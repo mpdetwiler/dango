@@ -6,12 +6,10 @@ b_tools = []
 
 if(platform.startswith('linux')):
 
-  print 'platform: ' + platform
   b_tools += ['g++', 'gnulink']
 
 elif(platform.startswith('win32') or platform.startswith('msys')):
 
-  print 'platform: ' + platform
   b_tools += ['mingw']
 
 elif(platform.startswith('darwin')):
@@ -33,17 +31,15 @@ env.Append(ENV = {'PATH':os.environ['PATH']})
 h_paths = []
 
 if(platform.startswith('linux')):
-  print ''
-#	env.Append(LIBS=['nspr4'])
-#	h_paths+=['/usr/include/nspr4/']
+
+  print 'platform: ' + platform
 
 elif(platform.startswith('win32') or platform.startswith('msys')):
 
-#	env.Append(LIBS=['nspr4'])
+  print 'platform: ' + platform
 #	env.Append(CXXFLAGS=['-static-libgcc','-static-libstdc++'])
 #	env.Append(LINKFLAGS=['-static-libgcc','-static-libstdc++'])
 	env.Append(LINKFLAGS = ['-flto-partition=none'])
-#	h_paths+=['c:/msys32/mingw32/include/nspr/']
 
 elif(platform.startswith('darwin')):
 
@@ -78,5 +74,5 @@ sources = [
 	Glob('src/*.cpp')
 ]
 
-env.Program('run',sources)
+env.Program('run', sources)
 
