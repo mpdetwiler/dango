@@ -5,20 +5,16 @@ platform = sys.platform
 b_tools = []
 
 if(platform.startswith('linux')):
-
   b_tools += ['g++', 'gnulink']
 
 elif(platform.startswith('win32') or platform.startswith('msys')):
-
   b_tools += ['mingw']
 
 elif(platform.startswith('darwin')):
-
   print 'platform: ' + platform + ' not yet implemented'
   Exit(1)
 
 else:
-
   print 'platform: ' + platform + ' not supported'
   Exit(1)
 
@@ -31,22 +27,18 @@ env.Append(ENV = {'PATH':os.environ['PATH']})
 h_paths = []
 
 if(platform.startswith('linux')):
-
   print 'platform: ' + platform
 
 elif(platform.startswith('win32') or platform.startswith('msys')):
-
   print 'platform: ' + platform
-#	env.Append(CXXFLAGS=['-static-libgcc','-static-libstdc++'])
-#	env.Append(LINKFLAGS=['-static-libgcc','-static-libstdc++'])
-	env.Append(LINKFLAGS = ['-flto-partition=none'])
+# env.Append(CXXFLAGS=['-static-libgcc','-static-libstdc++'])
+# env.Append(LINKFLAGS=['-static-libgcc','-static-libstdc++'])
+  env.Append(LINKFLAGS = ['-flto-partition=none'])
 
 elif(platform.startswith('darwin')):
-
 	Exit(1)
 
 else:
-
 	Exit(1)
 
 
