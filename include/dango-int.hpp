@@ -66,6 +66,26 @@ dango::integer
   template<>
   constexpr auto const MIN_VAL<dango::s_cent> =
     dango::s_cent(-dango::integer::MAX_VAL<dango::s_cent> - 1);
+
+  template
+  <typename tp_integer>
+  constexpr auto const MAX_VAL<tp_integer const> = dango::integer::MAX_VAL<tp_integer>;
+  template
+  <typename tp_integer>
+  constexpr auto const MAX_VAL<tp_integer volatile> = dango::integer::MAX_VAL<tp_integer>;
+  template
+  <typename tp_integer>
+  constexpr auto const MAX_VAL<tp_integer const volatile> = dango::integer::MAX_VAL<tp_integer>;
+
+  template
+  <typename tp_integer>
+  constexpr auto const MIN_VAL<tp_integer const> = dango::integer::MIN_VAL<tp_integer>;
+  template
+  <typename tp_integer>
+  constexpr auto const MIN_VAL<tp_integer volatile> = dango::integer::MIN_VAL<tp_integer>;
+  template
+  <typename tp_integer>
+  constexpr auto const MIN_VAL<tp_integer const volatile> = dango::integer::MIN_VAL<tp_integer>;
 }
 
 namespace
