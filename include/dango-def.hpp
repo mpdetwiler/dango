@@ -7,29 +7,33 @@
 
 #define dango_restrict __restrict__
 
-namespace dango
+#ifndef DANGO_NO_KEYWORDS
+#define restrict dango_restrict
+#endif
+
+namespace
+dango
 {
-  using unsigned_char = unsigned char;
-  using unsigned_short = unsigned short int;
-  using unsigned_int = unsigned int;
-  using unsigned_long = unsigned long int;
-  using unsigned_long_long = unsigned long long int;
+  using u_byte = unsigned char;
+  using u_short = unsigned short int;
+  using u_int = unsigned int;
+  using u_long = unsigned long int;
+  using u_cent = unsigned long long int;
 
-  using signed_char = signed char;
-  using signed_short = signed short int;
-  using signed_int = signed int;
-  using signed_long = signed long int;
-  using signed_long_long = signed long long int;
-
-  using long_double = long double;
+  using s_byte = signed char;
+  using s_short = signed short int;
+  using s_int = signed int;
+  using s_long = signed long int;
+  using s_cent = signed long long int;
 }
 
-namespace dango
+namespace
+dango
 {
   using nullptr_tag = decltype(nullptr);
 
   using usize = decltype(sizeof(char));
-  using isize = decltype(static_cast<char*>(nullptr) - static_cast<char*>(nullptr));
+  using ssize = decltype(static_cast<char*>(nullptr) - static_cast<char*>(nullptr));
 
   using uint8 = __UINT8_TYPE__;
   using uint16 = __UINT16_TYPE__;
@@ -37,18 +41,16 @@ namespace dango
   using uint64 = __UINT64_TYPE__;
   using uintptr = __UINTPTR_TYPE__;
 
-  using int8 = __INT8_TYPE__;
-  using int16 = __INT16_TYPE__;
-  using int32 = __INT32_TYPE__;
-  using int64 = __INT64_TYPE__;
-  using intptr = __INTPTR_TYPE__;
+  using sint8 = __INT8_TYPE__;
+  using sint16 = __INT16_TYPE__;
+  using sint32 = __INT32_TYPE__;
+  using sint64 = __INT64_TYPE__;
+  using sintptr = __INTPTR_TYPE__;
 
-  using char8 = char;
-  using char16 = char16_t;
-  using char32 = char32_t;
+  using wchar = char16_t;
+  using dchar = char32_t;
 
-  using float32 = float;
-  using float64 = double;
+  using real = long double;
 
   struct
   null_tag
@@ -57,29 +59,27 @@ namespace dango
 
   };
 
-  inline constexpr dango::null_tag const null{};
+  inline constexpr dango::null_tag const null{ };
 }
 
 #ifndef DANGO_NO_BASIC_TYPES
 
 using dango::nullptr_tag;
 using dango::usize;
-using dango::isize;
+using dango::ssize;
 using dango::uint8;
 using dango::uint16;
 using dango::uint32;
 using dango::uint64;
 using dango::uintptr;
-using dango::int8;
-using dango::int16;
-using dango::int32;
-using dango::int64;
-using dango::intptr;
-using dango::char8;
-using dango::char16;
-using dango::char32;
-using dango::float32;
-using dango::float64;
+using dango::sint8;
+using dango::sint16;
+using dango::sint32;
+using dango::sint64;
+using dango::sintptr;
+using dango::wchar;
+using dango::dchar;
+using dango::real;
 using dango::null_tag;
 using dango::null;
 
@@ -89,7 +89,8 @@ using dango::null;
 #define DANGO_CACHE_LINE_SIZE 64
 #endif
 
-namespace dango::detail
+namespace
+dango::detail
 {
   inline constexpr auto const CACHE_LINE_SIZE = dango::usize(DANGO_CACHE_LINE_SIZE);
 
@@ -107,24 +108,25 @@ private:
   dango::nullptr_tag            m_02;
   char                          m_03;
   wchar_t                       m_04;
-  char16_t                      m_06;
-  char32_t                      m_07;
-  dango::unsigned_char          m_08;
-  dango::unsigned_short         m_09;
-  dango::unsigned_int           m_10;
-  dango::unsigned_long          m_11;
-  dango::unsigned_long_long     m_12;
-  dango::signed_char            m_13;
-  dango::signed_short           m_14;
-  dango::signed_int             m_15;
-  dango::signed_long            m_16;
-  dango::signed_long_long       m_17;
+  dango::wchar                  m_06;
+  dango::dchar                  m_07;
+  dango::u_byte                 m_08;
+  dango::u_short                m_09;
+  dango::u_int                  m_10;
+  dango::u_long                 m_11;
+  dango::u_cent                 m_12;
+  dango::s_byte                 m_13;
+  dango::s_short                m_14;
+  dango::s_int                  m_15;
+  dango::s_long                 m_16;
+  dango::s_cent                 m_17;
   float                         m_18;
   double                        m_19;
-  dango::long_double            m_20;
+  dango::real                   m_20;
 };
 
-namespace dango
+namespace
+dango
 {
   struct alignas(dango::detail::fundamental_union)
   max_align_type
@@ -140,7 +142,7 @@ namespace dango
 
   enum class
   byte:
-  dango::unsigned_char
+  dango::u_byte
   {
 
   };
