@@ -1,7 +1,7 @@
 #ifndef __DANGO_INT_HPP__
 #define __DANGO_INT_HPP__ 1
 
-#include "dango-def.hpp"
+#include "dango-traits.hpp"
 
 namespace
 dango::integer
