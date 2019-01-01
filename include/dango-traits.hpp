@@ -3,88 +3,19 @@
 
 #include "dango-def.hpp"
 
-/*** integral_constant ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_integral, tp_integral tp_value>
-  struct integral_constant;
-
-  template
-  <bool tp_value>
-  using bool_constant = dango::detail::integral_constant<bool, tp_value>;
-
-  using true_type = dango::detail::bool_constant<true>;
-
-  using false_type = dango::detail::bool_constant<false>;
-}
-
-template
-<typename tp_integral, tp_integral tp_value>
-struct
-dango::
-detail::
-integral_constant
-{
-  using value_type = tp_integral;
-
-  static tp_integral const value;
-};
-
-template
-<typename tp_integral, tp_integral tp_value>
-constexpr tp_integral const
-dango::
-detail::
-integral_constant<tp_integral, tp_value>::
-value = tp_value;
-
 /*** is_same ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type1, typename tp_type2>
-  struct is_same;
-
-  template
-  <typename tp_type>
-  struct is_same<tp_type, tp_type>;
-}
 
 namespace
 dango
 {
   template
   <typename tp_type1, typename tp_type2>
-  constexpr bool const is_same =
-    dango::detail::is_same<tp_type1, tp_type2>::value;
+  constexpr bool const is_same = false;
+
+  template
+  <typename tp_type>
+  constexpr bool const is_same<tp_type, tp_type> = true;
 }
-
-template
-<typename tp_type1, typename tp_type2>
-struct
-dango::
-detail::
-is_same:
-dango::detail::false_type
-{
-
-};
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_same<tp_type, tp_type>:
-dango::detail::true_type
-{
-
-};
 
 /*** remove_const ***/
 
@@ -93,11 +24,11 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct remove_const;
+  struct remove_const_help;
 
   template
   <typename tp_type>
-  struct remove_const<tp_type const>;
+  struct remove_const_help<tp_type const>;
 }
 
 namespace
@@ -106,7 +37,7 @@ dango
   template
   <typename tp_type>
   using remove_const =
-    typename dango::detail::remove_const<tp_type>::type;
+    typename dango::detail::remove_const_help<tp_type>::type;
 }
 
 template
@@ -114,7 +45,7 @@ template
 struct
 dango::
 detail::
-remove_const
+remove_const_help
 {
   using type = tp_type;
 };
@@ -124,7 +55,7 @@ template
 struct
 dango::
 detail::
-remove_const<tp_type const>
+remove_const_help<tp_type const>
 {
   using type = tp_type;
 };
@@ -136,11 +67,11 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct remove_volatile;
+  struct remove_volatile_help;
 
   template
   <typename tp_type>
-  struct remove_volatile<tp_type volatile>;
+  struct remove_volatile_help<tp_type volatile>;
 }
 
 namespace
@@ -149,7 +80,7 @@ dango
   template
   <typename tp_type>
   using remove_volatile =
-    typename dango::detail::remove_volatile<tp_type>::type;
+    typename dango::detail::remove_volatile_help<tp_type>::type;
 }
 
 template
@@ -157,7 +88,7 @@ template
 struct
 dango::
 detail::
-remove_volatile
+remove_volatile_help
 {
   using type = tp_type;
 };
@@ -167,7 +98,7 @@ template
 struct
 dango::
 detail::
-remove_volatile<tp_type volatile>
+remove_volatile_help<tp_type volatile>
 {
   using type = tp_type;
 };
@@ -189,7 +120,10 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_void;
+  constexpr bool const is_void_help = false;
+
+  template<>
+  constexpr bool const is_void_help<void> = true;
 }
 
 namespace
@@ -198,19 +132,8 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_void =
-    dango::detail::is_void<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_void_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_void:
-dango::detail::bool_constant<dango::is_same<void, tp_type>>
-{
-
-};
 
 /*** is_null_ptr ***/
 
@@ -219,7 +142,10 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_null_ptr;
+  constexpr bool const is_null_ptr_help = false;
+
+  template<>
+  constexpr bool const is_null_ptr_help<dango::nullptr_tag> = true;
 }
 
 namespace
@@ -228,19 +154,8 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_null_ptr =
-    dango::detail::is_null_ptr<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_null_ptr_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_null_ptr:
-dango::detail::bool_constant<dango::is_same<dango::nullptr_tag, tp_type>>
-{
-
-};
 
 /*** is_uint ***/
 
@@ -249,7 +164,12 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_uint;
+  constexpr bool const is_uint_help =
+    dango::is_same<tp_type, dango::u_byte> ||
+    dango::is_same<tp_type, dango::u_short> ||
+    dango::is_same<tp_type, dango::u_int> ||
+    dango::is_same<tp_type, dango::u_long> ||
+    dango::is_same<tp_type, dango::u_cent>;
 }
 
 namespace
@@ -258,26 +178,8 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_uint =
-    dango::detail::is_uint<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_uint_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_uint:
-dango::detail::bool_constant
-<
-  dango::is_same<tp_type, dango::u_byte> ||
-  dango::is_same<tp_type, dango::u_short> ||
-  dango::is_same<tp_type, dango::u_int> ||
-  dango::is_same<tp_type, dango::u_long> ||
-  dango::is_same<tp_type, dango::u_cent>
->
-{
-
-};
 
 /*** is_sint ***/
 
@@ -286,7 +188,12 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_sint;
+  constexpr bool const is_sint_help =
+    dango::is_same<tp_type, dango::s_byte> ||
+    dango::is_same<tp_type, dango::s_short> ||
+    dango::is_same<tp_type, dango::s_int> ||
+    dango::is_same<tp_type, dango::s_long> ||
+    dango::is_same<tp_type, dango::s_cent>;
 }
 
 namespace
@@ -295,36 +202,10 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_sint =
-    dango::detail::is_sint<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_sint_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_sint:
-dango::detail::bool_constant
-<
-  dango::is_same<tp_type, dango::s_byte> ||
-  dango::is_same<tp_type, dango::s_short> ||
-  dango::is_same<tp_type, dango::s_int> ||
-  dango::is_same<tp_type, dango::s_long> ||
-  dango::is_same<tp_type, dango::s_cent>
->
-{
-
-};
 
 /*** is_int ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  struct is_int;
-}
 
 namespace
 dango
@@ -332,23 +213,8 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_int =
-    dango::detail::is_int<tp_type>::value;
+    dango::is_uint<tp_type> || dango::is_sint<tp_type>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_int:
-dango::detail::bool_constant
-<
-  dango::is_uint<tp_type> ||
-  dango::is_sint<tp_type>
->
-{
-
-};
 
 /*** is_integral ***/
 
@@ -357,7 +223,13 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_integral;
+  constexpr bool const is_integral_help =
+    dango::is_same<tp_type, bool> ||
+    dango::is_same<tp_type, char> ||
+    dango::is_same<tp_type, dango::wchar> ||
+    dango::is_same<tp_type, dango::dchar> ||
+    dango::is_same<tp_type, wchar_t> ||
+    dango::is_int<tp_type>;
 }
 
 namespace
@@ -366,27 +238,8 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_integral =
-    dango::detail::is_integral<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_integral_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_integral:
-dango::detail::bool_constant
-<
-  dango::is_same<tp_type, bool> ||
-  dango::is_same<tp_type, char> ||
-  dango::is_same<tp_type, dango::wchar> ||
-  dango::is_same<tp_type, dango::dchar> ||
-  dango::is_same<tp_type, wchar_t> ||
-  dango::is_int<tp_type>
->
-{
-
-};
 
 /*** is_float ***/
 
@@ -395,7 +248,10 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_float;
+  constexpr bool const is_float_help =
+    dango::is_same<tp_type, float> ||
+    dango::is_same<tp_type, double> ||
+    dango::is_same<tp_type, dango::real>;
 }
 
 namespace
@@ -404,24 +260,8 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_float =
-    dango::detail::is_float<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_float_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_float:
-dango::detail::bool_constant
-<
-  dango::is_same<tp_type, float> ||
-  dango::is_same<tp_type, double> ||
-  dango::is_same<tp_type, dango::real>
->
-{
-
-};
 
 /*** is_array ***/
 
@@ -478,11 +318,11 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_ptr;
+  constexpr bool const is_ptr_help = false;
 
   template
   <typename tp_type>
-  struct is_ptr<tp_type*>;
+  constexpr bool const is_ptr_help<tp_type*> = true;
 }
 
 namespace
@@ -491,30 +331,8 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_ptr =
-    dango::detail::is_ptr<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_ptr_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_ptr:
-dango::detail::false_type
-{
-
-};
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_ptr<tp_type*>:
-dango::detail::true_type
-{
-
-};
 
 /*** is_lvalue_ref ***/
 
@@ -574,11 +392,11 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_member_ptr;
+  constexpr bool const is_member_ptr_help = false;
 
   template
   <typename tp_type, typename tp_class>
-  struct is_member_ptr<tp_type tp_class::*>;
+  constexpr bool const is_member_ptr_help<tp_type tp_class::*> = true;
 }
 
 namespace
@@ -587,30 +405,8 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_member_ptr =
-    dango::detail::is_member_ptr<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_member_ptr_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_member_ptr:
-dango::detail::false_type
-{
-
-};
-
-template
-<typename tp_type, typename tp_class>
-struct
-dango::
-detail::
-is_member_ptr<tp_type tp_class::*>:
-dango::detail::true_type
-{
-
-};
 
 /*** is_member_func_ptr ***/
 
@@ -619,43 +415,21 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct is_member_func_ptr;
+  constexpr bool const is_member_func_ptr_help = false;
 
   template
   <typename tp_type, typename tp_class>
-  struct is_member_func_ptr<tp_type tp_class::*>;
+  constexpr bool const is_member_func_ptr_help<tp_type tp_class::*> =
+    dango::is_func<tp_type>;
 }
 
-namespace
-dango
+namespace dango
 {
   template
   <typename tp_type>
   constexpr bool const is_member_func_ptr =
-    dango::detail::is_member_func_ptr<dango::remove_cv<tp_type>>::value;
+    dango::detail::is_member_func_ptr_help<dango::remove_cv<tp_type>>;
 }
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-is_member_func_ptr:
-dango::detail::false_type
-{
-
-};
-
-template
-<typename tp_type, typename tp_class>
-struct
-dango::
-detail::
-is_member_func_ptr<tp_type tp_class::*>:
-dango::detail::bool_constant<dango::is_func<tp_type>>
-{
-
-};
 
 /*** is_member_data_ptr ***/
 
@@ -665,8 +439,7 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_member_data_ptr =
-    dango::is_member_ptr<tp_type> &&
-    !dango::is_member_func_ptr<tp_type>;
+    dango::is_member_ptr<tp_type> && !dango::is_member_func_ptr<tp_type>;
 }
 
 /*** is_arithmetic ***/
@@ -849,11 +622,11 @@ dango::detail
 {
   template
   <bool tp_cond, typename tp_true_type, typename tp_false_type>
-  struct conditional;
+  struct conditional_help;
 
   template
   <typename tp_true_type, typename tp_false_type>
-  struct conditional<true, tp_true_type, tp_false_type>;
+  struct conditional_help<true, tp_true_type, tp_false_type>;
 }
 
 namespace
@@ -862,7 +635,7 @@ dango
   template
   <bool tp_cond, typename tp_true_type, typename tp_false_type>
   using conditional =
-    typename dango::detail::conditional<tp_cond, tp_true_type, tp_false_type>;
+    typename dango::detail::conditional_help<tp_cond, tp_true_type, tp_false_type>;
 }
 
 template
@@ -870,7 +643,7 @@ template
 struct
 dango::
 detail::
-conditional
+conditional_help
 {
   using type = tp_false_type;
 };
@@ -880,7 +653,7 @@ template
 struct
 dango::
 detail::
-conditional<true, tp_true_type, tp_false_type>
+conditional_help<true, tp_true_type, tp_false_type>
 {
   using type = tp_true_type;
 };
@@ -893,11 +666,11 @@ dango::detail
 {
   template
   <bool tp_cond, typename tp_type>
-  struct enable_if;
+  struct enable_if_help;
 
   template
   <typename tp_type>
-  struct enable_if<true, tp_type>;
+  struct enable_if_help<true, tp_type>;
 }
 
 namespace
@@ -915,7 +688,7 @@ dango
   template
   <bool tp_cond, typename tp_type = dango::enable_tag>
   using enable_if =
-    typename dango::detail::enable_if<tp_cond, tp_type>::type;
+    typename dango::detail::enable_if_help<tp_cond, tp_type>::type;
 }
 
 template
@@ -923,7 +696,7 @@ template
 struct
 dango::
 detail::
-enable_if
+enable_if_help
 {
 
 };
@@ -933,7 +706,7 @@ template
 struct
 dango::
 detail::
-enable_if<true, tp_type>
+enable_if_help<true, tp_type>
 {
   using type = tp_type;
 };
