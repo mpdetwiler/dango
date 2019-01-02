@@ -123,6 +123,74 @@ dango
   using remove_cv = dango::remove_volatile<dango::remove_const<tp_type>>;
 }
 
+/*** remove_ref ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct remove_ref_help;
+
+  template
+  <typename tp_type>
+  struct remove_ref_help<tp_type&>;
+
+  template
+  <typename tp_type>
+  struct remove_ref_help<tp_type&&>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using remove_ref =
+    typename detail::remove_ref_help<tp_type>::type;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_ref_help
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_ref_help<tp_type&>
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_ref_help<tp_type&&>
+{
+  using type = tp_type;
+};
+
+/*** remove_cvref ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using remove_cvref =
+    dango::remove_cv<dango::remove_ref<tp_type>>;
+}
+
 /*** is_void ***/
 
 namespace
@@ -799,46 +867,46 @@ enable_if_help<true, tp_type>
   using type = tp_type;
 };
 
-/*** is_invokable is_invokable_ret ***/
+/*** is_callable is_callable_ret ***/
 
 namespace
 dango::detail
 {
   enum class
-  is_invokable_normal_tag:
+  is_callable_normal_tag:
   dango::uint32
   {
 
   };
 
-  inline constexpr detail::is_invokable_normal_tag const is_invokable_normal{ };
+  inline constexpr detail::is_callable_normal_tag const is_callable_normal{ };
 
   enum class
-  is_invokable_noexcept_tag:
+  is_callable_noexcept_tag:
   dango::uint32
   {
 
   };
 
-  inline constexpr detail::is_invokable_noexcept_tag const is_invokable_noexcept{ };
+  inline constexpr detail::is_callable_noexcept_tag const is_callable_noexcept{ };
 
   enum class
-  is_invokable_ret_normal_tag:
+  is_callable_ret_normal_tag:
   dango::uint32
   {
 
   };
 
-  inline constexpr detail::is_invokable_ret_normal_tag const is_invokable_ret_normal{ };
+  inline constexpr detail::is_callable_ret_normal_tag const is_callable_ret_normal{ };
 
   enum class
-  is_invokable_ret_noexcept_tag:
+  is_callable_ret_noexcept_tag:
   dango::uint32
   {
 
   };
 
-  inline constexpr detail::is_invokable_ret_noexcept_tag const is_invokable_ret_noexcept{ };
+  inline constexpr detail::is_callable_ret_noexcept_tag const is_callable_ret_noexcept{ };
 
   template
   <
@@ -847,8 +915,8 @@ dango::detail
     typename tp_enabled = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...))
   >
   constexpr auto
-  is_invokable_help
-  (detail::is_invokable_normal_tag const)noexcept->bool
+  is_callable_help
+  (detail::is_callable_normal_tag const)noexcept->bool
   {
     return true;
   }
@@ -860,8 +928,8 @@ dango::detail
     typename tp_enabled = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...))
   >
   constexpr auto
-  is_invokable_help
-  (detail::is_invokable_noexcept_tag const)noexcept->bool
+  is_callable_help
+  (detail::is_callable_noexcept_tag const)noexcept->bool
   {
     return noexcept(dango::declval<tp_func>()(dango::declval<tp_args>()...));
   }
@@ -875,8 +943,8 @@ dango::detail
     dango::enable_if<dango::is_convertible<tp_enabled_ret, tp_ret>> = dango::enable_val
   >
   constexpr auto
-  is_invokable_help
-  (detail::is_invokable_ret_normal_tag const)noexcept->bool
+  is_callable_help
+  (detail::is_callable_ret_normal_tag const)noexcept->bool
   {
     return true;
   }
@@ -890,8 +958,8 @@ dango::detail
     dango::enable_if<dango::is_convertible<tp_enabled_ret, tp_ret>> = dango::enable_val
   >
   constexpr auto
-  is_invokable_help
-  (detail::is_invokable_ret_noexcept_tag const)noexcept->bool
+  is_callable_help
+  (detail::is_callable_ret_noexcept_tag const)noexcept->bool
   {
     return noexcept(dango::declval<tp_func>()(dango::declval<tp_args>()...));
   }
@@ -903,7 +971,7 @@ dango::detail
     typename... tp_args
   >
   constexpr auto
-  is_invokable_help
+  is_callable_help
   (...)noexcept->bool
   {
     return false;
@@ -915,23 +983,23 @@ dango
 {
   template
   <typename tp_func, typename... tp_args>
-  constexpr bool const is_invokable =
-    detail::is_invokable_help<tp_func, tp_args...>(detail::is_invokable_normal);
+  constexpr bool const is_callable =
+    detail::is_callable_help<tp_func, tp_args...>(detail::is_callable_normal);
 
   template
   <typename tp_func, typename... tp_args>
-  constexpr bool const is_noexcept_invokable =
-    detail::is_invokable_help<tp_func, tp_args...>(detail::is_invokable_noexcept);
+  constexpr bool const is_noexcept_callable =
+    detail::is_callable_help<tp_func, tp_args...>(detail::is_callable_noexcept);
 
   template
   <typename tp_func, typename tp_ret, typename... tp_args>
-  constexpr bool const is_invokable_ret =
-    detail::is_invokable_help<tp_func, tp_ret, tp_args...>(detail::is_invokable_ret_normal);
+  constexpr bool const is_callable_ret =
+    detail::is_callable_help<tp_func, tp_ret, tp_args...>(detail::is_callable_ret_normal);
 
   template
   <typename tp_func, typename tp_ret, typename... tp_args>
-  constexpr bool const is_noexcept_invokable_ret =
-    detail::is_invokable_help<tp_func, tp_ret, tp_args...>(detail::is_invokable_ret_noexcept);
+  constexpr bool const is_noexcept_callable_ret =
+    detail::is_callable_help<tp_func, tp_ret, tp_args...>(detail::is_callable_ret_noexcept);
 }
 
 #endif

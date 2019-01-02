@@ -7,16 +7,16 @@ void func()noexcept;
 template
 <
   typename... tp_bool,
-  dango::enable_if<(... && dango::is_same<dango::remove_cv<tp_bool>, bool>)> = dango::enable_val
+  dango::enable_if<(true && ... && dango::is_same<dango::remove_cv<tp_bool>, bool>)> = dango::enable_val
 >
 constexpr auto
 conjunction
 (tp_bool const... args)noexcept->bool
 {
-  return (... && args);
+  return (true && ... && args);
 }
 
-static_assert(conjunction(true, true, true));
+static_assert(conjunction(true, true, true, true));
 
 #include <cstdio>
 
