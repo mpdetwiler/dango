@@ -716,6 +716,87 @@ make_sint_help<dango::u_cent>
   using type = dango::s_cent;
 };
 
+/*** void_type ***/
+
+namespace
+dango
+{
+  template
+  <typename... tp_types>
+  using void_type = void;
+}
+
+/*** decay ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct decay_help;
+
+  template
+  <typename tp_type>
+  struct decay_help<tp_type[]>;
+
+  template
+  <typename tp_type, dango::usize tp_size>
+  struct decay_help<tp_type[tp_size]>;
+
+  template
+  <typename tp_ret, typename... tp_args, bool tp_noexcept>
+  struct decay_help<tp_ret(tp_args...)noexcept(tp_noexcept)>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using decay =
+    typename detail::decay_help<dango::remove_ref<tp_type>>::type;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+decay_help
+{
+  using type = dango::remove_cv<tp_type>;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+decay_help<tp_type[]>
+{
+  using type = tp_type*;
+};
+
+template
+<typename tp_type, dango::usize tp_size>
+struct
+dango::
+detail::
+decay_help<tp_type[tp_size]>
+{
+  using type = tp_type*;
+};
+
+template
+<typename tp_ret, typename... tp_args, bool tp_noexcept>
+struct
+dango::
+detail::
+decay_help<tp_ret(tp_args...)noexcept(tp_noexcept)>
+{
+  using type = tp_ret(*)(tp_args...)noexcept(tp_noexcept);
+};
+
 /*** is_void ***/
 
 namespace
