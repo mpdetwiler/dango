@@ -191,6 +191,531 @@ dango
     dango::remove_cv<dango::remove_ref<tp_type>>;
 }
 
+/*** remove_ptr ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct remove_ptr_help;
+
+  template
+  <typename tp_type>
+  struct remove_ptr_help<tp_type*>;
+
+  template
+  <typename tp_type>
+  struct remove_ptr_help<tp_type* const>;
+
+  template
+  <typename tp_type>
+  struct remove_ptr_help<tp_type* volatile>;
+
+  template
+  <typename tp_type>
+  struct remove_ptr_help<tp_type* const volatile>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using remove_ptr =
+    typename detail::remove_ptr_help<tp_type>::type;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_ptr_help
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_ptr_help<tp_type*>
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_ptr_help<tp_type* const>
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_ptr_help<tp_type* volatile>
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_ptr_help<tp_type* const volatile>
+{
+  using type = tp_type;
+};
+
+/*** remove_all_ptr ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct remove_all_ptr_help;
+
+  template
+  <typename tp_type>
+  struct remove_all_ptr_help<tp_type*>;
+
+  template
+  <typename tp_type>
+  struct remove_all_ptr_help<tp_type* const>;
+
+  template
+  <typename tp_type>
+  struct remove_all_ptr_help<tp_type* volatile>;
+
+  template
+  <typename tp_type>
+  struct remove_all_ptr_help<tp_type* const volatile>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using remove_all_ptr =
+    typename detail::remove_all_ptr_help<tp_type>::type;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_all_ptr_help
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_all_ptr_help<tp_type*>
+{
+  using type = dango::remove_all_ptr<tp_type>;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_all_ptr_help<tp_type* const>
+{
+  using type = dango::remove_all_ptr<tp_type>;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_all_ptr_help<tp_type* volatile>
+{
+  using type = dango::remove_all_ptr<tp_type>;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_all_ptr_help<tp_type* const volatile>
+{
+  using type = dango::remove_all_ptr<tp_type>;
+};
+
+/*** remove_array ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct remove_array_help;
+
+  template
+  <typename tp_type>
+  struct remove_array_help<tp_type[]>;
+
+  template
+  <typename tp_type, dango::usize tp_size>
+  struct remove_array_help<tp_type[tp_size]>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using remove_array =
+    typename detail::remove_array_help<tp_type>::type;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_array_help
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_array_help<tp_type[]>
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type, dango::usize tp_size>
+struct
+dango::
+detail::
+remove_array_help<tp_type[tp_size]>
+{
+  using type = tp_type;
+};
+
+/*** remove_all_array ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct remove_all_array_help;
+
+  template
+  <typename tp_type>
+  struct remove_all_array_help<tp_type[]>;
+
+  template
+  <typename tp_type, dango::usize tp_size>
+  struct remove_all_array_help<tp_type[tp_size]>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using remove_all_array =
+    typename detail::remove_all_array_help<tp_type>::type;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_all_array_help
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+remove_all_array_help<tp_type[]>
+{
+  using type = dango::remove_all_array<tp_type>;
+};
+
+template
+<typename tp_type, dango::usize tp_size>
+struct
+dango::
+detail::
+remove_all_array_help<tp_type[tp_size]>
+{
+  using type = dango::remove_all_array<tp_type>;
+};
+
+/*** preserve_cv ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_from, typename tp_to>
+  struct preserve_cv_help;
+
+  template
+  <typename tp_from, typename tp_to>
+  struct preserve_cv_help<tp_from const, tp_to>;
+
+  template
+  <typename tp_from, typename tp_to>
+  struct preserve_cv_help<tp_from volatile, tp_to>;
+
+  template
+  <typename tp_from, typename tp_to>
+  struct preserve_cv_help<tp_from const volatile, tp_to>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_from, typename tp_to>
+  using preserve_cv =
+    typename detail::preserve_cv_help<tp_from, tp_to>::type;
+}
+
+template
+<typename tp_from, typename tp_to>
+struct
+dango::
+detail::
+preserve_cv_help
+{
+  using type = tp_to;
+};
+
+template
+<typename tp_from, typename tp_to>
+struct
+dango::
+detail::
+preserve_cv_help<tp_from const, tp_to>
+{
+  using type = tp_to const;
+};
+
+template
+<typename tp_from, typename tp_to>
+struct
+dango::
+detail::
+preserve_cv_help<tp_from volatile, tp_to>
+{
+  using type = tp_to volatile;
+};
+
+template
+<typename tp_from, typename tp_to>
+struct
+dango::
+detail::
+preserve_cv_help<tp_from const volatile, tp_to>
+{
+  using type = tp_to const volatile;
+};
+
+/*** make_uint ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct make_uint_help;
+
+  template<>
+  struct make_uint_help<dango::s_byte>;
+  template<>
+  struct make_uint_help<dango::s_short>;
+  template<>
+  struct make_uint_help<dango::s_int>;
+  template<>
+  struct make_uint_help<dango::s_long>;
+  template<>
+  struct make_uint_help<dango::s_cent>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using make_uint =
+    dango::preserve_cv<tp_type, typename detail::make_uint_help<dango::remove_cv<tp_type>>::type>;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+make_uint_help
+{
+  using type = tp_type;
+};
+
+template<>
+struct
+dango::
+detail::
+make_uint_help<dango::s_byte>
+{
+  using type = dango::u_byte;
+};
+
+template<>
+struct
+dango::
+detail::
+make_uint_help<dango::s_short>
+{
+  using type = dango::u_short;
+};
+
+template<>
+struct
+dango::
+detail::
+make_uint_help<dango::s_int>
+{
+  using type = dango::u_int;
+};
+
+template<>
+struct
+dango::
+detail::
+make_uint_help<dango::s_long>
+{
+  using type = dango::u_long;
+};
+
+template<>
+struct
+dango::
+detail::
+make_uint_help<dango::s_cent>
+{
+  using type = dango::u_cent;
+};
+
+/*** make_sint ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct make_sint_help;
+
+  template<>
+  struct make_sint_help<dango::u_byte>;
+  template<>
+  struct make_sint_help<dango::u_short>;
+  template<>
+  struct make_sint_help<dango::u_int>;
+  template<>
+  struct make_sint_help<dango::u_long>;
+  template<>
+  struct make_sint_help<dango::u_cent>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using make_sint =
+    dango::preserve_cv<tp_type, typename detail::make_sint_help<dango::remove_cv<tp_type>>::type>;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+make_sint_help
+{
+  using type = tp_type;
+};
+
+template<>
+struct
+dango::
+detail::
+make_sint_help<dango::u_byte>
+{
+  using type = dango::s_byte;
+};
+
+template<>
+struct
+dango::
+detail::
+make_sint_help<dango::u_short>
+{
+  using type = dango::s_short;
+};
+
+template<>
+struct
+dango::
+detail::
+make_sint_help<dango::u_int>
+{
+  using type = dango::s_int;
+};
+
+template<>
+struct
+dango::
+detail::
+make_sint_help<dango::u_long>
+{
+  using type = dango::s_long;
+};
+
+template<>
+struct
+dango::
+detail::
+make_sint_help<dango::u_cent>
+{
+  using type = dango::s_cent;
+};
+
 /*** is_void ***/
 
 namespace
@@ -355,6 +880,34 @@ dango
   <typename tp_type, dango::usize tp_size>
   constexpr dango::usize const array_rank<tp_type[tp_size]> =
     dango::array_rank<tp_type> + dango::usize(1);
+}
+
+/*** array_size ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type, dango::usize tp_dim = dango::usize(0)>
+  constexpr dango::usize const array_size = dango::usize(0);
+
+  template
+  <typename tp_type>
+  constexpr dango::usize const array_size<tp_type[], dango::usize(0)> = dango::usize(0);
+
+  template
+  <typename tp_type, dango::usize tp_dim>
+  constexpr dango::usize const array_size<tp_type[], tp_dim> =
+    dango::array_size<tp_type, tp_dim - dango::usize(1)>;
+
+  template
+  <typename tp_type, dango::usize tp_size>
+  constexpr dango::usize const array_size<tp_type[tp_size], dango::usize(0)> = tp_size;
+
+  template
+  <typename tp_type, dango::usize tp_size, dango::usize tp_dim>
+  constexpr dango::usize const array_size<tp_type[tp_size], tp_dim> =
+    dango::array_size<tp_type, tp_dim - dango::usize(1)>;
 }
 
 /*** is_enum ***/
