@@ -91,7 +91,7 @@ dango::integer
 namespace
 dango
 {
-	inline constexpr dango::usize const SIZE_MAX =
+	inline constexpr dango::usize const SIZE_MAX_VAL =
 		dango::integer::MAX_VAL<dango::usize> <= dango::integer::MAX_VAL<dango::ssize> ?
 		dango::integer::MAX_VAL<dango::usize> :
 		dango::usize(dango::integer::MAX_VAL<dango::ssize>);
