@@ -337,6 +337,26 @@ dango
   constexpr bool const is_array<tp_type[tp_size]> = true;
 }
 
+/*** array_rank ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr dango::usize const array_rank = dango::usize(0);
+
+  template
+  <typename tp_type>
+  constexpr dango::usize const array_rank<tp_type[]> =
+    dango::array_rank<tp_type> + dango::usize(1);
+
+  template
+  <typename tp_type, dango::usize tp_size>
+  constexpr dango::usize const array_rank<tp_type[tp_size]> =
+    dango::array_rank<tp_type> + dango::usize(1);
+}
+
 /*** is_enum ***/
 
 namespace
@@ -681,7 +701,7 @@ dango
   constexpr bool const is_base_of = __is_base_of(tp_base, tp_derived);
 }
 
-/*** is_convertible is_noexcept_convertible***/
+/*** is_convertible is_noexcept_convertible ***/
 
 namespace
 dango::detail
@@ -770,50 +790,6 @@ dango
       detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_noexcept)
     );
 }
-
-/*** conditional ***/
-
-namespace
-dango::detail
-{
-  template
-  <bool tp_cond, typename tp_true_type, typename tp_false_type>
-  struct conditional_help;
-
-  template
-  <typename tp_true_type, typename tp_false_type>
-  struct conditional_help<true, tp_true_type, tp_false_type>;
-}
-
-namespace
-dango
-{
-  template
-  <bool tp_cond, typename tp_true_type, typename tp_false_type>
-  using conditional =
-    typename detail::conditional_help<tp_cond, tp_true_type, tp_false_type>;
-}
-
-template
-<bool tp_cond, typename tp_true_type, typename tp_false_type>
-struct
-dango::
-detail::
-conditional_help
-{
-  using type = tp_false_type;
-};
-
-template
-<typename tp_true_type, typename tp_false_type>
-struct
-dango::
-detail::
-conditional_help<true, tp_true_type, tp_false_type>
-{
-  using type = tp_true_type;
-};
-
 
 /*** enable_if ***/
 
@@ -1001,6 +977,49 @@ dango
   constexpr bool const is_noexcept_callable_ret =
     detail::is_callable_help<tp_func, tp_ret, tp_args...>(detail::is_callable_ret_noexcept);
 }
+
+/*** conditional ***/
+
+namespace
+dango::detail
+{
+  template
+  <bool tp_cond, typename tp_true_type, typename tp_false_type>
+  struct conditional_help;
+
+  template
+  <typename tp_true_type, typename tp_false_type>
+  struct conditional_help<true, tp_true_type, tp_false_type>;
+}
+
+namespace
+dango
+{
+  template
+  <bool tp_cond, typename tp_true_type, typename tp_false_type>
+  using conditional =
+    typename detail::conditional_help<tp_cond, tp_true_type, tp_false_type>;
+}
+
+template
+<bool tp_cond, typename tp_true_type, typename tp_false_type>
+struct
+dango::
+detail::
+conditional_help
+{
+  using type = tp_false_type;
+};
+
+template
+<typename tp_true_type, typename tp_false_type>
+struct
+dango::
+detail::
+conditional_help<true, tp_true_type, tp_false_type>
+{
+  using type = tp_true_type;
+};
 
 #endif
 
