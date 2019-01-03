@@ -56,6 +56,7 @@ struct
 dango::
 detail::
 remove_const_help
+final
 {
   using type = tp_type;
 };
@@ -66,6 +67,7 @@ struct
 dango::
 detail::
 remove_const_help<tp_type const>
+final
 {
   using type = tp_type;
 };
@@ -99,6 +101,7 @@ struct
 dango::
 detail::
 remove_volatile_help
+final
 {
   using type = tp_type;
 };
@@ -109,6 +112,7 @@ struct
 dango::
 detail::
 remove_volatile_help<tp_type volatile>
+final
 {
   using type = tp_type;
 };
@@ -156,6 +160,7 @@ struct
 dango::
 detail::
 remove_ref_help
+final
 {
   using type = tp_type;
 };
@@ -166,6 +171,7 @@ struct
 dango::
 detail::
 remove_ref_help<tp_type&>
+final
 {
   using type = tp_type;
 };
@@ -176,6 +182,7 @@ struct
 dango::
 detail::
 remove_ref_help<tp_type&&>
+final
 {
   using type = tp_type;
 };
@@ -232,6 +239,7 @@ struct
 dango::
 detail::
 remove_ptr_help
+final
 {
   using type = tp_type;
 };
@@ -242,6 +250,7 @@ struct
 dango::
 detail::
 remove_ptr_help<tp_type*>
+final
 {
   using type = tp_type;
 };
@@ -252,6 +261,7 @@ struct
 dango::
 detail::
 remove_ptr_help<tp_type* const>
+final
 {
   using type = tp_type;
 };
@@ -262,6 +272,7 @@ struct
 dango::
 detail::
 remove_ptr_help<tp_type* volatile>
+final
 {
   using type = tp_type;
 };
@@ -272,6 +283,7 @@ struct
 dango::
 detail::
 remove_ptr_help<tp_type* const volatile>
+final
 {
   using type = tp_type;
 };
@@ -317,6 +329,7 @@ struct
 dango::
 detail::
 remove_all_ptr_help
+final
 {
   using type = tp_type;
 };
@@ -327,6 +340,7 @@ struct
 dango::
 detail::
 remove_all_ptr_help<tp_type*>
+final
 {
   using type = dango::remove_all_ptr<tp_type>;
 };
@@ -337,6 +351,7 @@ struct
 dango::
 detail::
 remove_all_ptr_help<tp_type* const>
+final
 {
   using type = dango::remove_all_ptr<tp_type>;
 };
@@ -347,6 +362,7 @@ struct
 dango::
 detail::
 remove_all_ptr_help<tp_type* volatile>
+final
 {
   using type = dango::remove_all_ptr<tp_type>;
 };
@@ -357,6 +373,7 @@ struct
 dango::
 detail::
 remove_all_ptr_help<tp_type* const volatile>
+final
 {
   using type = dango::remove_all_ptr<tp_type>;
 };
@@ -394,6 +411,7 @@ struct
 dango::
 detail::
 remove_array_help
+final
 {
   using type = tp_type;
 };
@@ -404,6 +422,7 @@ struct
 dango::
 detail::
 remove_array_help<tp_type[]>
+final
 {
   using type = tp_type;
 };
@@ -414,6 +433,7 @@ struct
 dango::
 detail::
 remove_array_help<tp_type[tp_size]>
+final
 {
   using type = tp_type;
 };
@@ -451,6 +471,7 @@ struct
 dango::
 detail::
 remove_all_array_help
+final
 {
   using type = tp_type;
 };
@@ -461,6 +482,7 @@ struct
 dango::
 detail::
 remove_all_array_help<tp_type[]>
+final
 {
   using type = dango::remove_all_array<tp_type>;
 };
@@ -471,6 +493,7 @@ struct
 dango::
 detail::
 remove_all_array_help<tp_type[tp_size]>
+final
 {
   using type = dango::remove_all_array<tp_type>;
 };
@@ -512,6 +535,7 @@ struct
 dango::
 detail::
 preserve_cv_help
+final
 {
   using type = tp_to;
 };
@@ -522,6 +546,7 @@ struct
 dango::
 detail::
 preserve_cv_help<tp_from const, tp_to>
+final
 {
   using type = tp_to const;
 };
@@ -532,6 +557,7 @@ struct
 dango::
 detail::
 preserve_cv_help<tp_from volatile, tp_to>
+final
 {
   using type = tp_to volatile;
 };
@@ -542,6 +568,7 @@ struct
 dango::
 detail::
 preserve_cv_help<tp_from const volatile, tp_to>
+final
 {
   using type = tp_to const volatile;
 };
@@ -582,6 +609,7 @@ struct
 dango::
 detail::
 make_uint_help
+final
 {
   using type = tp_type;
 };
@@ -591,6 +619,7 @@ struct
 dango::
 detail::
 make_uint_help<dango::s_byte>
+final
 {
   using type = dango::u_byte;
 };
@@ -600,6 +629,7 @@ struct
 dango::
 detail::
 make_uint_help<dango::s_short>
+final
 {
   using type = dango::u_short;
 };
@@ -609,6 +639,7 @@ struct
 dango::
 detail::
 make_uint_help<dango::s_int>
+final
 {
   using type = dango::u_int;
 };
@@ -618,6 +649,7 @@ struct
 dango::
 detail::
 make_uint_help<dango::s_long>
+final
 {
   using type = dango::u_long;
 };
@@ -627,6 +659,7 @@ struct
 dango::
 detail::
 make_uint_help<dango::s_cent>
+final
 {
   using type = dango::u_cent;
 };
@@ -667,6 +700,7 @@ struct
 dango::
 detail::
 make_sint_help
+final
 {
   using type = tp_type;
 };
@@ -676,6 +710,7 @@ struct
 dango::
 detail::
 make_sint_help<dango::u_byte>
+final
 {
   using type = dango::s_byte;
 };
@@ -685,6 +720,7 @@ struct
 dango::
 detail::
 make_sint_help<dango::u_short>
+final
 {
   using type = dango::s_short;
 };
@@ -694,6 +730,7 @@ struct
 dango::
 detail::
 make_sint_help<dango::u_int>
+final
 {
   using type = dango::s_int;
 };
@@ -703,6 +740,7 @@ struct
 dango::
 detail::
 make_sint_help<dango::u_long>
+final
 {
   using type = dango::s_long;
 };
@@ -712,6 +750,7 @@ struct
 dango::
 detail::
 make_sint_help<dango::u_cent>
+final
 {
   using type = dango::s_cent;
 };
@@ -763,6 +802,7 @@ struct
 dango::
 detail::
 decay_help
+final
 {
   using type = dango::remove_cv<tp_type>;
 };
@@ -773,6 +813,7 @@ struct
 dango::
 detail::
 decay_help<tp_type[]>
+final
 {
   using type = tp_type*;
 };
@@ -783,6 +824,7 @@ struct
 dango::
 detail::
 decay_help<tp_type[tp_size]>
+final
 {
   using type = tp_type*;
 };
@@ -793,6 +835,7 @@ struct
 dango::
 detail::
 decay_help<tp_ret(tp_args...)noexcept(tp_noexcept)>
+final
 {
   using type = tp_ret(*)(tp_args...)noexcept(tp_noexcept);
 };
@@ -845,6 +888,7 @@ struct
 dango::
 detail::
 enable_if_help
+final
 {
 
 };
@@ -855,6 +899,7 @@ struct
 dango::
 detail::
 enable_if_help<true, tp_type>
+final
 {
   using type = tp_type;
 };
@@ -888,6 +933,7 @@ struct
 dango::
 detail::
 conditional_help
+final
 {
   using type = tp_false_type;
 };
@@ -898,6 +944,7 @@ struct
 dango::
 detail::
 conditional_help<true, tp_true_type, tp_false_type>
+final
 {
   using type = tp_true_type;
 };

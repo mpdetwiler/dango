@@ -1,6 +1,8 @@
 #include "dango-def.hpp"
 #include "dango-int.hpp"
 #include "dango-macro.hpp"
+#include "dango-traits.hpp"
+#include "dango-util.hpp"
 
 void func()noexcept;
 
