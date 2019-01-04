@@ -1983,17 +1983,17 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_copy_assignable =
-    dango::is_assignable<tp_type, tp_type const&>;
+    dango::is_assignable<tp_type&, tp_type const&>;
 
   template
   <typename tp_type>
   constexpr bool const is_trivial_copy_assignable =
-    dango::is_trivial_assignable<tp_type, tp_type const&>;
+    dango::is_trivial_assignable<tp_type&, tp_type const&>;
 
   template
   <typename tp_type>
   constexpr bool const is_noexcept_copy_assignable =
-    dango::is_noexcept_assignable<tp_type, tp_type const&>;
+    dango::is_noexcept_assignable<tp_type&, tp_type const&>;
 }
 
 /*** is_move_assignable is_trivial_move_assignable is_noexcept_move_assignable ***/
@@ -2004,17 +2004,17 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_move_assignable =
-    dango::is_assignable<tp_type, tp_type&&>;
+    dango::is_assignable<tp_type&, tp_type&&>;
 
   template
   <typename tp_type>
   constexpr bool const is_trivial_move_assignable =
-    dango::is_trivial_assignable<tp_type, tp_type&&>;
+    dango::is_trivial_assignable<tp_type&, tp_type&&>;
 
   template
   <typename tp_type>
   constexpr bool const is_noexcept_move_assignable =
-    dango::is_noexcept_assignable<tp_type, tp_type&&>;
+    dango::is_noexcept_assignable<tp_type&, tp_type&&>;
 }
 
 /*** is_destructible is_trivial_destructible is_noexcept_destructible has_noexcept_destructor ***/
