@@ -144,7 +144,7 @@ public:
 private:
   value_type m_data;
 public:
-  DANGO_DELETE_DEFAULT_CTOR(atomic)
+  DANGO_DELETE_DEFAULT(atomic)
   DANGO_IMMOBILE(atomic)
 };
 
@@ -358,7 +358,7 @@ public:
 private:
   value_type m_data;
 public:
-  DANGO_DELETE_DEFAULT_CTOR(atomic)
+  DANGO_DELETE_DEFAULT(atomic)
   DANGO_IMMOBILE(atomic)
 };
 
@@ -552,7 +552,7 @@ public:
 private:
   value_type m_data;
 public:
-  DANGO_DELETE_DEFAULT_CTOR(atomic)
+  DANGO_DELETE_DEFAULT(atomic)
   DANGO_IMMOBILE(atomic)
 };
 
