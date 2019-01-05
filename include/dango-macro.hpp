@@ -10,9 +10,12 @@
   constexpr name(name&&)noexcept = delete;                                  \
   constexpr auto operator = (name&&)noexcept->name& = delete;
 
+#define DANGO_DELETE_DEFAULT_CTOR(name)                                     \
+  constexpr name()noexcept = delete;
+
 #define DANGO_UNINSTANTIABLE(name)                                          \
   DANGO_IMMOBILE(name)                                                      \
-  constexpr name()noexcept = delete;                                        \
+  DANGO_DELETE_DEFAULT_CTOR(name)                                           \
   ~name()noexcept = delete;
 
 #endif

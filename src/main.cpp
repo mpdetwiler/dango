@@ -4,6 +4,7 @@
 #include "dango-traits.hpp"
 #include "dango-util.hpp"
 #include "dango-assert.hpp"
+#include "dango-atomic.hpp"
 
 void func()noexcept;
 
@@ -41,6 +42,11 @@ main
   );
 
   func();
+
+  dango::atomic<int> a_test{ 5 };
+
+  a_test.load();
+  a_test.sub_fetch(4);
 
   return 0;
 }
