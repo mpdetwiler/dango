@@ -48,16 +48,31 @@ main
   a_test.load<dango::mem_order::acquire>();
   a_test.sub_fetch(4);
 
-  int a_x = 5;
+  int a_x[2];
 
-  dango::atomic<int const*> a_ax{ &a_x };
+  dango::atomic<int const*> a_ax{ &a_x[0] };
+
+  a_ax.fetch_add<dango::mem_order::acq_rel>(1);
+
+  if(a_ax.load() != &a_x[1])
+  {
+    printf("nope\n");
+  }
+  else
+  {
+    printf("yes\n");
+  }
 
   dango::atomic<void(*)()noexcept> a_afunc{ &func };
-
-  a_ax.fetch_add<dango::mem_order::acq_rel>(5);
 
   return 0;
 }
 
 template class dango::atomic<int(*)(int)noexcept>;
+
+template class dango::atomic<bool>;
+template auto dango::atomic<bool>::load<dango::mem_order::seq_cst>()const noexcept->bool;
+template auto dango::atomic<bool>::store<dango::mem_order::seq_cst>(bool)noexcept->void;
+
+static_assert(dango::atomic<bool>::is_lock_free());
 

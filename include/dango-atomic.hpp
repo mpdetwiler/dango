@@ -370,7 +370,7 @@ atomic<tp_type*, dango::enable_tag>::
 is_lock_free
 ()noexcept->bool
 {
-  auto a_temp = nullptr;
+  auto a_temp = value_type(nullptr);
 
   return __atomic_always_lock_free(sizeof(value_type), &a_temp);
 }
@@ -524,8 +524,146 @@ dango::
 atomic<bool, dango::enable_tag>
 final
 {
+public:
+  using value_type = bool;
 
+  static constexpr auto is_lock_free()noexcept->bool;
+public:
+  explicit constexpr atomic(value_type)noexcept;
+
+  ~atomic()noexcept = default;
+
+  template
+  <dango::mem_order tp_order = dango::mem_order::seq_cst>
+  auto load()const noexcept->value_type;
+  template
+  <dango::mem_order tp_order = dango::mem_order::seq_cst>
+  void store(value_type)noexcept;
+  template
+  <dango::mem_order tp_order = dango::mem_order::seq_cst>
+  auto exchange(value_type)noexcept->value_type;
+
+  template
+  <
+    dango::mem_order tp_success = dango::mem_order::seq_cst,
+    dango::mem_order tp_failure = dango::mem_order::seq_cst
+  >
+  auto compare_exchange(value_type&, value_type)noexcept->bool;
+private:
+  value_type m_data;
+public:
+  DANGO_DELETE_DEFAULT_CTOR(atomic)
+  DANGO_IMMOBILE(atomic)
 };
+
+constexpr auto
+dango::
+atomic<bool, dango::enable_tag>::
+is_lock_free
+()noexcept->bool
+{
+  auto a_temp = value_type(false);
+
+  return __atomic_always_lock_free(sizeof(value_type), &a_temp);
+}
+
+constexpr
+dango::
+atomic<bool, dango::enable_tag>::
+atomic
+(value_type const a_data)noexcept:
+m_data{ a_data }
+{
+
+}
+
+template
+<dango::mem_order tp_order>
+auto
+dango::
+atomic<bool, dango::enable_tag>::
+load
+()const noexcept->value_type
+{
+  static_assert(detail::is_valid_mem_order(tp_order));
+
+  static_assert
+  (
+    tp_order == dango::mem_order::relaxed ||
+    tp_order == dango::mem_order::acquire ||
+    tp_order == dango::mem_order::seq_cst
+  );
+
+  return __atomic_load_n(&m_data, dango::s_int(tp_order));
+}
+
+template
+<dango::mem_order tp_order>
+void
+dango::
+atomic<bool, dango::enable_tag>::
+store
+(value_type const a_data)noexcept
+{
+  static_assert(detail::is_valid_mem_order(tp_order));
+
+  static_assert
+  (
+    tp_order == dango::mem_order::relaxed ||
+    tp_order == dango::mem_order::release ||
+    tp_order == dango::mem_order::seq_cst
+  );
+
+  __atomic_store_n(&m_data, a_data, dango::s_int(tp_order));
+}
+
+template
+<dango::mem_order tp_order>
+auto
+dango::
+atomic<bool, dango::enable_tag>::
+exchange
+(value_type const a_data)noexcept->value_type
+{
+  static_assert(detail::is_valid_mem_order(tp_order));
+
+  return __atomic_exchange_n(&m_data, a_data, dango::s_int(tp_order));
+}
+
+template
+<
+  dango::mem_order tp_success,
+  dango::mem_order tp_failure
+>
+auto
+dango::
+atomic<bool, dango::enable_tag>::
+compare_exchange
+(value_type& a_expected, value_type const a_data)noexcept->bool
+{
+  static_assert(detail::is_valid_mem_order(tp_success));
+  static_assert(detail::is_valid_mem_order(tp_failure));
+
+  static_assert
+  (
+    tp_failure == dango::mem_order::relaxed ||
+    tp_failure == dango::mem_order::acquire ||
+    tp_failure == dango::mem_order::seq_cst
+  );
+
+  bool const a_result =
+  __atomic_compare_exchange_n
+  (
+    &m_data,
+    &a_expected,
+    a_data,
+    false,
+    dango::s_int(tp_success),
+    dango::s_int(tp_failure)
+  );
+
+  return a_result;
+}
 
 #endif
 
