@@ -3,6 +3,7 @@
 
 #include "dango-util.hpp"
 #include "dango-macro.hpp"
+#include "dango-atomic.hpp"
 
 /*** source_location ***/
 
@@ -107,6 +108,31 @@ noexcept->source_location
   return source_location{ a_file, a_func, dango::uint32(a_line) };
 }
 
+/*** likely unlikely ***/
+
+namespace
+dango
+{
+  constexpr auto likely(bool)noexcept->bool;
+  constexpr auto unlikely(bool)noexcept->bool;
+}
+
+constexpr auto
+dango::
+likely
+(bool const a_cond)noexcept->bool
+{
+  return bool(__builtin_expect(a_cond, true));
+}
+
+constexpr auto
+dango::
+unlikely
+(bool const a_cond)noexcept->bool
+{
+  return bool(__builtin_expect(a_cond, false));
+}
+
 /*** assume ***/
 
 namespace
@@ -120,11 +146,111 @@ dango::
 assume
 (bool const a_cond)noexcept
 {
-  if(!a_cond)
+  if(dango::unlikely(!a_cond))
   {
     __builtin_unreachable();
   }
 }
+
+/*** user_log_assert ***/
+
+namespace
+dango::detail
+{
+  void log_assert_fail(char const*, dango::source_location const&)noexcept;
+
+  void default_log_assert(char const*, dango::source_location const&)noexcept;
+}
+
+namespace
+dango
+{
+  void user_log_assert(char const*, dango::source_location const&)noexcept;
+}
+
+inline void
+dango::
+detail::
+log_assert_fail
+(char const* const a_message, dango::source_location const& a_loc)noexcept
+{
+  static dango::atomic<bool> s_blocker{ false };
+
+  while(s_blocker.exchange(true));
+
+#ifndef DANGO_USER_LOG_ASSERT
+  detail::default_log_assert(a_message, a_loc);
+#else
+  dango::user_log_assert(a_message, a_loc);
+#endif
+}
+
+/*** dango_assert ***/
+
+namespace
+dango::detail
+{
+  constexpr void
+  assert_func
+  (
+    bool,
+    char const*,
+    dango::source_location const& = dango::source_location::current()
+  )
+  noexcept;
+}
+
+constexpr void
+dango::
+detail::
+assert_func
+(
+  bool const a_cond,
+  char const* const a_message,
+  dango::source_location const& a_loc
+)
+noexcept
+{
+  if(dango::unlikely(!a_cond))
+  {
+    detail::log_assert_fail(a_message, a_loc);
+
+    __builtin_trap();
+  }
+}
+
+#ifndef DANGO_NO_DEBUG
+#define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond)
+#else
+#define dango_assert(cond) dango::assume(bool(cond))
+#endif
+
+/*** dango_unreachable ***/
+
+namespace
+dango::detail
+{
+  void
+  unreachable_func
+  (dango::source_location const& = dango::source_location::current())noexcept;
+}
+
+inline void
+dango::
+detail::
+unreachable_func
+(dango::source_location const& a_loc)noexcept
+{
+  detail::log_assert_fail("unreachable statement reached", a_loc);
+
+  __builtin_trap();
+}
+
+#ifndef DANGO_NO_DEBUG
+#define dango_unreachable dango::detail::unreachable_func()
+#else
+#define dango_unreachable __builtin_unreachable()
+#endif
 
 #endif
 
