@@ -48,6 +48,16 @@ main
   a_test.load<dango::mem_order::acquire>();
   a_test.sub_fetch(4);
 
+  int a_x = 5;
+
+  dango::atomic<int const*> a_ax{ &a_x };
+
+  dango::atomic<void(*)()noexcept> a_afunc{ &func };
+
+  a_ax.fetch_add<dango::mem_order::acq_rel>(5);
+
   return 0;
 }
+
+template class dango::atomic<int(*)(int)noexcept>;
 
