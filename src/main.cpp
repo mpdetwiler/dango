@@ -45,7 +45,7 @@ main
 
   dango::atomic<int> a_test{ 5 };
 
-  a_test.load();
+  a_test.load<dango::mem_order::acquire>();
   a_test.sub_fetch(4);
 
   return 0;
