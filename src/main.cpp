@@ -3,6 +3,7 @@
 #include "dango-macro.hpp"
 #include "dango-traits.hpp"
 #include "dango-util.hpp"
+#include "dango-assert.hpp"
 
 void func()noexcept;
 
