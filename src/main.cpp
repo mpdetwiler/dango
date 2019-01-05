@@ -32,6 +32,14 @@ main
   printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint32>));
   printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint64>));
 
+  printf
+  (
+    "%s %s %u\n",
+    dango::source_location::current().file(),
+    dango::source_location::current().function(),
+    dango::source_location::current().line()
+  );
+
   func();
 
   return 0;
