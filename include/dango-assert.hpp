@@ -228,8 +228,10 @@ noexcept
 
 #ifndef DANGO_NO_DEBUG
 #define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond)
+#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), #cond, loc)
 #else
 #define dango_assert(cond) dango::assume(bool(cond))
+#define dango_assert_loc(cond, loc) dango_assert(cond)
 #endif
 
 /*** dango_unreachable ***/
@@ -259,6 +261,29 @@ unreachable_func
 #define dango_unreachable dango::detail::unreachable_func()
 #else
 #define dango_unreachable __builtin_unreachable()
+#endif
+
+#ifndef DANGO_NO_DEBUG
+#define DANGO_SRC_LOC_ARG_DEFAULT dango::source_location const& = dango::source_location::current()
+#define DANGO_SRC_LOC_ARG(name) dango::source_location const& name
+#else
+
+namespace
+dango::detail
+{
+  struct
+  assert_dummy_arg
+  final
+  {
+
+  };
+
+  inline constexpr assert_dummy_arg const assert_dummy{ };
+}
+
+
+#define DANGO_SRC_LOC_ARG_DEFAULT dango::detail::assert_dummy_arg = dango::detail::assert_dummy
+#define DANGO_SRC_LOC_ARG(name) dango::detail::assert_dummy_arg const
 #endif
 
 #endif

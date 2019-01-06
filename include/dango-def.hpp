@@ -1,6 +1,8 @@
 #ifndef __DANGO_DEF_HPP__
 #define __DANGO_DEF_HPP__ 1
 
+//#define DANGO_NO_DEBUG
+
 #ifndef __GNUG__
 #error unsupported compiler
 #endif
