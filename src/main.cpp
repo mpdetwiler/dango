@@ -54,14 +54,7 @@ main
 
   a_ax.fetch_add<dango::mem_order::acq_rel>(1);
 
-  if(a_ax.load() != &a_x[1])
-  {
-    printf("nope\n");
-  }
-  else
-  {
-    printf("yes\n");
-  }
+  dango_assert(a_ax.load() == &a_x[1]);
 
   dango::atomic<void(*)()noexcept> a_afunc{ &func };
 

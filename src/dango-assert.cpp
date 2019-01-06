@@ -1,8 +1,6 @@
 #include "dango-assert.hpp"
 #include "dango-atomic.hpp"
 
-#include <stdio.h>
-
 namespace
 {
   dango::atomic<dango::assert_log_func> s_log_handler{ nullptr };
@@ -34,6 +32,8 @@ assert_fail_once
 
   while(s_blocker.exchange(true));
 }
+
+#include <stdio.h>
 
 void
 dango::
