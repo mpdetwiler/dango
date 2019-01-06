@@ -65,6 +65,8 @@ main
 
   dango::atomic<void(*)()noexcept> a_afunc{ &func };
 
+  dango_assert(false);
+
   return 0;
 }
 

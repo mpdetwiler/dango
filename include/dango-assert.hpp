@@ -3,7 +3,6 @@
 
 #include "dango-util.hpp"
 #include "dango-macro.hpp"
-#include "dango-atomic.hpp"
 
 /*** source_location ***/
 
@@ -47,6 +46,7 @@ private:
   char const* const m_func;
   dango::uint32 const m_line;
 public:
+  DANGO_DELETE_DEFAULT(source_location)
   DANGO_IMMOBILE(source_location)
 };
 
@@ -152,40 +152,47 @@ assume
   }
 }
 
-/*** user_log_assert ***/
-
-namespace
-dango::detail
-{
-  void log_assert_fail(char const*, dango::source_location const&)noexcept;
-
-  void default_log_assert(char const*, dango::source_location const&)noexcept;
-}
+/*** dango_assert ***/
 
 namespace
 dango
 {
-  void user_log_assert(char const*, dango::source_location const&)noexcept;
+  using assert_log_func = void(*)(char const*, dango::source_location const&)noexcept;
+
+  auto set_assert_log_handler(dango::assert_log_func)noexcept->assert_log_func;
+
+  auto get_assert_log_handler()noexcept->assert_log_func;
+}
+
+namespace
+dango::detail
+{
+  void assert_fail_log(char const*, dango::source_location const&)noexcept;
+
+  void assert_fail_once()noexcept;
+
+  void default_assert_log_handler(char const*, dango::source_location const&)noexcept;
 }
 
 inline void
 dango::
 detail::
-log_assert_fail
+assert_fail_log
 (char const* const a_message, dango::source_location const& a_loc)noexcept
 {
-  static dango::atomic<bool> s_blocker{ false };
+  detail::assert_fail_once();
 
-  while(s_blocker.exchange(true));
+  auto const a_handler = dango::get_assert_log_handler();
 
-#ifndef DANGO_USER_LOG_ASSERT
-  detail::default_log_assert(a_message, a_loc);
-#else
-  dango::user_log_assert(a_message, a_loc);
-#endif
+  if(a_handler)
+  {
+    a_handler(a_message, a_loc);
+  }
+  else
+  {
+    detail::default_assert_log_handler(a_message, a_loc);
+  }
 }
-
-/*** dango_assert ***/
 
 namespace
 dango::detail
@@ -213,7 +220,7 @@ noexcept
 {
   if(dango::unlikely(!a_cond))
   {
-    detail::log_assert_fail(a_message, a_loc);
+    detail::assert_fail_log(a_message, a_loc);
 
     __builtin_trap();
   }
@@ -241,7 +248,7 @@ detail::
 unreachable_func
 (dango::source_location const& a_loc)noexcept
 {
-  detail::log_assert_fail("unreachable statement reached", a_loc);
+  detail::assert_fail_log("unreachable statement reached", a_loc);
 
   __builtin_trap();
 }
