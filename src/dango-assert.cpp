@@ -6,6 +6,11 @@ namespace
   dango::atomic<dango::assert_log_func> s_log_handler{ nullptr };
 }
 
+char const* const
+dango::
+detail::
+unreachable_message = "unreachable statement reached";
+
 auto
 dango::
 set_assert_log_handler
@@ -41,8 +46,9 @@ detail::
 default_assert_log_handler
 (char const* const a_message, dango::source_location const& a_loc)noexcept
 {
-  printf
+  fprintf
   (
+    stderr,
     "%s[%u] %s: assertion failed: %s\n",
     a_loc.file(),
     dango::u_int(a_loc.line()),

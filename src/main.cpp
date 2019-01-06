@@ -5,6 +5,7 @@
 #include "dango-util.hpp"
 #include "dango-assert.hpp"
 #include "dango-atomic.hpp"
+#include "dango-mem.hpp"
 
 void func()noexcept;
 

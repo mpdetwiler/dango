@@ -305,6 +305,67 @@ dango::enable_if
   return dango::max(a_arg1, dango::max(a_arg2, a_args...));
 }
 
+/*** is_equal is_lesser is_greater is_lequal is_gequal ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto
+  is_equal
+  (tp_type, tp_type)noexcept->
+  enable_if<dango::is_arithmetic<tp_type>, bool>;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  is_lesser
+  (tp_type, tp_type)noexcept->
+  enable_if<dango::is_arithmetic<tp_type>, bool>;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  is_greater
+  (tp_type, tp_type)noexcept->
+  enable_if<dango::is_arithmetic<tp_type>, bool>;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  is_lequal
+  (tp_type, tp_type)noexcept->
+  enable_if<dango::is_arithmetic<tp_type>, bool>;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  is_gequal
+  (tp_type, tp_type)noexcept->
+  enable_if<dango::is_arithmetic<tp_type>, bool>;
+}
+
+#define DANGO_DEFINE_COMPARISON_FUNC(name, oper)          \
+template                                                  \
+<typename tp_type>                                        \
+constexpr auto                                            \
+dango::                                                   \
+is_##name                                                 \
+(tp_type const a_lhs, tp_type const a_rhs)noexcept->      \
+enable_if<dango::is_arithmetic<tp_type>, bool>            \
+{                                                         \
+  return a_lhs oper a_rhs;                                \
+}
+
+DANGO_DEFINE_COMPARISON_FUNC(equal, == )
+DANGO_DEFINE_COMPARISON_FUNC(lesser, < )
+DANGO_DEFINE_COMPARISON_FUNC(greater, > )
+DANGO_DEFINE_COMPARISON_FUNC(lequal, <= )
+DANGO_DEFINE_COMPARISON_FUNC(gequal, >= )
+
+#undef DANGO_DEFINE_COMPARISON_FUNC
+
 /*** next_multiple ***/
 
 namespace

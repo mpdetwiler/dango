@@ -240,6 +240,8 @@ dango::detail
   void
   unreachable_func
   (dango::source_location const& = dango::source_location::current())noexcept;
+
+  extern char const* const unreachable_message;
 }
 
 inline void
@@ -248,7 +250,7 @@ detail::
 unreachable_func
 (dango::source_location const& a_loc)noexcept
 {
-  detail::assert_fail_log("unreachable statement reached", a_loc);
+  detail::assert_fail_log(unreachable_message, a_loc);
 
   __builtin_trap();
 }
