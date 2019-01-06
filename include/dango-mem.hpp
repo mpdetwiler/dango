@@ -27,15 +27,6 @@ is_aligned
 
 /*** aligned_ptr ***/
 
-#define DANGO_ALIGNED_PTR_ENABLE_SPEC(type, align)  \
-dango::enable_if                                    \
-<                                                   \
-  (dango::is_object<type> ||                        \
-  dango::is_void<type>) &&                          \
-  dango::is_pow_two(align),                         \
-  dango::enable_tag                                 \
->
-
 namespace
 dango::detail
 {
@@ -56,117 +47,149 @@ dango
     detail::alignof_with_void_help<dango::remove_cv<tp_type>>;
 }
 
+#define DANGO_ALIGNED_PTR_ENABLE_SPEC(type, nullable, align)    \
+type,                                                           \
+nullable,                                                       \
+align,                                                          \
+dango::enable_if                                                \
+<                                                               \
+  (dango::is_object<type> ||                                    \
+  dango::is_void<type>) &&                                      \
+  dango::is_pow_two(align),                                     \
+  dango::enable_tag                                             \
+>                                                               \
+
 namespace
 dango
 {
   template
   <
     typename tp_type,
+    bool tp_nullable = true,
     dango::usize tp_align = dango::alignof_with_void<tp_type>,
     typename tp_enabled = dango::enable_tag
   >
   class aligned_ptr;
 
   template
-  <typename tp_type, dango::usize tp_align>
+  <typename tp_type, bool tp_nullable, dango::usize tp_align>
   class
   aligned_ptr
-  <tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>;
+  <DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>;
 }
 
 template
-<typename tp_type, dango::usize tp_align>
+<typename tp_type, bool tp_nullable, dango::usize tp_align>
 class
 dango::
 aligned_ptr
-<tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>
+<DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>
 final
 {
 public:
   using value_type = tp_type*;
 
   static dango::usize const c_align;
+private:
+
 public:
+  template
+  <
+    bool tp_tp_nullable = tp_nullable,
+    dango::enable_if<tp_tp_nullable> tp_enabled = dango::enable_val
+  >
   constexpr aligned_ptr(dango::null_tag)noexcept;
+
   constexpr aligned_ptr(dango::nullptr_tag)noexcept = delete;
   constexpr aligned_ptr(value_type, DANGO_SRC_LOC_ARG_DEFAULT)noexcept;
   constexpr aligned_ptr(aligned_ptr const&)noexcept = default;
 
-  template
-  <
-    typename tp_tp_type,
-    dango::usize tp_tp_align,
-    typename tp_other = dango::aligned_ptr<tp_tp_type, tp_tp_align>,
-    dango::enable_if
-    <
-      dango::is_constructible<value_type, typename tp_other::value_type const&> &&
-      dango::is_gequal(tp_other::c_align, c_align)
-    > = dango::enable_val
-  >
-  constexpr
-  aligned_ptr
-  (dango::aligned_ptr<tp_tp_type, tp_tp_align> const& a_ptr)noexcept:
-  m_ptr{ a_ptr.m_ptr }
-  {
-
-  }
-
   ~aligned_ptr()noexcept = default;
 
+  template
+  <
+    bool tp_tp_nullable = tp_nullable,
+    dango::enable_if<tp_tp_nullable> tp_enabled = dango::enable_val
+  >
   constexpr auto operator = (dango::null_tag)noexcept->aligned_ptr&;
+
   constexpr auto operator = (dango::nullptr_tag)noexcept->aligned_ptr& = delete;
   constexpr auto operator = (value_type)noexcept->aligned_ptr& = delete;
   constexpr auto operator = (aligned_ptr const&)noexcept->aligned_ptr& = default;
-
-  template
-  <
-    typename tp_tp_type,
-    dango::usize tp_tp_align,
-    typename tp_other = dango::aligned_ptr<tp_tp_type, tp_tp_align>,
-    dango::enable_if
-    <
-      dango::is_assignable<value_type&, typename tp_other::value_type const&> &&
-      dango::is_gequal(tp_other::c_align, c_align)
-    > = dango::enable_val
-  >
-  constexpr auto
-  operator =
-  (dango::aligned_ptr<tp_tp_type, tp_tp_align> const& a_ptr)noexcept->aligned_ptr&
-  {
-    m_ptr = a_ptr.m_ptr;
-
-    return *this;
-  }
 
   constexpr auto get()const noexcept->value_type;
 
   constexpr operator value_type()const noexcept;
 
   explicit constexpr operator bool()const noexcept;
+
+  template
+  <
+    typename tp_tp_type,
+    bool tp_tp_nullable,
+    dango::usize tp_tp_align,
+    typename tp_other = dango::aligned_ptr<tp_tp_type, tp_tp_nullable, tp_tp_align>,
+    dango::enable_if
+    <
+      dango::is_constructible<value_type, typename tp_other::value_type const&> &&
+      (tp_nullable || (!tp_nullable && !tp_tp_nullable)) &&
+      dango::is_gequal(tp_other::c_align, c_align)
+    > = dango::enable_val
+  >
+  constexpr
+  aligned_ptr
+  (tp_other const& a_ptr)noexcept:
+  m_ptr{ a_ptr.get() }
+  {
+
+  }
+
+  template
+  <
+    typename tp_tp_type,
+    bool tp_tp_nullable,
+    dango::usize tp_tp_align,
+    typename tp_other = dango::aligned_ptr<tp_tp_type, tp_tp_nullable, tp_tp_align>,
+    dango::enable_if
+    <
+      dango::is_assignable<value_type&, typename tp_other::value_type const&> &&
+      (tp_nullable || (!tp_nullable && !tp_tp_nullable)) &&
+      dango::is_gequal(tp_other::c_align, c_align)
+    > = dango::enable_val
+  >
+  constexpr auto
+  operator =
+  (tp_other const& a_ptr)noexcept->aligned_ptr&
+  {
+    m_ptr = a_ptr.get();
+
+    return *this;
+  }
 private:
   value_type m_ptr;
 public:
   DANGO_DELETE_DEFAULT(aligned_ptr)
-
-  template
-  <typename, dango::usize, typename tp_enabled>
-  friend class aligned_ptr;
 };
 
 template
-<typename tp_type, dango::usize tp_align>
+<typename tp_type, bool tp_nullable, dango::usize tp_align>
 constexpr dango::usize const
 dango::
 aligned_ptr
-<tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>::
+<DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
 c_align = dango::max(tp_align, dango::alignof_with_void<tp_type>);
 
 template
-<typename tp_type, dango::usize tp_align>
+<typename tp_type, bool tp_nullable, dango::usize tp_align>
+template
+<
+  bool tp_tp_nullable,
+  dango::enable_if<tp_tp_nullable> tp_enabled
+>
 constexpr
 dango::
 aligned_ptr
-<tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>::
+<DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
 aligned_ptr
 (dango::null_tag const)noexcept:
 m_ptr{ nullptr }
@@ -175,11 +198,11 @@ m_ptr{ nullptr }
 }
 
 template
-<typename tp_type, dango::usize tp_align>
+<typename tp_type, bool tp_nullable, dango::usize tp_align>
 constexpr
 dango::
 aligned_ptr
-<tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>::
+<DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
 aligned_ptr
 (value_type const a_ptr, DANGO_SRC_LOC_ARG(a_loc))noexcept:
 m_ptr{ a_ptr }
@@ -188,11 +211,16 @@ m_ptr{ a_ptr }
 }
 
 template
-<typename tp_type, dango::usize tp_align>
+<typename tp_type, bool tp_nullable, dango::usize tp_align>
+template
+<
+  bool tp_tp_nullable = tp_nullable,
+  dango::enable_if<tp_tp_nullable> tp_enabled = dango::enable_val
+>
 constexpr auto
 dango::
 aligned_ptr
-<tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>::
+<DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
 operator =
 (dango::null_tag const)noexcept->aligned_ptr&
 {
@@ -202,11 +230,11 @@ operator =
 }
 
 template
-<typename tp_type, dango::usize tp_align>
+<typename tp_type, bool tp_nullable, dango::usize tp_align>
 constexpr auto
 dango::
 aligned_ptr
-<tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>::
+<DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
 get
 ()const noexcept->value_type
 {
@@ -214,11 +242,11 @@ get
 }
 
 template
-<typename tp_type, dango::usize tp_align>
+<typename tp_type, bool tp_nullable, dango::usize tp_align>
 constexpr
 dango::
 aligned_ptr
-<tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>::
+<DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
 operator value_type
 ()const noexcept
 {
@@ -226,11 +254,11 @@ operator value_type
 }
 
 template
-<typename tp_type, dango::usize tp_align>
+<typename tp_type, bool tp_nullable, dango::usize tp_align>
 constexpr
 dango::
 aligned_ptr
-<tp_type, tp_align, DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_align)>::
+<DANGO_ALIGNED_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
 operator bool
 ()const noexcept
 {
