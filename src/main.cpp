@@ -65,7 +65,9 @@ main
 
   dango::atomic<void(*)()noexcept> a_afunc{ &func };
 
-  dango_assert(false);
+  dango::set_assert_log_handler(dango::detail::default_assert_log_handler);
+
+  dango_assert(true);
 
   return 0;
 }
