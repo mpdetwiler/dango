@@ -132,13 +132,13 @@ public:
     dango::enable_if
     <
       dango::is_constructible<value_type, typename tp_other::value_type const&> &&
-      (tp_nullable || (!tp_nullable && !tp_tp_nullable)) &&
+      (tp_nullable || !tp_tp_nullable) &&
       dango::is_gequal(tp_other::c_align, c_align)
-    > = dango::enable_val
+    > tp_enabled = dango::enable_val
   >
   constexpr
   aligned_ptr
-  (tp_other const& a_ptr)noexcept:
+  (aligned_ptr<tp_tp_type, tp_tp_nullable, tp_tp_align> const& a_ptr)noexcept:
   m_ptr{ a_ptr.get() }
   {
 
@@ -153,13 +153,13 @@ public:
     dango::enable_if
     <
       dango::is_assignable<value_type&, typename tp_other::value_type const&> &&
-      (tp_nullable || (!tp_nullable && !tp_tp_nullable)) &&
+      (tp_nullable || !tp_tp_nullable) &&
       dango::is_gequal(tp_other::c_align, c_align)
     > = dango::enable_val
   >
   constexpr auto
   operator =
-  (tp_other const& a_ptr)noexcept->aligned_ptr&
+  (aligned_ptr<tp_tp_type, tp_tp_nullable, tp_tp_align> const& a_ptr)noexcept->aligned_ptr&
   {
     m_ptr = a_ptr.get();
 
@@ -288,6 +288,10 @@ operator bool
 }
 
 #undef DANGO_ALIGNED_PTR_ENABLE_SPEC
+
+static_assert(dango::is_convertible<dango::aligned_ptr<int>, dango::aligned_ptr<int const>>);
+static_assert(dango::is_constructible<dango::aligned_ptr<int const>, dango::aligned_ptr<int> const&>);
+static_assert(dango::is_assignable<dango::aligned_ptr<int const>&, dango::aligned_ptr<int> const&>);
 
 #endif
 
