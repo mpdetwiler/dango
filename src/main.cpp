@@ -63,9 +63,7 @@ main
 
   dango_assert(true);
 
-  dango::aligned_ptr<int const, true> a_aligned = a_x;
-
-  a_aligned = null;
+  dango::aligned_ptr<int const, false> a_aligned = a_x;
 
   return 0;
 }

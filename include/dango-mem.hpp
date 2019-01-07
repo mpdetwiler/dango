@@ -207,6 +207,11 @@ aligned_ptr
 (value_type const a_ptr, DANGO_SRC_LOC_ARG(a_loc))noexcept:
 m_ptr{ a_ptr }
 {
+  if constexpr(!tp_nullable)
+  {
+    dango_assert_loc(a_ptr != nullptr, a_loc);
+  }
+
   dango_assert_loc(dango::is_aligned(a_ptr, c_align), a_loc);
 }
 
@@ -238,7 +243,17 @@ aligned_ptr
 get
 ()const noexcept->value_type
 {
-  return static_cast<value_type>(__builtin_assume_aligned(m_ptr, c_align));
+  if constexpr(!tp_nullable)
+  {
+    dango::assume(m_ptr != nullptr);
+  }
+
+  void const volatile* const a_ptr = m_ptr;
+
+  void* const a_result =
+    __builtin_assume_aligned(const_cast<void const*>(a_ptr), c_align);
+
+  return static_cast<value_type>(a_result);
 }
 
 template
@@ -262,7 +277,14 @@ aligned_ptr
 operator bool
 ()const noexcept
 {
-  return m_ptr != nullptr;
+  if constexpr(!tp_nullable)
+  {
+    return true;
+  }
+  else
+  {
+    return m_ptr != nullptr;
+  }
 }
 
 #undef DANGO_ALIGNED_PTR_ENABLE_SPEC
