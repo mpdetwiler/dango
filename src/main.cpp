@@ -70,6 +70,8 @@ main
 
   dango::aligned_ptr<int, 16> a_aligned = a_x;
 
+  a_aligned = a_aligned;
+
   dango::aligned_ptr<int const> a_aligned2 = a_aligned;
 
   a_aligned2 = a_aligned;

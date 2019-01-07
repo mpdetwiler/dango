@@ -293,5 +293,6 @@ static_assert(dango::is_convertible<dango::aligned_ptr<int>, dango::aligned_ptr<
 static_assert(dango::is_constructible<dango::aligned_ptr<int const>, dango::aligned_ptr<int> const&>);
 static_assert(dango::is_assignable<dango::aligned_ptr<int const>&, dango::aligned_ptr<int> const&>);
 
+
 #endif
 
