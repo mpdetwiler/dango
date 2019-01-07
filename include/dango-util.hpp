@@ -346,16 +346,16 @@ dango
   enable_if<dango::is_arithmetic<tp_type>, bool>;
 }
 
-#define DANGO_DEFINE_COMPARISON_FUNC(name, oper)          \
-template                                                  \
-<typename tp_type>                                        \
-constexpr auto                                            \
-dango::                                                   \
-is_##name                                                 \
-(tp_type const a_lhs, tp_type const a_rhs)noexcept->      \
-enable_if<dango::is_arithmetic<tp_type>, bool>            \
-{                                                         \
-  return a_lhs oper a_rhs;                                \
+#define DANGO_DEFINE_COMPARISON_FUNC(name, oper) \
+template \
+<typename tp_type> \
+constexpr auto \
+dango:: \
+is_##name \
+(tp_type const a_lhs, tp_type const a_rhs)noexcept-> \
+enable_if<dango::is_arithmetic<tp_type>, bool> \
+{ \
+  return a_lhs oper a_rhs; \
 }
 
 DANGO_DEFINE_COMPARISON_FUNC(equal, == )

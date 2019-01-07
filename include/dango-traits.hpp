@@ -960,6 +960,50 @@ dango
     dango::is_same<dango::remove_cv<tp_type>, void>;
 }
 
+/*** sizeof_with_void ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  constexpr dango::usize const sizeof_with_void_help = sizeof(tp_type);
+
+  template<>
+  constexpr dango::usize const sizeof_with_void_help<void> = dango::usize(1);
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr dango::usize const sizeof_with_void_help =
+    detail::sizeof_with_void_help<dango::remove_cv<tp_type>>;
+}
+
+/*** alignof_with_void ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  constexpr dango::usize const alignof_with_void_help = alignof(tp_type);
+
+  template<>
+  constexpr dango::usize const alignof_with_void_help<void> = dango::usize(1);
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr dango::usize const alignof_with_void =
+    detail::alignof_with_void_help<dango::remove_cv<tp_type>>;
+}
+
 /*** is_null_ptr ***/
 
 namespace

@@ -25,11 +25,6 @@ static_assert(conjunction(true, true, true, true));
 
 #include <cstdio>
 
-void mega_func(dango::aligned_ptr<int const> const)noexcept
-{
-
-}
-
 auto
 main
 ()noexcept->dango::s_int
@@ -68,15 +63,11 @@ main
 
   dango_assert(true);
 
-  dango::aligned_ptr<int, 16> a_aligned = a_x;
+  dango::param_ptr<void, true> a_param = a_x;
 
-  a_aligned = a_aligned;
+  dango::param_ptr<void const, true> a_param2 = a_param;
 
-  dango::aligned_ptr<int const> a_aligned2 = a_aligned;
-
-  a_aligned2 = a_aligned;
-
-  mega_func(a_aligned);
+  dango::mem_copy(a_x, a_x, sizeof(a_x));
 
   return 0;
 }

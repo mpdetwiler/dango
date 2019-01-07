@@ -263,27 +263,36 @@ unreachable_func
 #define dango_unreachable __builtin_unreachable()
 #endif
 
+/*** source location arg ***/
+
 #ifndef DANGO_NO_DEBUG
-#define DANGO_SRC_LOC_ARG_DEFAULT dango::source_location const& = dango::source_location::current()
+
+#define DANGO_SRC_LOC_ARG_DEFAULT(name) \
+dango::source_location const& name = dango::source_location::current()
+
 #define DANGO_SRC_LOC_ARG(name) dango::source_location const& name
+
 #else
 
 namespace
 dango::detail
 {
   struct
-  assert_dummy_arg
+  assert_dummy_tag
   final
   {
 
   };
 
-  inline constexpr assert_dummy_arg const assert_dummy{ };
+  inline constexpr assert_dummy_tag const assert_dummy_val{ };
 }
 
 
-#define DANGO_SRC_LOC_ARG_DEFAULT dango::detail::assert_dummy_arg = dango::detail::assert_dummy
-#define DANGO_SRC_LOC_ARG(name) dango::detail::assert_dummy_arg const
+#define DANGO_SRC_LOC_ARG_DEFAULT(name) \
+dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
+
+#define DANGO_SRC_LOC_ARG(name) dango::detail::assert_dummy_tag const
+
 #endif
 
 #endif

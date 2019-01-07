@@ -60,13 +60,13 @@ dango
 
 /*************************************************************/
 
-#define DANGO_ATOMIC_INT_ENABLE_SPEC(param)   \
-dango::enable_if                              \
-<                                             \
-  dango::is_int<param> &&                     \
-  !dango::is_const<param> &&                  \
-  !dango::is_volatile<param>,                 \
-  dango::enable_tag                           \
+#define DANGO_ATOMIC_INT_ENABLE_SPEC(param) \
+dango::enable_if \
+< \
+  dango::is_int<param> && \
+  !dango::is_const<param> && \
+  !dango::is_volatile<param>, \
+  dango::enable_tag \
 >
 
 namespace
@@ -269,20 +269,20 @@ compare_exchange
   return a_result;
 }
 
-#define DANGO_ATOMIC_DEFINE_FETCH(name)                                     \
-template                                                                    \
-<typename tp_type>                                                          \
-template                                                                    \
-<dango::mem_order tp_order>                                                 \
-auto                                                                        \
-dango::                                                                     \
-atomic<tp_type, DANGO_ATOMIC_INT_ENABLE_SPEC(tp_type)>::                    \
-name                                                                        \
-(value_type const a_data)noexcept->value_type                               \
-{                                                                           \
-  static_assert(detail::is_valid_mem_order(tp_order));                      \
-                                                                            \
-  return __atomic_##name(&m_data, a_data, dango::s_int(tp_order));          \
+#define DANGO_ATOMIC_DEFINE_FETCH(name) \
+template \
+<typename tp_type> \
+template \
+<dango::mem_order tp_order> \
+auto \
+dango:: \
+atomic<tp_type, DANGO_ATOMIC_INT_ENABLE_SPEC(tp_type)>:: \
+name \
+(value_type const a_data)noexcept->value_type \
+{ \
+  static_assert(detail::is_valid_mem_order(tp_order)); \
+\
+  return __atomic_##name(&m_data, a_data, dango::s_int(tp_order)); \
 }
 
 DANGO_ATOMIC_DEFINE_FETCH(fetch_add)
@@ -483,29 +483,29 @@ compare_exchange
   return a_result;
 }
 
-#define DANGO_ATOMIC_DEFINE_FETCH(name)                                     \
-template                                                                    \
-<typename tp_type>                                                          \
-template                                                                    \
-<dango::mem_order tp_order, typename tp_pointed>                            \
-auto                                                                        \
-dango::                                                                     \
-atomic<tp_type*, dango::enable_tag>::                                       \
-name                                                                        \
-(dango::ssize const a_data)noexcept->                                       \
-dango::enable_if<!dango::is_func<tp_pointed>, value_type>                   \
-{                                                                           \
-  static_assert(detail::is_valid_mem_order(tp_order));                      \
-                                                                            \
-  value_type const a_result =                                               \
-  __atomic_##name                                                           \
-  (                                                                         \
-    &m_data,                                                                \
-    a_data * dango::ssize(sizeof(tp_type)),                                 \
-    dango::s_int(tp_order)                                                  \
-  );                                                                        \
-                                                                            \
-  return a_result;                                                          \
+#define DANGO_ATOMIC_DEFINE_FETCH(name) \
+template \
+<typename tp_type> \
+template \
+<dango::mem_order tp_order, typename tp_pointed> \
+auto \
+dango:: \
+atomic<tp_type*, dango::enable_tag>:: \
+name \
+(dango::ssize const a_data)noexcept-> \
+dango::enable_if<!dango::is_func<tp_pointed>, value_type> \
+{ \
+  static_assert(detail::is_valid_mem_order(tp_order)); \
+\
+  value_type const a_result = \
+  __atomic_##name \
+  ( \
+    &m_data, \
+    a_data * dango::ssize(sizeof(tp_type)), \
+    dango::s_int(tp_order) \
+  ); \
+\
+  return a_result; \
 }
 
 DANGO_ATOMIC_DEFINE_FETCH(fetch_add)
