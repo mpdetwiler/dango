@@ -412,5 +412,35 @@ noexcept->dango::param_ptr<void, false>
   return dango::mem_copy<dango::usize(1)>(a_dest, a_source, a_count);
 }
 
+/*** address_of ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto
+  address_of
+  (tp_type&)noexcept->
+  dango::enable_if<dango::is_object<tp_type>, tp_type*>;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+address_of
+(tp_type& a_arg)noexcept->
+dango::enable_if<dango::is_object<tp_type>, tp_type*>
+{
+  using cast_type = dango::preserve_cv<tp_type, dango::byte>;
+
+  auto& a_ref = reinterpret_cast<cast_type&>(a_arg);
+
+  return reinterpret_cast<tp_type*>(&a_ref);
+}
+
+
+
 #endif
 
