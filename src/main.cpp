@@ -25,6 +25,17 @@ static_assert(conjunction(true, true, true, true));
 
 #include <cstdio>
 
+struct ptr_holder
+{
+private:
+  int* const m_ptr;
+public:
+  constexpr ptr_holder(int* const a_ptr)noexcept:m_ptr{ a_ptr }{ }
+  constexpr operator int*()const noexcept{ return m_ptr; }
+};
+
+void conversion(ptr_holder)noexcept;
+
 auto
 main
 ()noexcept->dango::s_int
@@ -68,6 +79,18 @@ main
   dango::param_ptr<void const, true> a_param2 = a_param;
 
   dango::mem_copy(a_x, a_x, sizeof(a_x));
+
+  dango::param_ptr<void()noexcept(true)> a_param_func = func;
+
+  dango::param_ptr<void()noexcept(false)> a_param_func2 = a_param_func;
+
+  a_param_func2.get();
+
+  ptr_holder a_holder = nullptr;
+
+  dango::param_ptr<int> a_param_h = a_holder;
+
+  dango_assert(!a_param_h);
 
   return 0;
 }
