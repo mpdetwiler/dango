@@ -5,6 +5,186 @@
 #include "dango-assert.hpp"
 #include "dango-macro.hpp"
 
+/*** placement new ***/
+
+namespace
+dango
+{
+  struct
+  placement_tag
+  final
+  {
+
+  };
+
+  inline constexpr dango::placement_tag const placement{ };
+}
+
+[[nodiscard]] constexpr auto
+operator new
+(dango::usize, dango::placement_tag, void*)noexcept->void*;
+
+[[nodiscard]] constexpr auto
+operator new[]
+(dango::usize, dango::placement_tag, void*)noexcept->void*;
+
+constexpr void
+operator delete
+(void*, dango::placement_tag, void*)noexcept;
+
+constexpr void
+operator delete[]
+(void*, dango::placement_tag, void*)noexcept;
+
+constexpr auto
+operator new
+(
+  dango::usize const,
+  dango::placement_tag const,
+  void* const a_addr
+)
+noexcept->void*
+{
+  return a_addr;
+}
+
+constexpr auto
+operator new[]
+(
+  dango::usize const,
+  dango::placement_tag const,
+  void* const a_addr
+)
+noexcept->void*
+{
+  return a_addr;
+}
+
+constexpr void
+operator delete
+(
+  void* const,
+  dango::placement_tag const,
+  void* const
+)
+noexcept
+{
+
+}
+
+constexpr void
+operator delete[]
+(
+  void* const,
+  dango::placement_tag const,
+  void* const
+)
+noexcept
+{
+
+}
+
+/*** dango_new_noexcept ***/
+
+namespace
+dango
+{
+#ifndef DANGO_NEW_NOEXCEPT
+  inline constexpr bool const c_operator_new_noexcept = false;
+#else
+  inline constexpr bool const c_operator_new_noexcept = true;
+#endif
+}
+
+namespace
+dango::detail
+{
+  constexpr auto true_bool()noexcept->bool;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  true_bool
+  (tp_type&&)noexcept->
+  dango::enable_if<dango::is_constructible<bool, tp_type>, bool>;
+}
+
+constexpr auto
+dango::
+detail::
+true_bool
+()noexcept->bool
+{
+  return true;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+detail::
+true_bool
+(tp_type&& a_arg)noexcept->
+dango::enable_if<dango::is_constructible<bool, tp_type>, bool>
+{
+  return bool(dango::forward<tp_type>(a_arg));
+}
+
+#define dango_new_noexcept(cond) \
+noexcept(dango::c_operator_new_noexcept && dango::detail::true_bool(cond))
+
+/*** launder ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  [[nodiscard]] constexpr auto
+  launder
+  (tp_type*)noexcept->
+  dango::enable_if<dango::is_object<tp_type>, tp_type*>;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+launder
+(tp_type* const a_arg)noexcept->
+dango::enable_if<dango::is_object<tp_type>, tp_type*>
+{
+  return __builtin_launder(a_arg);
+}
+
+/*** address_of ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto
+  address_of
+  (tp_type&)noexcept->
+  dango::enable_if<dango::is_object<tp_type>, tp_type*>;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+address_of
+(tp_type& a_arg)noexcept->
+dango::enable_if<dango::is_object<tp_type>, tp_type*>
+{
+  using cast_type = dango::preserve_cv<tp_type, dango::byte>;
+
+  auto& a_ref = reinterpret_cast<cast_type&>(a_arg);
+
+  return reinterpret_cast<tp_type*>(&a_ref);
+}
+
 /*** is_aligned ***/
 
 namespace
@@ -412,33 +592,7 @@ noexcept->dango::param_ptr<void, false>
   return dango::mem_copy<dango::usize(1)>(a_dest, a_source, a_count);
 }
 
-/*** address_of ***/
 
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  constexpr auto
-  address_of
-  (tp_type&)noexcept->
-  dango::enable_if<dango::is_object<tp_type>, tp_type*>;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-address_of
-(tp_type& a_arg)noexcept->
-dango::enable_if<dango::is_object<tp_type>, tp_type*>
-{
-  using cast_type = dango::preserve_cv<tp_type, dango::byte>;
-
-  auto& a_ref = reinterpret_cast<cast_type&>(a_arg);
-
-  return reinterpret_cast<tp_type*>(&a_ref);
-}
 
 
 
