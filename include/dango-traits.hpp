@@ -840,16 +840,6 @@ final
   using type = tp_ret(*)(tp_args...)noexcept(tp_noexcept);
 };
 
-/*** underlying_type ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_enum>
-  using underlying_type = __underlying_type(tp_enum);
-}
-
 /*** enable_if ***/
 
 namespace
@@ -2176,6 +2166,51 @@ dango
   <typename tp_type>
   constexpr bool const has_virtual_destructor<tp_type&&> = false;
 }
+
+/*** underlying_type ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type, bool tp_enum = dango::is_enum<tp_type>>
+  struct underlying_type_help;
+
+  template
+  <typename tp_type>
+  struct underlying_type_help<tp_type, true>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_enum>
+  using underlying_type =
+    typename detail::underlying_type_help<tp_enum>::type;
+}
+
+template
+<typename tp_type, bool tp_enum>
+struct
+dango::
+detail::
+underlying_type_help
+final
+{
+  using type = tp_type;
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+underlying_type_help<tp_type, true>
+final
+{
+  using type = __underlying_type(tp_type);
+};
 
 /*** endian ***/
 

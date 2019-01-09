@@ -63,10 +63,9 @@ dango
 #define DANGO_ATOMIC_INT_ENABLE_SPEC(param) \
 dango::enable_if \
 < \
-  dango::is_int<param> && \
+  dango::is_int<dango::underlying_type<param>> && \
   !dango::is_const<param> && \
-  !dango::is_volatile<param>, \
-  dango::enable_tag \
+  !dango::is_volatile<param> \
 >
 
 namespace
@@ -111,36 +110,104 @@ public:
   auto compare_exchange(value_type&, value_type)noexcept->bool;
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto fetch_add(value_type)noexcept->value_type;
-  template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto fetch_sub(value_type)noexcept->value_type;
-  template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto fetch_and(value_type)noexcept->value_type;
-  template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto fetch_or(value_type)noexcept->value_type;
-  template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto fetch_xor(value_type)noexcept->value_type;
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() + dango::declval<tp_value_type>())
+  >
+  auto fetch_add(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto add_fetch(value_type)noexcept->value_type;
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() - dango::declval<tp_value_type>())
+  >
+  auto fetch_sub(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
+
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto sub_fetch(value_type)noexcept->value_type;
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() & dango::declval<tp_value_type>())
+  >
+  auto fetch_and(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
+
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto and_fetch(value_type)noexcept->value_type;
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() | dango::declval<tp_value_type>())
+  >
+  auto fetch_or(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
+
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto or_fetch(value_type)noexcept->value_type;
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() ^ dango::declval<tp_value_type>())
+  >
+  auto fetch_xor(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
+
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
-  auto xor_fetch(value_type)noexcept->value_type;
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() + dango::declval<tp_value_type>())
+  >
+  auto add_fetch(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
+
+  template
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() - dango::declval<tp_value_type>())
+  >
+  auto sub_fetch(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
+
+  template
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() & dango::declval<tp_value_type>())
+  >
+  auto and_fetch(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
+
+  template
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() | dango::declval<tp_value_type>())
+  >
+  auto or_fetch(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
+
+  template
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_value_type = value_type,
+    typename tp_ret =
+      decltype(dango::declval<tp_value_type>() ^ dango::declval<tp_value_type>())
+  >
+  auto xor_fetch(value_type)noexcept->
+  dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type>;
 private:
   value_type m_data;
 public:
@@ -273,12 +340,18 @@ compare_exchange
 template \
 <typename tp_type> \
 template \
-<dango::mem_order tp_order> \
+< \
+  dango::mem_order tp_order, \
+  typename tp_value_type, \
+  typename tp_ret \
+> \
 auto \
 dango:: \
 atomic<tp_type, DANGO_ATOMIC_INT_ENABLE_SPEC(tp_type)>:: \
 name \
-(value_type const a_data)noexcept->value_type \
+(value_type const a_data) \
+noexcept-> \
+dango::enable_if<dango::is_convertible<tp_ret, value_type>, value_type> \
 { \
   static_assert(detail::is_valid_mem_order(tp_order)); \
 \

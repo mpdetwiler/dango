@@ -6,6 +6,7 @@
 #include "dango-assert.hpp"
 #include "dango-atomic.hpp"
 #include "dango-mem.hpp"
+#include "dango-concurrent.hpp"
 
 void func()noexcept;
 
@@ -36,6 +37,20 @@ public:
 
 void conversion(ptr_holder)noexcept;
 
+enum class
+state
+{
+  alpha, beta
+};
+
+auto operator + (state const a, state const b)noexcept->state
+{
+  return state(int(a) + int(b));
+}
+
+
+#include <cstddef>
+
 auto
 main
 ()noexcept->dango::s_int
@@ -55,10 +70,10 @@ main
 
   func();
 
-  dango::atomic<int> a_test{ 5 };
+  dango::atomic<uint8> a_test{ int(5) };
 
   a_test.load<dango::mem_order::acquire>();
-  a_test.sub_fetch(4);
+  a_test.fetch_xor(4);
 
   int a_x[2];
 
@@ -91,6 +106,23 @@ main
   dango::param_ptr<int> a_param_h = a_holder;
 
   dango_assert(!a_param_h);
+
+  dango::atomic<std::byte> test{ std::byte(0) };
+
+  test.fetch_or(std::byte(1));
+
+  dango_assert(test.load() == std::byte(1));
+
+  dango::exec_once a_once;
+
+  dango_assert(a_once.exec([]()noexcept->void{ printf("hello\n"); }));
+  dango_assert(!a_once.exec([]()noexcept->void{ printf("hello\n"); }));
+  a_once.reset();
+  dango_assert(a_once.exec([]()noexcept->void{ printf("hello\n"); }));
+
+  auto const a_func = []()noexcept(false)->void{ };
+
+  a_once.exec(a_func);
 
   return 0;
 }
