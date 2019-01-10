@@ -295,5 +295,71 @@ dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
 
 #endif
 
+#ifdef DANGO_SOURCE_FILE
+
+#include "dango-assert.hpp"
+#include "dango-atomic.hpp"
+
+namespace
+dango::detail
+{
+  namespace
+  {
+    dango::atomic<dango::assert_log_func> s_assert_log_handler{ nullptr };
+    dango::atomic<bool> s_assert_fail_once{ false };
+  }
+}
+
+char const* const
+dango::
+detail::
+unreachable_message = "unreachable statement reached";
+
+auto
+dango::
+set_assert_log_handler
+(dango::assert_log_func const a_handler)noexcept->dango::assert_log_func
+{
+  return detail::s_assert_log_handler.exchange(a_handler);
+}
+
+auto
+dango::
+get_assert_log_handler
+()noexcept->dango::assert_log_func
+{
+  return detail::s_assert_log_handler.load();
+}
+
+void
+dango::
+detail::
+assert_fail_once
+()noexcept
+{
+  while(detail::s_assert_fail_once.exchange(true));
+}
+
+#include <stdio.h>
+
+void
+dango::
+detail::
+default_assert_log_handler
+(char const* const a_message, dango::source_location const& a_loc)noexcept
+{
+  fprintf
+  (
+    stderr,
+    "%s[%u] %s: assertion failed: %s\n",
+    a_loc.file(),
+    dango::u_int(a_loc.line()),
+    a_loc.function(),
+    a_message
+  );
+}
+
+#endif
+
 #endif
 
