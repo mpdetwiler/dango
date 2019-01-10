@@ -15,7 +15,7 @@
 
 #define DANGO_UNINSTANTIABLE(name) \
   DANGO_IMMOBILE(name) \
-  DANGO_DELETE_DEFAULT_CTOR(name) \
+  DANGO_DELETE_DEFAULT(name) \
   ~name()noexcept = delete;
 
 #define DANGO_UNASSIGNABLE(name) \

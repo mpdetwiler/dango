@@ -626,8 +626,8 @@ dango::
 aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>
 {
 public:
-  static constexpr dango::usize const c_align = tp_align;
   static constexpr dango::usize const c_size = dango::next_multiple(tp_size, tp_align);
+  static constexpr dango::usize const c_align = tp_align;
 public:
   constexpr aligned_storage()noexcept = default;
 
@@ -658,7 +658,7 @@ auto
 dango::
 aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>::
 get
-()const noexcept->const void*
+()const noexcept->void const*
 {
   return m_storage;
 }

@@ -43,14 +43,20 @@ auto operator + (state const a, state const b)noexcept->state
 
 #include <cstddef>
 
+static dango::mutex s_mut{ };
+
 auto
 main
 ()noexcept->dango::s_int
 {
-  printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint8>));
-  printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint16>));
-  printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint32>));
-  printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint64>));
+  {
+    auto const a_crit = s_mut.lock();
+
+    printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint8>));
+    printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint16>));
+    printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint32>));
+    printf("%lli\n", dango::s_cent(dango::integer::MIN_VAL<sint64>));
+  }
 
   printf
   (

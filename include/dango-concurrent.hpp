@@ -5,6 +5,7 @@
 #include "dango-traits.hpp"
 #include "dango-atomic.hpp"
 #include "dango-assert.hpp"
+#include "dango-mem.hpp"
 
 /*** exec_once ***/
 
@@ -89,7 +90,7 @@ try_acquire
 
   do
   {
-    state a_expected = state::INITIAL;
+    auto a_expected = state::INITIAL;
 
     if(m_state.compare_exchange<acquire, acquire>(a_expected, state::EXECUTING))
     {
@@ -203,7 +204,29 @@ exec_once::
 has_executed
 ()const noexcept->bool
 {
-  return m_state.load<dango::mem_order::acquire>() == state::EXECUTED;
+  constexpr auto const acquire = dango::mem_order::acquire;
+
+  auto a_count = dango::uint32(0);
+
+  do
+  {
+    auto const a_state = m_state.load<acquire>();
+
+    if(a_state == state::EXECUTED)
+    {
+      break;
+    }
+
+    if(a_state == state::INITIAL)
+    {
+      return false;
+    }
+
+    detail::spin_yield(a_count);
+  }
+  while(true);
+
+  return true;
 }
 
 inline void
@@ -224,7 +247,7 @@ reset
 
   do
   {
-    state a_expected = state::EXECUTED;
+    auto a_expected = state::EXECUTED;
 
     if(m_state.compare_exchange<release, acquire>(a_expected, state::INITIAL))
     {
@@ -394,7 +417,109 @@ try_lock
 
 /*** mutex ***/
 
+namespace
+dango::detail
+{
+  using primitive_storage = dango::aligned_storage<dango::usize(48)>;
+}
 
+namespace
+dango
+{
+  class mutex;
+}
+
+class alignas(dango::cache_align_type)
+dango::
+mutex
+final
+{
+private:
+  class locker;
+  class try_locker;
+public:
+  constexpr mutex()noexcept;
+
+  ~mutex()noexcept;
+
+  [[nodiscard]] auto lock()noexcept->locker;
+  [[nodiscard]] auto try_lock()noexcept->try_locker;
+private:
+  template
+  <typename tp_type>
+  auto get()noexcept->tp_type*;
+  void init()noexcept;
+  auto acquire()noexcept->mutex*;
+  auto try_acquire()noexcept->mutex*;
+  void release()noexcept;
+private:
+  detail::primitive_storage m_storage;
+  dango::exec_once m_init;
+public:
+  DANGO_IMMOBILE(mutex)
+};
+
+class
+dango::
+mutex::
+locker
+final
+{
+public:
+  locker(mutex* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
+  ~locker()noexcept{ m_lock->release(); }
+private:
+  mutex* const m_lock;
+public:
+  DANGO_DELETE_DEFAULT(locker)
+  DANGO_IMMOBILE(locker)
+};
+
+class
+dango::
+mutex::
+try_locker
+final
+{
+public:
+  try_locker(mutex* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
+  ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
+  explicit operator bool()const{ return m_lock != nullptr; }
+private:
+  mutex* const m_lock;
+public:
+  DANGO_DELETE_DEFAULT(try_locker)
+  DANGO_IMMOBILE(try_locker)
+};
+
+constexpr
+dango::
+mutex::
+mutex
+()noexcept:
+m_storage{ },
+m_init{ }
+{
+
+}
+
+inline auto
+dango::
+mutex::
+lock
+()noexcept->locker
+{
+  return locker{ this };
+}
+
+inline auto
+dango::
+mutex::
+try_lock
+()noexcept->try_locker
+{
+  return try_locker{ this };
+}
 
 /*** thread ***/
 
@@ -442,6 +567,123 @@ spin_yield
 #ifdef __linux__
 
 #include <pthread.h>
+#include <errno.h>
+
+/*** mutex ***/
+
+dango::
+mutex::
+~mutex
+()noexcept
+{
+  using type = pthread_mutex_t;
+
+  if(!m_init.has_executed())
+  {
+    return;
+  }
+
+  auto const a_result = pthread_mutex_destroy(get<type>());
+
+  dango_assert(a_result == 0);
+}
+
+template
+<typename tp_type>
+auto
+dango::
+mutex::
+get
+()noexcept->tp_type*
+{
+  using type = pthread_mutex_t;
+
+  static_assert(dango::is_same<dango::remove_cv<tp_type>, type>);
+
+  return static_cast<type*>(m_storage.get());
+}
+
+void
+dango::
+mutex::
+init
+()noexcept
+{
+  using type = pthread_mutex_t;
+
+  static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
+  static_assert(alignof(type) <= alignof(detail::primitive_storage));
+
+  m_init.exec
+  (
+    [this]()noexcept->void
+    {
+      auto const a_prim = ::new (dango::placement, m_storage.get()) type;
+
+      auto const a_result = pthread_mutex_init(a_prim, nullptr);
+
+      dango_assert(a_result == 0);
+    }
+  );
+}
+
+auto
+dango::
+mutex::
+acquire
+()noexcept->mutex*
+{
+  using type = pthread_mutex_t;
+
+  init();
+
+  auto const a_result = pthread_mutex_lock(get<type>());
+
+  dango_assert(a_result == 0);
+
+  return this;
+}
+
+auto
+dango::
+mutex::
+try_acquire
+()noexcept->mutex*
+{
+  using type = pthread_mutex_t;
+
+  init();
+
+  auto const a_result = pthread_mutex_trylock(get<type>());
+
+  if(a_result == 0)
+  {
+    return this;
+  }
+
+  dango_assert(a_result == EBUSY);
+
+  return nullptr;
+}
+
+void
+dango::
+mutex::
+release
+()noexcept
+{
+  using type = pthread_mutex_t;
+
+#ifndef DANGO_NO_DEBUG
+  dango_assert(m_init.has_executed());
+#endif
+
+  auto const  a_result = pthread_mutex_unlock(get<type>());
+
+  dango_assert(a_result == 0);
+}
+
+/*** thread ***/
 
 void
 dango::

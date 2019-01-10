@@ -10,6 +10,7 @@
 #include "dango-atomic.hpp"
 #include "dango-mem.hpp"
 #include "dango-concurrent.hpp"
+#include "dango-global.hpp"
 
 #endif
 
