@@ -592,9 +592,78 @@ noexcept->dango::param_ptr<void, false>
   return dango::mem_copy<dango::usize(1)>(a_dest, a_source, a_count);
 }
 
+/*** aligned_storage ***/
 
+#define DANGO_ALIGNED_STORAGE_ENABLE_SPEC(size, align) \
+size, \
+align, \
+dango::enable_if \
+< \
+  (size != dango::usize(0)) && \
+  dango::is_pow_two(align) \
+>
 
+namespace
+dango
+{
+  template
+  <
+    dango::usize tp_size,
+    dango::usize tp_align = alignof(dango::max_align_type),
+    typename tp_enabled = dango::enable_tag
+  >
+  class aligned_storage;
 
+  template
+  <dango::usize tp_size, dango::usize tp_align>
+  class aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>;
+}
+
+template
+<dango::usize tp_size, dango::usize tp_align>
+class
+dango::
+aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>
+{
+public:
+  static constexpr dango::usize const c_align = tp_align;
+  static constexpr dango::usize const c_size = dango::next_multiple(tp_size, tp_align);
+public:
+  constexpr aligned_storage()noexcept = default;
+
+  ~aligned_storage()noexcept = default;
+
+  auto get()noexcept->void*;
+  auto get()const noexcept->void const*;
+private:
+  alignas(c_align) dango::byte m_storage[c_size];
+public:
+  DANGO_IMMOBILE(aligned_storage)
+};
+
+template
+<dango::usize tp_size, dango::usize tp_align>
+auto
+dango::
+aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>::
+get
+()noexcept->void*
+{
+  return m_storage;
+}
+
+template
+<dango::usize tp_size, dango::usize tp_align>
+auto
+dango::
+aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>::
+get
+()const noexcept->const void*
+{
+  return m_storage;
+}
+
+#undef DANGO_ALIGNED_STORAGE_ENABLE_SPEC
 
 #endif
 
