@@ -1,8 +1,8 @@
 #ifndef __DANGO_ASSERT_HPP__
 #define __DANGO_ASSERT_HPP__ 1
 
-#include "dango-traits.hpp"
 #include "dango-macro.hpp"
+#include "dango-def.hpp"
 
 /*** source_location ***/
 
@@ -297,17 +297,13 @@ dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
 
 #ifdef DANGO_SOURCE_FILE
 
-#include "dango-assert.hpp"
 #include "dango-atomic.hpp"
 
 namespace
-dango::detail
+dango::assert_cpp
 {
-  namespace
-  {
-    dango::atomic<dango::assert_log_func> s_assert_log_handler{ nullptr };
-    dango::atomic<bool> s_assert_fail_once{ false };
-  }
+  static dango::atomic<dango::assert_log_func> s_assert_log_handler{ nullptr };
+  static dango::atomic<bool> s_assert_fail_once{ false };
 }
 
 char const* const
@@ -320,7 +316,7 @@ dango::
 set_assert_log_handler
 (dango::assert_log_func const a_handler)noexcept->dango::assert_log_func
 {
-  return detail::s_assert_log_handler.exchange(a_handler);
+  return assert_cpp::s_assert_log_handler.exchange(a_handler);
 }
 
 auto
@@ -328,7 +324,7 @@ dango::
 get_assert_log_handler
 ()noexcept->dango::assert_log_func
 {
-  return detail::s_assert_log_handler.load();
+  return assert_cpp::s_assert_log_handler.load();
 }
 
 void
@@ -337,7 +333,7 @@ detail::
 assert_fail_once
 ()noexcept
 {
-  while(detail::s_assert_fail_once.exchange(true));
+  while(assert_cpp::s_assert_fail_once.exchange(true));
 }
 
 #include <stdio.h>

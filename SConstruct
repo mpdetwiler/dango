@@ -28,6 +28,7 @@ h_paths = []
 
 if(platform.startswith('linux')):
   print 'platform: ' + platform
+  env.Append(LIBS=['pthread'])
 
 elif(platform.startswith('win32') or platform.startswith('msys')):
   print 'platform: ' + platform

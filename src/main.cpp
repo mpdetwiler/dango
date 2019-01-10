@@ -1,12 +1,4 @@
-#include "dango-def.hpp"
-#include "dango-int.hpp"
-#include "dango-macro.hpp"
-#include "dango-traits.hpp"
-#include "dango-util.hpp"
-#include "dango-assert.hpp"
-#include "dango-atomic.hpp"
-#include "dango-mem.hpp"
-#include "dango-concurrent.hpp"
+#include "dango.hpp"
 
 void func()noexcept;
 
@@ -123,6 +115,19 @@ main
   auto const a_func = []()noexcept(false)->void{ };
 
   a_once.exec(a_func);
+
+  dango::thread::yield();
+
+  dango::spin_lock a_lock;
+
+  {
+    auto const a_crit = a_lock.lock();
+  }
+
+  if(auto const a_crit = a_lock.try_lock())
+  {
+
+  }
 
   return 0;
 }
