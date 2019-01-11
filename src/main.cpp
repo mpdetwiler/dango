@@ -124,16 +124,19 @@ main
 
   dango::thread::yield();
 
-  dango::spin_lock a_lock;
+  dango::spin_mutex a_lock;
 
-  {
-    auto const a_crit = a_lock.lock();
-  }
-
-  if(auto const a_crit = a_lock.try_lock())
+  dango_crit(a_lock)
   {
 
   }
+
+  dango_try_crit(a_lock)
+  {
+
+  }
+
+  auto const a_printer = global_printer();
 
   return 0;
 }

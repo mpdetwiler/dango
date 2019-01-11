@@ -3,110 +3,387 @@
 
 #include "dango-concurrent.hpp"
 
-#include <cstdio>
+#define DANGO_GLOBAL_STORAGE_ENABLE_SPEC(type, ret, construct) \
+type, \
+ret, \
+construct, \
+dango::enable_if \
+< \
+  dango::is_object<type> && \
+  dango::is_same<dango::remove_cv<type>, ret> \
+>
 
-#define DANGO_DEFINE_GLOBAL(name, type, ...) \
-class \
-name##_global \
-final \
+namespace
+dango::detail
+{
+  template
+  <
+    typename tp_type,
+    typename tp_ret,
+    tp_ret(& tp_construct)()noexcept,
+    typename tp_enabled = dango::enable_tag
+  >
+  class global_storage;
+
+  template
+  <
+    typename tp_type,
+    typename tp_ret,
+    tp_ret(& tp_construct)()noexcept
+  >
+  class global_storage<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>;
+}
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+class alignas(dango::cache_align_type)
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>
+final
+{
+public:
+  template
+  <global_storage& tp_storage>
+  class strong_incrementer;
+
+  template
+  <global_storage& tp_storage>
+  class weak_incrementer;
+public:
+  constexpr global_storage()noexcept;
+  ~global_storage()noexcept = default;
+private:
+  void increment()noexcept;
+  auto try_increment()noexcept->bool;
+  void decrement()noexcept;
+private:
+  dango::aligned_storage<sizeof(tp_ret), alignof(tp_ret)> m_storage;
+  dango::exec_once m_init;
+  dango::spin_mutex m_lock;
+  dango::usize m_ref_count;
+private:
+  DANGO_IMMOBILE(global_storage)
+};
+
+/*** strong_incrementer ***/
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+template
+<
+  dango::
+  detail::
+  global_storage
+  <DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>&
+  tp_storage
+>
+class
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+strong_incrementer
+final
+{
+public:
+  strong_incrementer()noexcept;
+  ~strong_incrementer()noexcept;
+public:
+  DANGO_IMMOBILE(strong_incrementer)
+};
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+template
+<
+  dango::
+  detail::
+  global_storage
+  <DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>&
+  tp_storage
+>
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+strong_incrementer<tp_storage>::
+strong_incrementer
+()noexcept
+{
+  tp_storage.increment();
+}
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+template
+<
+  dango::
+  detail::
+  global_storage
+  <DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>&
+  tp_storage
+>
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+strong_incrementer<tp_storage>::
+~strong_incrementer
+()noexcept
+{
+  tp_storage.decrement();
+}
+
+/*** weak_incrementer ***/
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+template
+<
+  dango::
+  detail::
+  global_storage
+  <DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>&
+  tp_storage
+>
+class
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+weak_incrementer
+final
+{
+public:
+  weak_incrementer(DANGO_SRC_LOC_ARG())noexcept;
+  ~weak_incrementer()noexcept;
+public:
+  DANGO_IMMOBILE(weak_incrementer)
+};
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+template
+<
+  dango::
+  detail::
+  global_storage
+  <DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>&
+  tp_storage
+>
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+weak_incrementer<tp_storage>::
+weak_incrementer
+(DANGO_SRC_LOC_ARG(a_loc))noexcept
+{
+  bool const dango_global_alive = tp_storage.try_increment();
+
+  dango_assert_loc(dango_global_alive, a_loc);
+
+  if(dango_global_alive)
+  {
+    return;
+  }
+
+  dango::terminate();
+}
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+template
+<
+  dango::
+  detail::
+  global_storage
+  <DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>&
+  tp_storage
+>
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+weak_incrementer<tp_storage>::
+~weak_incrementer
+()noexcept
+{
+  tp_storage.decrement();
+}
+
+/*** global_storage ***/
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+constexpr
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+global_storage
+()noexcept:
+m_storage{ },
+m_init{ },
+m_lock{ },
+m_ref_count{ dango::usize(0) }
+{
+
+}
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+void
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+increment
+()noexcept
+{
+  m_init.exec
+  (
+    [this]()noexcept->void
+    {
+      ::new (dango::placement, m_storage.get()) tp_ret{ tp_construct() };
+    }
+  );
+
+  dango_crit(m_lock)
+  {
+    ++m_ref_count;
+  }
+}
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+auto
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+try_increment
+()noexcept->bool
+{
+  dango_crit(m_lock)
+  {
+    if(m_ref_count == dango::usize(0))
+    {
+      return false;
+    }
+
+    ++m_ref_count;
+  }
+
+  return true;
+}
+
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+void
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+decrement
+()noexcept
+{
+  dango_crit(m_lock)
+  {
+    if(--m_ref_count != dango::usize(0))
+    {
+      return;
+    }
+  }
+
+  auto const a_ptr = static_cast<tp_ret*>(m_storage.get());
+
+  dango::destructor(a_ptr);
+}
+
+#undef DANGO_GLOBAL_STORAGE_ENABLE_SPEC
+
+#define DANGO_DEFINE_GLOBAL_IMPL(linkage, name, type, ...) \
+namespace \
+name##_dango_global \
 { \
-public: \
-  class incrementer; \
-private: \
   using value_type = type; \
-  class storage; \
-  static storage s_storage; \
-private: \
-  DANGO_UNINSTANTIABLE(name##_global) \
-}; \
- \
-class \
-name##_global:: \
-storage \
-final \
-{ \
-public: \
-  constexpr storage()noexcept; \
-  ~storage()noexcept = default; \
-  void increment()noexcept; \
-  void decrement()noexcept; \
-private: \
-  dango::aligned_storage<sizeof(value_type), alignof(value_type)> m_storage; \
-  dango::exec_once m_init; \
-  dango::atomic<dango::uint32> m_ref_count; \
-private: \
-  DANGO_IMMOBILE(storage) \
-}; \
-constexpr \
-name##_global:: \
-storage:: \
-storage \
-()noexcept: \
-m_storage{ }, \
-m_init{ }, \
-m_ref_count{ dango::uint32(0) }{ } \
-class \
-name##_global:: \
-incrementer \
-final \
-{ \
-public: \
-  incrementer()noexcept; \
-  ~incrementer()noexcept; \
-public: \
-  DANGO_IMMOBILE(incrementer) \
-}; \
-inline \
-name##_global:: \
-incrementer:: \
-incrementer \
-()noexcept \
-{ \
-  s_storage.increment(); \
-} \
-inline \
-name##_global:: \
-incrementer:: \
-~incrementer \
-()noexcept \
-{ \
-  s_storage.decrement(); \
-} \
-inline void \
-name##_global:: \
-storage:: \
-increment \
-()noexcept \
-{ \
-  m_init.exec \
-  ( \
-    [this]()noexcept->void \
-    { \
-      ::new (dango::placement, m_storage.get()) value_type{ __VA_ARGS__ }; \
-    } \
-  ); \
-  m_ref_count.add_fetch(dango::uint32(1)); \
-  printf("incremented\n"); \
-} \
-inline void \
-name##_global:: \
-storage:: \
-decrement \
-()noexcept \
-{ \
-  auto const a_count = m_ref_count.sub_fetch(dango::uint32(1)); \
-  printf("decremented\n"); \
-  if(a_count != dango::uint32(0)) \
+  using return_type = dango::remove_cv<value_type>; \
+  linkage auto \
+  construct \
+  ()noexcept->return_type \
   { \
-    return; \
+    return return_type{ __VA_ARGS__ }; \
   } \
-  auto const a_ptr = static_cast<value_type*>(m_storage.get()); \
-  a_ptr->~value_type(); \
+  using storage_type = \
+    dango::detail::global_storage<value_type, return_type, construct>; \
+  linkage storage_type s_storage{ }; \
+  using strong_type = storage_type::strong_incrementer<s_storage>; \
+  using weak_type = storage_type::weak_incrementer<s_storage>; \
+  static strong_type const s_strong{ }; \
 } \
-inline name##_global::storage \
-name##_global:: \
-s_storage{ }; \
-static name##_global::incrementer const s_##name##_incrementer{ };
+[[nodiscard]] linkage auto \
+name \
+(DANGO_SRC_LOC_ARG_DEFAULT(a_loc)) \
+noexcept->name##_dango_global::weak_type \
+{ \
+  static name##_dango_global::strong_type const s_strong{ }; \
+  return name##_dango_global::weak_type{ a_loc }; \
+}
+
+#define DANGO_DEFINE_GLOBAL_INLINE(name, type, ...) \
+DANGO_DEFINE_GLOBAL_IMPL(inline, name, type, __VA_ARGS__)
+
+#define DANGO_DEFINE_GLOBAL_STATIC(name, type, ...) \
+DANGO_DEFINE_GLOBAL_IMPL(static, name, type, __VA_ARGS__)
+
+#include <cstdio>
 
 struct
 printer
@@ -120,9 +397,13 @@ printer
   {
     printf("printer destructor\n");
   }
+
+  DANGO_IMMOBILE(printer)
 };
 
-DANGO_DEFINE_GLOBAL(global_printer, printer, 7u)
+DANGO_DEFINE_GLOBAL_INLINE(global_printer, printer const volatile, 7u)
+
+inline void use_printer()noexcept{ auto const a_printer = global_printer(); }
 
 #endif
 

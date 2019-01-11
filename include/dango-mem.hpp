@@ -84,6 +84,34 @@ noexcept
 
 }
 
+/*** destructor ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  auto
+  destructor
+  (tp_type const volatile*)
+  noexcept(dango::is_noexcept_destructible<tp_type>)->
+  dango::enable_if<dango::is_destructible<tp_type>, void>;
+}
+
+template
+<typename tp_type>
+auto
+dango::
+destructor
+(tp_type const volatile* const a_ptr)
+noexcept(dango::is_noexcept_destructible<tp_type>)->
+dango::enable_if<dango::is_destructible<tp_type>, void>
+{
+  dango_assert(a_ptr != nullptr);
+
+  a_ptr->~tp_type();
+}
+
 /*** dango_new_noexcept ***/
 
 namespace

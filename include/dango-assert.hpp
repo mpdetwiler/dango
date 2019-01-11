@@ -157,11 +157,10 @@ assume
 namespace
 dango
 {
-  using assert_log_func = void(*)(char const*, dango::source_location const&)noexcept;
+  using assert_log_handler = void(*)(char const*, dango::source_location const&)noexcept;
 
-  auto set_assert_log_handler(dango::assert_log_func)noexcept->assert_log_func;
-
-  auto get_assert_log_handler()noexcept->assert_log_func;
+  auto set_assert_log_handler(dango::assert_log_handler)noexcept->dango::assert_log_handler;
+  auto get_assert_log_handler()noexcept->dango::assert_log_handler;
 }
 
 namespace
@@ -295,6 +294,19 @@ dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
 
 #endif
 
+/*** terminate set_terminate ***/
+
+namespace
+dango
+{
+  using terminate_handler = void(*)()noexcept;
+
+  auto set_terminate(terminate_handler)noexcept->dango::terminate_handler;
+  auto get_terminate()noexcept->dango::terminate_handler;
+
+  [[noreturn]] void terminate()noexcept;
+}
+
 #ifdef DANGO_SOURCE_FILE
 
 #include "dango-atomic.hpp"
@@ -302,7 +314,7 @@ dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
 namespace
 dango::assert_cpp
 {
-  static dango::atomic<dango::assert_log_func> s_assert_log_handler{ nullptr };
+  static dango::atomic<dango::assert_log_handler> s_assert_log_handler{ nullptr };
   static dango::atomic<bool> s_assert_fail_once{ false };
 }
 
@@ -314,7 +326,7 @@ unreachable_message = "unreachable statement reached";
 auto
 dango::
 set_assert_log_handler
-(dango::assert_log_func const a_handler)noexcept->dango::assert_log_func
+(dango::assert_log_handler const a_handler)noexcept->dango::assert_log_handler
 {
   return assert_cpp::s_assert_log_handler.exchange(a_handler);
 }
@@ -322,7 +334,7 @@ set_assert_log_handler
 auto
 dango::
 get_assert_log_handler
-()noexcept->dango::assert_log_func
+()noexcept->dango::assert_log_handler
 {
   return assert_cpp::s_assert_log_handler.load();
 }
@@ -353,6 +365,36 @@ default_assert_log_handler
     a_loc.function(),
     a_message
   );
+}
+
+#include <exception>
+
+auto
+dango::
+set_terminate
+(dango::terminate_handler const a_handler)noexcept->dango::terminate_handler
+{
+  auto const a_result = std::set_terminate(a_handler);
+
+  return reinterpret_cast<dango::terminate_handler>(a_result);
+}
+
+auto
+dango::
+get_terminate
+()noexcept->dango::terminate_handler
+{
+  auto const a_result = std::get_terminate();
+
+  return reinterpret_cast<dango::terminate_handler>(a_result);
+}
+
+void
+dango::
+terminate
+()noexcept
+{
+  std::terminate();
 }
 
 #endif

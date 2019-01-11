@@ -22,5 +22,9 @@
   constexpr auto operator = (name const&)noexcept->name& = delete; \
   constexpr auto operator = (name&&)noexcept->name& = delete;
 
+#define DANGO_TOKEN_CONCAT_IMPL(x, y) x##y
+#define DANGO_TOKEN_CONCAT(x, y) DANGO_TOKEN_CONCAT_IMPL(x, y)
+#define DANGO_APPEND_LINE(x) DANGO_TOKEN_CONCAT(x, __LINE__)
+
 #endif
 

@@ -7,6 +7,14 @@
 #include "dango-assert.hpp"
 #include "dango-mem.hpp"
 
+/*** dango_crit dango_try_crit ***/
+
+#define dango_crit(name) \
+if constexpr(auto const DANGO_APPEND_LINE(dango_crit_var_) = (name).lock())
+
+#define dango_try_crit(name) \
+if(auto const DANGO_APPEND_LINE(dango_crit_var_) = (name).try_lock())
+
 /*** exec_once ***/
 
 namespace
@@ -264,50 +272,51 @@ reset
   while(true);
 }
 
-/*** spin_lock ***/
+/*** spin_mutex ***/
 
 namespace
 dango
 {
-  class spin_lock;
+  class spin_mutex;
 }
 
 class
 dango::
-spin_lock
+spin_mutex
 final
 {
 private:
   class locker;
   class try_locker;
 public:
-  constexpr spin_lock()noexcept;
+  constexpr spin_mutex()noexcept;
 
-  ~spin_lock()noexcept = default;
+  ~spin_mutex()noexcept = default;
 
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
 private:
-  auto acquire()noexcept->spin_lock*;
-  auto try_acquire()noexcept->spin_lock*;
+  auto acquire()noexcept->spin_mutex*;
+  auto try_acquire()noexcept->spin_mutex*;
   void release()noexcept;
 private:
   dango::atomic<bool> m_locked;
 public:
-  DANGO_IMMOBILE(spin_lock)
+  DANGO_IMMOBILE(spin_mutex)
 };
 
 class
 dango::
-spin_lock::
+spin_mutex::
 locker
 final
 {
 public:
-  locker(spin_lock* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
+  locker(spin_mutex* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
   ~locker()noexcept{ m_lock->release(); }
+  explicit constexpr operator bool()const{ return true; }
 private:
-  spin_lock* const m_lock;
+  spin_mutex* const m_lock;
 public:
   DANGO_DELETE_DEFAULT(locker)
   DANGO_IMMOBILE(locker)
@@ -315,16 +324,16 @@ public:
 
 class
 dango::
-spin_lock::
+spin_mutex::
 try_locker
 final
 {
 public:
-  try_locker(spin_lock* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
+  try_locker(spin_mutex* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
   explicit operator bool()const{ return m_lock != nullptr; }
 private:
-  spin_lock* const m_lock;
+  spin_mutex* const m_lock;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
   DANGO_IMMOBILE(try_locker)
@@ -332,8 +341,8 @@ public:
 
 constexpr
 dango::
-spin_lock::
-spin_lock
+spin_mutex::
+spin_mutex
 ()noexcept:
 m_locked{ false }
 {
@@ -342,9 +351,9 @@ m_locked{ false }
 
 inline auto
 dango::
-spin_lock::
+spin_mutex::
 acquire
-()noexcept->spin_lock*
+()noexcept->spin_mutex*
 {
   constexpr auto const acquire = dango::mem_order::acquire;
 
@@ -369,9 +378,9 @@ acquire
 
 inline auto
 dango::
-spin_lock::
+spin_mutex::
 try_acquire
-()noexcept->spin_lock*
+()noexcept->spin_mutex*
 {
   constexpr auto const acquire = dango::mem_order::acquire;
 
@@ -390,7 +399,7 @@ try_acquire
 
 inline void
 dango::
-spin_lock::
+spin_mutex::
 release
 ()noexcept
 {
@@ -399,7 +408,7 @@ release
 
 inline auto
 dango::
-spin_lock::
+spin_mutex::
 lock
 ()noexcept->locker
 {
@@ -408,7 +417,7 @@ lock
 
 inline auto
 dango::
-spin_lock::
+spin_mutex::
 try_lock
 ()noexcept->try_locker
 {
@@ -468,6 +477,7 @@ final
 public:
   locker(mutex* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
   ~locker()noexcept{ m_lock->release(); }
+  explicit constexpr operator bool()const{ return true; }
 private:
   mutex* const m_lock;
 public:
