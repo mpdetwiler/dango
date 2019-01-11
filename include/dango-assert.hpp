@@ -157,7 +157,8 @@ assume
 namespace
 dango
 {
-  using assert_log_handler = void(*)(char const*, dango::source_location const&)noexcept;
+  using assert_log_handler =
+    void(*)(char const*, char const*, dango::source_location const&)noexcept;
 
   auto set_assert_log_handler(dango::assert_log_handler)noexcept->dango::assert_log_handler;
   auto get_assert_log_handler()noexcept->dango::assert_log_handler;
@@ -166,18 +167,37 @@ dango
 namespace
 dango::detail
 {
-  void assert_fail_log(char const*, dango::source_location const&)noexcept;
+  void
+  assert_fail_log
+  (
+    char const*,
+    char const*,
+    dango::source_location const&
+  )
+  noexcept;
 
   void assert_fail_once()noexcept;
 
-  void default_assert_log_handler(char const*, dango::source_location const&)noexcept;
+  void
+  default_assert_log_handler
+  (
+    char const*,
+    char const*,
+    dango::source_location const&
+  )
+  noexcept;
 }
 
 inline void
 dango::
 detail::
 assert_fail_log
-(char const* const a_message, dango::source_location const& a_loc)noexcept
+(
+  char const* const a_expr,
+  char const* const a_msg,
+  dango::source_location const& a_loc
+)
+noexcept
 {
   detail::assert_fail_once();
 
@@ -185,11 +205,11 @@ assert_fail_log
 
   if(a_handler)
   {
-    a_handler(a_message, a_loc);
+    a_handler(a_expr, a_msg, a_loc);
   }
   else
   {
-    detail::default_assert_log_handler(a_message, a_loc);
+    detail::default_assert_log_handler(a_expr, a_msg, a_loc);
   }
 }
 
@@ -200,6 +220,7 @@ dango::detail
   assert_func
   (
     bool,
+    char const*,
     char const*,
     dango::source_location const& = dango::source_location::current()
   )
@@ -212,25 +233,30 @@ detail::
 assert_func
 (
   bool const a_cond,
-  char const* const a_message,
+  char const* const a_expr,
+  char const* const a_msg,
   dango::source_location const& a_loc
 )
 noexcept
 {
   if(dango::unlikely(!a_cond))
   {
-    detail::assert_fail_log(a_message, a_loc);
+    detail::assert_fail_log(a_expr, a_msg, a_loc);
 
     __builtin_trap();
   }
 }
 
 #ifndef DANGO_NO_DEBUG
-#define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond)
-#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), #cond, loc)
+#define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond, "")
+#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), #cond, "", loc)
+#define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), #cond, msg)
+#define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), #cond, msg, loc)
 #else
 #define dango_assert(cond) dango::assume(bool(cond))
 #define dango_assert_loc(cond, loc) dango_assert(cond)
+#define dango_assert_msg(cond, msg) dango_assert(cond)
+#define dango_assert_msg_loc(cond, msg, loc) dango_assert(cond)
 #endif
 
 /*** dango_unreachable ***/
@@ -240,7 +266,11 @@ dango::detail
 {
   void
   unreachable_func
-  (dango::source_location const& = dango::source_location::current())noexcept;
+  (
+    char const* const,
+    dango::source_location const& = dango::source_location::current()
+  )
+  noexcept;
 
   extern char const* const unreachable_message;
 }
@@ -249,17 +279,23 @@ inline void
 dango::
 detail::
 unreachable_func
-(dango::source_location const& a_loc)noexcept
+(
+  char const* const a_msg,
+  dango::source_location const& a_loc
+)
+noexcept
 {
-  detail::assert_fail_log(unreachable_message, a_loc);
+  detail::assert_fail_log("", a_msg, a_loc);
 
   __builtin_trap();
 }
 
 #ifndef DANGO_NO_DEBUG
-#define dango_unreachable dango::detail::unreachable_func()
+#define dango_unreachable dango::detail::unreachable_func(dango::detail::unreachable_message)
+#define dango_unreachable_msg(msg) dango::detail::unreachable_func(msg)
 #else
-#define dango_unreachable __builtin_unreachable()
+#define dango_unreachable do{ __builtin_unreachable(); }while(false)
+#define dango_unreachable_msg(msg) dango_unreachable
 #endif
 
 /*** source location arg ***/
@@ -358,16 +394,22 @@ void
 dango::
 detail::
 default_assert_log_handler
-(char const* const a_message, dango::source_location const& a_loc)noexcept
+(
+  char const* const a_expr,
+  char const* const a_msg,
+  dango::source_location const& a_loc
+)
+noexcept
 {
   fprintf
   (
     stderr,
-    "%s[%u] %s: assertion failed: %s\n",
+    "%s[%u] %s: assertion[%s] failed: %s\n",
     a_loc.file(),
     dango::u_int(a_loc.line()),
     a_loc.function(),
-    a_message
+    a_expr,
+    a_msg
   );
 }
 

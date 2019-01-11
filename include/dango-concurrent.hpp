@@ -10,7 +10,7 @@
 /*** dango_crit dango_try_crit ***/
 
 #define dango_crit(name) \
-if constexpr(auto const DANGO_APPEND_LINE(dango_crit_var_) = (name).lock())
+if constexpr(auto const DANGO_APPEND_LINE(dango_crit_var_) = (name).lock(); true)
 
 #define dango_try_crit(name) \
 if(auto const DANGO_APPEND_LINE(dango_crit_var_) = (name).try_lock())
@@ -37,7 +37,7 @@ final
 private:
   enum class
   state:
-  dango::uint32
+  dango::uint8
   {
     EXECUTED, EXECUTING, INITIAL
   };
@@ -314,7 +314,6 @@ final
 public:
   locker(spin_mutex* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
   ~locker()noexcept{ m_lock->release(); }
-  explicit constexpr operator bool()const{ return true; }
 private:
   spin_mutex* const m_lock;
 public:
@@ -477,7 +476,6 @@ final
 public:
   locker(mutex* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
   ~locker()noexcept{ m_lock->release(); }
-  explicit constexpr operator bool()const{ return true; }
 private:
   mutex* const m_lock;
 public:
