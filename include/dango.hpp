@@ -1,6 +1,8 @@
 #ifndef __DANGO_HPP__
 #define __DANGO_HPP__ 1
 
+//#define DANGO_NO_DEBUG
+
 #include "dango-macro.hpp"
 #include "dango-def.hpp"
 #include "dango-int.hpp"

@@ -661,8 +661,8 @@ public:
 
   ~aligned_storage()noexcept = default;
 
-  auto get()noexcept->void*;
-  auto get()const noexcept->void const*;
+  constexpr auto get()noexcept->void*;
+  constexpr auto get()const noexcept->void const*;
 private:
   alignas(c_align) dango::byte m_storage[c_size];
 public:
@@ -671,7 +671,7 @@ public:
 
 template
 <dango::usize tp_size, dango::usize tp_align>
-auto
+constexpr auto
 dango::
 aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>::
 get
@@ -682,7 +682,7 @@ get
 
 template
 <dango::usize tp_size, dango::usize tp_align>
-auto
+constexpr auto
 dango::
 aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>::
 get

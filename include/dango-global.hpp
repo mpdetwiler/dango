@@ -62,8 +62,9 @@ private:
   void increment()noexcept;
   auto try_increment()noexcept->bool;
   void decrement()noexcept;
+  constexpr auto get()const noexcept->tp_type*;
 private:
-  dango::aligned_storage<sizeof(tp_ret), alignof(tp_ret)> m_storage;
+  mutable dango::aligned_storage<sizeof(tp_ret), alignof(tp_ret)> m_storage;
   dango::exec_once m_init;
   dango::spin_mutex m_lock;
   dango::usize m_ref_count;
@@ -179,6 +180,11 @@ final
 public:
   weak_incrementer(DANGO_SRC_LOC_ARG())noexcept;
   ~weak_incrementer()noexcept;
+public:
+  constexpr auto get()const noexcept->tp_type*{ return tp_storage.get(); }
+  constexpr auto operator -> ()const noexcept->tp_type*{ return tp_storage.get(); }
+  constexpr auto operator * ()const noexcept->tp_type&{ return *tp_storage.get(); }
+  explicit constexpr operator bool()const noexcept{ return true; }
 public:
   DANGO_IMMOBILE(weak_incrementer)
 };
@@ -347,6 +353,23 @@ decrement
   dango::destructor(a_ptr);
 }
 
+template
+<
+  typename tp_type,
+  typename tp_ret,
+  tp_ret(& tp_construct)()noexcept
+>
+constexpr auto
+dango::
+detail::
+global_storage
+<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+get
+()const noexcept->tp_type*
+{
+  return static_cast<tp_type*>(m_storage.get());
+}
+
 #undef DANGO_GLOBAL_STORAGE_ENABLE_SPEC
 
 #define DANGO_DEFINE_GLOBAL_IMPL(linkage, name, type, ...) \
@@ -374,7 +397,7 @@ name \
 noexcept->name##_dango_global::weak_type \
 { \
   static name##_dango_global::strong_type const s_strong{ }; \
-  return name##_dango_global::weak_type{ a_loc }; \
+  return name##_dango_global::weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
 }
 
 #define DANGO_DEFINE_GLOBAL_INLINE(name, type, ...) \
@@ -383,27 +406,8 @@ DANGO_DEFINE_GLOBAL_IMPL(inline, name, type, __VA_ARGS__)
 #define DANGO_DEFINE_GLOBAL_STATIC(name, type, ...) \
 DANGO_DEFINE_GLOBAL_IMPL(static, name, type, __VA_ARGS__)
 
-#include <cstdio>
-
-struct
-printer
-{
-  printer(dango::uint32 const a_x)noexcept
-  {
-    printf("printer constructor %u\n", a_x);
-  }
-
-  ~printer()noexcept
-  {
-    printf("printer destructor\n");
-  }
-
-  DANGO_IMMOBILE(printer)
-};
-
-DANGO_DEFINE_GLOBAL_INLINE(global_printer, printer const volatile, 7u)
-
-inline void use_printer()noexcept{ auto const a_printer = global_printer(); }
+#define dango_access_global(global_name, local_name) \
+if constexpr(auto const local_name = global_name())
 
 #endif
 

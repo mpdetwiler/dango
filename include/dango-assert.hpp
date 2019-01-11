@@ -271,6 +271,8 @@ dango::source_location const& name = dango::source_location::current()
 
 #define DANGO_SRC_LOC_ARG(name) dango::source_location const& name
 
+#define DANGO_SRC_LOC_ARG_FORWARD(name) name
+
 #else
 
 namespace
@@ -291,6 +293,8 @@ dango::detail
 dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
 
 #define DANGO_SRC_LOC_ARG(name) dango::detail::assert_dummy_tag const
+
+#define DANGO_SRC_LOC_ARG_FORWARD(name) dango::detail::assert_dummy_val
 
 #endif
 
