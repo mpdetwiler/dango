@@ -113,7 +113,8 @@ final
 
 #define DANGO_COMMA_TYPE(...) dango::parenth_type<void(__VA_ARGS__)noexcept>
 
-DANGO_DEFINE_GLOBAL_INLINE(s_tuple, DANGO_COMMA_TYPE(std::tuple<int, bool>), 1, true)
+DANGO_DEFINE_GLOBAL_INLINE
+(s_tuple, DANGO_COMMA_TYPE(std::tuple<bool, int, float> const), true, 5, 4.0f)
 
 auto
 main
