@@ -25,12 +25,12 @@ printer
 };
 
 
-DANGO_DEFINE_GLOBAL_INLINE(s_accessor, accessor const, )
+DANGO_DEFINE_GLOBAL_INLINE_CV(s_accessor, const, accessor{ })
 
 namespace
 test
 {
-  DANGO_DEFINE_GLOBAL_INLINE(s_printer, printer const, )
+  DANGO_DEFINE_GLOBAL_INLINE_CV(s_printer, const, printer{ })
 }
 
 printer::
@@ -77,44 +77,7 @@ accessor::
   printf("accessed\n");
 }
 
-#include <tuple>
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  struct parenth_type_help;
-
-  template
-  <typename tp_type>
-  struct parenth_type_help<void(tp_type)noexcept>;
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  using parenth_type =
-    typename detail::parenth_type_help<tp_type>::type;
-}
-
-template
-<typename tp_type>
-struct
-dango::
-detail::
-parenth_type_help<void(tp_type)noexcept>
-final
-{
-  using type = tp_type;
-};
-
-#define DANGO_COMMA_TYPE(...) dango::parenth_type<void(__VA_ARGS__)noexcept>
-
-DANGO_DEFINE_GLOBAL_INLINE
-(s_tuple, DANGO_COMMA_TYPE(std::tuple<bool, int, float> const), true, 5, 4.0f)
+DANGO_DEFINE_GLOBAL_INLINE(s_x, f)
 
 auto
 main

@@ -9,6 +9,7 @@ ret, \
 construct, \
 dango::enable_if \
 < \
+  !dango::is_array<type> && \
   dango::is_object<type> && \
   dango::is_same<dango::remove_cv<type>, ret> \
 >
@@ -380,11 +381,16 @@ decrement
 
 #undef DANGO_GLOBAL_STORAGE_ENABLE_SPEC
 
-#define DANGO_DEFINE_GLOBAL_IMPL(linkage, name, type, ...) \
+#define DANGO_DEFINE_GLOBAL_IMPL(linkage, name, cv, ...) \
 namespace \
 name##_dango_global \
 { \
-  using value_type = type; \
+  using value_type = decltype(__VA_ARGS__) cv; \
+  static_assert \
+  ( \
+    !dango::is_array<value_type> && \
+    dango::is_object<value_type> \
+  ); \
   using return_type = dango::remove_cv<value_type>; \
   linkage auto \
   construct \
@@ -409,11 +415,17 @@ noexcept->name##_dango_global::weak_type \
 } \
 linkage constexpr auto& name##_fast = *name##_dango_global::s_storage.get();
 
-#define DANGO_DEFINE_GLOBAL_INLINE(name, type, ...) \
-DANGO_DEFINE_GLOBAL_IMPL(inline, name, type, __VA_ARGS__)
+#define DANGO_DEFINE_GLOBAL_INLINE_CV(name, cv, ...) \
+DANGO_DEFINE_GLOBAL_IMPL(inline, name, cv, __VA_ARGS__)
 
-#define DANGO_DEFINE_GLOBAL_STATIC(name, type, ...) \
-DANGO_DEFINE_GLOBAL_IMPL(static, name, type, __VA_ARGS__)
+#define DANGO_DEFINE_GLOBAL_INLINE(name, ...) \
+DANGO_DEFINE_GLOBAL_INLINE_CV(name, , __VA_ARGS__)
+
+#define DANGO_DEFINE_GLOBAL_STATIC_CV(name, cv, ...) \
+DANGO_DEFINE_GLOBAL_IMPL(static, name, cv, __VA_ARGS__)
+
+#define DANGO_DEFINE_GLOBAL_STATIC(name, ...) \
+DANGO_DEFINE_GLOBAL_STATIC_CV(name, , __VA_ARGS__)
 
 #define dango_access_global(global_name, local_name) \
 if constexpr(auto const local_name = global_name(); true)
