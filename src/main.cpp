@@ -77,7 +77,7 @@ accessor::
   printf("accessed\n");
 }
 
-DANGO_DEFINE_GLOBAL_INLINE(s_x, f)
+DANGO_DEFINE_GLOBAL_INLINE(s_x, int{ 5 })
 
 auto
 main
