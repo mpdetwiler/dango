@@ -77,7 +77,9 @@ accessor::
   printf("accessed\n");
 }
 
-DANGO_DEFINE_GLOBAL_INLINE(s_x, int{ 5 })
+#include <tuple>
+
+DANGO_DEFINE_GLOBAL_INLINE(s_x, std::make_tuple(1, true, 2u, 3.5f))
 
 auto
 main
@@ -89,6 +91,20 @@ main
   }
 
   test::s_printer_fast.print("fast");
+
+  dango_access_global(s_x, a_x)
+  {
+    std::get<0>(*a_x) = 5;
+  }
+
+  dango::mutex a_lock{ };
+
+  dango::bound_cond_var a_cond{ a_lock };
+
+  dango_try_crit_bcv(a_cond, a_crit)
+  {
+    a_crit.notify();
+  }
 
   return 0;
 }

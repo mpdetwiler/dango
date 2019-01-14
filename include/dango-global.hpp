@@ -383,7 +383,7 @@ decrement
 
 #define DANGO_DEFINE_GLOBAL_IMPL(linkage, name, cv, ...) \
 namespace \
-name##_dango_global \
+name##_namespace \
 { \
   using value_type = decltype(__VA_ARGS__) cv; \
   static_assert \
@@ -408,12 +408,12 @@ name##_dango_global \
 [[nodiscard]] linkage auto \
 name \
 (DANGO_SRC_LOC_ARG_DEFAULT(a_loc)) \
-noexcept->name##_dango_global::weak_type \
+noexcept->name##_namespace::weak_type \
 { \
-  static name##_dango_global::strong_type const s_strong{ }; \
-  return name##_dango_global::weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
+  static name##_namespace::strong_type const s_strong{ }; \
+  return name##_namespace::weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
 } \
-linkage constexpr auto& name##_fast = *name##_dango_global::s_storage.get();
+linkage constexpr auto& name##_fast = *name##_namespace::s_storage.get();
 
 #define DANGO_DEFINE_GLOBAL_INLINE_CV(name, cv, ...) \
 DANGO_DEFINE_GLOBAL_IMPL(inline, name, cv, __VA_ARGS__)
