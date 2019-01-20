@@ -7,25 +7,25 @@
 #include "dango-assert.hpp"
 #include "dango-mem.hpp"
 
-/*** dango_crit dango_try_crit ***/
+/*** dango_crit ***/
 
-#define dango_crit(mutex_name) \
-if constexpr(auto const DANGO_APPEND_LINE(dango_crit_var_) = (mutex_name).lock(); true)
+#define dango_crit(lockable) \
+dango_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
 
-#define dango_crit_cv(cond_name, mutex_name, local_name) \
-if constexpr(auto const local_name = (cond_name).lock(mutex_name); true)
+#define dango_crit_full(lockable, local_name) \
+if constexpr(auto const local_name = (lockable).lock(); true)
 
-#define dango_crit_bcv(cond_name, local_name) \
-dango_crit_cv(cond_name, , local_name)
+#define dango_crit_cond(cond, mutex, local_name) \
+if constexpr(auto const local_name = (cond).lock(mutex); true)
 
-#define dango_try_crit(mutex_name) \
-if(auto const DANGO_APPEND_LINE(dango_crit_var_) = (mutex_name).try_lock())
+#define dango_try_crit(lockable) \
+dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
 
-#define dango_try_crit_cv(cond_name, mutex_name, local_name) \
-if(auto const local_name = (cond_name).try_lock(mutex_name))
+#define dango_try_crit_full(lockable, local_name) \
+if(auto const local_name = (lockable).try_lock())
 
-#define dango_try_crit_bcv(cond_name, local_name) \
-dango_try_crit_cv(cond_name, , local_name)
+#define dango_try_crit_cond(cond, mutex, local_name) \
+if(auto const local_name = (cond).try_lock(mutex))
 
 /*** exec_once ***/
 
@@ -447,7 +447,12 @@ namespace
 dango
 {
   class mutex;
-  class cond_var;
+}
+
+namespace
+dango::detail
+{
+  class cond_var_base;
 }
 
 class alignas(dango::cache_align_type)
@@ -455,7 +460,7 @@ dango::
 mutex
 final
 {
-  friend dango::cond_var;
+  friend dango::detail::cond_var_base;
 private:
   class locker;
   class try_locker;
@@ -542,29 +547,26 @@ try_lock
 {
   return try_locker{ this };
 }
-/*** cond_var ***/
+/*** cond_var_base ***/
 
 namespace
-dango
+dango::detail
 {
-  class cond_var;
+  class cond_var_base;
 }
 
 class alignas(dango::cache_align_type)
 dango::
-cond_var
+detail::
+cond_var_base
 {
 protected:
   class locker;
   class try_locker;
   using mutex_type = dango::mutex;
-public:
-  constexpr cond_var()noexcept;
-
-  ~cond_var()noexcept;
-
-  [[nodiscard]] auto lock(mutex_type&)noexcept->locker;
-  [[nodiscard]] auto try_lock(mutex_type&)noexcept->try_locker;
+protected:
+  constexpr cond_var_base()noexcept;
+  ~cond_var_base()noexcept;
 private:
   template
   <typename tp_type>
@@ -577,17 +579,18 @@ private:
   detail::primitive_storage m_storage;
   dango::exec_once m_init;
 public:
-  DANGO_IMMOBILE(cond_var)
+  DANGO_IMMOBILE(cond_var_base)
 };
 
 class
 dango::
-cond_var::
+detail::
+cond_var_base::
 locker
 final
 {
 public:
-  locker(mutex_type* const a_lock, cond_var* const a_cond)noexcept:
+  locker(mutex_type* const a_lock, cond_var_base* const a_cond)noexcept:
   m_lock{ a_lock->acquire() },
   m_cond{ a_cond }{ }
   ~locker()noexcept{ m_lock->release(); }
@@ -596,7 +599,7 @@ public:
   void notify_all()const noexcept{ m_cond->notify_all(m_lock); }
 private:
   mutex_type* const m_lock;
-  cond_var* const m_cond;
+  cond_var_base* const m_cond;
 public:
   DANGO_DELETE_DEFAULT(locker)
   DANGO_IMMOBILE(locker)
@@ -604,22 +607,35 @@ public:
 
 class
 dango::
-cond_var::
+detail::
+cond_var_base::
 try_locker
 final
 {
 public:
-  try_locker(mutex_type* const a_lock, cond_var* const a_cond)noexcept:
+  try_locker(mutex_type* const a_lock, cond_var_base* const a_cond)noexcept:
   m_lock{ a_lock->try_acquire() },
   m_cond{ a_cond }{ }
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
   explicit operator bool()const{ return m_lock != nullptr; }
-  void wait()const noexcept{ if(m_lock){ m_cond->wait(m_lock); } }
-  void notify()const noexcept{ if(m_lock){ m_cond->notify(m_lock); } }
-  void notify_all()const noexcept{ if(m_lock){ m_cond->notify_all(m_lock); } }
+
+  void wait(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))const noexcept
+  {
+    dango_assert_loc(m_lock != nullptr, a_loc); m_cond->wait(m_lock);
+  }
+
+  void notify(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))const noexcept
+  {
+    dango_assert_loc(m_lock != nullptr, a_loc); m_cond->notify(m_lock);
+  }
+
+  void notify_all(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))const noexcept
+  {
+    dango_assert_loc(m_lock != nullptr, a_loc); m_cond->notify_all(m_lock);
+  }
 private:
   mutex_type* const m_lock;
-  cond_var* const m_cond;
+  cond_var_base* const m_cond;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
   DANGO_IMMOBILE(try_locker)
@@ -627,14 +643,58 @@ public:
 
 constexpr
 dango::
-cond_var::
-cond_var
+detail::
+cond_var_base::
+cond_var_base
 ()noexcept:
 m_storage{ },
 m_init{ }
 {
 
 }
+
+/*** cond_var ***/
+
+namespace
+dango
+{
+  class cond_var;
+}
+
+class
+dango::
+cond_var
+final:
+dango::detail::cond_var_base
+{
+private:
+  using super_type = dango::detail::cond_var_base;
+public:
+  constexpr cond_var()noexcept;
+
+  ~cond_var()noexcept;
+
+  [[nodiscard]] auto lock(mutex_type&)noexcept->locker;
+  [[nodiscard]] auto try_lock(mutex_type&)noexcept->try_locker;
+public:
+  DANGO_IMMOBILE(cond_var)
+};
+
+constexpr
+dango::
+cond_var::
+cond_var
+()noexcept:
+super_type{ }
+{
+
+}
+
+inline
+dango::
+cond_var::
+~cond_var
+()noexcept = default;
 
 inline auto
 dango::
@@ -666,10 +726,10 @@ class
 dango::
 bound_cond_var
 final:
-dango::cond_var
+dango::detail::cond_var_base
 {
 private:
-  using super_type = dango::cond_var;
+  using super_type = dango::detail::cond_var_base;
 public:
   constexpr bound_cond_var(mutex_type&)noexcept;
 
@@ -888,11 +948,12 @@ release
   dango_assert(a_result == 0);
 }
 
-/*** cond_var ***/
+/*** cond_var_base ***/
 
 dango::
-cond_var::
-~cond_var
+detail::
+cond_var_base::
+~cond_var_base
 ()noexcept
 {
   using type = pthread_cond_t;
@@ -911,7 +972,8 @@ template
 <typename tp_type>
 auto
 dango::
-cond_var::
+detail::
+cond_var_base::
 get
 ()noexcept->tp_type*
 {
@@ -924,7 +986,8 @@ get
 
 void
 dango::
-cond_var::
+detail::
+cond_var_base::
 init
 ()noexcept
 {
@@ -955,7 +1018,8 @@ init
 
 void
 dango::
-cond_var::
+detail::
+cond_var_base::
 wait
 (mutex_type* const a_lock)noexcept
 {
@@ -972,7 +1036,8 @@ wait
 
 void
 dango::
-cond_var::
+detail::
+cond_var_base::
 notify
 (mutex_type* const)noexcept
 {
@@ -988,7 +1053,8 @@ notify
 
 void
 dango::
-cond_var::
+detail::
+cond_var_base::
 notify_all
 (mutex_type* const)noexcept
 {

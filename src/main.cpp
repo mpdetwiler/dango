@@ -101,9 +101,14 @@ main
 
   dango::bound_cond_var a_cond{ a_lock };
 
-  dango_try_crit_bcv(a_cond, a_crit)
+  dango_try_crit_full(a_cond, a_crit)
   {
     a_crit.notify();
+  }
+
+  dango_crit(a_cond)
+  {
+    dango_crit_var_109.notify();
   }
 
   return 0;
