@@ -385,7 +385,9 @@ detail::
 assert_fail_once
 ()noexcept
 {
-  while(assert_cpp::s_assert_fail_once.exchange(true));
+  bool const a_spin = assert_cpp::s_assert_fail_once.exchange(true);
+
+  while(a_spin);
 }
 
 #include <stdio.h>

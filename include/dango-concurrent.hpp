@@ -370,19 +370,13 @@ acquire
 
   auto a_count = dango::uint32(0);
 
-  do
+  while(m_locked.exchange<acquire>(true))
   {
-    if(!m_locked.load<acquire>())
+    while(m_locked.load<acquire>())
     {
-      if(!m_locked.exchange<acquire>(true))
-      {
-        break;
-      }
+      detail::spin_yield(a_count);
     }
-
-    detail::spin_yield(a_count);
   }
-  while(true);
 
   return this;
 }
@@ -792,11 +786,17 @@ dango::
 thread
 final
 {
+private:
+  static void
+  thread_create
+  (void(*)(void*)noexcept(false), void*)noexcept(false);
 public:
   static void yield()noexcept;
 };
 
 
+
+#ifndef DANGO_NO_MULTICORE
 inline void
 dango::
 detail::
@@ -805,12 +805,12 @@ spin_yield
 {
   auto const a_current = a_count++;
 
-  if(a_current < dango::uint32(10))
+  if(a_current < dango::uint32(16))
   {
     return;
   }
 
-  if(a_current < dango::uint32(100))
+  if(a_current < dango::uint32(128))
   {
     __builtin_ia32_pause();
 
@@ -819,6 +819,16 @@ spin_yield
 
   dango::thread::yield();
 }
+#else
+inline void
+dango::
+detail::
+spin_yield
+(dango::uint32&)noexcept
+{
+  dango::thread::yield();
+}
+#endif
 
 #ifdef DANGO_SOURCE_FILE
 
@@ -1070,6 +1080,72 @@ notify_all
 
 /*** thread ***/
 
+namespace
+dango::concurrent_cpp
+{
+  template
+  <typename tp_func>
+  auto thread_start_address(void*)noexcept->void*;
+}
+
+void
+dango::
+thread::
+thread_create
+(
+  void(* const a_thread_func)(void*)noexcept(false),
+  void* const a_thread_data
+)
+noexcept(false)
+{
+  constexpr auto const acquire = dango::mem_order::acquire;
+  constexpr auto const release = dango::mem_order::release;
+
+  dango::atomic<bool> a_starting{ true };
+
+  auto a_func =
+  [
+    a_thread_func,
+    a_thread_data,
+    &a_starting
+  ]
+  ()noexcept(false)->void
+  {
+    a_starting.store<release>(false);
+
+    a_thread_func(a_thread_data);
+  };
+
+  {
+    pthread_t a_thread_ID;
+
+    auto const a_result =
+    pthread_create
+    (
+      &a_thread_ID,
+      nullptr,
+      concurrent_cpp::thread_start_address<decltype(a_func)>,
+      &a_func
+    );
+
+    if(a_result == EAGAIN)
+    {
+      throw "thread creation failed"; // TODO
+    }
+
+    dango_assert(a_result == 0);
+
+    pthread_detach(a_thread_ID);
+  }
+
+  auto a_count = dango::uint32(0);
+
+  while(a_starting.load<acquire>())
+  {
+    detail::spin_yield(a_count);
+  }
+}
+
 void
 dango::
 thread::
@@ -1077,6 +1153,34 @@ yield
 ()noexcept
 {
   pthread_yield();
+}
+
+template
+<typename tp_func>
+auto
+dango::
+concurrent_cpp::
+thread_start_address
+(void* const a_data)noexcept->void*
+{
+  static_assert(!dango::is_const<tp_func>);
+  static_assert(dango::is_noexcept_move_constructible<tp_func>);
+  static_assert(dango::is_callable_ret<tp_func, void>);
+
+  auto const a_func_ptr = static_cast<tp_func*>(a_data);
+
+  auto const a_func = dango::move(*a_func_ptr);
+
+  try
+  {
+    a_func();
+  }
+  catch(...)
+  {
+
+  }
+
+  return nullptr;
 }
 
 #endif /* __linux__ */
