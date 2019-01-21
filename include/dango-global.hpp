@@ -279,7 +279,7 @@ global_storage
 get
 ()const noexcept->tp_type*
 {
-  return static_cast<tp_type*>(m_storage.get());
+  return dango::launder(static_cast<tp_type*>(m_storage.get()));
 }
 
 template

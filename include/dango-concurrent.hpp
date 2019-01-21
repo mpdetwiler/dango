@@ -885,7 +885,7 @@ get
 
   static_assert(dango::is_same<dango::remove_cv<tp_type>, type>);
 
-  return static_cast<type*>(m_storage.get());
+  return dango::launder(static_cast<type*>(m_storage.get()));
 }
 
 void
@@ -1008,7 +1008,7 @@ get
 
   static_assert(dango::is_same<dango::remove_cv<tp_type>, type>);
 
-  return static_cast<type*>(m_storage.get());
+  return dango::launder(static_cast<type*>(m_storage.get()));
 }
 
 void
@@ -1128,6 +1128,8 @@ noexcept(false)
   ]
   ()noexcept(false)->void
   {
+    pthread_detach(pthread_self());
+
     a_starting.store<release>(false);
 
     a_thread_func(a_thread_data);
@@ -1151,8 +1153,6 @@ noexcept(false)
     }
 
     dango_assert(a_result == 0);
-
-    pthread_detach(a_thread_ID);
   }
 
   auto a_count = dango::uint32(0);

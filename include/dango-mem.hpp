@@ -233,6 +233,72 @@ is_aligned
   return (a_int % dango::uintptr(a_align)) == dango::uintptr(0);
 }
 
+/*** operator_new operator_delete ***/
+
+namespace
+dango
+{
+  class heap_ptr;
+
+  auto operator_new(dango::usize, dango::usize)dango_new_noexcept()->dango::heap_ptr;
+  void operator_delete(void*, dango::usize, dango::usize)noexcept;
+}
+
+/*** heap_ptr ***/
+
+namespace
+dango
+{
+  class heap_ptr;
+}
+
+class
+dango::
+heap_ptr
+final
+{
+private:
+  constexpr heap_ptr(void*, dango::usize, dango::usize)noexcept;
+public:
+  ~heap_ptr()noexcept;
+  auto get()const noexcept->void*;
+  auto size()const noexcept->dango::usize;
+  auto align()const noexcept->dango::usize;
+private:
+  void* const m_ptr;
+  dango::usize const m_size;
+  dango::usize const m_align;
+public:
+  DANGO_DELETE_DEFAULT(heap_ptr)
+  DANGO_IMMOBILE(heap_ptr)
+};
+
+constexpr
+dango::
+heap_ptr::
+heap_ptr
+(
+  void* const a_ptr,
+  dango::usize const a_size,
+  dango::usize const a_align
+)
+noexcept:
+m_ptr{ a_ptr },
+m_size{ a_size },
+m_align{ a_align }
+{
+
+}
+
+inline
+dango::
+heap_ptr::
+~heap_ptr
+()noexcept
+{
+  dango::operator_delete(m_ptr, m_size, m_align);
+}
+
 /*** param_ptr ***/
 
 namespace
