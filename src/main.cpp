@@ -106,11 +106,6 @@ main
     a_crit.notify();
   }
 
-  dango_crit(a_cond)
-  {
-    dango_crit_var_109.notify();
-  }
-
   return 0;
 }
 

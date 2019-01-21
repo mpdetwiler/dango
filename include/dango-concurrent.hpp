@@ -787,14 +787,31 @@ thread
 final
 {
 private:
+  using thread_start_func = void(*)(void*)noexcept(false);
+private:
+  static thread_local bool t_is_dango_thread;
+
   static void
-  thread_create
-  (void(*)(void*)noexcept(false), void*)noexcept(false);
+  start_thread
+  (thread_start_func, void*)noexcept(false);
 public:
   static void yield()noexcept;
+  static auto self()noexcept->thread const&;
+
+  template
+  <typename tp_func>
+  static auto
+  create
+  (tp_func&&)noexcept(false)->
+  dango::enable_if<dango::is_callable_ret<tp_func, void>, thread>;
+private:
+  //thread()noexcept
 };
 
-
+inline thread_local bool
+dango::
+thread::
+t_is_dango_thread = false;
 
 #ifndef DANGO_NO_MULTICORE
 inline void
@@ -1091,9 +1108,9 @@ dango::concurrent_cpp
 void
 dango::
 thread::
-thread_create
+start_thread
 (
-  void(* const a_thread_func)(void*)noexcept(false),
+  thread_start_func const a_thread_func,
   void* const a_thread_data
 )
 noexcept(false)
@@ -1163,7 +1180,7 @@ concurrent_cpp::
 thread_start_address
 (void* const a_data)noexcept->void*
 {
-  static_assert(!dango::is_const<tp_func>);
+  static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
   static_assert(dango::is_callable_ret<tp_func, void>);
 
@@ -1177,7 +1194,7 @@ thread_start_address
   }
   catch(...)
   {
-
+    dango::terminate();
   }
 
   return nullptr;
