@@ -240,7 +240,7 @@ dango
 {
   class heap_ptr;
 
-  auto operator_new(dango::usize, dango::usize)dango_new_noexcept()->dango::heap_ptr;
+  auto operator_new(dango::usize, dango::usize)dango_new_noexcept(true)->dango::heap_ptr;
   void operator_delete(void*, dango::usize, dango::usize)noexcept;
 }
 
@@ -257,15 +257,19 @@ dango::
 heap_ptr
 final
 {
+  friend auto dango::operator_new(dango::usize, dango::usize)dango_new_noexcept()->dango::heap_ptr;
 private:
-  constexpr heap_ptr(void*, dango::usize, dango::usize)noexcept;
+  using value_type = void*;
+private:
+  constexpr heap_ptr(value_type, dango::usize, dango::usize)noexcept;
 public:
   ~heap_ptr()noexcept;
-  auto get()const noexcept->void*;
+  auto get()const noexcept->value_type;
   auto size()const noexcept->dango::usize;
   auto align()const noexcept->dango::usize;
+  auto dismiss()noexcept->value_type;
 private:
-  void* const m_ptr;
+  value_type m_ptr;
   dango::usize const m_size;
   dango::usize const m_align;
 public:
@@ -278,7 +282,7 @@ dango::
 heap_ptr::
 heap_ptr
 (
-  void* const a_ptr,
+  value_type const a_ptr,
   dango::usize const a_size,
   dango::usize const a_align
 )
@@ -296,7 +300,50 @@ heap_ptr::
 ~heap_ptr
 ()noexcept
 {
-  dango::operator_delete(m_ptr, m_size, m_align);
+  if(m_ptr)
+  {
+    dango::operator_delete(m_ptr, m_size, m_align);
+  }
+}
+
+inline auto
+dango::
+heap_ptr::
+get
+()const noexcept->value_type
+{
+  return m_ptr;
+}
+
+inline auto
+dango::
+heap_ptr::
+size
+()const noexcept->dango::usize
+{
+  return m_size;
+}
+
+inline auto
+dango::
+heap_ptr::
+align
+()const noexcept->dango::usize
+{
+  return m_align;
+}
+
+inline auto
+dango::
+heap_ptr::
+dismiss
+()noexcept->value_type
+{
+  auto const a_ptr = m_ptr;
+
+  m_ptr = nullptr;
+
+  return a_ptr;
 }
 
 /*** param_ptr ***/
@@ -758,6 +805,72 @@ get
 }
 
 #undef DANGO_ALIGNED_STORAGE_ENABLE_SPEC
+
+#ifdef DANGO_SOURCE_FILE
+
+#include <new>
+
+auto
+dango::
+operator_new
+(
+  dango::usize const a_size_arg,
+  dango::usize const a_align_arg
+)
+dango_new_noexcept(true)->dango::heap_ptr
+{
+  dango_assert(a_size_arg != dango::usize(0));
+  dango_assert(dango::is_pow_two(a_align_arg));
+
+  auto const a_size = dango::next_multiple(a_size_arg, a_align_arg);
+  auto const a_align = std::align_val_t{ a_align_arg };
+
+  if constexpr(dango::c_operator_new_noexcept)
+  {
+    try
+    {
+      auto const a_ptr = ::operator new(a_size, a_align);
+
+      return dango::heap_ptr{ a_ptr, a_size_arg, a_align_arg };
+    }
+    catch(...)
+    {
+#ifndef DANGO_NO_DEBUG
+      dango_unreachable_msg("memory allocation failed");
+#else
+      dango::terminate();
+#endif
+    }
+  }
+  else
+  {
+    auto const a_ptr = ::operator new(a_size, a_align);
+
+    return dango::heap_ptr{ a_ptr, a_size_arg, a_align_arg };
+  }
+}
+
+void
+dango::
+operator_delete
+(
+  void* const a_ptr,
+  dango::usize const a_size_arg,
+  dango::usize const a_align_arg
+)
+noexcept
+{
+  dango_assert(a_ptr != nullptr);
+  dango_assert(a_size_arg != dango::usize(0));
+  dango_assert(dango::is_pow_two(a_align_arg));
+
+  auto const a_size = dango::next_multiple(a_size_arg, a_align_arg);
+  auto const a_align = std::align_val_t{ a_align_arg };
+
+  ::operator delete(a_ptr, a_size, a_align);
+}
+
+#endif
 
 #endif
 

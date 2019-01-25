@@ -321,10 +321,11 @@ increment
       return;
     }
   }
-
+#ifndef DANGO_NO_DEBUG
   dango_unreachable_msg("attempt to initialize already-destroyed global");
-
+#else
   dango::terminate();
+#endif
 }
 
 template
