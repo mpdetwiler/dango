@@ -788,8 +788,9 @@ final
 {
 private:
   using thread_start_func = void(*)(void*)noexcept(false);
+  class control_block;
 private:
-  static thread_local bool t_is_dango_thread;
+  static auto new_control_block()noexcept->control_block*;
 
   static void
   start_thread
@@ -808,10 +809,23 @@ private:
   //thread()noexcept
 };
 
-inline thread_local bool
+class
 dango::
 thread::
-t_is_dango_thread = false;
+control_block
+final
+{
+private:
+  dango::atomic<dango::usize> m_ref_count;
+  dango::mutex m_mutex;
+  dango::bound_cond_var m_cond;
+  bool m_running;
+  dango::usize m_waiter_count;
+public:
+  DANGO_IMMOBILE(control_block)
+};
+
+
 
 #ifndef DANGO_NO_MULTICORE
 inline void

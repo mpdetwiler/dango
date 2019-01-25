@@ -240,7 +240,10 @@ dango
 {
   class heap_ptr;
 
-  auto operator_new(dango::usize, dango::usize)dango_new_noexcept(true)->dango::heap_ptr;
+  [[nodiscard]] auto
+  operator_new
+  (dango::usize, dango::usize)dango_new_noexcept(true)->dango::heap_ptr;
+
   void operator_delete(void*, dango::usize, dango::usize)noexcept;
 }
 
