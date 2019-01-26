@@ -55,7 +55,6 @@ private:
   };
 public:
   constexpr exec_once()noexcept;
-
   ~exec_once()noexcept = default;
 
   template
@@ -302,9 +301,7 @@ private:
   class try_locker;
 public:
   constexpr spin_mutex()noexcept;
-
   ~spin_mutex()noexcept = default;
-
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
 private:
@@ -537,39 +534,6 @@ try_lock
   return try_locker{ this };
 }
 
-/*** static_mutex ***/
-
-namespace
-dango
-{
-  class static_mutex;
-}
-
-struct
-dango::
-static_mutex
-final:
-dango::detail::mutex_base
-{
-private:
-  using super_type = dango::detail::mutex_base;
-public:
-  constexpr static_mutex()noexcept;
-  ~static_mutex()noexcept = default;
-public:
-  DANGO_IMMOBILE(static_mutex)
-};
-
-constexpr
-dango::
-static_mutex::
-static_mutex
-()noexcept:
-super_type{ }
-{
-
-}
-
 /*** mutex ***/
 
 namespace
@@ -610,6 +574,39 @@ mutex::
 ()noexcept
 {
   destroy();
+}
+
+/*** static_mutex ***/
+
+namespace
+dango
+{
+  class static_mutex;
+}
+
+struct
+dango::
+static_mutex
+final:
+dango::detail::mutex_base
+{
+private:
+  using super_type = dango::detail::mutex_base;
+public:
+  constexpr static_mutex()noexcept;
+  ~static_mutex()noexcept = default;
+public:
+  DANGO_IMMOBILE(static_mutex)
+};
+
+constexpr
+dango::
+static_mutex::
+static_mutex
+()noexcept:
+super_type{ }
+{
+
 }
 
 /*** cond_var_base ***/
@@ -658,7 +655,11 @@ final
 public:
   locker(mutex_type* const a_lock, cond_var_base* const a_cond)noexcept:
   m_lock{ a_lock->acquire() },
-  m_cond{ a_cond }{ }
+  m_cond{ a_cond }
+  {
+
+  }
+
   ~locker()noexcept{ m_lock->release(); }
   void wait()const noexcept{ m_cond->wait(m_lock); }
   void notify()const noexcept{ m_cond->notify(m_lock); }
@@ -681,7 +682,11 @@ final
 public:
   try_locker(mutex_type* const a_lock, cond_var_base* const a_cond)noexcept:
   m_lock{ a_lock->try_acquire() },
-  m_cond{ a_cond }{ }
+  m_cond{ a_cond }
+  {
+
+  }
+
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
   explicit operator bool()const{ return m_lock != nullptr; }
 
@@ -957,9 +962,6 @@ try_lock
 {
   return try_locker{ m_lock, this };
 }
-
-inline dango::static_mutex s_test_mutex{ };
-inline dango::static_cond_var_mutex s_test_cv{ s_test_mutex };
 
 /*** thread ***/
 
