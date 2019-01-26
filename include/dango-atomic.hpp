@@ -44,18 +44,51 @@ is_valid_mem_order
 }
 
 namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  constexpr auto
+  is_atomic_help
+  ()noexcept->bool
+  {
+    using temp_type = dango::remove_cv<tp_type>;
+
+    temp_type a_temp{ };
+
+    return __atomic_always_lock_free(sizeof(temp_type), &a_temp);
+  }
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type, typename tp_enabled = dango::enable_tag>
+  constexpr bool const is_atomic = false;
+
+  template
+  <typename tp_type>
+  constexpr bool const
+  is_atomic
+  <
+    tp_type,
+    dango::enable_if
+    <
+      dango::is_int<dango::underlying_type<tp_type>> ||
+      dango::is_ptr<tp_type> ||
+      dango::is_member_ptr<tp_type> ||
+      dango::is_same<dango::remove_cv<tp_type>, bool>
+    >
+  > = detail::is_atomic_help<tp_type>();
+}
+
+namespace
 dango
 {
   template
   <typename tp_type, typename tp_enabled = dango::enable_tag>
   class atomic;
-
-  template
-  <typename tp_type>
-  class atomic<tp_type*, dango::enable_tag>;
-
-  template<>
-  class atomic<bool, dango::enable_tag>;
 }
 
 /*************************************************************/
@@ -65,7 +98,8 @@ dango::enable_if \
 < \
   dango::is_int<dango::underlying_type<param>> && \
   !dango::is_const<param> && \
-  !dango::is_volatile<param> \
+  !dango::is_volatile<param> && \
+  dango::is_atomic<param> \
 >
 
 namespace
@@ -85,8 +119,6 @@ final
 {
 public:
   using value_type = tp_type;
-
-  static constexpr auto is_lock_free()noexcept->bool;
 public:
   explicit constexpr atomic(value_type)noexcept;
 
@@ -214,19 +246,6 @@ public:
   DANGO_DELETE_DEFAULT(atomic)
   DANGO_IMMOBILE(atomic)
 };
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-atomic<tp_type, DANGO_ATOMIC_INT_ENABLE_SPEC(tp_type)>::
-is_lock_free
-()noexcept->bool
-{
-  auto a_temp = value_type(0);
-
-  return __atomic_always_lock_free(sizeof(value_type), &a_temp);
-}
 
 template
 <typename tp_type>
@@ -376,17 +395,32 @@ DANGO_ATOMIC_DEFINE_FETCH(xor_fetch)
 
 /*************************************************************/
 
+#define DANGO_ATOMIC_PTR_ENABLE_SPEC(param) \
+dango::enable_if \
+< \
+  (dango::is_ptr<param> || dango::is_member_ptr<param>) && \
+  !dango::is_const<param> && \
+  !dango::is_volatile<param> && \
+  dango::is_atomic<param> \
+>
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  class atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>;
+}
+
 template
 <typename tp_type>
 class
 dango::
-atomic<tp_type*, dango::enable_tag>
+atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>
 final
 {
 public:
-  using value_type = tp_type*;
-
-  static constexpr auto is_lock_free()noexcept->bool;
+  using value_type = tp_type;
 public:
   explicit constexpr atomic(value_type)noexcept;
 
@@ -410,24 +444,60 @@ public:
   auto compare_exchange(value_type&, value_type)noexcept->bool;
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_pointed = tp_type>
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_tp_type = tp_type,
+    typename tp_pointed = dango::remove_ptr<tp_type>
+  >
   auto fetch_add(dango::ssize)noexcept->
-  dango::enable_if<!dango::is_func<tp_pointed>, value_type>;
+  dango::enable_if
+  <
+    !dango::is_member_ptr<tp_tp_type> &&
+    !dango::is_func<tp_pointed>,
+    value_type
+  >;
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_pointed = tp_type>
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_tp_type = tp_type,
+    typename tp_pointed = dango::remove_ptr<tp_type>
+  >
   auto fetch_sub(dango::ssize)noexcept->
-  dango::enable_if<!dango::is_func<tp_pointed>, value_type>;
+  dango::enable_if
+  <
+    !dango::is_member_ptr<tp_tp_type> &&
+    !dango::is_func<tp_pointed>,
+    value_type
+  >;
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_pointed = tp_type>
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_tp_type = tp_type,
+    typename tp_pointed = dango::remove_ptr<tp_type>
+  >
   auto add_fetch(dango::ssize)noexcept->
-  dango::enable_if<!dango::is_func<tp_pointed>, value_type>;
+  dango::enable_if
+  <
+    !dango::is_member_ptr<tp_tp_type> &&
+    !dango::is_func<tp_pointed>,
+    value_type
+  >;
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_pointed = tp_type>
+  <
+    dango::mem_order tp_order = dango::mem_order::seq_cst,
+    typename tp_tp_type = tp_type,
+    typename tp_pointed = dango::remove_ptr<tp_type>
+  >
   auto sub_fetch(dango::ssize)noexcept->
-  dango::enable_if<!dango::is_func<tp_pointed>, value_type>;
+  dango::enable_if
+  <
+    !dango::is_member_ptr<tp_tp_type> &&
+    !dango::is_func<tp_pointed>,
+    value_type
+  >;
 private:
   value_type m_data;
 public:
@@ -437,22 +507,9 @@ public:
 
 template
 <typename tp_type>
-constexpr auto
-dango::
-atomic<tp_type*, dango::enable_tag>::
-is_lock_free
-()noexcept->bool
-{
-  auto a_temp = value_type(nullptr);
-
-  return __atomic_always_lock_free(sizeof(value_type), &a_temp);
-}
-
-template
-<typename tp_type>
 constexpr
 dango::
-atomic<tp_type*, dango::enable_tag>::
+atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
 atomic
 (value_type const a_data)noexcept:
 m_data{ a_data }
@@ -466,7 +523,7 @@ template
 <dango::mem_order tp_order>
 auto
 dango::
-atomic<tp_type*, dango::enable_tag>::
+atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
 load
 ()const noexcept->value_type
 {
@@ -488,7 +545,7 @@ template
 <dango::mem_order tp_order>
 void
 dango::
-atomic<tp_type*, dango::enable_tag>::
+atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
 store
 (value_type const a_data)noexcept
 {
@@ -510,7 +567,7 @@ template
 <dango::mem_order tp_order>
 auto
 dango::
-atomic<tp_type*, dango::enable_tag>::
+atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
 exchange
 (value_type const a_data)noexcept->value_type
 {
@@ -528,7 +585,7 @@ template
 >
 auto
 dango::
-atomic<tp_type*, dango::enable_tag>::
+atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
 compare_exchange
 (value_type& a_expected, value_type const a_data)noexcept->bool
 {
@@ -560,13 +617,22 @@ compare_exchange
 template \
 <typename tp_type> \
 template \
-<dango::mem_order tp_order, typename tp_pointed> \
+< \
+  dango::mem_order tp_order, \
+  typename tp_tp_type, \
+  typename tp_pointed \
+> \
 auto \
 dango:: \
-atomic<tp_type*, dango::enable_tag>:: \
+atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>:: \
 name \
-(dango::ssize const a_data)noexcept-> \
-dango::enable_if<!dango::is_func<tp_pointed>, value_type> \
+(dango::ssize const a_arg)noexcept-> \
+dango::enable_if \
+< \
+  !dango::is_member_ptr<tp_tp_type> && \
+  !dango::is_func<tp_pointed>, \
+  value_type\
+> \
 { \
   static_assert(detail::is_valid_mem_order(tp_order)); \
 \
@@ -574,7 +640,7 @@ dango::enable_if<!dango::is_func<tp_pointed>, value_type> \
   __atomic_##name \
   ( \
     &m_data, \
-    a_data * dango::ssize(sizeof(tp_type)), \
+    a_arg * dango::ssize(sizeof(value_type)), \
     dango::s_int(tp_order) \
   ); \
 \
@@ -589,7 +655,18 @@ DANGO_ATOMIC_DEFINE_FETCH(sub_fetch)
 
 #undef DANGO_ATOMIC_DEFINE_FETCH
 
+#undef DANGO_ATOMIC_PTR_ENABLE_SPEC
+
 /*************************************************************/
+
+static_assert(dango::is_atomic<bool>);
+
+namespace
+dango
+{
+  template<>
+  class atomic<bool, dango::enable_tag>;
+}
 
 template<>
 class
@@ -599,8 +676,6 @@ final
 {
 public:
   using value_type = bool;
-
-  static constexpr auto is_lock_free()noexcept->bool;
 public:
   explicit constexpr atomic(value_type)noexcept;
 
@@ -628,17 +703,6 @@ public:
   DANGO_DELETE_DEFAULT(atomic)
   DANGO_IMMOBILE(atomic)
 };
-
-constexpr auto
-dango::
-atomic<bool, dango::enable_tag>::
-is_lock_free
-()noexcept->bool
-{
-  auto a_temp = value_type(false);
-
-  return __atomic_always_lock_free(sizeof(value_type), &a_temp);
-}
 
 constexpr
 dango::

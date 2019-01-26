@@ -123,7 +123,9 @@ private:
   float                         m_18;
   double                        m_19;
   dango::real                   m_20;
-  void(* m_21)();
+  void(* m_21)()noexcept;
+  void(fundamental_union::* m_22)()noexcept;
+  char fundamental_union::* m_23;
 };
 
 namespace
