@@ -429,40 +429,30 @@ try_lock
   return try_locker{ this };
 }
 
-/*** mutex ***/
+/*** mutex_base ***/
 
 namespace
 dango::detail
 {
   using primitive_storage = dango::aligned_storage<dango::usize(48)>;
-}
-
-namespace
-dango
-{
-  class mutex;
-}
-
-namespace
-dango::detail
-{
+  class mutex_base;
   class cond_var_base;
 }
 
 class alignas(dango::cache_align_type)
 dango::
-mutex
-final
+detail::
+mutex_base
 {
   friend dango::detail::cond_var_base;
-private:
+protected:
   class locker;
   class try_locker;
+protected:
+  constexpr mutex_base()noexcept;
+  ~mutex_base()noexcept = default;
+  void destroy()noexcept;
 public:
-  constexpr mutex()noexcept;
-
-  ~mutex()noexcept;
-
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
 private:
@@ -470,27 +460,28 @@ private:
   <typename tp_type>
   auto get()noexcept->tp_type*;
   void init()noexcept;
-  auto acquire()noexcept->mutex*;
-  auto try_acquire()noexcept->mutex*;
+  auto acquire()noexcept->mutex_base*;
+  auto try_acquire()noexcept->mutex_base*;
   void release()noexcept;
 private:
   detail::primitive_storage m_storage;
   dango::exec_once m_init;
 public:
-  DANGO_IMMOBILE(mutex)
+  DANGO_IMMOBILE(mutex_base)
 };
 
 class
 dango::
-mutex::
+detail::
+mutex_base::
 locker
 final
 {
 public:
-  locker(mutex* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
+  locker(mutex_base* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
   ~locker()noexcept{ m_lock->release(); }
 private:
-  mutex* const m_lock;
+  mutex_base* const m_lock;
 public:
   DANGO_DELETE_DEFAULT(locker)
   DANGO_IMMOBILE(locker)
@@ -498,16 +489,17 @@ public:
 
 class
 dango::
-mutex::
+detail::
+mutex_base::
 try_locker
 final
 {
 public:
-  try_locker(mutex* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
+  try_locker(mutex_base* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
   explicit operator bool()const{ return m_lock != nullptr; }
 private:
-  mutex* const m_lock;
+  mutex_base* const m_lock;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
   DANGO_IMMOBILE(try_locker)
@@ -515,8 +507,9 @@ public:
 
 constexpr
 dango::
-mutex::
-mutex
+detail::
+mutex_base::
+mutex_base
 ()noexcept:
 m_storage{ },
 m_init{ }
@@ -526,7 +519,8 @@ m_init{ }
 
 inline auto
 dango::
-mutex::
+detail::
+mutex_base::
 lock
 ()noexcept->locker
 {
@@ -535,12 +529,89 @@ lock
 
 inline auto
 dango::
-mutex::
+detail::
+mutex_base::
 try_lock
 ()noexcept->try_locker
 {
   return try_locker{ this };
 }
+
+/*** static_mutex ***/
+
+namespace
+dango
+{
+  class static_mutex;
+}
+
+struct
+dango::
+static_mutex
+final:
+dango::detail::mutex_base
+{
+private:
+  using super_type = dango::detail::mutex_base;
+public:
+  constexpr static_mutex()noexcept;
+  ~static_mutex()noexcept = default;
+public:
+  DANGO_IMMOBILE(static_mutex)
+};
+
+constexpr
+dango::
+static_mutex::
+static_mutex
+()noexcept:
+super_type{ }
+{
+
+}
+
+/*** mutex ***/
+
+namespace
+dango
+{
+  class mutex;
+}
+
+struct
+dango::
+mutex
+final:
+dango::detail::mutex_base
+{
+private:
+  using super_type = dango::detail::mutex_base;
+public:
+  constexpr mutex()noexcept;
+  ~mutex()noexcept;
+public:
+  DANGO_IMMOBILE(mutex)
+};
+
+constexpr
+dango::
+mutex::
+mutex
+()noexcept:
+super_type{ }
+{
+
+}
+
+inline
+dango::
+mutex::
+~mutex
+()noexcept
+{
+  destroy();
+}
+
 /*** cond_var_base ***/
 
 namespace
@@ -557,10 +628,11 @@ cond_var_base
 protected:
   class locker;
   class try_locker;
-  using mutex_type = dango::mutex;
+  using mutex_type = dango::detail::mutex_base;
 protected:
   constexpr cond_var_base()noexcept;
-  ~cond_var_base()noexcept;
+  ~cond_var_base()noexcept = default;
+  void destroy()noexcept;
 private:
   template
   <typename tp_type>
@@ -665,9 +737,7 @@ private:
   using super_type = dango::detail::cond_var_base;
 public:
   constexpr cond_var()noexcept;
-
   ~cond_var()noexcept;
-
   [[nodiscard]] auto lock(mutex_type&)noexcept->locker;
   [[nodiscard]] auto try_lock(mutex_type&)noexcept->try_locker;
 public:
@@ -688,7 +758,10 @@ inline
 dango::
 cond_var::
 ~cond_var
-()noexcept = default;
+()noexcept
+{
+  destroy();
+}
 
 inline auto
 dango::
@@ -708,40 +781,91 @@ try_lock
   return try_locker{ &a_lock, this };
 }
 
-/*** bound_cond_var ***/
+/*** static_cond_var ***/
 
 namespace
 dango
 {
-  class bound_cond_var;
+  class static_cond_var;
 }
 
 class
 dango::
-bound_cond_var
+static_cond_var
 final:
 dango::detail::cond_var_base
 {
 private:
   using super_type = dango::detail::cond_var_base;
 public:
-  constexpr bound_cond_var(mutex_type&)noexcept;
+  constexpr static_cond_var()noexcept;
+  ~static_cond_var()noexcept = default;
+  [[nodiscard]] auto lock(mutex_type&)noexcept->locker;
+  [[nodiscard]] auto try_lock(mutex_type&)noexcept->try_locker;
+public:
+  DANGO_IMMOBILE(static_cond_var)
+};
 
-  ~bound_cond_var()noexcept;
+constexpr
+dango::
+static_cond_var::
+static_cond_var
+()noexcept:
+super_type{ }
+{
 
+}
+
+inline auto
+dango::
+static_cond_var::
+lock
+(mutex_type& a_lock)noexcept->locker
+{
+  return locker{ &a_lock, this };
+}
+
+inline auto
+dango::
+static_cond_var::
+try_lock
+(mutex_type& a_lock)noexcept->try_locker
+{
+  return try_locker{ &a_lock, this };
+}
+
+/*** cond_var_mutex ***/
+
+namespace
+dango
+{
+  class cond_var_mutex;
+}
+
+class
+dango::
+cond_var_mutex
+final:
+dango::detail::cond_var_base
+{
+private:
+  using super_type = dango::detail::cond_var_base;
+public:
+  explicit constexpr cond_var_mutex(mutex_type&)noexcept;
+  ~cond_var_mutex()noexcept;
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
 private:
   mutex_type* const m_lock;
 public:
-  DANGO_DELETE_DEFAULT(bound_cond_var)
-  DANGO_IMMOBILE(bound_cond_var)
+  DANGO_DELETE_DEFAULT(cond_var_mutex)
+  DANGO_IMMOBILE(cond_var_mutex)
 };
 
 constexpr
 dango::
-bound_cond_var::
-bound_cond_var
+cond_var_mutex::
+cond_var_mutex
 (mutex_type& a_lock)noexcept:
 super_type{ },
 m_lock{ &a_lock }
@@ -751,13 +875,16 @@ m_lock{ &a_lock }
 
 inline
 dango::
-bound_cond_var::
-~bound_cond_var
-()noexcept = default;
+cond_var_mutex::
+~cond_var_mutex
+()noexcept
+{
+  destroy();
+}
 
 inline auto
 dango::
-bound_cond_var::
+cond_var_mutex::
 lock
 ()noexcept->locker
 {
@@ -766,12 +893,73 @@ lock
 
 inline auto
 dango::
-bound_cond_var::
+cond_var_mutex::
 try_lock
 ()noexcept->try_locker
 {
   return try_locker{ m_lock, this };
 }
+
+/*** static_cond_var_mutex ***/
+
+namespace
+dango
+{
+  class static_cond_var_mutex;
+}
+
+class
+dango::
+static_cond_var_mutex
+final:
+dango::detail::cond_var_base
+{
+private:
+  using super_type = dango::detail::cond_var_base;
+  using mutex_type = dango::static_mutex;
+public:
+  explicit constexpr static_cond_var_mutex(mutex_type&)noexcept;
+  ~static_cond_var_mutex()noexcept = default;
+  [[nodiscard]] auto lock()noexcept->locker;
+  [[nodiscard]] auto try_lock()noexcept->try_locker;
+private:
+  mutex_type* const m_lock;
+public:
+  DANGO_DELETE_DEFAULT(static_cond_var_mutex)
+  DANGO_IMMOBILE(static_cond_var_mutex)
+};
+
+constexpr
+dango::
+static_cond_var_mutex::
+static_cond_var_mutex
+(mutex_type& a_lock)noexcept:
+super_type{ },
+m_lock{ &a_lock }
+{
+
+}
+
+inline auto
+dango::
+static_cond_var_mutex::
+lock
+()noexcept->locker
+{
+  return locker{ m_lock, this };
+}
+
+inline auto
+dango::
+static_cond_var_mutex::
+try_lock
+()noexcept->try_locker
+{
+  return try_locker{ m_lock, this };
+}
+
+inline dango::static_mutex s_test_mutex{ };
+inline dango::static_cond_var_mutex s_test_cv{ s_test_mutex };
 
 /*** thread ***/
 
@@ -818,7 +1006,7 @@ final
 private:
   dango::atomic<dango::usize> m_ref_count;
   dango::mutex m_mutex;
-  dango::bound_cond_var m_cond;
+  dango::cond_var_mutex m_cond;
   bool m_running;
   dango::usize m_waiter_count;
 public:
@@ -868,30 +1056,14 @@ spin_yield
 #include <pthread.h>
 #include <errno.h>
 
-/*** mutex ***/
-
-dango::
-mutex::
-~mutex
-()noexcept
-{
-  using type = pthread_mutex_t;
-
-  if(!m_init.has_executed())
-  {
-    return;
-  }
-
-  auto const a_result = pthread_mutex_destroy(get<type>());
-
-  dango_assert(a_result == 0);
-}
+/*** mutex_base ***/
 
 template
 <typename tp_type>
 auto
 dango::
-mutex::
+detail::
+mutex_base::
 get
 ()noexcept->tp_type*
 {
@@ -904,7 +1076,8 @@ get
 
 void
 dango::
-mutex::
+detail::
+mutex_base::
 init
 ()noexcept
 {
@@ -933,11 +1106,31 @@ init
   );
 }
 
+void
+dango::
+detail::
+mutex_base::
+destroy
+()noexcept
+{
+  using type = pthread_mutex_t;
+
+  if(!m_init.has_executed())
+  {
+    return;
+  }
+
+  auto const a_result = pthread_mutex_destroy(get<type>());
+
+  dango_assert(a_result == 0);
+}
+
 auto
 dango::
-mutex::
+detail::
+mutex_base::
 acquire
-()noexcept->mutex*
+()noexcept->mutex_base*
 {
   using type = pthread_mutex_t;
 
@@ -952,9 +1145,10 @@ acquire
 
 auto
 dango::
-mutex::
+detail::
+mutex_base::
 try_acquire
-()noexcept->mutex*
+()noexcept->mutex_base*
 {
   using type = pthread_mutex_t;
 
@@ -974,7 +1168,8 @@ try_acquire
 
 void
 dango::
-mutex::
+detail::
+mutex_base::
 release
 ()noexcept
 {
@@ -990,24 +1185,6 @@ release
 }
 
 /*** cond_var_base ***/
-
-dango::
-detail::
-cond_var_base::
-~cond_var_base
-()noexcept
-{
-  using type = pthread_cond_t;
-
-  if(!m_init.has_executed())
-  {
-    return;
-  }
-
-  auto const a_result = pthread_cond_destroy(get<type>());
-
-  dango_assert(a_result == 0);
-}
 
 template
 <typename tp_type>
@@ -1055,6 +1232,25 @@ init
       pthread_condattr_destroy(&a_attr);
     }
   );
+}
+
+void
+dango::
+detail::
+cond_var_base::
+destroy
+()noexcept
+{
+  using type = pthread_cond_t;
+
+  if(!m_init.has_executed())
+  {
+    return;
+  }
+
+  auto const a_result = pthread_cond_destroy(get<type>());
+
+  dango_assert(a_result == 0);
 }
 
 void

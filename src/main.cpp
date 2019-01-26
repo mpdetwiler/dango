@@ -99,7 +99,7 @@ main
 
   dango::mutex a_lock{ };
 
-  dango::bound_cond_var a_cond{ a_lock };
+  dango::cond_var_mutex a_cond{ a_lock };
 
   dango_try_crit_full(a_cond, a_crit)
   {
