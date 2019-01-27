@@ -519,7 +519,7 @@ dango
     typename tp_ret = dango::detail::scope_guard<dango::decay<tp_func>>,
     typename tp_enabled = decltype(tp_ret{ dango::declval<tp_func>() })
   >
-  auto
+  [[nodiscard]] auto
   make_guard
   (tp_func&&)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
   dango::enable_if
@@ -653,7 +653,7 @@ dango
     typename tp_ret = dango::detail::finally_guard<dango::decay<tp_func>>,
     typename tp_enabled = decltype(tp_ret{ dango::declval<tp_func>() })
   >
-  auto
+  [[nodiscard]] auto
   make_finally
   (tp_func&&)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
   dango::enable_if

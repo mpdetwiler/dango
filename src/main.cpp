@@ -85,6 +85,15 @@ auto
 main
 ()noexcept->dango::s_int
 {
+  auto const a_finally =
+  dango::make_finally
+  (
+    []()noexcept->void
+    {
+      printf("finally\n");
+    }
+  );
+
   dango_access_global(test::s_printer, a_printer)
   {
     a_printer->print("hi");
