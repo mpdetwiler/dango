@@ -1196,13 +1196,30 @@ dango::enable_if<dango::is_callable_ret<tp_func, void>, thread>
   constexpr auto const acquire = dango::mem_order::acquire;
   constexpr auto const release = dango::mem_order::release;
 
+  using func_type = dango::decay<tp_func>;
+
+  auto a_mem = dango::operator_new(sizeof(func_type), alignof(func_type));
+
+  auto const a_thread_func_ptr =
+    ::new (dango::placement, a_mem.get()) func_type{ dango::forward<tp_func>(a_thread_func) };
+
+  auto a_guard =
+  dango::make_guard
+  (
+    [a_thread_func_ptr]()noexcept->void
+    {
+      dango::destructor(a_thread_func_ptr);
+    }
+  );
+
   thread a_ret{ dango::null };
 
   dango::atomic<bool> a_starting{ true };
 
   auto a_func =
   [
-    a_thread_func = dango::forward<tp_func>(a_thread_func),
+    a_mem = a_mem.get(),
+    &a_thread_func = *a_thread_func_ptr,
     &a_ret,
     &a_starting
   ]
@@ -1211,6 +1228,17 @@ dango::enable_if<dango::is_callable_ret<tp_func, void>, thread>
     a_ret = dango::thread::self();
 
     a_starting.store<release>(false);
+
+    auto const a_finally =
+    dango::make_finally
+    (
+      [a_mem, &a_thread_func]()noexcept->void
+      {
+        dango::destructor(&a_thread_func);
+
+        dango::operator_delete(a_mem, sizeof(func_type), alignof(func_type));
+      }
+    );
 
     a_thread_func();
   };
@@ -1223,6 +1251,10 @@ dango::enable_if<dango::is_callable_ret<tp_func, void>, thread>
   {
     detail::spin_yield(a_count);
   }
+
+  a_guard.dismiss();
+
+  a_mem.dismiss();
 
   return a_ret;
 }

@@ -11,6 +11,8 @@
 #define restrict dango_restrict
 #endif
 
+#include "dango-macro.hpp"
+
 namespace
 dango
 {
@@ -56,7 +58,7 @@ dango
   null_tag
   final
   {
-
+    DANGO_TAG_TYPE(null_tag)
   };
 
   inline constexpr dango::null_tag const null{ };

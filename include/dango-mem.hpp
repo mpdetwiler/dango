@@ -14,7 +14,7 @@ dango
   placement_tag
   final
   {
-
+    DANGO_TAG_TYPE(placement_tag)
   };
 
   inline constexpr dango::placement_tag const placement{ };

@@ -318,7 +318,7 @@ dango::detail
   assert_dummy_tag
   final
   {
-
+    DANGO_TAG_TYPE(assert_dummy_tag)
   };
 
   inline constexpr assert_dummy_tag const assert_dummy_val{ };

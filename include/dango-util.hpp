@@ -393,5 +393,294 @@ dango::enable_if<dango::is_uint<tp_uint>, dango::remove_cv<tp_uint>>
   return (a_mod != tp_uint(0)) ? (a_arg2 * (a_div + tp_uint(1))) : a_arg1;
 }
 
+/*** make_guard ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_func>
+  class scope_guard;
+}
+
+template
+<typename tp_func>
+class
+dango::
+detail::
+scope_guard
+{
+private:
+  using func_type = dango::decay<tp_func>;
+  static_assert(dango::is_same<func_type, tp_func>);
+public:
+  template
+  <
+    typename tp_func_type = func_type,
+    dango::enable_if<dango::is_copy_constructible<tp_func_type>> = dango::enable_val
+  >
+  explicit constexpr
+  scope_guard(func_type const&)noexcept(dango::is_noexcept_copy_constructible<func_type>);
+
+  template
+  <
+    typename tp_func_type = func_type,
+    dango::enable_if<dango::is_move_constructible<tp_func_type>> = dango::enable_val
+  >
+  explicit constexpr
+  scope_guard(func_type&&)noexcept(dango::is_noexcept_move_constructible<func_type>);
+
+  ~scope_guard()noexcept;
+  void dismiss()noexcept;
+private:
+  func_type m_func;
+  bool m_dismissed;
+public:
+  DANGO_DELETE_DEFAULT(scope_guard)
+  DANGO_IMMOBILE(scope_guard)
+};
+
+template
+<typename tp_func>
+template
+<
+  typename tp_func_type,
+  dango::enable_if<dango::is_copy_constructible<tp_func_type>>
+>
+constexpr
+dango::
+detail::
+scope_guard<tp_func>::
+scope_guard
+(func_type const& a_func)
+noexcept(dango::is_noexcept_copy_constructible<func_type>):
+m_func{ a_func },
+m_dismissed{ false }
+{
+
+}
+
+template
+<typename tp_func>
+template
+<
+  typename tp_func_type,
+  dango::enable_if<dango::is_move_constructible<tp_func_type>>
+>
+constexpr
+dango::
+detail::
+scope_guard<tp_func>::
+scope_guard
+(func_type&& a_func)
+noexcept(dango::is_noexcept_move_constructible<func_type>):
+m_func{ dango::move(a_func) },
+m_dismissed{ false }
+{
+
+}
+
+template
+<typename tp_func>
+dango::
+detail::
+scope_guard<tp_func>::
+~scope_guard
+()noexcept
+{
+  static_assert(noexcept(m_func()));
+
+  if(m_dismissed)
+  {
+    return;
+  }
+
+  m_func();
+}
+
+template
+<typename tp_func>
+void
+dango::
+detail::
+scope_guard<tp_func>::
+dismiss
+()noexcept
+{
+  m_dismissed = true;
+}
+
+namespace
+dango
+{
+  template
+  <
+    typename tp_func,
+    typename tp_ret = dango::detail::scope_guard<dango::decay<tp_func>>,
+    typename tp_enabled = decltype(tp_ret{ dango::declval<tp_func>() })
+  >
+  auto
+  make_guard
+  (tp_func&&)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
+  dango::enable_if
+  <
+    dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void>,
+    tp_ret
+  >;
+}
+
+template
+<
+  typename tp_func,
+  typename tp_ret,
+  typename tp_enabled
+>
+auto
+dango::
+make_guard
+(tp_func&& a_func)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
+dango::enable_if
+<
+  dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void>,
+  tp_ret
+>
+{
+  return tp_ret{ dango::forward<tp_func>(a_func) };
+}
+
+/*** make_finally ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_func>
+  class finally_guard;
+}
+
+template
+<typename tp_func>
+class
+dango::
+detail::
+finally_guard
+{
+private:
+  using func_type = dango::decay<tp_func>;
+  static_assert(dango::is_same<func_type, tp_func>);
+public:
+  template
+  <
+    typename tp_func_type = func_type,
+    dango::enable_if<dango::is_copy_constructible<tp_func_type>> = dango::enable_val
+  >
+  explicit constexpr
+  finally_guard(func_type const&)noexcept(dango::is_noexcept_copy_constructible<func_type>);
+
+  template
+  <
+    typename tp_func_type = func_type,
+    dango::enable_if<dango::is_move_constructible<tp_func_type>> = dango::enable_val
+  >
+  explicit constexpr
+  finally_guard(func_type&&)noexcept(dango::is_noexcept_move_constructible<func_type>);
+
+  ~finally_guard()noexcept;
+private:
+  func_type m_func;
+public:
+  DANGO_DELETE_DEFAULT(finally_guard)
+  DANGO_IMMOBILE(finally_guard)
+};
+
+template
+<typename tp_func>
+template
+<
+  typename tp_func_type,
+  dango::enable_if<dango::is_copy_constructible<tp_func_type>>
+>
+constexpr
+dango::
+detail::
+finally_guard<tp_func>::
+finally_guard
+(func_type const& a_func)
+noexcept(dango::is_noexcept_copy_constructible<func_type>):
+m_func{ a_func }
+{
+
+}
+
+template
+<typename tp_func>
+template
+<
+  typename tp_func_type,
+  dango::enable_if<dango::is_move_constructible<tp_func_type>>
+>
+constexpr
+dango::
+detail::
+finally_guard<tp_func>::
+finally_guard
+(func_type&& a_func)
+noexcept(dango::is_noexcept_move_constructible<func_type>):
+m_func{ dango::move(a_func) }
+{
+
+}
+
+template
+<typename tp_func>
+dango::
+detail::
+finally_guard<tp_func>::
+~finally_guard
+()noexcept
+{
+  static_assert(noexcept(m_func()));
+
+  m_func();
+}
+
+namespace
+dango
+{
+  template
+  <
+    typename tp_func,
+    typename tp_ret = dango::detail::finally_guard<dango::decay<tp_func>>,
+    typename tp_enabled = decltype(tp_ret{ dango::declval<tp_func>() })
+  >
+  auto
+  make_finally
+  (tp_func&&)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
+  dango::enable_if
+  <
+    dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void>,
+    tp_ret
+  >;
+}
+
+template
+<
+  typename tp_func,
+  typename tp_ret,
+  typename tp_enabled
+>
+auto
+dango::
+make_finally
+(tp_func&& a_func)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
+dango::enable_if
+<
+  dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void>,
+  tp_ret
+>
+{
+  return tp_ret{ dango::forward<tp_func>(a_func) };
+}
+
 #endif
 
