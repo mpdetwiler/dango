@@ -56,7 +56,7 @@ dango::detail
 
     temp_type a_temp{ };
 
-    return __atomic_always_lock_free(sizeof(temp_type), &a_temp);
+    return __atomic_always_lock_free(sizeof(a_temp), &a_temp);
   }
 }
 
@@ -74,6 +74,24 @@ dango
   <tp_type, dango::enable_if<dango::is_scalar<tp_type> && !dango::is_null_ptr<tp_type>>> =
     detail::is_atomic_help<tp_type>();
 }
+
+static_assert(dango::is_atomic<bool>);
+static_assert(dango::is_atomic<char>);
+static_assert(dango::is_atomic<dango::wchar>);
+static_assert(dango::is_atomic<dango::dchar>);
+static_assert(dango::is_atomic<wchar_t>);
+static_assert(dango::is_atomic<dango::uint8>);
+static_assert(dango::is_atomic<dango::sint8>);
+static_assert(dango::is_atomic<dango::uint16>);
+static_assert(dango::is_atomic<dango::sint16>);
+static_assert(dango::is_atomic<dango::uint32>);
+static_assert(dango::is_atomic<dango::sint32>);
+static_assert(dango::is_atomic<dango::usize>);
+static_assert(dango::is_atomic<dango::ssize>);
+static_assert(dango::is_atomic<dango::uintptr>);
+static_assert(dango::is_atomic<dango::sintptr>);
+static_assert(dango::is_atomic<void*>);
+static_assert(dango::is_atomic<void(*)()noexcept>);
 
 namespace
 dango

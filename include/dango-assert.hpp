@@ -264,7 +264,7 @@ noexcept
 namespace
 dango::detail
 {
-  void
+  [[noreturn]] void
   unreachable_func
   (
     char const* const,
@@ -334,7 +334,7 @@ dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
 
 #endif
 
-/*** terminate set_terminate ***/
+/*** terminate get_terminate set_terminate ***/
 
 namespace
 dango

@@ -979,12 +979,19 @@ final
 private:
   using thread_start_func = void(*)(void*)noexcept(false);
   class control_block;
+  class notifier;
 private:
   static auto new_control_block()noexcept->control_block*;
 
   static void
   start_thread
   (thread_start_func, void*)noexcept(false);
+
+  template
+  <typename tp_func>
+  static void thread_start_address(void*)noexcept(false);
+
+  static thread const& s_main_init;
 public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
@@ -992,12 +999,26 @@ public:
   template
   <typename tp_func>
   static auto
-  create
-  (tp_func&&)noexcept(false)->
+  create(tp_func&&)noexcept(false)->
   dango::enable_if<dango::is_callable_ret<tp_func, void>, thread>;
 private:
-  //thread()noexcept
+  thread()noexcept;
+public:
+  constexpr thread(dango::null_tag)noexcept;
+  thread(thread const&)noexcept;
+  thread(thread&&)noexcept;
+  ~thread()noexcept;
+  auto operator = (dango::null_tag)&noexcept->thread&;
+  auto operator = (thread const&)&noexcept->thread&;
+  auto operator = (thread&&)&noexcept->thread&;
+  explicit constexpr operator bool()const noexcept;
+  auto is_running()const noexcept->bool;
+  void join()const noexcept;
+private:
+  control_block* m_control;
 };
+
+/*** control_block ***/
 
 class
 dango::
@@ -1005,17 +1026,227 @@ thread::
 control_block
 final
 {
+public:
+  static auto operator new(dango::usize)dango_new_noexcept(true)->void*;
+  static void operator delete(void*)noexcept;
+public:
+  constexpr control_block()noexcept;
+  ~control_block()noexcept;
+  void increment()noexcept;
+  auto decrement()noexcept->bool;
+  void wait()noexcept;
+  void notify_all()noexcept;
+  auto is_running()const noexcept->bool;
 private:
   dango::atomic<dango::usize> m_ref_count;
-  dango::mutex m_mutex;
-  dango::cond_var_mutex m_cond;
+  mutable dango::mutex m_mutex;
+  mutable dango::cond_var_mutex m_cond;
   bool m_running;
   dango::usize m_waiter_count;
 public:
   DANGO_IMMOBILE(control_block)
 };
 
+inline void
+dango::
+thread::
+control_block::
+operator delete
+(void* const a_ptr)noexcept
+{
+  dango::operator_delete(a_ptr, sizeof(control_block), alignof(control_block));
+}
 
+inline
+dango::
+thread::
+control_block::
+~control_block
+()noexcept = default;
+
+inline void
+dango::
+thread::
+control_block::
+increment
+()noexcept
+{
+  m_ref_count.add_fetch(dango::usize(1));
+}
+
+inline auto
+dango::
+thread::
+control_block::
+decrement
+()noexcept->bool
+{
+  return m_ref_count.sub_fetch(dango::usize(1)) == dango::usize(0);
+}
+
+/*** thread ***/
+
+inline dango::thread const&
+dango::
+thread::
+s_main_init = dango::thread::self();
+
+constexpr
+dango::
+thread::
+thread
+(dango::null_tag const)noexcept:
+m_control{ nullptr }
+{
+
+}
+
+inline
+dango::
+thread::
+thread
+(thread const& a_thread)noexcept:
+m_control{ a_thread.m_control }
+{
+  if(m_control)
+  {
+    m_control->increment();
+  }
+}
+
+inline
+dango::
+thread::
+thread
+(thread&& a_thread)noexcept:
+m_control{ a_thread.m_control }
+{
+  a_thread.m_control = nullptr;
+}
+
+inline
+dango::
+thread::
+~thread
+()noexcept
+{
+  if(m_control && m_control->decrement())
+  {
+    delete m_control;
+  }
+}
+
+inline auto
+dango::
+thread::
+operator =
+(dango::null_tag const)&noexcept->thread&
+{
+  thread a_temp{ dango::null };
+
+  dango::swap(m_control, a_temp.m_control);
+
+  return *this;
+}
+
+inline auto
+dango::
+thread::
+operator =
+(thread const& a_thread)&noexcept->thread&
+{
+  thread a_temp{ a_thread };
+
+  dango::swap(m_control, a_temp.m_control);
+
+  return *this;
+}
+
+inline auto
+dango::
+thread::
+operator =
+(thread&& a_thread)&noexcept->thread&
+{
+  thread a_temp{ dango::move(a_thread) };
+
+  dango::swap(m_control, a_temp.m_control);
+
+  return *this;
+}
+
+constexpr
+dango::
+thread::
+operator bool
+()const noexcept
+{
+  return m_control != nullptr;
+}
+
+template
+<typename tp_func>
+auto
+dango::
+thread::
+create
+(tp_func&& a_thread_func)noexcept(false)->
+dango::enable_if<dango::is_callable_ret<tp_func, void>, thread>
+{
+  constexpr auto const acquire = dango::mem_order::acquire;
+  constexpr auto const release = dango::mem_order::release;
+
+  thread a_ret{ dango::null };
+
+  dango::atomic<bool> a_starting{ true };
+
+  auto a_func =
+  [
+    a_thread_func = dango::forward<tp_func>(a_thread_func),
+    &a_ret,
+    &a_starting
+  ]
+  ()noexcept(false)->void
+  {
+    a_ret = dango::thread::self();
+
+    a_starting.store<release>(false);
+
+    a_thread_func();
+  };
+
+  start_thread(thread_start_address<decltype(a_func)>, &a_func);
+
+  auto a_count = dango::uint32(0);
+
+  while(a_starting.load<acquire>())
+  {
+    detail::spin_yield(a_count);
+  }
+
+  return a_ret;
+}
+
+template
+<typename tp_func>
+void
+dango::
+thread::
+thread_start_address
+(void* const a_data)noexcept(false)
+{
+  static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
+  static_assert(dango::is_noexcept_move_constructible<tp_func>);
+  static_assert(dango::is_callable_ret<tp_func, void>);
+
+  auto const a_func_ptr = static_cast<tp_func*>(a_data);
+
+  auto const a_func = dango::move(*a_func_ptr);
+
+  a_func();
+}
+
+/*** spin_yield ***/
 
 #ifndef DANGO_NO_MULTICORE
 inline void
@@ -1052,6 +1283,192 @@ spin_yield
 #endif
 
 #ifdef DANGO_SOURCE_FILE
+
+/*** control_block ***/
+
+auto
+dango::
+thread::
+control_block::
+operator new
+(dango::usize const a_size)dango_new_noexcept(true)->void*
+{
+  constexpr auto c_size = sizeof(control_block);
+
+  dango_assert(a_size == c_size);
+
+  return dango::operator_new(c_size, alignof(control_block)).dismiss();
+}
+
+constexpr
+dango::
+thread::
+control_block::
+control_block
+()noexcept:
+m_ref_count{ dango::usize(1) },
+m_mutex{ },
+m_cond{ m_mutex },
+m_running{ true },
+m_waiter_count{ dango::usize(0) }
+{
+
+}
+
+void
+dango::
+thread::
+control_block::
+wait
+()noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    while(m_running)
+    {
+      ++m_waiter_count;
+
+      a_crit.wait();
+
+      --m_waiter_count;
+    }
+  }
+}
+
+void
+dango::
+thread::
+control_block::
+notify_all
+()noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    m_running = false;
+
+    if(m_waiter_count != dango::usize(0))
+    {
+      a_crit.notify_all();
+    }
+  }
+}
+
+auto
+dango::
+thread::
+control_block::
+is_running
+()const noexcept->bool
+{
+  dango_crit(m_mutex)
+  {
+    return m_running;
+  }
+}
+
+/*** notifier ***/
+
+class
+dango::
+thread::
+notifier
+final
+{
+public:
+  constexpr notifier(thread const&)noexcept;
+  ~notifier()noexcept;
+private:
+  control_block* const m_control;
+public:
+  DANGO_DELETE_DEFAULT(notifier)
+  DANGO_IMMOBILE(notifier)
+};
+
+constexpr
+dango::
+thread::
+notifier::
+notifier
+(thread const& a_thread)noexcept:
+m_control{ a_thread.m_control }
+{
+
+}
+
+dango::
+thread::
+notifier::
+~notifier
+()noexcept
+{
+  m_control->notify_all();
+}
+
+/*** thread ***/
+
+dango::
+thread::
+thread
+()noexcept:
+m_control{ new_control_block() }
+{
+
+}
+
+auto
+dango::
+thread::
+is_running
+()const noexcept->bool
+{
+  dango_assert(m_control != nullptr);
+
+  return m_control->is_running();
+}
+
+void
+dango::
+thread::
+join
+()const noexcept
+{
+  dango_assert(m_control != nullptr);
+
+  m_control->wait();
+}
+
+auto
+dango::
+thread::
+new_control_block
+()noexcept->control_block*
+{
+  try
+  {
+    return new control_block{ };
+  }
+  catch(...)
+  {
+#ifndef DANGO_NO_DEBUG
+    dango_unreachable_msg("thread control block allocation failed");
+#else
+    dango::terminate();
+#endif
+  }
+}
+
+auto
+dango::
+thread::
+self
+()noexcept->thread const&
+{
+  thread_local thread const t_thread{ };
+
+  thread_local notifier const t_notifier{ t_thread };
+
+  return t_thread;
+}
 
 #ifdef __linux__
 

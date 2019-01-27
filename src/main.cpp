@@ -106,6 +106,15 @@ main
     a_crit.notify();
   }
 
+  dango_assert(dango::thread::self().is_running());
+
+  auto const a_thread =
+    dango::thread::create([]()noexcept->void{ printf("thread print\n"); });
+
+  a_thread.join();
+
+  dango_assert(!a_thread.is_running());
+
   return 0;
 }
 
