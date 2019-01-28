@@ -1014,6 +1014,8 @@ public:
   explicit constexpr operator bool()const noexcept;
   auto is_running()const noexcept->bool;
   void join()const noexcept;
+  constexpr auto dango_operator_is_null()const noexcept->bool;
+  constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
 private:
   control_block* m_control;
 };
@@ -1182,6 +1184,24 @@ operator bool
 ()const noexcept
 {
   return m_control != nullptr;
+}
+
+constexpr auto
+dango::
+thread::
+dango_operator_is_null
+()const noexcept->bool
+{
+  return m_control == nullptr;
+}
+
+constexpr auto
+dango::
+thread::
+dango_operator_equals
+(thread const& a_thread)const noexcept->bool
+{
+  return m_control == a_thread.m_control;
 }
 
 template

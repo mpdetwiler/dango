@@ -285,7 +285,7 @@ unreachable_func
 )
 noexcept
 {
-  detail::assert_fail_log("", a_msg, a_loc);
+  detail::assert_fail_log("unreachable", a_msg, a_loc);
 
   __builtin_trap();
 }

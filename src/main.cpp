@@ -118,11 +118,15 @@ main
   dango_assert(dango::thread::self().is_running());
 
   auto const a_thread =
-    dango::thread::create([]()noexcept->void{ printf("thread print\n"); });
+    dango::thread::create([]()noexcept(false)->void{ printf("thread print\n"); });
+
+  dango_assert(a_thread != null);
 
   a_thread.join();
 
   dango_assert(!a_thread.is_running());
+
+  dango_assert(a_thread == a_thread);
 
   return 0;
 }
