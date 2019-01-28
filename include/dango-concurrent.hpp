@@ -1012,7 +1012,7 @@ public:
   auto operator = (thread const&)&noexcept->thread&;
   auto operator = (thread&&)&noexcept->thread&;
   explicit constexpr operator bool()const noexcept;
-  auto is_running()const noexcept->bool;
+  auto is_alive()const noexcept->bool;
   void join()const noexcept;
   constexpr auto dango_operator_is_null()const noexcept->bool;
   constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
@@ -1038,12 +1038,12 @@ public:
   auto decrement()noexcept->bool;
   void wait()noexcept;
   void notify_all()noexcept;
-  auto is_running()const noexcept->bool;
+  auto is_alive()const noexcept->bool;
 private:
   dango::atomic<dango::usize> m_ref_count;
   mutable dango::mutex m_mutex;
   mutable dango::cond_var_mutex m_cond;
-  bool m_running;
+  bool m_alive;
   dango::usize m_waiter_count;
 public:
   DANGO_IMMOBILE(control_block)
@@ -1334,6 +1334,10 @@ spin_yield
 }
 #endif
 
+/*** rec_mutex_base ***/
+
+
+
 #ifdef DANGO_SOURCE_FILE
 
 /*** control_block ***/
@@ -1361,7 +1365,7 @@ control_block
 m_ref_count{ dango::usize(1) },
 m_mutex{ },
 m_cond{ m_mutex },
-m_running{ true },
+m_alive{ true },
 m_waiter_count{ dango::usize(0) }
 {
 
@@ -1376,7 +1380,7 @@ wait
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(m_running)
+    while(m_alive)
     {
       ++m_waiter_count;
 
@@ -1396,7 +1400,7 @@ notify_all
 {
   dango_crit_full(m_cond, a_crit)
   {
-    m_running = false;
+    m_alive = false;
 
     if(m_waiter_count != dango::usize(0))
     {
@@ -1409,12 +1413,12 @@ auto
 dango::
 thread::
 control_block::
-is_running
+is_alive
 ()const noexcept->bool
 {
   dango_crit(m_mutex)
   {
-    return m_running;
+    return m_alive;
   }
 }
 
@@ -1470,12 +1474,12 @@ m_control{ new_control_block() }
 auto
 dango::
 thread::
-is_running
+is_alive
 ()const noexcept->bool
 {
   dango_assert(m_control != nullptr);
 
-  return m_control->is_running();
+  return m_control->is_alive();
 }
 
 void

@@ -22,6 +22,8 @@ printer
   }
 
   DANGO_IMMOBILE(printer)
+
+  constexpr auto dango_operator_is_null()const noexcept->bool{ return false; }
 };
 
 
@@ -115,16 +117,17 @@ main
     a_crit.notify();
   }
 
-  dango_assert(dango::thread::self().is_running());
+  dango_assert(dango::thread::self().is_alive());
 
   auto const a_thread =
     dango::thread::create([]()noexcept(false)->void{ printf("thread print\n"); });
 
   dango_assert(a_thread != null);
+  dango_assert(a_thread != dango::thread::self());
 
   a_thread.join();
 
-  dango_assert(!a_thread.is_running());
+  dango_assert(!a_thread.is_alive());
 
   dango_assert(a_thread == a_thread);
 
