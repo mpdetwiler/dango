@@ -83,6 +83,11 @@ accessor::
 
 DANGO_DEFINE_GLOBAL_INLINE(s_x, std::make_tuple(1, true, 2u, 3.5f))
 
+struct sucker
+{
+  ~sucker()noexcept(false){ }
+};
+
 auto
 main
 ()noexcept->dango::s_int
@@ -130,6 +135,8 @@ main
   dango_assert(!a_thread.is_alive());
 
   dango_assert(a_thread == a_thread);
+
+
 
   return 0;
 }

@@ -23,6 +23,7 @@ import os;
 env = Environment(tools = b_tools)
 
 env.Append(ENV = {'PATH':os.environ['PATH']})
+#env.Replace(CXX = 'i686-w64-mingw32-g++')
 
 h_paths = []
 
@@ -34,7 +35,7 @@ elif(platform.startswith('win32') or platform.startswith('msys')):
   print 'platform: ' + platform
 # env.Append(CXXFLAGS=['-static-libgcc','-static-libstdc++'])
 # env.Append(LINKFLAGS=['-static-libgcc','-static-libstdc++'])
-  env.Append(LINKFLAGS = ['-flto-partition=none'])
+# env.Append(LINKFLAGS = ['-flto-partition=none'])
 
 elif(platform.startswith('darwin')):
 	Exit(1)

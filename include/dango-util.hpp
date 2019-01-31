@@ -489,6 +489,7 @@ scope_guard<tp_func>::
 ()noexcept
 {
   static_assert(noexcept(m_func()));
+  static_assert(dango::is_noexcept_destructible<func_type>);
 
   if(m_dismissed)
   {
@@ -524,7 +525,8 @@ dango
   (tp_func&&)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
   dango::enable_if
   <
-    dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void>,
+    dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void> &&
+    dango::is_noexcept_destructible<dango::decay<tp_func>>,
     tp_ret
   >;
 }
@@ -541,7 +543,8 @@ make_guard
 (tp_func&& a_func)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
 dango::enable_if
 <
-  dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void>,
+  dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void> &&
+  dango::is_noexcept_destructible<dango::decay<tp_func>>,
   tp_ret
 >
 {
@@ -640,6 +643,7 @@ finally_guard<tp_func>::
 ()noexcept
 {
   static_assert(noexcept(m_func()));
+  static_assert(dango::is_noexcept_destructible<func_type>);
 
   m_func();
 }
@@ -658,7 +662,8 @@ dango
   (tp_func&&)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
   dango::enable_if
   <
-    dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void>,
+    dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void> &&
+    dango::is_noexcept_destructible<dango::decay<tp_func>>,
     tp_ret
   >;
 }
@@ -675,7 +680,8 @@ make_finally
 (tp_func&& a_func)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
 dango::enable_if
 <
-  dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void>,
+  dango::is_noexcept_callable_ret<dango::decay<tp_func>&, void> &&
+  dango::is_noexcept_destructible<dango::decay<tp_func>>,
   tp_ret
 >
 {
