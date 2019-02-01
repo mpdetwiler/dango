@@ -3,6 +3,7 @@
 
 #include "dango-macro.hpp"
 #include "dango-traits.hpp"
+#include "dango-int.hpp"
 #include "dango-atomic.hpp"
 #include "dango-assert.hpp"
 #include "dango-mem.hpp"
@@ -60,10 +61,17 @@ deadline
 protected:
   using value_type = dango::uint64;
 protected:
+  static constexpr auto safe_add(value_type, value_type)noexcept->value_type;
+protected:
   constexpr deadline(value_type)noexcept;
 public:
   virtual ~deadline()noexcept = default;
   auto has_passed()const noexcept->bool;
+  auto remaining()const noexcept->value_type;
+  auto get()const noexcept->value_type;
+  void set(value_type)noexcept;
+  void set_rel(value_type)noexcept;
+  void add(value_type)noexcept;
 private:
   virtual auto tick_count()const noexcept->value_type = 0;
 private:
@@ -72,6 +80,21 @@ public:
   DANGO_DELETE_DEFAULT(deadline)
   DANGO_IMMOBILE(deadline)
 };
+
+constexpr auto
+dango::
+deadline::
+safe_add
+(value_type const a_lhs, value_type const a_rhs)noexcept->value_type
+{
+  value_type const a_max_add =
+    dango::integer::MAX_VAL<value_type> - a_lhs;
+
+  auto const a_add =
+    dango::min(a_max_add, a_rhs);
+
+  return a_lhs + a_add;
+}
 
 constexpr
 dango::
@@ -92,6 +115,60 @@ has_passed
   return tick_count() >= m_deadline;
 }
 
+inline auto
+dango::
+deadline::
+remaining
+()const noexcept->value_type
+{
+  auto const a_now = tick_count();
+
+  if(a_now >= m_deadline)
+  {
+    return value_type(0);
+  }
+
+  return m_deadline - a_now;
+}
+
+inline auto
+dango::
+deadline::
+get
+()const noexcept->value_type
+{
+  return m_deadline;
+}
+
+inline void
+dango::
+deadline::
+set
+(value_type const a_deadline)noexcept
+{
+  m_deadline = a_deadline;
+}
+
+inline void
+dango::
+deadline::
+set_rel
+(value_type const a_interval)noexcept
+{
+  auto const a_now = tick_count();
+
+  m_deadline = safe_add(a_now, a_interval);
+}
+
+inline void
+dango::
+deadline::
+add
+(value_type const a_val)noexcept
+{
+  m_deadline = safe_add(m_deadline, a_val);
+}
+
 namespace
 dango::detail
 {
@@ -108,7 +185,11 @@ dango::deadline
 private:
   using super_type = dango::deadline;
 public:
+  static auto make(value_type)noexcept->deadline_unbiased;
+  static auto make_rel(value_type)noexcept->deadline_unbiased;
+private:
   constexpr deadline_unbiased(value_type)noexcept;
+public:
   virtual ~deadline_unbiased()noexcept = default;
 private:
   virtual auto tick_count()const noexcept->value_type override;
@@ -116,6 +197,28 @@ public:
   DANGO_DELETE_DEFAULT(deadline_unbiased)
   DANGO_IMMOBILE(deadline_unbiased)
 };
+
+inline auto
+dango::
+detail::
+deadline_unbiased::
+make
+(value_type const a_deadline)noexcept->deadline_unbiased
+{
+  return deadline_unbiased{ a_deadline };
+}
+
+inline auto
+dango::
+detail::
+deadline_unbiased::
+make_rel
+(value_type const a_interval)noexcept->deadline_unbiased
+{
+  auto const a_now = dango::get_tick_count();
+
+  return deadline_unbiased{ safe_add(a_now, a_interval) };
+}
 
 constexpr
 dango::
@@ -154,7 +257,11 @@ dango::deadline
 private:
   using super_type = dango::deadline;
 public:
+  static auto make(value_type)noexcept->deadline_biased;
+  static auto make_rel(value_type)noexcept->deadline_biased;
+private:
   constexpr deadline_biased(value_type)noexcept;
+public:
   virtual ~deadline_biased()noexcept = default;
 private:
   virtual auto tick_count()const noexcept->value_type override;
@@ -162,6 +269,28 @@ public:
   DANGO_DELETE_DEFAULT(deadline_biased)
   DANGO_IMMOBILE(deadline_biased)
 };
+
+inline auto
+dango::
+detail::
+deadline_biased::
+make
+(value_type const a_deadline)noexcept->deadline_biased
+{
+  return deadline_biased{ a_deadline };
+}
+
+inline auto
+dango::
+detail::
+deadline_biased::
+make_rel
+(value_type const a_interval)noexcept->deadline_biased
+{
+  auto const a_now = dango::get_tick_count(dango::suspend_aware);
+
+  return deadline_biased{ safe_add(a_now, a_interval) };
+}
 
 constexpr
 dango::
@@ -200,7 +329,7 @@ dango::
 make_deadline
 (dango::uint64 const a_deadline)noexcept->detail::deadline_unbiased
 {
-  return detail::deadline_unbiased{ a_deadline };
+  return detail::deadline_unbiased::make(a_deadline);
 }
 
 inline auto
@@ -208,7 +337,7 @@ dango::
 make_deadline
 (dango::uint64 const a_deadline, dango::suspend_aware_tag const)noexcept->detail::deadline_biased
 {
-  return detail::deadline_biased{ a_deadline };
+  return detail::deadline_biased::make(a_deadline);
 }
 
 inline auto
@@ -216,9 +345,7 @@ dango::
 make_deadline_rel
 (dango::uint64 const a_interval)noexcept->detail::deadline_unbiased
 {
-  auto const a_now = dango::get_tick_count();
-
-  return detail::deadline_unbiased{ a_now + a_interval };
+  return detail::deadline_unbiased::make_rel(a_interval);
 }
 
 inline auto
@@ -226,9 +353,7 @@ dango::
 make_deadline_rel
 (dango::uint64 const a_interval, dango::suspend_aware_tag const)noexcept->detail::deadline_biased
 {
-  auto const a_now = dango::get_tick_count(dango::suspend_aware);
-
-  return detail::deadline_biased{ a_now + a_interval };
+  return detail::deadline_biased::make_rel(a_interval);
 }
 
 /*** exec_once ***/
@@ -840,6 +965,7 @@ private:
   auto get()noexcept->tp_type*;
   void init()noexcept;
   void wait(mutex_type*)noexcept;
+  void wait(mutex_type*, dango::deadline const&)noexcept;
   void notify(mutex_type*)noexcept;
   void notify_all(mutex_type*)noexcept;
 private:
@@ -866,6 +992,7 @@ public:
 
   ~locker()noexcept{ m_lock->release(); }
   void wait()const noexcept{ m_cond->wait(m_lock); }
+  void wait(dango::deadline const& a_deadline)const noexcept{ m_cond->wait(m_lock, a_deadline); }
   void notify()const noexcept{ m_cond->notify(m_lock); }
   void notify_all()const noexcept{ m_cond->notify_all(m_lock); }
 private:
@@ -893,21 +1020,10 @@ public:
 
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
   explicit operator bool()const{ return m_lock != nullptr; }
-
-  void wait(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))const noexcept
-  {
-    dango_assert_loc(m_lock != nullptr, a_loc); m_cond->wait(m_lock);
-  }
-
-  void notify(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))const noexcept
-  {
-    dango_assert_loc(m_lock != nullptr, a_loc); m_cond->notify(m_lock);
-  }
-
-  void notify_all(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))const noexcept
-  {
-    dango_assert_loc(m_lock != nullptr, a_loc); m_cond->notify_all(m_lock);
-  }
+  void wait()const noexcept{ m_cond->wait(m_lock); }
+  void wait(dango::deadline const& a_deadline)const noexcept{ m_cond->wait(m_lock, a_deadline); }
+  void notify()const noexcept{ m_cond->notify(m_lock); }
+  void notify_all()const noexcept{ m_cond->notify_all(m_lock); }
 private:
   mutex_type* const m_lock;
   cond_var_base* const m_cond;
@@ -1834,8 +1950,17 @@ init
     {
       pthread_mutexattr_t a_attr;
 
-      pthread_mutexattr_init(&a_attr);
-      pthread_mutexattr_settype(&a_attr, PTHREAD_MUTEX_NORMAL);
+      {
+        auto const a_ret = pthread_mutexattr_init(&a_attr);
+
+        dango_assert(a_ret == 0);
+      }
+
+      {
+        auto const a_ret = pthread_mutexattr_settype(&a_attr, PTHREAD_MUTEX_NORMAL);
+
+        dango_assert(a_ret == 0);
+      }
 
       auto const a_prim = ::new (dango::placement, m_storage.get()) type;
 
@@ -1843,7 +1968,11 @@ init
 
       dango_assert(a_result == 0);
 
-      pthread_mutexattr_destroy(&a_attr);
+      {
+        auto const a_ret = pthread_mutexattr_destroy(&a_attr);
+
+        dango_assert(a_ret == 0);
+      }
     }
   );
 }
@@ -1962,8 +2091,17 @@ init
     {
       pthread_condattr_t a_attr;
 
-      pthread_condattr_init(&a_attr);
-      pthread_condattr_setclock(&a_attr, CLOCK_BOOTTIME);
+      {
+        auto const a_ret = pthread_condattr_init(&a_attr);
+
+        dango_assert(a_ret == 0);
+      }
+
+      {
+        auto const a_ret = pthread_condattr_setclock(&a_attr, CLOCK_MONOTONIC);
+
+        dango_assert(a_ret == 0);
+      }
 
       auto const a_prim = ::new (dango::placement, m_storage.get()) type;
 
@@ -1971,7 +2109,11 @@ init
 
       dango_assert(a_result == 0);
 
-      pthread_condattr_destroy(&a_attr);
+      {
+        auto const a_ret = pthread_condattr_destroy(&a_attr);
+
+        dango_assert(a_ret == 0);
+      }
     }
   );
 }
@@ -2005,6 +2147,8 @@ wait
   using type = pthread_cond_t;
   using lock_type = pthread_mutex_t;
 
+  dango_assert(a_lock != nullptr);
+
   init();
 
   auto const a_result =
@@ -2017,10 +2161,60 @@ void
 dango::
 detail::
 cond_var_base::
-notify
-(mutex_type* const)noexcept
+wait
+(mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
 {
   using type = pthread_cond_t;
+  using lock_type = pthread_mutex_t;
+
+  dango_assert(a_lock != nullptr);
+
+  init();
+
+  using u64 = dango::uint64;
+
+  auto const a_rem = a_deadline.remaining();
+
+  if(a_rem == u64(0))
+  {
+    return;
+  }
+
+  auto const a_now = dango::get_tick_count();
+
+  timespec a_spec;
+
+  {
+    auto const a_dead = a_now + a_rem;
+    auto const a_sec = a_dead / u64(1'000);
+    auto const a_mod = a_dead % u64(1'000);
+    auto const a_nsec = a_mod * u64(1'000'000);
+
+    a_spec.tv_sec = a_sec;
+    a_spec.tv_nsec = a_nsec;
+  }
+
+  auto const a_result =
+  pthread_cond_timedwait
+  (
+    get<type>(),
+    a_lock->get<lock_type>(),
+    &a_spec
+  );
+
+  dango_assert((a_result == 0) || (a_result == ETIMEDOUT));
+}
+
+void
+dango::
+detail::
+cond_var_base::
+notify
+(mutex_type* const a_lock)noexcept
+{
+  using type = pthread_cond_t;
+
+  dango_assert(a_lock != nullptr);
 
   init();
 
@@ -2035,9 +2229,11 @@ dango::
 detail::
 cond_var_base::
 notify_all
-(mutex_type* const)noexcept
+(mutex_type* const a_lock)noexcept
 {
   using type = pthread_cond_t;
+
+  dango_assert(a_lock != nullptr);
 
   init();
 
@@ -2163,6 +2359,28 @@ thread_start_address
 
 #include <windows.h>
 #include <realtimeapiset.h>
+
+/*** get_tick_count ***/
+
+auto
+dango::
+get_tick_count
+()noexcept->dango::uint64
+{
+  ULONGLONG a_result;
+
+  QueryUnbiasedInterruptTime(&a_result);
+
+  return dango::uint64(a_result);
+}
+
+auto
+dango::
+get_tick_count
+(dango::suspend_aware_tag const)noexcept->dango::uint64
+{
+  return dango::uint64(GetTickCount64());
+}
 
 /*** mutex_base ***/
 
@@ -2329,6 +2547,8 @@ wait
   using type = CONDITION_VARIABLE;
   using lock_type = SRWLOCK;
 
+  dango_assert(a_lock != nullptr);
+
   init();
 
   SleepConditionVariableSRW
@@ -2344,10 +2564,50 @@ void
 dango::
 detail::
 cond_var_base::
-notify
-(mutex_type* const)noexcept
+wait
+(mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
 {
   using type = CONDITION_VARIABLE;
+  using lock_type = SRWLOCK;
+
+  dango_assert(a_lock != nullptr);
+
+  init();
+
+  using u64 = dango::uint64;
+
+  constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
+
+  auto const a_rem = a_deadline.remaining();
+
+  if(a_rem == u64(0))
+  {
+    return;
+  }
+
+  auto const a_interval = dango::min(a_rem, c_max_interval);
+
+  dango_assert(a_interval != u64(INFINITE));
+
+  SleepConditionVariableSRW
+  (
+    get<type>(),
+    a_lock->get<lock_type>(),
+    DWORD(a_interval),
+    ULONG(0)
+  );
+}
+
+void
+dango::
+detail::
+cond_var_base::
+notify
+(mutex_type* const a_lock)noexcept
+{
+  using type = CONDITION_VARIABLE;
+
+  dango_assert(a_lock != nullptr);
 
   init();
 
@@ -2359,9 +2619,11 @@ dango::
 detail::
 cond_var_base::
 notify_all
-(mutex_type* const)noexcept
+(mutex_type* const a_lock)noexcept
 {
   using type = CONDITION_VARIABLE;
+
+  dango_assert(a_lock != nullptr);
 
   init();
 

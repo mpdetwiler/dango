@@ -87,7 +87,7 @@ auto
 main
 ()noexcept->dango::s_int
 {
-  auto const a_finally =
+  /*auto const a_finally =
   dango::make_finally
   (
     []()noexcept->void
@@ -106,7 +106,7 @@ main
   dango_access_global(s_x, a_x)
   {
     std::get<0>(*a_x) = 5;
-  }
+  }*/
 
   dango::mutex a_lock{ };
 
@@ -131,7 +131,7 @@ main
 
   dango_assert(a_thread == a_thread);
 
-  auto const a_deadline = dango::make_deadline_rel(dango::uint64(5000));
+  auto const a_deadline = dango::make_deadline_rel(dango::uint64(5'000), dango::suspend_aware);
 
   printf
   (
@@ -139,7 +139,27 @@ main
     dango::u_cent(dango::get_tick_count() / 1000)
   );
 
-  while(!a_deadline.has_passed());
+  printf
+  (
+    "tick count (suspend-aware): %llu\n",
+    dango::u_cent(dango::get_tick_count(dango::suspend_aware) / 1000)
+  );
+
+  dango_crit_full(a_cond, a_crit)
+  {
+    while(!a_deadline.has_passed())
+    {
+      a_crit.wait(a_deadline);
+
+      printf("wake\n");
+    }
+  }
+
+  printf
+  (
+    "tick count: %llu\n",
+    dango::u_cent(dango::get_tick_count() / 1000)
+  );
 
   printf
   (
