@@ -83,11 +83,6 @@ accessor::
 
 DANGO_DEFINE_GLOBAL_INLINE(s_x, std::make_tuple(1, true, 2u, 3.5f))
 
-struct sucker
-{
-  ~sucker()noexcept(false){ }
-};
-
 auto
 main
 ()noexcept->dango::s_int
@@ -136,7 +131,21 @@ main
 
   dango_assert(a_thread == a_thread);
 
+  auto const a_deadline = dango::make_deadline_rel(dango::uint64(5000));
 
+  printf
+  (
+    "tick count: %llu\n",
+    dango::u_cent(dango::get_tick_count() / 1000)
+  );
+
+  while(!a_deadline.has_passed());
+
+  printf
+  (
+    "tick count (suspend-aware): %llu\n",
+    dango::u_cent(dango::get_tick_count(dango::suspend_aware) / 1000)
+  );
 
   return 0;
 }

@@ -27,6 +27,210 @@ if(auto const local_name = (lockable).try_lock())
 #define dango_try_crit_cond(cond, mutex, local_name) \
 if(auto const local_name = (cond).try_lock(mutex))
 
+/*** get_tick_count ***/
+
+namespace
+dango
+{
+  struct
+  suspend_aware_tag
+  final
+  {
+    DANGO_TAG_TYPE(suspend_aware_tag)
+  };
+
+  inline constexpr suspend_aware_tag const suspend_aware{ };
+
+  auto get_tick_count()noexcept->dango::uint64;
+  auto get_tick_count(dango::suspend_aware_tag)noexcept->dango::uint64;
+}
+
+/*** deadline ***/
+
+namespace
+dango
+{
+  class deadline;
+}
+
+class
+dango::
+deadline
+{
+protected:
+  using value_type = dango::uint64;
+protected:
+  constexpr deadline(value_type)noexcept;
+public:
+  virtual ~deadline()noexcept = default;
+  auto has_passed()const noexcept->bool;
+private:
+  virtual auto tick_count()const noexcept->value_type = 0;
+private:
+  value_type m_deadline;
+public:
+  DANGO_DELETE_DEFAULT(deadline)
+  DANGO_IMMOBILE(deadline)
+};
+
+constexpr
+dango::
+deadline::
+deadline
+(value_type const a_deadline)noexcept:
+m_deadline{ a_deadline }
+{
+
+}
+
+inline auto
+dango::
+deadline::
+has_passed
+()const noexcept->bool
+{
+  return tick_count() >= m_deadline;
+}
+
+namespace
+dango::detail
+{
+  struct deadline_unbiased;
+}
+
+struct
+dango::
+detail::
+deadline_unbiased
+final:
+dango::deadline
+{
+private:
+  using super_type = dango::deadline;
+public:
+  constexpr deadline_unbiased(value_type)noexcept;
+  virtual ~deadline_unbiased()noexcept = default;
+private:
+  virtual auto tick_count()const noexcept->value_type override;
+public:
+  DANGO_DELETE_DEFAULT(deadline_unbiased)
+  DANGO_IMMOBILE(deadline_unbiased)
+};
+
+constexpr
+dango::
+detail::
+deadline_unbiased::
+deadline_unbiased
+(value_type const a_deadline)noexcept:
+super_type{ a_deadline }
+{
+
+}
+
+inline auto
+dango::
+detail::
+deadline_unbiased::
+tick_count
+()const noexcept->value_type
+{
+  return dango::get_tick_count();
+}
+
+namespace
+dango::detail
+{
+  struct deadline_biased;
+}
+
+struct
+dango::
+detail::
+deadline_biased
+final:
+dango::deadline
+{
+private:
+  using super_type = dango::deadline;
+public:
+  constexpr deadline_biased(value_type)noexcept;
+  virtual ~deadline_biased()noexcept = default;
+private:
+  virtual auto tick_count()const noexcept->value_type override;
+public:
+  DANGO_DELETE_DEFAULT(deadline_biased)
+  DANGO_IMMOBILE(deadline_biased)
+};
+
+constexpr
+dango::
+detail::
+deadline_biased::
+deadline_biased
+(value_type const a_deadline)noexcept:
+super_type{ a_deadline }
+{
+
+}
+
+inline auto
+dango::
+detail::
+deadline_biased::
+tick_count
+()const noexcept->value_type
+{
+  return dango::get_tick_count(dango::suspend_aware);
+}
+
+/*** make_deadline ***/
+
+namespace
+dango
+{
+  auto make_deadline(dango::uint64)noexcept->detail::deadline_unbiased;
+  auto make_deadline(dango::uint64, dango::suspend_aware_tag)noexcept->detail::deadline_biased;
+  auto make_deadline_rel(dango::uint64)noexcept->detail::deadline_unbiased;
+  auto make_deadline_rel(dango::uint64, dango::suspend_aware_tag)noexcept->detail::deadline_biased;
+}
+
+inline auto
+dango::
+make_deadline
+(dango::uint64 const a_deadline)noexcept->detail::deadline_unbiased
+{
+  return detail::deadline_unbiased{ a_deadline };
+}
+
+inline auto
+dango::
+make_deadline
+(dango::uint64 const a_deadline, dango::suspend_aware_tag const)noexcept->detail::deadline_biased
+{
+  return detail::deadline_biased{ a_deadline };
+}
+
+inline auto
+dango::
+make_deadline_rel
+(dango::uint64 const a_interval)noexcept->detail::deadline_unbiased
+{
+  auto const a_now = dango::get_tick_count();
+
+  return detail::deadline_unbiased{ a_now + a_interval };
+}
+
+inline auto
+dango::
+make_deadline_rel
+(dango::uint64 const a_interval, dango::suspend_aware_tag const)noexcept->detail::deadline_biased
+{
+  auto const a_now = dango::get_tick_count(dango::suspend_aware);
+
+  return detail::deadline_biased{ a_now + a_interval };
+}
+
 /*** exec_once ***/
 
 namespace
@@ -1000,7 +1204,12 @@ public:
   <typename tp_func>
   static auto
   create(tp_func&&)noexcept(false)->
-  dango::enable_if<dango::is_callable_ret<dango::decay<tp_func>&, void>, thread>;
+  dango::enable_if
+  <
+    dango::is_callable_ret<dango::decay<tp_func>&, void> &&
+    dango::is_noexcept_destructible<dango::decay<tp_func>>,
+    thread
+  >;
 private:
   thread()noexcept;
 public:
@@ -1211,7 +1420,12 @@ dango::
 thread::
 create
 (tp_func&& a_thread_func)noexcept(false)->
-dango::enable_if<dango::is_callable_ret<dango::decay<tp_func>&, void>, thread>
+dango::enable_if
+<
+  dango::is_callable_ret<dango::decay<tp_func>&, void> &&
+  dango::is_noexcept_destructible<dango::decay<tp_func>>,
+  thread
+>
 {
   constexpr auto const acquire = dango::mem_order::acquire;
   constexpr auto const release = dango::mem_order::release;
@@ -1290,6 +1504,7 @@ thread_start_address
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
   static_assert(dango::is_callable_ret<tp_func&, void>);
+  static_assert(dango::is_noexcept_destructible<tp_func>);
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);
 
@@ -1531,6 +1746,58 @@ self
 #include <pthread.h>
 #include <errno.h>
 
+/*** get_tick_count ***/
+
+auto
+dango::
+get_tick_count
+()noexcept->dango::uint64
+{
+  constexpr auto const c_clock = clockid_t(CLOCK_MONOTONIC);
+
+  using u64 = dango::uint64;
+
+  constexpr auto const c_mul = u64(1'000);
+  constexpr auto const c_div = u64(1'000'000);
+
+  timespec a_spec;
+
+  auto const a_result =
+    clock_gettime(c_clock, &a_spec);
+
+  dango_assert(a_result == 0);
+
+  auto const a_sec = u64(a_spec.tv_sec);
+  auto const a_nsec = u64(a_spec.tv_nsec);
+
+  return (a_sec * c_mul) + (a_nsec / c_div);
+}
+
+auto
+dango::
+get_tick_count
+(dango::suspend_aware_tag const)noexcept->dango::uint64
+{
+  constexpr auto const c_clock = clockid_t(CLOCK_BOOTTIME);
+
+  using u64 = dango::uint64;
+
+  constexpr auto const c_mul = u64(1'000);
+  constexpr auto const c_div = u64(1'000'000);
+
+  timespec a_spec;
+
+  auto const a_result =
+    clock_gettime(c_clock, &a_spec);
+
+  dango_assert(a_result == 0);
+
+  auto const a_sec = u64(a_spec.tv_sec);
+  auto const a_nsec = u64(a_spec.tv_nsec);
+
+  return (a_sec * c_mul) + (a_nsec / c_div);
+}
+
 /*** mutex_base ***/
 
 template
@@ -1696,7 +1963,7 @@ init
       pthread_condattr_t a_attr;
 
       pthread_condattr_init(&a_attr);
-      pthread_condattr_setclock(&a_attr, CLOCK_MONOTONIC);
+      pthread_condattr_setclock(&a_attr, CLOCK_BOOTTIME);
 
       auto const a_prim = ::new (dango::placement, m_storage.get()) type;
 
@@ -1868,6 +2135,7 @@ thread_start_address
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
   static_assert(dango::is_callable_ret<tp_func&, void>);
+  static_assert(dango::is_noexcept_destructible<tp_func>);
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);
 
@@ -1890,6 +2158,327 @@ thread_start_address
 }
 
 #endif /* __linux__ */
+
+#ifdef _WIN32
+
+#include <windows.h>
+#include <realtimeapiset.h>
+
+/*** mutex_base ***/
+
+template
+<typename tp_type>
+auto
+dango::
+detail::
+mutex_base::
+get
+()noexcept->tp_type*
+{
+  using type = SRWLOCK;
+
+  static_assert(dango::is_same<dango::remove_cv<tp_type>, type>);
+
+  return dango::launder(static_cast<type*>(m_storage.get()));
+}
+
+void
+dango::
+detail::
+mutex_base::
+init
+()noexcept
+{
+  using type = SRWLOCK;
+
+  static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
+  static_assert(alignof(type) <= alignof(detail::primitive_storage));
+
+  m_init.exec
+  (
+    [this]()noexcept->void
+    {
+      auto const a_prim = ::new (dango::placement, m_storage.get()) type;
+
+      InitializeSRWLock(a_prim);
+    }
+  );
+}
+
+void
+dango::
+detail::
+mutex_base::
+destroy
+()noexcept
+{
+
+}
+
+auto
+dango::
+detail::
+mutex_base::
+acquire
+()noexcept->mutex_base*
+{
+  using type = SRWLOCK;
+
+  init();
+
+  AcquireSRWLockExclusive(get<type>());
+
+  return this;
+}
+
+auto
+dango::
+detail::
+mutex_base::
+try_acquire
+()noexcept->mutex_base*
+{
+  using type = SRWLOCK;
+
+  init();
+
+  auto const a_result = TryAcquireSRWLockExclusive(get<type>());
+
+  if(a_result)
+  {
+    return this;
+  }
+
+  return nullptr;
+}
+
+void
+dango::
+detail::
+mutex_base::
+release
+()noexcept
+{
+  using type = SRWLOCK;
+
+#ifndef DANGO_NO_DEBUG
+  dango_assert(m_init.has_executed());
+#endif
+
+  ReleaseSRWLockExclusive(get<type>());
+}
+
+/*** cond_var_base ***/
+
+template
+<typename tp_type>
+auto
+dango::
+detail::
+cond_var_base::
+get
+()noexcept->tp_type*
+{
+  using type = CONDITION_VARIABLE;
+
+  static_assert(dango::is_same<dango::remove_cv<tp_type>, type>);
+
+  return dango::launder(static_cast<type*>(m_storage.get()));
+}
+
+void
+dango::
+detail::
+cond_var_base::
+init
+()noexcept
+{
+  using type = CONDITION_VARIABLE;
+
+  static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
+  static_assert(alignof(type) <= alignof(detail::primitive_storage));
+
+  m_init.exec
+  (
+    [this]()noexcept->void
+    {
+      auto const a_prim = ::new (dango::placement, m_storage.get()) type;
+
+      InitializeConditionVariable(a_prim);
+    }
+  );
+}
+
+void
+dango::
+detail::
+cond_var_base::
+destroy
+()noexcept
+{
+
+}
+
+void
+dango::
+detail::
+cond_var_base::
+wait
+(mutex_type* const a_lock)noexcept
+{
+  using type = CONDITION_VARIABLE;
+  using lock_type = SRWLOCK;
+
+  init();
+
+  SleepConditionVariableSRW
+  (
+    get<type>(),
+    a_lock->get<lock_type>(),
+    DWORD(INFINITE),
+    ULONG(0)
+  );
+}
+
+void
+dango::
+detail::
+cond_var_base::
+notify
+(mutex_type* const)noexcept
+{
+  using type = CONDITION_VARIABLE;
+
+  init();
+
+  WakeConditionVariable(get<type>());
+}
+
+void
+dango::
+detail::
+cond_var_base::
+notify_all
+(mutex_type* const)noexcept
+{
+  using type = CONDITION_VARIABLE;
+
+  init();
+
+  WakeAllConditionVariable(get<type>());
+}
+
+/*** thread ***/
+
+namespace
+dango::concurrent_cpp
+{
+  template
+  <typename tp_func>
+  auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
+}
+
+void
+dango::
+thread::
+start_thread
+(
+  thread_start_func const a_thread_func,
+  void* const a_thread_data
+)
+noexcept(false)
+{
+  constexpr auto const acquire = dango::mem_order::acquire;
+  constexpr auto const release = dango::mem_order::release;
+
+  dango::atomic<bool> a_starting{ true };
+
+  auto a_func =
+  [
+    a_thread_func,
+    a_thread_data,
+    &a_starting
+  ]
+  ()noexcept(false)->void
+  {
+    a_starting.store<release>(false);
+
+    a_thread_func(a_thread_data);
+  };
+
+  {
+    auto const a_handle =
+    CreateThread
+    (
+      nullptr,
+      SIZE_T(0),
+      concurrent_cpp::thread_start_address<decltype(a_func)>,
+      &a_func,
+      DWORD(0),
+      nullptr
+    );
+
+    if(a_handle == NULL)
+    {
+      throw "thread creation failed"; // TODO
+    }
+
+    auto const a_result = CloseHandle(a_handle);
+
+    dango_assert(a_result != 0);
+  }
+
+  auto a_count = dango::uint32(0);
+
+  while(a_starting.load<acquire>())
+  {
+    detail::spin_yield(a_count);
+  }
+}
+
+void
+dango::
+thread::
+yield
+()noexcept
+{
+  Sleep(DWORD(0));
+}
+
+template
+<typename tp_func>
+auto WINAPI
+dango::
+concurrent_cpp::
+thread_start_address
+(LPVOID const a_data)noexcept->DWORD
+{
+  static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
+  static_assert(dango::is_noexcept_move_constructible<tp_func>);
+  static_assert(dango::is_callable_ret<tp_func&, void>);
+  static_assert(dango::is_noexcept_destructible<tp_func>);
+
+  auto const a_func_ptr = static_cast<tp_func*>(a_data);
+
+  auto const a_func = dango::move(*a_func_ptr);
+
+  try
+  {
+    a_func();
+  }
+  catch(...)
+  {
+#ifndef DANGO_NO_DEBUG
+    dango_unreachable_msg("uncaught exception in thread");
+#else
+    dango::terminate();
+#endif
+  }
+
+  return DWORD(0);
+}
+
+#endif /* _WIN32 */
 
 #endif /* DANGO_SOURCE_FILE */
 
