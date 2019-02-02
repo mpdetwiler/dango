@@ -1,7 +1,7 @@
 #include "dango.hpp"
 
 #include <cstdio>
-
+/*
 struct
 accessor
 {
@@ -82,7 +82,7 @@ accessor::
 #include <tuple>
 
 DANGO_DEFINE_GLOBAL_INLINE(s_x, std::make_tuple(1, true, 2u, 3.5f))
-
+*/
 auto
 main
 ()noexcept->dango::s_int
@@ -112,7 +112,7 @@ main
 
   dango::cond_var_mutex a_cond{ a_lock };
 
-  dango_try_crit_full(a_cond, a_crit)
+  /*dango_try_crit_full(a_cond, a_crit)
   {
     a_crit.notify();
   }
@@ -129,7 +129,7 @@ main
 
   dango_assert(!a_thread.is_alive());
 
-  dango_assert(a_thread == a_thread);
+  dango_assert(a_thread == a_thread);*/
 
   auto const a_deadline = dango::make_deadline_rel(dango::uint64(30'000));
 

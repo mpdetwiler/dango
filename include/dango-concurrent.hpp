@@ -2369,7 +2369,7 @@ get_tick_count
 
   QueryUnbiasedInterruptTime(&a_result);
 
-  return dango::uint64(a_result);
+  return dango::uint64(a_result) / dango::uint64(10'000);
 }
 
 auto

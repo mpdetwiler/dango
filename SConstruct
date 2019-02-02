@@ -1,49 +1,46 @@
-import sys
+AddOption(
+  '--target',
+  dest='target',
+  type='string',
+  nargs=1,
+  action='store',
+  metavar='DIR',
+  help='build target'
+)
 
-platform = sys.platform
+target = GetOption('target')
 
-b_tools = []
-
-if(platform.startswith('linux')):
-  b_tools += ['g++', 'gnulink']
-
-elif(platform.startswith('win32') or platform.startswith('msys')):
-  b_tools += ['mingw']
-
-elif(platform.startswith('darwin')):
-  print 'platform: ' + platform + ' not yet implemented'
-  Exit(1)
-
+if(target == 'linux'):
+  print 'building for \"' + target + '\"'
+elif(target == 'win32'):
+  print 'building for \"' + target + '\"'
+elif(target == 'win64'):
+  print 'building for \"' + target + '\"'
 else:
-  print 'platform: ' + platform + ' not supported'
+  print 'invalid target'
   Exit(1)
 
 import os;
 
-env = Environment(tools = b_tools)
+env = Environment()
 
 env.Append(ENV = {'PATH':os.environ['PATH']})
-#env.Replace(CXX = 'i686-w64-mingw32-g++')
-#env.Append(CXXFLAGS = ['-D WIN32_LEAN_AND_MEAN', '-D WINVER=0x0A00', '-D _WIN32_WINNT=0x0A00'])
 
 h_paths = []
+prog_name = 'run'
 
-if(platform.startswith('linux')):
-  print 'platform: ' + platform
+if(target == 'win32'):
+  env.Replace(CXX = 'i686-w64-mingw32-g++')
+elif(target == 'win64'):
+  env.Replace(CXX = 'x86_64-w64-mingw32-g++')
+
+if(target == 'linux'):
   env.Append(LIBS=['pthread'])
-
-elif(platform.startswith('win32') or platform.startswith('msys')):
-  print 'platform: ' + platform
-# env.Append(CXXFLAGS = ['-static-libgcc','-static-libstdc++'])
-# env.Append(LINKFLAGS = ['-static-libgcc','-static-libstdc++'])
-# env.Append(LINKFLAGS = ['-flto-partition=none'])
-
-elif(platform.startswith('darwin')):
-	Exit(1)
-
-else:
-	Exit(1)
-
+elif(target == 'win32' or target == 'win64'):
+  prog_name = 'run.exe'
+  env.Append(CXXFLAGS = ['-static-libgcc','-static-libstdc++'])
+  env.Append(LINKFLAGS = ['-static-libgcc','-static-libstdc++'])
+  env.Append(CXXFLAGS = ['-D WIN32_LEAN_AND_MEAN', '-D WINVER=0x0A00', '-D _WIN32_WINNT=0x0A00'])
 
 h_paths += ['include/']
 
@@ -69,5 +66,5 @@ sources = [
 	Glob('src/*.cpp')
 ]
 
-env.Program('run', sources)
+env.Program(prog_name, sources)
 
