@@ -52,10 +52,10 @@ elif(target == 'win64'):
   env.Replace(CXX = 'x86_64-w64-mingw32-g++');
 
 if(target == 'linux'):
-  env.Append(LIBS=['pthread']);
+  env.Append(LIBS = ['pthread']);
 elif(target == 'win32' or target == 'win64'):
   prog_name += '.exe';
-  flags += ['-static-libgcc','-static-libstdc++'];
+  flags += ['-static-libgcc', '-static-libstdc++'];
   flags += ['-D WIN32_LEAN_AND_MEAN', '-D WINVER=0x0A00', '-D _WIN32_WINNT=0x0A00'];
 
 header_paths += ['include/'];
@@ -63,6 +63,9 @@ header_paths += ['include/'];
 env.Append(CPPPATH = header_paths);
 env.Append(CXXFLAGS = flags);
 env.Append(LINKFLAGS = flags);
+
+if(target == 'win32' or target == 'win64'):
+  env.Append(LINKFLAGS = ['-static', '-lwinpthread']);
 
 sources = [
 	Glob('src/*.cpp')
