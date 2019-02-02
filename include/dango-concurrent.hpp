@@ -1864,29 +1864,20 @@ self
 
 /*** get_tick_count ***/
 
+namespace
+dango::concurrent_cpp
+{
+  static auto tick_count(clockid_t)noexcept->dango::uint64;
+
+  static constexpr auto const COND_VAR_CLOCK = clockid_t(CLOCK_REALTIME);
+}
+
 auto
 dango::
 get_tick_count
 ()noexcept->dango::uint64
 {
-  constexpr auto const c_clock = clockid_t(CLOCK_MONOTONIC);
-
-  using u64 = dango::uint64;
-
-  constexpr auto const c_mul = u64(1'000);
-  constexpr auto const c_div = u64(1'000'000);
-
-  timespec a_spec;
-
-  auto const a_result =
-    clock_gettime(c_clock, &a_spec);
-
-  dango_assert(a_result == 0);
-
-  auto const a_sec = u64(a_spec.tv_sec);
-  auto const a_nsec = u64(a_spec.tv_nsec);
-
-  return (a_sec * c_mul) + (a_nsec / c_div);
+  return concurrent_cpp::tick_count(CLOCK_MONOTONIC);
 }
 
 auto
@@ -1894,24 +1885,7 @@ dango::
 get_tick_count
 (dango::suspend_aware_tag const)noexcept->dango::uint64
 {
-  constexpr auto const c_clock = clockid_t(CLOCK_BOOTTIME);
-
-  using u64 = dango::uint64;
-
-  constexpr auto const c_mul = u64(1'000);
-  constexpr auto const c_div = u64(1'000'000);
-
-  timespec a_spec;
-
-  auto const a_result =
-    clock_gettime(c_clock, &a_spec);
-
-  dango_assert(a_result == 0);
-
-  auto const a_sec = u64(a_spec.tv_sec);
-  auto const a_nsec = u64(a_spec.tv_nsec);
-
-  return (a_sec * c_mul) + (a_nsec / c_div);
+  return concurrent_cpp::tick_count(CLOCK_BOOTTIME);
 }
 
 /*** mutex_base ***/
@@ -2098,7 +2072,7 @@ init
       }
 
       {
-        auto const a_ret = pthread_condattr_setclock(&a_attr, CLOCK_MONOTONIC);
+        auto const a_ret = pthread_condattr_setclock(&a_attr, concurrent_cpp::COND_VAR_CLOCK);
 
         dango_assert(a_ret == 0);
       }
@@ -2180,7 +2154,7 @@ wait
     return;
   }
 
-  auto const a_now = dango::get_tick_count();
+  auto const a_now = concurrent_cpp::tick_count(concurrent_cpp::COND_VAR_CLOCK);
 
   timespec a_spec;
 
@@ -2250,7 +2224,7 @@ dango::concurrent_cpp
 {
   template
   <typename tp_func>
-  auto thread_start_address(void*)noexcept->void*;
+  static auto thread_start_address(void*)noexcept->void*;
 }
 
 void
@@ -2320,9 +2294,33 @@ yield
   pthread_yield();
 }
 
+static auto
+dango::
+concurrent_cpp::
+tick_count
+(clockid_t const a_clock)noexcept->dango::uint64
+{
+  using u64 = dango::uint64;
+
+  constexpr auto const c_mul = u64(1'000);
+  constexpr auto const c_div = u64(1'000'000);
+
+  timespec a_spec;
+
+  auto const a_result =
+    clock_gettime(a_clock, &a_spec);
+
+  dango_assert(a_result == 0);
+
+  auto const a_sec = u64(a_spec.tv_sec);
+  auto const a_nsec = u64(a_spec.tv_nsec);
+
+  return (a_sec * c_mul) + (a_nsec / c_div);
+}
+
 template
 <typename tp_func>
-auto
+static auto
 dango::
 concurrent_cpp::
 thread_start_address
@@ -2637,7 +2635,7 @@ dango::concurrent_cpp
 {
   template
   <typename tp_func>
-  auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
+  static auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
 }
 
 void
@@ -2709,7 +2707,7 @@ yield
 
 template
 <typename tp_func>
-auto WINAPI
+static auto WINAPI
 dango::
 concurrent_cpp::
 thread_start_address

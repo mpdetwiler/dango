@@ -131,7 +131,7 @@ main
 
   dango_assert(a_thread == a_thread);
 
-  auto const a_deadline = dango::make_deadline_rel(dango::uint64(5'000), dango::suspend_aware);
+  auto const a_deadline = dango::make_deadline_rel(dango::uint64(30'000));
 
   printf
   (
