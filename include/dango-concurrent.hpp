@@ -760,7 +760,9 @@ try_lock
 namespace
 dango::detail
 {
-  using primitive_storage = dango::aligned_storage<dango::usize(48)>;
+  using primitive_storage =
+    dango::aligned_storage<dango::usize(48), dango::usize(16)>;
+
   class mutex_base;
   class cond_var_base;
 }
