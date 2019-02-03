@@ -56,7 +56,6 @@ if(target == 'linux'):
 elif(target == 'win32' or target == 'win64'):
   prog_name += '.exe';
   flags += ['-static-libgcc', '-static-libstdc++'];
-  flags += ['-D WIN32_LEAN_AND_MEAN', '-D WINVER=0x0A00', '-D _WIN32_WINNT=0x0A00'];
 
 header_paths += ['include/'];
 

@@ -2460,6 +2460,28 @@ thread_start_address
 
 #ifdef _WIN32
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#ifdef WINVER
+#if (WINVER < 0x0A00)
+#undef WINVER
+#define WINVER 0x0A00
+#endif
+#else
+#define WINVER 0x0A00
+#endif
+
+#ifdef _WIN32_WINNT
+#if (_WIN32_WINNT < 0x0A00)
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0A00
+#endif
+#else
+#define _WIN32_WINNT 0x0A00
+#endif
+
 #include <windows.h>
 #include <realtimeapiset.h>
 
