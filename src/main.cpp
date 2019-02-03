@@ -1,7 +1,7 @@
 #include "dango.hpp"
 
 #include <cstdio>
-/*
+
 struct
 accessor
 {
@@ -81,13 +81,13 @@ accessor::
 
 #include <tuple>
 
-DANGO_DEFINE_GLOBAL_INLINE(s_x, std::make_tuple(1, true, 2u, 3.5f))*/
+DANGO_DEFINE_GLOBAL_INLINE(s_x, std::make_tuple(1, true, 2u, 3.5f))
 
 auto
 main
 ()noexcept->dango::s_int
 {
-  /*auto const a_finally =
+  auto const a_finally =
   dango::make_finally
   (
     []()noexcept->void
@@ -106,18 +106,18 @@ main
   dango_access_global(s_x, a_x)
   {
     std::get<0>(*a_x) = 5;
-  }*/
+  }
 
   dango::mutex a_lock{ };
 
   dango::cond_var_mutex a_cond{ a_lock };
 
-  /*dango_try_crit_full(a_cond, a_crit)
+  dango_try_crit_full(a_cond, a_crit)
   {
     a_crit.notify();
-  }*/
+  }
 
-  //dango_assert(dango::thread::self().is_alive());
+  dango_assert(dango::thread::self().is_alive());
 
   auto const a_thread =
     dango::thread::create([]()noexcept(false)->void{ fprintf(stderr, "thread print\n"); });
@@ -131,7 +131,7 @@ main
 
   dango_assert(a_thread == a_thread);
 
-  auto const a_deadline = dango::make_deadline_rel(dango::uint64(20'000));
+  auto const a_deadline = dango::make_deadline_rel(dango::uint64(10'000));
 
   printf
   (
@@ -166,6 +166,8 @@ main
     "tick count (suspend-aware): %llu\n",
     dango::u_cent(dango::get_tick_count(dango::suspend_aware) / 1000)
   );
+
+  dango::thread::sleep(5'000);
 
   return 0;
 }

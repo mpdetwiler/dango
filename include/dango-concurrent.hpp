@@ -1368,6 +1368,8 @@ private:
 public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
+  static void sleep(dango::uint64)noexcept;
+  static void sleep(dango::uint64, dango::suspend_aware_tag)noexcept;
 
   template
   <typename tp_func>
@@ -1629,8 +1631,6 @@ dango::enable_if
   ()noexcept(false)->void
   {
     a_ret = dango::thread::self();
-
-    //dango_assert(dango::thread::self().is_alive());
 
     a_starting.store<release>(false);
 
@@ -1910,6 +1910,56 @@ self
   thread_local notifier const t_notifier{ t_thread };
 
   return t_thread;
+}
+
+void
+dango::
+thread::
+sleep
+(dango::uint64 const a_interval)noexcept
+{
+  static dango::static_mutex s_mutex{ };
+  static dango::static_cond_var_mutex s_cond{ s_mutex };
+
+  if(a_interval == dango::uint64(0))
+  {
+    return;
+  }
+
+  auto const a_deadline = dango::make_deadline_rel(a_interval);
+
+  dango_crit_full(s_cond, a_crit)
+  {
+    while(!a_deadline.has_passed())
+    {
+      a_crit.wait(a_deadline);
+    }
+  }
+}
+
+void
+dango::
+thread::
+sleep
+(dango::uint64 const a_interval, dango::suspend_aware_tag const)noexcept
+{
+  static dango::static_mutex s_mutex{ };
+  static dango::static_cond_var_mutex s_cond{ s_mutex };
+
+  if(a_interval == dango::uint64(0))
+  {
+    return;
+  }
+
+  auto const a_deadline = dango::make_deadline_rel(a_interval, dango::suspend_aware);
+
+  dango_crit_full(s_cond, a_crit)
+  {
+    while(!a_deadline.has_passed())
+    {
+      a_crit.wait(a_deadline);
+    }
+  }
 }
 
 #ifdef __linux__
