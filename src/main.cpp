@@ -131,7 +131,7 @@ main
 
   dango_assert(a_thread == a_thread);
 
-  auto const a_deadline = dango::make_deadline_rel(dango::uint64(10'000));
+  auto const a_deadline = dango::make_deadline_rel(dango::uint64(1'000));
 
   printf
   (
@@ -167,7 +167,14 @@ main
     dango::u_cent(dango::get_tick_count(dango::suspend_aware) / 1000)
   );
 
-  dango::thread::sleep(5'000);
+  dango::thread::sleep(5'00);
+
+  for(auto a_i = uint32(0); a_i < uint32(100); ++a_i)
+  {
+    printf("tick count: %llu\n", dango::u_cent(dango::get_tick_count()));
+
+    dango::thread::sleep(1);
+  }
 
   return 0;
 }
