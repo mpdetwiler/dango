@@ -788,6 +788,7 @@ private:
   <typename tp_type>
   auto get()noexcept->tp_type*;
   void init()noexcept;
+  void initialize()noexcept;
   auto acquire()noexcept->mutex_base*;
   auto try_acquire()noexcept->mutex_base*;
   void release()noexcept;
@@ -843,6 +844,16 @@ m_storage{ },
 m_init{ }
 {
 
+}
+
+inline void
+dango::
+detail::
+mutex_base::
+init
+()noexcept
+{
+  m_init.exec([this]()noexcept->void{ initialize(); });
 }
 
 inline auto
@@ -973,6 +984,7 @@ private:
   <typename tp_type>
   auto get()noexcept->tp_type*;
   void init()noexcept;
+  void initialize()noexcept;
   void wait(mutex_type*)noexcept;
   void wait(mutex_type*, dango::deadline const&)noexcept;
   void notify(mutex_type*)noexcept;
@@ -1045,6 +1057,16 @@ m_storage{ },
 m_init{ }
 {
 
+}
+
+inline void
+dango::
+detail::
+cond_var_base::
+init
+()noexcept
+{
+  m_init.exec([this]()noexcept->void{ initialize(); });
 }
 
 inline auto
@@ -1943,7 +1965,7 @@ void
 dango::
 detail::
 mutex_base::
-init
+initialize
 ()noexcept
 {
   using type = pthread_mutex_t;
@@ -1951,37 +1973,31 @@ init
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  m_init.exec
-  (
-    [this]()noexcept->void
-    {
-      pthread_mutexattr_t a_attr;
+  pthread_mutexattr_t a_attr;
 
-      {
-        auto const a_ret = pthread_mutexattr_init(&a_attr);
+  {
+    auto const a_ret = pthread_mutexattr_init(&a_attr);
 
-        dango_assert(a_ret == 0);
-      }
+    dango_assert(a_ret == 0);
+  }
 
-      {
-        auto const a_ret = pthread_mutexattr_settype(&a_attr, PTHREAD_MUTEX_NORMAL);
+  {
+    auto const a_ret = pthread_mutexattr_settype(&a_attr, PTHREAD_MUTEX_NORMAL);
 
-        dango_assert(a_ret == 0);
-      }
+    dango_assert(a_ret == 0);
+  }
 
-      auto const a_prim = ::new (dango::placement, m_storage.get()) type;
+  auto const a_prim = ::new (dango::placement, m_storage.get()) type;
 
-      auto const a_result = pthread_mutex_init(a_prim, &a_attr);
+  auto const a_result = pthread_mutex_init(a_prim, &a_attr);
 
-      dango_assert(a_result == 0);
+  dango_assert(a_result == 0);
 
-      {
-        auto const a_ret = pthread_mutexattr_destroy(&a_attr);
+  {
+    auto const a_ret = pthread_mutexattr_destroy(&a_attr);
 
-        dango_assert(a_ret == 0);
-      }
-    }
-  );
+    dango_assert(a_ret == 0);
+  }
 }
 
 void
@@ -2088,7 +2104,7 @@ void
 dango::
 detail::
 cond_var_base::
-init
+initialize
 ()noexcept
 {
   using type = pthread_cond_t;
@@ -2096,37 +2112,31 @@ init
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  m_init.exec
-  (
-    [this]()noexcept->void
-    {
-      pthread_condattr_t a_attr;
+  pthread_condattr_t a_attr;
 
-      {
-        auto const a_ret = pthread_condattr_init(&a_attr);
+  {
+    auto const a_ret = pthread_condattr_init(&a_attr);
 
-        dango_assert(a_ret == 0);
-      }
+    dango_assert(a_ret == 0);
+  }
 
-      {
-        auto const a_ret = pthread_condattr_setclock(&a_attr, concurrent_cpp::COND_VAR_CLOCK);
+  {
+    auto const a_ret = pthread_condattr_setclock(&a_attr, concurrent_cpp::COND_VAR_CLOCK);
 
-        dango_assert(a_ret == 0);
-      }
+    dango_assert(a_ret == 0);
+  }
 
-      auto const a_prim = ::new (dango::placement, m_storage.get()) type;
+  auto const a_prim = ::new (dango::placement, m_storage.get()) type;
 
-      auto const a_result = pthread_cond_init(a_prim, &a_attr);
+  auto const a_result = pthread_cond_init(a_prim, &a_attr);
 
-      dango_assert(a_result == 0);
+  dango_assert(a_result == 0);
 
-      {
-        auto const a_ret = pthread_condattr_destroy(&a_attr);
+  {
+    auto const a_ret = pthread_condattr_destroy(&a_attr);
 
-        dango_assert(a_ret == 0);
-      }
-    }
-  );
+    dango_assert(a_ret == 0);
+  }
 }
 
 void
@@ -2447,7 +2457,7 @@ void
 dango::
 detail::
 mutex_base::
-init
+initialize
 ()noexcept
 {
   using type = SRWLOCK;
@@ -2455,15 +2465,9 @@ init
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  m_init.exec
-  (
-    [this]()noexcept->void
-    {
-      auto const a_prim = ::new (dango::placement, m_storage.get()) type;
+  auto const a_prim = ::new (dango::placement, m_storage.get()) type;
 
-      InitializeSRWLock(a_prim);
-    }
-  );
+  InitializeSRWLock(a_prim);
 }
 
 void
@@ -2555,7 +2559,7 @@ void
 dango::
 detail::
 cond_var_base::
-init
+initialize
 ()noexcept
 {
   using type = CONDITION_VARIABLE;
@@ -2563,15 +2567,9 @@ init
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  m_init.exec
-  (
-    [this]()noexcept->void
-    {
-      auto const a_prim = ::new (dango::placement, m_storage.get()) type;
+  auto const a_prim = ::new (dango::placement, m_storage.get()) type;
 
-      InitializeConditionVariable(a_prim);
-    }
-  );
+  InitializeConditionVariable(a_prim);
 }
 
 void
