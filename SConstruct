@@ -15,13 +15,13 @@ if(target is None):
   target = 'linux';
 
 if(target == 'linux'):
-  print 'building for \"' + target + '\"';
+  print('building for \"' + target + '\"');
 elif(target == 'win32'):
-  print 'building for \"' + target + '\"';
+  print('building for \"' + target + '\"');
 elif(target == 'win64'):
-  print 'building for \"' + target + '\"';
+  print('building for \"' + target + '\"');
 else:
-  print 'invalid target \"' + target + '\"';
+  print('invalid target \"' + target + '\"');
   Exit(1);
 
 import os;
