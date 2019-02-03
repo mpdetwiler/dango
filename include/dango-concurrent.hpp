@@ -33,17 +33,8 @@ if(auto const local_name = (cond).try_lock(mutex))
 namespace
 dango
 {
-  struct
-  suspend_aware_tag
-  final
-  {
-    DANGO_TAG_TYPE(suspend_aware_tag)
-  };
-
-  inline constexpr suspend_aware_tag const suspend_aware{ };
-
   auto get_tick_count()noexcept->dango::uint64;
-  auto get_tick_count(dango::suspend_aware_tag)noexcept->dango::uint64;
+  auto get_tick_count_sa()noexcept->dango::uint64;
 }
 
 /*** deadline ***/
@@ -287,7 +278,7 @@ deadline_biased::
 make_rel
 (value_type const a_interval)noexcept->deadline_biased
 {
-  auto const a_now = dango::get_tick_count(dango::suspend_aware);
+  auto const a_now = dango::get_tick_count_sa();
 
   return deadline_biased{ safe_add(a_now, a_interval) };
 }
@@ -310,7 +301,7 @@ deadline_biased::
 tick_count
 ()const noexcept->value_type
 {
-  return dango::get_tick_count(dango::suspend_aware);
+  return dango::get_tick_count_sa();
 }
 
 /*** make_deadline ***/
@@ -319,9 +310,9 @@ namespace
 dango
 {
   auto make_deadline(dango::uint64)noexcept->detail::deadline_unbiased;
-  auto make_deadline(dango::uint64, dango::suspend_aware_tag)noexcept->detail::deadline_biased;
+  auto make_deadline_sa(dango::uint64)noexcept->detail::deadline_biased;
   auto make_deadline_rel(dango::uint64)noexcept->detail::deadline_unbiased;
-  auto make_deadline_rel(dango::uint64, dango::suspend_aware_tag)noexcept->detail::deadline_biased;
+  auto make_deadline_rel_sa(dango::uint64)noexcept->detail::deadline_biased;
 }
 
 inline auto
@@ -334,8 +325,8 @@ make_deadline
 
 inline auto
 dango::
-make_deadline
-(dango::uint64 const a_deadline, dango::suspend_aware_tag const)noexcept->detail::deadline_biased
+make_deadline_sa
+(dango::uint64 const a_deadline)noexcept->detail::deadline_biased
 {
   return detail::deadline_biased::make(a_deadline);
 }
@@ -350,8 +341,8 @@ make_deadline_rel
 
 inline auto
 dango::
-make_deadline_rel
-(dango::uint64 const a_interval, dango::suspend_aware_tag const)noexcept->detail::deadline_biased
+make_deadline_rel_sa
+(dango::uint64 const a_interval)noexcept->detail::deadline_biased
 {
   return detail::deadline_biased::make_rel(a_interval);
 }
@@ -450,7 +441,10 @@ try_acquire
       return false;
     }
 
-    detail::spin_yield(a_count);
+    while(m_state.load<acquire>() == state::EXECUTING)
+    {
+      detail::spin_yield(a_count);
+    }
   }
   while(true);
 
@@ -584,7 +578,6 @@ reset
 ()noexcept
 {
   constexpr auto const acquire = dango::mem_order::acquire;
-  constexpr auto const release = dango::mem_order::release;
 
   if(m_state.load<acquire>() == state::INITIAL)
   {
@@ -597,7 +590,7 @@ reset
   {
     auto a_expected = state::EXECUTED;
 
-    if(m_state.compare_exchange<release, acquire>(a_expected, state::INITIAL))
+    if(m_state.compare_exchange<acquire, acquire>(a_expected, state::INITIAL))
     {
       break;
     }
@@ -607,7 +600,10 @@ reset
       break;
     }
 
-    detail::spin_yield(a_count);
+    while(m_state.load<acquire>() == state::EXECUTING)
+    {
+      detail::spin_yield(a_count);
+    }
   }
   while(true);
 }
@@ -1369,7 +1365,7 @@ public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
   static void sleep(dango::uint64)noexcept;
-  static void sleep(dango::uint64, dango::suspend_aware_tag)noexcept;
+  static void sleep_sa(dango::uint64)noexcept;
 
   template
   <typename tp_func>
@@ -1940,8 +1936,8 @@ sleep
 void
 dango::
 thread::
-sleep
-(dango::uint64 const a_interval, dango::suspend_aware_tag const)noexcept
+sleep_sa
+(dango::uint64 const a_interval)noexcept
 {
   static dango::static_mutex s_mutex{ };
   static dango::static_cond_var_mutex s_cond{ s_mutex };
@@ -1951,7 +1947,7 @@ sleep
     return;
   }
 
-  auto const a_deadline = dango::make_deadline_rel(a_interval, dango::suspend_aware);
+  auto const a_deadline = dango::make_deadline_rel_sa(a_interval);
 
   dango_crit_full(s_cond, a_crit)
   {
@@ -1987,8 +1983,8 @@ get_tick_count
 
 auto
 dango::
-get_tick_count
-(dango::suspend_aware_tag const)noexcept->dango::uint64
+get_tick_count_sa
+()noexcept->dango::uint64
 {
   return concurrent_cpp::tick_count(CLOCK_BOOTTIME);
 }
@@ -2501,8 +2497,8 @@ get_tick_count
 
 auto
 dango::
-get_tick_count
-(dango::suspend_aware_tag const)noexcept->dango::uint64
+get_tick_count_sa
+()noexcept->dango::uint64
 {
   return dango::uint64(GetTickCount64());
 }

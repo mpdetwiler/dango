@@ -142,7 +142,7 @@ main
   printf
   (
     "tick count (suspend-aware): %llu\n",
-    dango::u_cent(dango::get_tick_count(dango::suspend_aware) / 1000)
+    dango::u_cent(dango::get_tick_count_sa() / 1000)
   );
 
   dango_crit_full(a_cond, a_crit)
@@ -164,7 +164,7 @@ main
   printf
   (
     "tick count (suspend-aware): %llu\n",
-    dango::u_cent(dango::get_tick_count(dango::suspend_aware) / 1000)
+    dango::u_cent(dango::get_tick_count_sa() / 1000)
   );
 
   dango::thread::sleep(5'00);
