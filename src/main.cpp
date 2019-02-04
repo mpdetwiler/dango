@@ -2,10 +2,14 @@
 
 #include <cstdio>
 
+#include <windows.h>
+
 auto
 main
 ()noexcept->dango::s_int
 {
+  timeBeginPeriod(DWORD(1));
+
   fprintf(stderr, "tick_count: %llu\n", dango::u_cent(dango::get_tick_count()));
   fprintf(stderr, "tick_count_sa: %llu\n", dango::u_cent(dango::get_tick_count_sa()));
   fprintf(stderr, "sleep...\n");

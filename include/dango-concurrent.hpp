@@ -2497,20 +2497,12 @@ dango::
 get_tick_count
 ()noexcept->dango::uint64
 {
-  static constexpr auto const c_func =
-  []()noexcept->dango::uint64
-  {
-    dango::uint64 a_bias;
-
-    concurrent_cpp::perf_count(a_bias);
-
-    return a_bias;
-  };
-
-  static auto const s_init_bias = c_func();
   static dango::spin_mutex s_lock{ };
-  static auto s_prev = concurrent_cpp::perf_count();
+  static dango::uint64 s_init_bias_mutable = dango::uint64(0);
+  static auto s_prev = concurrent_cpp::perf_count(s_init_bias_mutable);
   static auto s_current = dango::uint64(0);
+
+  constexpr auto const& c_init_bias = s_init_bias_mutable;
 
   dango::uint64 a_result;
   dango::uint64 a_bias;
@@ -2529,7 +2521,7 @@ get_tick_count
     a_result = s_current;
   }
 
-  a_result -= (a_bias - s_init_bias);
+  a_result -= (a_bias - c_init_bias);
 
   return a_result;
 }

@@ -56,6 +56,7 @@ if(target == 'linux'):
 elif(target == 'win32' or target == 'win64'):
   prog_name += '.exe';
   flags += ['-static-libgcc', '-static-libstdc++'];
+  env.Append(LIBS = ['winmm']);
 
 header_paths += ['include/'];
 
