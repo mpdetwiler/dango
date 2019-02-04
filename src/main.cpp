@@ -21,6 +21,8 @@ main
       while(!a_deadline.has_passed())
       {
         a_crit.wait(a_deadline);
+
+        fprintf(stdout, "wake\n");
       }
     }
   }
@@ -37,9 +39,14 @@ main
       while(!a_deadline.has_passed())
       {
         a_crit.wait(a_deadline);
+
+        fprintf(stdout, "wake\n");
       }
     }
   }
+
+  fprintf(stdout, "tick_count: %llu\n", dango::u_cent(dango::get_tick_count()));
+  fprintf(stdout, "tick_count_sa: %llu\n", dango::u_cent(dango::get_tick_count_sa()));
 
   auto a_deadline = dango::make_deadline_rel(5);
 
