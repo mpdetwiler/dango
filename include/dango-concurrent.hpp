@@ -2456,43 +2456,82 @@ thread_start_address
 
 #ifdef _WIN32
 
+#define DANGO_WINDOWS_VER 0x0601
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 
 #ifdef WINVER
-#if (WINVER < 0x0A00)
+#if (WINVER < DANGO_WINDOWS_VER)
 #undef WINVER
-#define WINVER 0x0A00
+#define WINVER DANGO_WINDOWS_VER
 #endif
 #else
-#define WINVER 0x0A00
+#define WINVER DANGO_WINDOWS_VER
 #endif
 
 #ifdef _WIN32_WINNT
-#if (_WIN32_WINNT < 0x0A00)
+#if (_WIN32_WINNT < DANGO_WINDOWS_VER)
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0A00
+#define _WIN32_WINNT DANGO_WINDOWS_VER
 #endif
 #else
-#define _WIN32_WINNT 0x0A00
+#define _WIN32_WINNT DANGO_WINDOWS_VER
 #endif
 
 #include <windows.h>
-#include <realtimeapiset.h>
 
 /*** get_tick_count ***/
+
+namespace
+dango::concurrent_cpp
+{
+  static auto perf_freq()noexcept->dango::uint64;
+  static auto perf_count()noexcept->dango::uint64;
+  static auto perf_count(dango::uint64&)noexcept->dango::uint64;
+}
 
 auto
 dango::
 get_tick_count
 ()noexcept->dango::uint64
 {
-  ULONGLONG a_result;
+  static constexpr auto const c_func =
+  []()noexcept->dango::uint64
+  {
+    dango::uint64 a_bias;
 
-  QueryUnbiasedInterruptTime(&a_result);
+    concurrent_cpp::perf_count(a_bias);
 
-  return dango::uint64(a_result) / dango::uint64(10'000);
+    return a_bias;
+  };
+
+  static auto const s_init_bias = c_func();
+  static dango::spin_mutex s_lock{ };
+  static auto s_prev = concurrent_cpp::perf_count();
+  static auto s_current = dango::uint64(0);
+
+  dango::uint64 a_result;
+  dango::uint64 a_bias;
+
+  auto const a_freq = concurrent_cpp::perf_freq();
+  auto const a_count = concurrent_cpp::perf_count(a_bias);
+
+  dango_crit(s_lock)
+  {
+    auto const a_delta = a_count - s_prev;
+
+    s_prev = a_count;
+
+    s_current += (a_delta * dango::uint64(1'000)) / a_freq;
+
+    a_result = s_current;
+  }
+
+  a_result -= (a_bias - s_init_bias);
+
+  return a_result;
 }
 
 auto
@@ -2500,7 +2539,27 @@ dango::
 get_tick_count_sa
 ()noexcept->dango::uint64
 {
-  return dango::uint64(GetTickCount64());
+  static dango::spin_mutex s_lock{ };
+  static auto s_prev = concurrent_cpp::perf_count();
+  static auto s_current = dango::uint64(0);
+
+  dango::uint64 a_result;
+
+  auto const a_freq = concurrent_cpp::perf_freq();
+  auto const a_count = concurrent_cpp::perf_count();
+
+  dango_crit(s_lock)
+  {
+    auto const a_delta = a_count - s_prev;
+
+    s_prev = a_count;
+
+    s_current += (a_delta * dango::uint64(1'000)) / a_freq;
+
+    a_result = s_current;
+  }
+
+  return a_result;
 }
 
 /*** mutex_base ***/
@@ -2826,6 +2885,63 @@ yield
 ()noexcept
 {
   Sleep(DWORD(0));
+}
+
+static auto
+dango::
+concurrent_cpp::
+perf_freq
+()noexcept->dango::uint64
+{
+  static constexpr auto const c_func =
+  []()noexcept->dango::uint64
+  {
+    LARGE_INTEGER a_result;
+
+    QueryPerformanceFrequency(&a_result);
+
+    return dango::uint64(a_result.QuadPart);
+  };
+
+  static auto const s_result = c_func();
+
+  return s_result;
+}
+
+static auto
+dango::
+concurrent_cpp::
+perf_count
+()noexcept->dango::uint64
+{
+  LARGE_INTEGER a_result;
+
+  QueryPerformanceCounter(&a_result);
+
+  return dango::uint64(a_result.QuadPart);
+}
+
+static auto
+dango::
+concurrent_cpp::
+perf_count
+(dango::uint64& a_suspend_bias)noexcept->dango::uint64
+{
+  static auto& s_bias_ref = *reinterpret_cast<ULONGLONG const volatile*>(dango::uintptr(0x7FFE0000 + 0x3B0));
+
+  dango::uint64 a_bias;
+  dango::uint64 a_result;
+
+  do
+  {
+    a_bias = s_bias_ref;
+    a_result = concurrent_cpp::perf_count();
+  }
+  while(a_bias != s_bias_ref);
+
+  a_suspend_bias = a_bias / dango::uint64(10'000);
+
+  return a_result;
 }
 
 template
