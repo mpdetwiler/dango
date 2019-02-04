@@ -1361,6 +1361,8 @@ private:
   static void thread_start_address(void*)noexcept(false);
 
   static thread const& s_main_init;
+  static dango::uint64 const s_tick_count_init;
+  static dango::uint64 const s_tick_count_sa_init;
 public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
@@ -1468,6 +1470,16 @@ inline dango::thread const&
 dango::
 thread::
 s_main_init = dango::thread::self();
+
+inline dango::uint64 const
+dango::
+thread::
+s_tick_count_init = dango::get_tick_count();
+
+inline dango::uint64 const
+dango::
+thread::
+s_tick_count_sa_init = dango::get_tick_count_sa();
 
 constexpr
 dango::
@@ -1978,7 +1990,13 @@ dango::
 get_tick_count
 ()noexcept->dango::uint64
 {
-  return concurrent_cpp::tick_count(CLOCK_MONOTONIC);
+  constexpr auto const c_clock = clockid_t(CLOCK_MONOTONIC);
+
+  static auto const s_init = concurrent_cpp::tick_count(c_clock);
+
+  auto const a_count = concurrent_cpp::tick_count(c_clock);
+
+  return a_count - s_init;
 }
 
 auto
@@ -1986,7 +2004,13 @@ dango::
 get_tick_count_sa
 ()noexcept->dango::uint64
 {
-  return concurrent_cpp::tick_count(CLOCK_BOOTTIME);
+  constexpr auto const c_clock = clockid_t(CLOCK_BOOTTIME);
+
+  static auto const s_init = concurrent_cpp::tick_count(c_clock);
+
+  auto const a_count = concurrent_cpp::tick_count(c_clock);
+
+  return a_count - s_init;
 }
 
 /*** mutex_base ***/
@@ -2498,7 +2522,7 @@ get_tick_count
 ()noexcept->dango::uint64
 {
   static dango::spin_mutex s_lock{ };
-  static dango::uint64 s_init_bias_mutable = dango::uint64(0);
+  static auto s_init_bias_mutable = dango::uint64(0);
   static auto s_prev = concurrent_cpp::perf_count(s_init_bias_mutable);
   static auto s_current = dango::uint64(0);
 
