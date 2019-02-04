@@ -64,9 +64,6 @@ env.Append(CPPPATH = header_paths);
 env.Append(CXXFLAGS = flags);
 env.Append(LINKFLAGS = flags);
 
-if(target == 'win32' or target == 'win64'):
-  env.Append(LINKFLAGS = ['-static', '-lwinpthread']);
-
 sources = [
 	Glob('src/*.cpp')
 ];

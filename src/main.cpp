@@ -26,8 +26,10 @@ main
   {
     fprintf(stderr, "tick_count: %llu\n", dango::u_cent(dango::get_tick_count()));
     fprintf(stderr, "tick_count_sa: %llu\n", dango::u_cent(dango::get_tick_count_sa()));
-    dango::thread::sleep(1);
+    dango::thread::sleep(5);
   }
+
+  timeEndPeriod(1);
 
   return 0;
 }
