@@ -6,6 +6,9 @@ auto
 main
 ()noexcept->dango::s_int
 {
+  dango::thread::sleep(100);
+  dango::thread::sleep_sa(100);
+
   dango::mutex a_mutex{ };
   dango::cond_var_mutex a_cond{ a_mutex };
 

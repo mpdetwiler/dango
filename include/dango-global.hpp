@@ -208,14 +208,14 @@ weak_incrementer
 {
   bool const a_alive = tp_storage.try_increment();
 
+#ifndef DANGO_NO_DEBUG
   dango_assert_msg_loc(a_alive, "attempt to access already-destroyed global", a_loc);
-
-  if(a_alive)
+#else
+  if(!a_alive)
   {
-    return;
+    dango::terminate();
   }
-
-  dango::terminate();
+#endif
 }
 
 template

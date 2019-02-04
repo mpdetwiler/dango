@@ -63,6 +63,7 @@ public:
   void set(value_type)noexcept;
   void set_rel(value_type)noexcept;
   void add(value_type)noexcept;
+  virtual auto is_suspend_aware()const noexcept->bool = 0;
 private:
   virtual auto tick_count()const noexcept->value_type = 0;
 private:
@@ -80,6 +81,10 @@ safe_add
 {
   value_type const a_max_add =
     dango::integer::MAX_VAL<value_type> - a_lhs;
+
+#ifndef DANGO_NO_DEBUG
+  dango_assert(a_rhs <= a_max_add);
+#endif
 
   auto const a_add =
     dango::min(a_max_add, a_rhs);
@@ -181,7 +186,8 @@ public:
 private:
   constexpr deadline_unbiased(value_type)noexcept;
 public:
-  virtual ~deadline_unbiased()noexcept = default;
+  virtual ~deadline_unbiased()noexcept override = default;
+  virtual auto is_suspend_aware()const noexcept->bool override;
 private:
   virtual auto tick_count()const noexcept->value_type override;
 public:
@@ -226,6 +232,16 @@ inline auto
 dango::
 detail::
 deadline_unbiased::
+is_suspend_aware
+()const noexcept->bool
+{
+  return false;
+}
+
+inline auto
+dango::
+detail::
+deadline_unbiased::
 tick_count
 ()const noexcept->value_type
 {
@@ -253,7 +269,8 @@ public:
 private:
   constexpr deadline_biased(value_type)noexcept;
 public:
-  virtual ~deadline_biased()noexcept = default;
+  virtual ~deadline_biased()noexcept override = default;
+  virtual auto is_suspend_aware()const noexcept->bool override;
 private:
   virtual auto tick_count()const noexcept->value_type override;
 public:
@@ -292,6 +309,16 @@ deadline_biased
 super_type{ a_deadline }
 {
 
+}
+
+inline auto
+dango::
+detail::
+deadline_biased::
+is_suspend_aware
+()const noexcept->bool
+{
+  return true;
 }
 
 inline auto
@@ -956,15 +983,33 @@ super_type{ }
 namespace
 dango::detail
 {
+  class cond_var_elem;
   class cond_var_base;
+  class cond_var_registry;
 }
+
+class
+dango::
+detail::
+cond_var_elem
+{
+protected:
+  constexpr cond_var_elem()noexcept = default;
+  ~cond_var_elem()noexcept = default;
+public:
+  DANGO_IMMOBILE(cond_var_elem)
+};
 
 class alignas(dango::cache_align_type)
 dango::
 detail::
-cond_var_base
+cond_var_base:
+public dango::detail::cond_var_elem
 {
+  friend dango::detail::cond_var_registry;
 private:
+  using super_type = dango::detail::cond_var_elem;
+  using elem_ptr = super_type*;
   class locker;
   class try_locker;
 protected:
@@ -985,6 +1030,10 @@ private:
   void wait(mutex_type*, dango::deadline const&)noexcept;
   void notify(mutex_type*)noexcept;
   void notify_all(mutex_type*)noexcept;
+  auto prev()const noexcept->elem_ptr;
+  auto next()const noexcept->elem_ptr;
+  void set_prev(elem_ptr)noexcept;
+  void set_next(elem_ptr)noexcept;
 private:
   detail::primitive_storage m_storage;
   dango::exec_once m_init;
@@ -1049,6 +1098,7 @@ detail::
 cond_var_base::
 cond_var_base
 ()noexcept:
+super_type{ },
 m_storage{ },
 m_init{ }
 {
@@ -1728,9 +1778,69 @@ spin_yield
 }
 #endif
 
-/*** rec_mutex_base ***/
+/*** cond_var_registry ***/
 
+namespace
+dango::detail
+{
+  class cond_var_registry;
+  class cond_var_sentinel;
+}
 
+class
+dango::
+detail::
+cond_var_sentinel
+final:
+public dango::detail::cond_var_elem
+{
+private:
+  using value_type = dango::detail::cond_var_elem*;
+public:
+  constexpr cond_var_sentinel()noexcept:
+  m_prev{ nullptr },
+  m_next{ nullptr }
+  { }
+  ~cond_var_sentinel()noexcept = default;
+  constexpr auto prev()const noexcept->value_type{ return m_prev; };
+  constexpr auto next()const noexcept->value_type{ return m_next; };
+  constexpr void set_prev(value_type const a_prev)noexcept{ m_prev = a_prev; };
+  constexpr void set_next(value_type const a_next)noexcept{ m_next = a_next; };
+private:
+  value_type m_prev;
+  value_type m_next;
+public:
+  DANGO_IMMOBILE(cond_var_sentinel)
+};
+
+class
+dango::
+detail::
+cond_var_registry
+final
+{
+private:
+  using cond_type = dango::detail::cond_var_base;
+public:
+  static cond_var_registry s_registry;
+public:
+  void add(cond_type*)noexcept;
+  void remove(cond_type*)noexcept;
+private:
+  constexpr cond_var_registry()noexcept;
+  ~cond_var_registry()noexcept = default;
+private:
+  dango::static_mutex m_mutex;
+  dango::static_cond_var_mutex m_cond;
+  detail::cond_var_sentinel m_head_sentinel[dango::usize(2)];
+  detail::cond_var_sentinel m_tail_sentinel[dango::usize(2)];
+  detail::cond_var_sentinel* m_external_head;
+  detail::cond_var_sentinel* m_internal_head;
+  detail::cond_var_sentinel* m_tail;
+  bool m_alive;
+public:
+  DANGO_IMMOBILE(cond_var_registry)
+};
 
 #ifdef DANGO_SOURCE_FILE
 
@@ -1967,6 +2077,101 @@ sleep_sa
     {
       a_crit.wait(a_deadline);
     }
+  }
+}
+
+/*** cond_var_registry ***/
+
+constexpr
+dango::
+detail::
+cond_var_registry::
+cond_var_registry
+()noexcept:
+m_mutex{ },
+m_cond{ m_mutex },
+m_head_sentinel{ { }, { } },
+m_tail_sentinel{ { }, { } },
+m_external_head{ &m_head_sentinel[dango::usize(0)] },
+m_internal_head{ &m_head_sentinel[dango::usize(1)] },
+m_tail{ m_external_head },
+m_alive{ true }
+{
+  m_head_sentinel[dango::usize(0)].set_next(&m_tail_sentinel[dango::usize(0)]);
+  m_tail_sentinel[dango::usize(0)].set_prev(&m_head_sentinel[dango::usize(0)]);
+  m_head_sentinel[dango::usize(1)].set_next(&m_tail_sentinel[dango::usize(1)]);
+  m_tail_sentinel[dango::usize(1)].set_prev(&m_head_sentinel[dango::usize(1)]);
+}
+
+dango::detail::cond_var_registry
+dango::
+detail::
+cond_var_registry::
+s_registry{ };
+
+void
+dango::
+detail::
+cond_var_registry::
+add
+(cond_type* const a_cond)noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    if(m_tail->prev() == m_external_head)
+    {
+      m_external_head->set_next(a_cond);
+      m_tail->set_prev(a_cond);
+      a_cond->set_prev(m_external_head);
+      a_cond->set_next(m_tail);
+
+      a_crit.notify();
+
+      return;
+    }
+
+    auto const a_prev = static_cast<cond_type*>(m_tail->prev());
+
+    a_prev->set_next(a_cond);
+    m_tail->set_prev(a_cond);
+    a_cond->set_prev(a_prev);
+    a_cond->set_next(m_tail);
+  }
+}
+
+void
+dango::
+detail::
+cond_var_registry::
+remove
+(cond_type* const a_cond)noexcept
+{
+  dango_crit(m_mutex)
+  {
+    if(a_cond->prev() == m_external_head)
+    {
+      m_external_head->set_next(a_cond->next());
+    }
+    else
+    {
+      auto const a_prev = static_cast<cond_type*>(a_cond->prev());
+
+      a_prev->set_next(a_cond->next());
+    }
+
+    if(a_cond->next() == m_tail)
+    {
+      m_tail->set_prev(a_cond->prev());
+    }
+    else
+    {
+      auto const a_next = static_cast<cond_type*>(a_cond->next());
+
+      a_next->set_prev(a_cond->prev());
+    }
+
+    a_cond->set_prev(nullptr);
+    a_cond->set_next(nullptr);
   }
 }
 
@@ -2416,7 +2621,7 @@ thread::
 yield
 ()noexcept
 {
-  pthread_yield();
+  sched_yield();
 }
 
 static auto
