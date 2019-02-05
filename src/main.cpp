@@ -6,8 +6,15 @@ auto
 main
 ()noexcept->dango::s_int
 {
+  printf("sleep\n");
+
   dango::thread::sleep(100);
+
+  printf("sleep_sa\n");
+
   dango::thread::sleep_sa(100);
+
+  printf("done\n");
 
   dango::mutex a_mutex{ };
   dango::cond_var_mutex a_cond{ a_mutex };
