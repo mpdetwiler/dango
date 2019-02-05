@@ -1,32 +1,10 @@
 #ifndef __DANGO_CONCURRENT_HPP__
 #define __DANGO_CONCURRENT_HPP__ 1
 
-#include "dango-macro.hpp"
-#include "dango-traits.hpp"
-#include "dango-int.hpp"
-#include "dango-atomic.hpp"
+#include "dango-concurrent-base.hpp"
 #include "dango-assert.hpp"
 #include "dango-mem.hpp"
-
-/*** dango_crit ***/
-
-#define dango_crit(lockable) \
-dango_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
-
-#define dango_crit_full(lockable, local_name) \
-if constexpr(auto const local_name = (lockable).lock(); true)
-
-#define dango_crit_cond(cond, mutex, local_name) \
-if constexpr(auto const local_name = (cond).lock(mutex); true)
-
-#define dango_try_crit(lockable) \
-dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
-
-#define dango_try_crit_full(lockable, local_name) \
-if(auto const local_name = (lockable).try_lock())
-
-#define dango_try_crit_cond(cond, mutex, local_name) \
-if(auto const local_name = (cond).try_lock(mutex))
+#include "dango-global.hpp"
 
 /*** get_tick_count ***/
 
@@ -374,417 +352,13 @@ make_deadline_rel_sa
   return detail::deadline_biased::make_rel(a_interval);
 }
 
-/*** exec_once ***/
-
-namespace
-dango::detail
-{
-  void spin_yield(dango::uint32&)noexcept;
-}
-
-namespace
-dango
-{
-  class exec_once;
-}
-
-class
-dango::
-exec_once
-final
-{
-private:
-  enum class
-  state:
-  dango::uint8
-  {
-    EXECUTED, EXECUTING, INITIAL
-  };
-public:
-  constexpr exec_once()noexcept;
-  ~exec_once()noexcept = default;
-
-  template
-  <typename tp_func, typename... tp_args>
-  auto exec
-  (tp_func&&, tp_args&&...)
-  noexcept(dango::is_noexcept_callable_ret<tp_func, void, tp_args...>)->
-  dango::enable_if<dango::is_callable_ret<tp_func, void, tp_args...>, bool>;
-
-  template
-  <typename tp_func, typename... tp_args>
-  auto exec
-  (tp_func&&, tp_args&&...)
-  noexcept(dango::is_noexcept_callable_ret<tp_func, bool, tp_args...>)->
-  dango::enable_if<dango::is_callable_ret<tp_func, bool, tp_args...>, bool>;
-
-  auto has_executed()const noexcept->bool;
-  void reset()noexcept;
-private:
-  bool try_acquire()noexcept;
-  void release(bool)noexcept;
-private:
-  dango::atomic<state> m_state;
-public:
-  DANGO_IMMOBILE(exec_once)
-};
-
-constexpr
-dango::
-exec_once::
-exec_once
-()noexcept:
-m_state{ state::INITIAL }
-{
-
-}
-
-inline auto
-dango::
-exec_once::
-try_acquire
-()noexcept->bool
-{
-  constexpr auto const acquire = dango::mem_order::acquire;
-
-  if(dango::likely(m_state.load<acquire>() == state::EXECUTED))
-  {
-    return false;
-  }
-
-  auto a_count = dango::uint32(0);
-
-  do
-  {
-    auto a_expected = state::INITIAL;
-
-    if(m_state.compare_exchange<acquire, acquire>(a_expected, state::EXECUTING))
-    {
-      break;
-    }
-
-    if(a_expected == state::EXECUTED)
-    {
-      return false;
-    }
-
-    while(m_state.load<acquire>() == state::EXECUTING)
-    {
-      detail::spin_yield(a_count);
-    }
-  }
-  while(true);
-
-  return true;
-}
-
-inline void
-dango::
-exec_once::
-release
-(bool const a_success)noexcept
-{
-  constexpr auto const release = dango::mem_order::release;
-
-  m_state.store<release>(a_success ? state::EXECUTED : state::INITIAL);
-}
-
-template
-<typename tp_func, typename... tp_args>
-auto
-dango::
-exec_once::
-exec
-(tp_func&& a_func, tp_args&&... a_args)
-noexcept(dango::is_noexcept_callable_ret<tp_func, void, tp_args...>)->
-dango::enable_if<dango::is_callable_ret<tp_func, void, tp_args...>, bool>
-{
-  if(dango::likely(!try_acquire()))
-  {
-    return false;
-  }
-
-  if constexpr(dango::is_noexcept_callable_ret<tp_func, void, tp_args...>)
-  {
-    a_func(dango::forward<tp_args>(a_args)...);
-  }
-  else
-  {
-    try
-    {
-      a_func(dango::forward<tp_args>(a_args)...);
-    }
-    catch(...)
-    {
-      release(false);
-
-      throw;
-    }
-  }
-
-  release(true);
-
-  return true;
-}
-
-template
-<typename tp_func, typename... tp_args>
-auto
-dango::
-exec_once::
-exec
-(tp_func&& a_func, tp_args&&... a_args)
-noexcept(dango::is_noexcept_callable_ret<tp_func, bool, tp_args...>)->
-dango::enable_if<dango::is_callable_ret<tp_func, bool, tp_args...>, bool>
-{
-  if(dango::likely(!try_acquire()))
-  {
-    return false;
-  }
-
-  bool a_success;
-
-  if constexpr(dango::is_noexcept_callable_ret<tp_func, bool, tp_args...>)
-  {
-    a_success = a_func(dango::forward<tp_args>(a_args)...);
-  }
-  else
-  {
-    try
-    {
-      a_success = a_func(dango::forward<tp_args>(a_args)...);
-    }
-    catch(...)
-    {
-      release(false);
-
-      throw;
-    }
-  }
-
-  release(a_success);
-
-  return a_success;
-}
-
-inline auto
-dango::
-exec_once::
-has_executed
-()const noexcept->bool
-{
-  constexpr auto const acquire = dango::mem_order::acquire;
-
-  auto a_count = dango::uint32(0);
-
-  do
-  {
-    auto const a_state = m_state.load<acquire>();
-
-    if(a_state == state::EXECUTED)
-    {
-      break;
-    }
-
-    if(a_state == state::INITIAL)
-    {
-      return false;
-    }
-
-    detail::spin_yield(a_count);
-  }
-  while(true);
-
-  return true;
-}
-
-inline void
-dango::
-exec_once::
-reset
-()noexcept
-{
-  constexpr auto const acquire = dango::mem_order::acquire;
-
-  if(m_state.load<acquire>() == state::INITIAL)
-  {
-    return;
-  }
-
-  auto a_count = dango::uint32(0);
-
-  do
-  {
-    auto a_expected = state::EXECUTED;
-
-    if(m_state.compare_exchange<acquire, acquire>(a_expected, state::INITIAL))
-    {
-      break;
-    }
-
-    if(a_expected == state::INITIAL)
-    {
-      break;
-    }
-
-    while(m_state.load<acquire>() == state::EXECUTING)
-    {
-      detail::spin_yield(a_count);
-    }
-  }
-  while(true);
-}
-
-/*** spin_mutex ***/
-
-namespace
-dango
-{
-  class spin_mutex;
-}
-
-class
-dango::
-spin_mutex
-final
-{
-private:
-  class locker;
-  class try_locker;
-public:
-  constexpr spin_mutex()noexcept;
-  ~spin_mutex()noexcept = default;
-  [[nodiscard]] auto lock()noexcept->locker;
-  [[nodiscard]] auto try_lock()noexcept->try_locker;
-private:
-  auto acquire()noexcept->spin_mutex*;
-  auto try_acquire()noexcept->spin_mutex*;
-  void release()noexcept;
-private:
-  dango::atomic<bool> m_locked;
-public:
-  DANGO_IMMOBILE(spin_mutex)
-};
-
-class
-dango::
-spin_mutex::
-locker
-final
-{
-public:
-  locker(spin_mutex* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
-  ~locker()noexcept{ m_lock->release(); }
-private:
-  spin_mutex* const m_lock;
-public:
-  DANGO_DELETE_DEFAULT(locker)
-  DANGO_IMMOBILE(locker)
-};
-
-class
-dango::
-spin_mutex::
-try_locker
-final
-{
-public:
-  try_locker(spin_mutex* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
-  ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
-  explicit operator bool()const{ return m_lock != nullptr; }
-private:
-  spin_mutex* const m_lock;
-public:
-  DANGO_DELETE_DEFAULT(try_locker)
-  DANGO_IMMOBILE(try_locker)
-};
-
-constexpr
-dango::
-spin_mutex::
-spin_mutex
-()noexcept:
-m_locked{ false }
-{
-
-}
-
-inline auto
-dango::
-spin_mutex::
-acquire
-()noexcept->spin_mutex*
-{
-  constexpr auto const acquire = dango::mem_order::acquire;
-
-  auto a_count = dango::uint32(0);
-
-  while(m_locked.exchange<acquire>(true))
-  {
-    while(m_locked.load<acquire>())
-    {
-      detail::spin_yield(a_count);
-    }
-  }
-
-  return this;
-}
-
-inline auto
-dango::
-spin_mutex::
-try_acquire
-()noexcept->spin_mutex*
-{
-  constexpr auto const acquire = dango::mem_order::acquire;
-
-  if(m_locked.load<acquire>())
-  {
-    return nullptr;
-  }
-
-  if(m_locked.exchange<acquire>(true))
-  {
-    return nullptr;
-  }
-
-  return this;
-}
-
-inline void
-dango::
-spin_mutex::
-release
-()noexcept
-{
-  m_locked.store<dango::mem_order::release>(false);
-}
-
-inline auto
-dango::
-spin_mutex::
-lock
-()noexcept->locker
-{
-  return locker{ this };
-}
-
-inline auto
-dango::
-spin_mutex::
-try_lock
-()noexcept->try_locker
-{
-  return try_locker{ this };
-}
-
 /*** mutex_base ***/
 
 namespace
 dango::detail
 {
   using primitive_storage =
-    dango::aligned_storage<dango::usize(48), dango::usize(16)>;
+    dango::aligned_storage<dango::usize(16), alignof(void*)>;
 
   class mutex_base;
   class cond_var_base;
@@ -797,6 +371,7 @@ mutex_base
 {
   friend dango::detail::cond_var_base;
 private:
+  class mutex_impl;
   class locker;
   class try_locker;
 protected:
@@ -993,9 +568,18 @@ dango::
 detail::
 cond_var_elem
 {
+  friend dango::detail::cond_var_registry;
+private:
+  using value_type = dango::detail::cond_var_elem*;
 protected:
-  constexpr cond_var_elem()noexcept = default;
+  constexpr cond_var_elem()noexcept:
+  m_prev{ nullptr },
+  m_next{ nullptr }
+  { }
   ~cond_var_elem()noexcept = default;
+private:
+  value_type m_prev;
+  value_type m_next;
 public:
   DANGO_IMMOBILE(cond_var_elem)
 };
@@ -1006,10 +590,10 @@ detail::
 cond_var_base:
 public dango::detail::cond_var_elem
 {
-  friend dango::detail::cond_var_registry;
+  friend detail::cond_var_registry;
 private:
   using super_type = dango::detail::cond_var_elem;
-  using elem_ptr = super_type*;
+  class cond_var_impl;
   class locker;
   class try_locker;
 protected:
@@ -1030,11 +614,12 @@ private:
   void wait(mutex_type*, dango::deadline const&)noexcept;
   void notify(mutex_type*)noexcept;
   void notify_all(mutex_type*)noexcept;
-  auto prev()const noexcept->elem_ptr;
-  auto next()const noexcept->elem_ptr;
-  void set_prev(elem_ptr)noexcept;
-  void set_next(elem_ptr)noexcept;
+  void regist(mutex_type*, dango::deadline const&)noexcept;
+  void unregist(mutex_type*, dango::deadline const&)noexcept;
+  void process()noexcept;
 private:
+  mutex_type* m_current_mutex;
+  dango::usize m_ref_count;
   detail::primitive_storage m_storage;
   dango::exec_once m_init;
 public:
@@ -1099,6 +684,8 @@ cond_var_base::
 cond_var_base
 ()noexcept:
 super_type{ },
+m_current_mutex{ nullptr },
+m_ref_count{ dango::usize(0) },
 m_storage{ },
 m_init{ }
 {
@@ -1742,42 +1329,6 @@ thread_start_address
   a_func();
 }
 
-/*** spin_yield ***/
-
-#ifndef DANGO_NO_MULTICORE
-inline void
-dango::
-detail::
-spin_yield
-(dango::uint32& a_count)noexcept
-{
-  auto const a_current = a_count++;
-
-  if(a_current < dango::uint32(16))
-  {
-    return;
-  }
-
-  if(a_current < dango::uint32(128))
-  {
-    __builtin_ia32_pause();
-
-    return;
-  }
-
-  dango::thread::yield();
-}
-#else
-inline void
-dango::
-detail::
-spin_yield
-(dango::uint32&)noexcept
-{
-  dango::thread::yield();
-}
-#endif
-
 /*** cond_var_registry ***/
 
 namespace
@@ -1785,6 +1336,8 @@ dango::detail
 {
   class cond_var_registry;
   class cond_var_sentinel;
+  class cond_var_registry_thread;
+  class cond_var_registry_access;
 }
 
 class
@@ -1795,20 +1348,10 @@ final:
 public dango::detail::cond_var_elem
 {
 private:
-  using value_type = dango::detail::cond_var_elem*;
+  using super_type = dango::detail::cond_var_elem;
 public:
-  constexpr cond_var_sentinel()noexcept:
-  m_prev{ nullptr },
-  m_next{ nullptr }
-  { }
+  constexpr cond_var_sentinel()noexcept:super_type{ }{ }
   ~cond_var_sentinel()noexcept = default;
-  constexpr auto prev()const noexcept->value_type{ return m_prev; };
-  constexpr auto next()const noexcept->value_type{ return m_next; };
-  constexpr void set_prev(value_type const a_prev)noexcept{ m_prev = a_prev; };
-  constexpr void set_next(value_type const a_next)noexcept{ m_next = a_next; };
-private:
-  value_type m_prev;
-  value_type m_next;
 public:
   DANGO_IMMOBILE(cond_var_sentinel)
 };
@@ -1819,16 +1362,21 @@ detail::
 cond_var_registry
 final
 {
+  friend dango::detail::cond_var_registry_access;
 private:
   using cond_type = dango::detail::cond_var_base;
 public:
-  static cond_var_registry s_registry;
-public:
+  [[nodiscard]] auto lock()noexcept->auto;
   void add(cond_type*)noexcept;
   void remove(cond_type*)noexcept;
+  void notify_exit()noexcept;
+  void thread_func()noexcept;
 private:
   constexpr cond_var_registry()noexcept;
   ~cond_var_registry()noexcept = default;
+  auto wait_empty()noexcept->bool;
+  auto poll(dango::deadline&)noexcept->bool;
+  auto check_bias()noexcept->bool;
 private:
   dango::static_mutex m_mutex;
   dango::static_cond_var_mutex m_cond;
@@ -1836,13 +1384,90 @@ private:
   detail::cond_var_sentinel m_tail_sentinel[dango::usize(2)];
   detail::cond_var_sentinel* m_external_head;
   detail::cond_var_sentinel* m_internal_head;
-  detail::cond_var_sentinel* m_tail;
+  detail::cond_var_elem* m_tail;
   bool m_alive;
+  dango::uint64 m_last_bias;
 public:
   DANGO_IMMOBILE(cond_var_registry)
 };
 
+constexpr
+dango::
+detail::
+cond_var_registry::
+cond_var_registry
+()noexcept:
+m_mutex{ },
+m_cond{ m_mutex },
+m_head_sentinel{ { }, { } },
+m_tail_sentinel{ { }, { } },
+m_external_head{ &m_head_sentinel[dango::usize(0)] },
+m_internal_head{ &m_head_sentinel[dango::usize(1)] },
+m_tail{ m_external_head },
+m_alive{ true },
+m_last_bias{ dango::uint64(0) }
+{
+  m_head_sentinel[dango::usize(0)].m_next = &m_tail_sentinel[dango::usize(0)];
+  m_tail_sentinel[dango::usize(0)].m_prev = &m_head_sentinel[dango::usize(0)];
+  m_head_sentinel[dango::usize(1)].m_next = &m_tail_sentinel[dango::usize(1)];
+  m_tail_sentinel[dango::usize(1)].m_prev = &m_head_sentinel[dango::usize(1)];
+}
+
+class
+dango::
+detail::
+cond_var_registry_access
+final
+{
+  friend dango::detail::cond_var_base;
+  friend dango::detail::cond_var_registry_thread;
+private:
+  static dango::detail::cond_var_registry s_registry;
+public:
+  DANGO_UNINSTANTIABLE(cond_var_registry_access)
+};
+
+inline dango::detail::cond_var_registry
+dango::
+detail::
+cond_var_registry_access::
+s_registry{ };
+
+class
+dango::
+detail::
+cond_var_registry_thread
+final
+{
+private:
+  static auto start_thread()noexcept->dango::thread;
+public:
+  cond_var_registry_thread()noexcept;
+  ~cond_var_registry_thread()noexcept;
+private:
+  dango::thread const m_thread;
+public:
+  DANGO_IMMOBILE(cond_var_registry_thread)
+};
+
+namespace
+dango::detail
+{
+  DANGO_DEFINE_GLOBAL_INLINE_CV(s_cond_var_registry_thread, const, detail::cond_var_registry_thread{ })
+}
+
 #ifdef DANGO_SOURCE_FILE
+
+/*** thread_yield ***/
+
+void
+dango::
+detail::
+thread_yield
+()noexcept
+{
+  dango::thread::yield();
+}
 
 /*** control_block ***/
 
@@ -2082,32 +1707,15 @@ sleep_sa
 
 /*** cond_var_registry ***/
 
-constexpr
+auto
 dango::
 detail::
 cond_var_registry::
-cond_var_registry
-()noexcept:
-m_mutex{ },
-m_cond{ m_mutex },
-m_head_sentinel{ { }, { } },
-m_tail_sentinel{ { }, { } },
-m_external_head{ &m_head_sentinel[dango::usize(0)] },
-m_internal_head{ &m_head_sentinel[dango::usize(1)] },
-m_tail{ m_external_head },
-m_alive{ true }
+lock
+()noexcept->auto
 {
-  m_head_sentinel[dango::usize(0)].set_next(&m_tail_sentinel[dango::usize(0)]);
-  m_tail_sentinel[dango::usize(0)].set_prev(&m_head_sentinel[dango::usize(0)]);
-  m_head_sentinel[dango::usize(1)].set_next(&m_tail_sentinel[dango::usize(1)]);
-  m_tail_sentinel[dango::usize(1)].set_prev(&m_head_sentinel[dango::usize(1)]);
+  return m_cond.lock();
 }
-
-dango::detail::cond_var_registry
-dango::
-detail::
-cond_var_registry::
-s_registry{ };
 
 void
 dango::
@@ -2116,27 +1724,13 @@ cond_var_registry::
 add
 (cond_type* const a_cond)noexcept
 {
-  dango_crit_full(m_cond, a_crit)
-  {
-    if(m_tail->prev() == m_external_head)
-    {
-      m_external_head->set_next(a_cond);
-      m_tail->set_prev(a_cond);
-      a_cond->set_prev(m_external_head);
-      a_cond->set_next(m_tail);
+  auto const a_prev = m_tail->m_prev;
+  auto const a_next = m_tail;
 
-      a_crit.notify();
-
-      return;
-    }
-
-    auto const a_prev = static_cast<cond_type*>(m_tail->prev());
-
-    a_prev->set_next(a_cond);
-    m_tail->set_prev(a_cond);
-    a_cond->set_prev(a_prev);
-    a_cond->set_next(m_tail);
-  }
+  a_cond->m_prev = a_prev;
+  a_cond->m_next = a_next;
+  a_next->m_prev = a_cond;
+  a_prev->m_next = a_cond;
 }
 
 void
@@ -2146,32 +1740,294 @@ cond_var_registry::
 remove
 (cond_type* const a_cond)noexcept
 {
-  dango_crit(m_mutex)
+  auto const a_prev = a_cond->m_prev;
+  auto const a_next = a_cond->m_next;
+
+  a_next->m_prev = a_prev;
+  a_prev->m_next = a_next;
+  a_cond->m_prev = nullptr;
+  a_cond->m_next = nullptr;
+}
+
+void
+dango::
+detail::
+cond_var_registry::
+notify_exit
+()noexcept
+{
+  dango_crit_full(m_cond, a_crit)
   {
-    if(a_cond->prev() == m_external_head)
-    {
-      m_external_head->set_next(a_cond->next());
-    }
-    else
-    {
-      auto const a_prev = static_cast<cond_type*>(a_cond->prev());
+    m_alive = false;
 
-      a_prev->set_next(a_cond->next());
-    }
+    a_crit.notify();
+  }
+}
 
-    if(a_cond->next() == m_tail)
+void
+dango::
+detail::
+cond_var_registry::
+thread_func
+()noexcept
+{
+  do
+  {
+    if(wait_empty())
     {
-      m_tail->set_prev(a_cond->prev());
-    }
-    else
-    {
-      auto const a_next = static_cast<cond_type*>(a_cond->next());
-
-      a_next->set_prev(a_cond->prev());
+      break;
     }
 
-    a_cond->set_prev(nullptr);
-    a_cond->set_next(nullptr);
+    auto a_deadline = dango::make_deadline_rel(dango::uint64(100));
+
+    while(poll(a_deadline));
+  }
+  while(true);
+}
+
+auto
+dango::
+detail::
+cond_var_registry::
+wait_empty
+()noexcept->bool
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    while(m_external_head->m_next == m_tail)
+    {
+      if(!m_alive)
+      {
+        return true;
+      }
+
+      a_crit.wait();
+    }
+  }
+
+  return false;
+}
+
+auto
+dango::
+detail::
+cond_var_registry::
+poll
+(dango::deadline& a_deadline)noexcept->bool
+{
+  bool a_alive;
+  detail::cond_var_elem* a_head;
+  detail::cond_var_elem* a_tail;
+
+  dango_crit_full(m_cond, a_crit)
+  {
+    do
+    {
+      if(m_external_head->m_next == m_tail)
+      {
+        return false;
+      }
+
+      a_alive = m_alive;
+
+      if(a_deadline.has_passed())
+      {
+        a_deadline.add(dango::uint64(100));
+
+        break;
+      }
+
+      if(!a_alive)
+      {
+        break;
+      }
+
+      a_crit.wait(a_deadline);
+    }
+    while(true);
+
+    if(check_bias())
+    {
+      return a_alive;
+    }
+
+    a_head = m_external_head->m_next;
+    a_tail = m_tail;
+
+    dango::swap(m_external_head, m_internal_head);
+
+    m_tail = m_external_head->m_next;
+  }
+
+  auto a_current = a_head;
+
+  while(a_current != a_tail)
+  {
+    auto const a_next = a_current->m_next;
+    auto const a_cond = static_cast<detail::cond_var_base*>(a_current);
+
+    a_cond->process();
+
+    a_current = a_next;
+  }
+
+  return a_alive;
+}
+
+auto
+dango::
+detail::
+cond_var_registry::
+check_bias
+()noexcept->bool
+{
+  auto const a_current = dango::get_tick_count();
+  auto const a_current_sa = dango::get_tick_count_sa();
+  auto const a_bias = a_current_sa - a_current;
+  auto const a_delta = a_bias - m_last_bias;
+
+  m_last_bias = a_bias;
+
+  return a_delta >= dango::uint64(5);
+}
+
+/*** cond_var_registry_thread ***/
+
+auto
+dango::
+detail::
+cond_var_registry_thread::
+start_thread
+()noexcept->dango::thread
+{
+  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
+
+  try
+  {
+    return dango::thread::create([]()noexcept->void{ c_registry.thread_func(); });
+  }
+  catch(...)
+  {
+#ifndef DANGO_NO_DEBUG
+    dango_unreachable_msg("cond_var watcher thread creation failed");
+#else
+    dango::terminate();
+#endif
+  }
+}
+
+dango::
+detail::
+cond_var_registry_thread::
+cond_var_registry_thread
+()noexcept:
+m_thread{ start_thread() }
+{
+
+}
+
+dango::
+detail::
+cond_var_registry_thread::
+~cond_var_registry_thread
+()noexcept
+{
+  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
+
+  c_registry.notify_exit();
+
+  m_thread.join();
+}
+
+/*** cond_var_base ***/
+
+void
+dango::
+detail::
+cond_var_base::
+regist
+(mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
+{
+  if(!a_deadline.is_suspend_aware())
+  {
+    return;
+  }
+
+  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
+
+  dango_crit_full(c_registry, a_crit)
+  {
+    auto const a_prev = m_ref_count++;
+
+    if(a_prev != dango::usize(0))
+    {
+      return;
+    }
+
+    dango_assert(m_current_mutex == nullptr);
+
+    m_current_mutex = a_lock;
+
+    c_registry.add(this);
+
+    a_crit.notify();
+  }
+}
+
+void
+dango::
+detail::
+cond_var_base::
+unregist
+(mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
+{
+  if(!a_deadline.is_suspend_aware())
+  {
+    return;
+  }
+
+  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
+
+  dango_crit_full(c_registry, a_crit)
+  {
+    auto const a_current = --m_ref_count;
+
+    if(a_current != dango::usize(0))
+    {
+      return;
+    }
+
+    dango_assert(m_current_mutex == a_lock);
+
+    m_current_mutex = nullptr;
+
+    c_registry.remove(this);
+
+    a_crit.notify();
+  }
+}
+
+void
+dango::
+detail::
+cond_var_base::
+process
+()noexcept
+{
+  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
+
+  dango_crit_full(c_registry, a_crit)
+  {
+    dango_assert(m_ref_count != dango::usize(0));
+    dango_assert(m_current_mutex != nullptr);
+
+    dango_crit_cond(*this, m_current_mutex, a_notify_crit)
+    {
+      a_notify_crit.notify_all();
+    }
+
+    c_registry.remove(this);
+    c_registry.add(this);
   }
 }
 
@@ -2986,6 +2842,8 @@ wait
 
   dango_assert(a_interval != u64(INFINITE));
 
+  regist(a_lock, a_deadline);
+
   SleepConditionVariableSRW
   (
     get<type>(),
@@ -2993,6 +2851,8 @@ wait
     DWORD(a_interval),
     ULONG(0)
   );
+
+  unregist(a_lock, a_deadline);
 }
 
 void
