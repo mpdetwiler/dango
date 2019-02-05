@@ -2,6 +2,7 @@
 #define __DANGO_CONCURRENT_HPP__ 1
 
 #include "dango-concurrent-base.hpp"
+#include "dango-int.hpp"
 #include "dango-assert.hpp"
 #include "dango-mem.hpp"
 #include "dango-global.hpp"
@@ -2518,6 +2519,7 @@ tick_count
 
   constexpr auto const c_mul = u64(1'000);
   constexpr auto const c_div = u64(1'000'000);
+  constexpr auto const c_half = c_div / u64(2);
 
   timespec a_spec;
 
@@ -2529,7 +2531,7 @@ tick_count
   auto const a_sec = u64(a_spec.tv_sec);
   auto const a_nsec = u64(a_spec.tv_nsec);
 
-  return (a_sec * c_mul) + (a_nsec / c_div);
+  return (a_sec * c_mul) + (a_nsec / c_div) + u64((a_nsec % c_div) >= c_half);
 }
 
 template
@@ -2610,26 +2612,30 @@ dango::
 get_tick_count
 ()noexcept->dango::uint64
 {
+  using u64 = dango::uint64;
+
   static dango::spin_mutex s_lock{ };
-  static auto s_init_bias_mutable = dango::uint64(0);
+  static auto s_init_bias_mutable = u64(0);
   static auto s_prev = concurrent_cpp::perf_count(s_init_bias_mutable);
-  static auto s_current = dango::uint64(0);
+  static auto s_current = u64(0);
 
   constexpr auto const& c_init_bias = s_init_bias_mutable;
 
-  dango::uint64 a_result;
-  dango::uint64 a_bias;
+  u64 a_result;
+  u64 a_bias;
 
   auto const a_freq = concurrent_cpp::perf_freq();
-  auto const a_count = concurrent_cpp::perf_count(a_bias);
+  auto const a_half = a_freq / u64(2);
 
   dango_crit(s_lock)
   {
+    auto const a_count = concurrent_cpp::perf_count(a_bias);
     auto const a_delta = a_count - s_prev;
+    auto const a_mul = a_delta * u64(1'000);
 
     s_prev = a_count;
 
-    s_current += (a_delta * dango::uint64(1'000)) / a_freq;
+    s_current += (a_mul / a_freq) + u64((a_mul % a_freq) >= a_half);
 
     a_result = s_current;
   }
@@ -2644,22 +2650,26 @@ dango::
 get_tick_count_sa
 ()noexcept->dango::uint64
 {
+  using u64 = dango::uint64;
+
   static dango::spin_mutex s_lock{ };
   static auto s_prev = concurrent_cpp::perf_count();
-  static auto s_current = dango::uint64(0);
+  static auto s_current = u64(0);
 
-  dango::uint64 a_result;
+  u64 a_result;
 
   auto const a_freq = concurrent_cpp::perf_freq();
-  auto const a_count = concurrent_cpp::perf_count();
+  auto const a_half = a_freq / u64(2);
 
   dango_crit(s_lock)
   {
+    auto const a_count = concurrent_cpp::perf_count();
     auto const a_delta = a_count - s_prev;
+    auto const a_mul = a_delta * u64(1'000);
 
     s_prev = a_count;
 
-    s_current += (a_delta * dango::uint64(1'000)) / a_freq;
+    s_current += (a_mul / a_freq) + u64((a_mul % a_freq) >= a_half);
 
     a_result = s_current;
   }
@@ -3034,10 +3044,15 @@ concurrent_cpp::
 perf_count
 (dango::uint64& a_suspend_bias)noexcept->dango::uint64
 {
+  using u64 = dango::uint64;
+
   static auto& s_bias_ref = *reinterpret_cast<ULONGLONG const volatile*>(dango::uintptr(0x7FFE0000 + 0x3B0));
 
-  dango::uint64 a_bias;
-  dango::uint64 a_result;
+  constexpr auto const c_div = u64(10'000);
+  constexpr auto const c_half = c_div / u64(2);
+
+  u64 a_bias;
+  u64 a_result;
 
   do
   {
@@ -3046,7 +3061,7 @@ perf_count
   }
   while(a_bias != s_bias_ref);
 
-  a_suspend_bias = a_bias / dango::uint64(10'000);
+  a_suspend_bias = (a_bias / c_div) + u64((a_bias % c_div) >= c_half);
 
   return a_result;
 }

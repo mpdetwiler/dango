@@ -3,8 +3,8 @@
 
 #include "dango-macro.hpp"
 #include "dango-traits.hpp"
-#include "dango-int.hpp"
 #include "dango-atomic.hpp"
+#include "dango-util.hpp"
 
 /*** dango_crit ***/
 
@@ -162,16 +162,11 @@ dango::enable_if<dango::is_callable_ret<tp_func, void, tp_args...>, bool>
   }
   else
   {
-    try
-    {
-      a_func(dango::forward<tp_args>(a_args)...);
-    }
-    catch(...)
-    {
-      release(false);
+    auto a_guard = dango::make_guard([this]()noexcept->void{ release(false); });
 
-      throw;
-    }
+    a_func(dango::forward<tp_args>(a_args)...);
+
+    a_guard.dismiss();
   }
 
   release(true);
@@ -202,16 +197,11 @@ dango::enable_if<dango::is_callable_ret<tp_func, bool, tp_args...>, bool>
   }
   else
   {
-    try
-    {
-      a_success = a_func(dango::forward<tp_args>(a_args)...);
-    }
-    catch(...)
-    {
-      release(false);
+    auto a_guard = dango::make_guard([this]()noexcept->void{ release(false); });
 
-      throw;
-    }
+    a_success = a_func(dango::forward<tp_args>(a_args)...);
+
+    a_guard.dismiss();
   }
 
   release(a_success);
