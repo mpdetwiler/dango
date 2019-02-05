@@ -1724,8 +1724,15 @@ cond_var_registry::
 add
 (cond_type* const a_cond)noexcept
 {
+  dango_assert(a_cond != nullptr);
+  dango_assert(a_cond->m_prev == nullptr);
+  dango_assert(a_cond->m_next == nullptr);
+
   auto const a_prev = m_tail->m_prev;
   auto const a_next = m_tail;
+
+  dango_assert(a_prev->m_next == a_next);
+  dango_assert(a_next->m_prev == a_prev);
 
   a_cond->m_prev = a_prev;
   a_cond->m_next = a_next;
@@ -1740,8 +1747,15 @@ cond_var_registry::
 remove
 (cond_type* const a_cond)noexcept
 {
+  dango_assert(a_cond != nullptr);
+  dango_assert(a_cond->m_prev != nullptr);
+  dango_assert(a_cond->m_next != nullptr);
+
   auto const a_prev = a_cond->m_prev;
   auto const a_next = a_cond->m_next;
+
+  dango_assert(a_prev->m_next == a_cond);
+  dango_assert(a_next->m_prev == a_cond);
 
   a_next->m_prev = a_prev;
   a_prev->m_next = a_next;
@@ -1915,7 +1929,7 @@ start_thread
   catch(...)
   {
 #ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg("cond_var watcher thread creation failed");
+    dango_unreachable_msg("cond_var watcher-thread creation failed");
 #else
     dango::terminate();
 #endif
