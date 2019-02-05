@@ -1360,6 +1360,10 @@ final
   friend dango::detail::cond_var_registry_access;
 private:
   using cond_type = dango::detail::cond_var_base;
+private:
+  static void remove(cond_type*)noexcept;
+  static auto current_bias()noexcept->dango::uint64;
+  static auto bias_okay(dango::uint64&)noexcept->bool;
 public:
   void regist(cond_type*, dango::deadline const&)noexcept;
   void unregist(cond_type*, dango::deadline const&)noexcept;
@@ -1369,10 +1373,8 @@ private:
   constexpr cond_var_registry()noexcept;
   ~cond_var_registry()noexcept = default;
   void add(cond_type*)noexcept;
-  void remove(cond_type*)noexcept;
   auto wait_empty()noexcept->bool;
-  auto poll_bias(dango::deadline&)noexcept->bool;
-  auto bias_okay()noexcept->bool;
+  auto poll_bias(dango::uint64&, dango::deadline&)noexcept->bool;
   auto pop_internal()noexcept->bool;
 private:
   dango::static_mutex m_mutex;
@@ -1385,7 +1387,6 @@ private:
   detail::cond_var_elem* m_internal_tail;
   bool m_alive;
   bool m_waiting;
-  dango::uint64 m_last_bias;
 public:
   DANGO_IMMOBILE(cond_var_registry)
 };
@@ -1405,8 +1406,7 @@ m_internal_head{ &m_head_sentinel[1] },
 m_external_tail{ &m_tail_sentinel[0] },
 m_internal_tail{ &m_tail_sentinel[1] },
 m_alive{ true },
-m_waiting{ false },
-m_last_bias{ dango::uint64(0) }
+m_waiting{ false }
 {
   m_head_sentinel[0].m_next = &m_tail_sentinel[0];
   m_tail_sentinel[0].m_prev = &m_head_sentinel[0];
@@ -1831,9 +1831,11 @@ thread_func
       break;
     }
 
+    auto a_bias = current_bias();
+
     auto a_deadline = dango::make_deadline_rel(dango::uint64(0));
 
-    while(poll_bias(a_deadline));
+    while(poll_bias(a_bias, a_deadline));
   }
   while(true);
 }
@@ -1916,7 +1918,7 @@ dango::
 detail::
 cond_var_registry::
 poll_bias
-(dango::deadline& a_deadline)noexcept->bool
+(dango::uint64& a_prev_bias, dango::deadline& a_deadline)noexcept->bool
 {
   bool a_alive;
 
@@ -1951,7 +1953,7 @@ poll_bias
     }
     while(true);
 
-    if(bias_okay())
+    if(bias_okay(a_prev_bias))
     {
       return a_alive;
     }
@@ -1969,15 +1971,33 @@ auto
 dango::
 detail::
 cond_var_registry::
-bias_okay
-()noexcept->bool
+current_bias
+()noexcept->dango::uint64
 {
   auto const a_current = dango::get_tick_count();
-  auto const a_current_sa = dango::get_tick_count_sa();
-  auto const a_bias = a_current_sa - a_current;
-  auto const a_delta = a_bias - m_last_bias;
 
-  m_last_bias = a_bias;
+  auto const a_current_sa = dango::get_tick_count_sa();
+
+  if(a_current >= a_current_sa)
+  {
+    return dango::uint64(0);
+  }
+
+  return a_current_sa - a_current;
+}
+
+auto
+dango::
+detail::
+cond_var_registry::
+bias_okay
+(dango::uint64& a_prev_bias)noexcept->bool
+{
+  auto const a_bias = current_bias();
+
+  auto const a_delta = a_bias - a_prev_bias;
+
+  a_prev_bias = a_bias;
 
   return a_delta < dango::uint64(5);
 }
