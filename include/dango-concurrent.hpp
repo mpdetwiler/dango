@@ -1817,6 +1817,8 @@ cond_var_registry::
 poll
 (dango::deadline& a_deadline)noexcept->bool
 {
+  printf("poll\n");
+
   bool a_alive;
   detail::cond_var_elem* a_head;
   detail::cond_var_elem* a_tail;
