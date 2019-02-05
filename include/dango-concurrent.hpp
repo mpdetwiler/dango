@@ -1888,7 +1888,7 @@ check_bias
 
   m_last_bias = a_bias;
 
-  return a_delta >= dango::uint64(5);
+  return a_delta < dango::uint64(5);
 }
 
 /*** cond_var_registry_thread ***/
