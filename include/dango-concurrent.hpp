@@ -358,7 +358,7 @@ namespace
 dango::detail
 {
   using primitive_storage =
-    dango::aligned_storage<dango::usize(16), alignof(void*)>;
+    dango::aligned_storage<dango::usize(48), alignof(void*)>;
 
   class mutex_base;
   class cond_var_base;
@@ -1401,16 +1401,16 @@ m_mutex{ },
 m_cond{ m_mutex },
 m_head_sentinel{ { }, { } },
 m_tail_sentinel{ { }, { } },
-m_external_head{ &m_head_sentinel[dango::usize(0)] },
-m_internal_head{ &m_head_sentinel[dango::usize(1)] },
-m_tail{ m_external_head },
+m_external_head{ &m_head_sentinel[0] },
+m_internal_head{ &m_head_sentinel[1] },
+m_tail{ &m_tail_sentinel[0] },
 m_alive{ true },
 m_last_bias{ dango::uint64(0) }
 {
-  m_head_sentinel[dango::usize(0)].m_next = &m_tail_sentinel[dango::usize(0)];
-  m_tail_sentinel[dango::usize(0)].m_prev = &m_head_sentinel[dango::usize(0)];
-  m_head_sentinel[dango::usize(1)].m_next = &m_tail_sentinel[dango::usize(1)];
-  m_tail_sentinel[dango::usize(1)].m_prev = &m_head_sentinel[dango::usize(1)];
+  m_head_sentinel[0].m_next = &m_tail_sentinel[0];
+  m_tail_sentinel[0].m_prev = &m_head_sentinel[0];
+  m_head_sentinel[1].m_next = &m_tail_sentinel[1];
+  m_tail_sentinel[1].m_prev = &m_head_sentinel[1];
 }
 
 class
@@ -1822,8 +1822,6 @@ wait_empty
   return false;
 }
 
-#include <cstdio>
-
 auto
 dango::
 detail::
@@ -1831,8 +1829,6 @@ cond_var_registry::
 poll
 (dango::deadline& a_deadline)noexcept->bool
 {
-  printf("poll\n");
-
   bool a_alive;
   detail::cond_var_elem* a_head;
   detail::cond_var_elem* a_tail;
@@ -1876,8 +1872,6 @@ poll
 
     m_tail = m_external_head->m_next;
   }
-
-  printf("processing\n");
 
   auto a_current = a_head;
 
@@ -2047,6 +2041,7 @@ process
     }
 
     c_registry.remove(this);
+
     c_registry.add(this);
   }
 }
@@ -2063,7 +2058,7 @@ dango::concurrent_cpp
 {
   static auto tick_count(clockid_t)noexcept->dango::uint64;
 
-  static constexpr auto const COND_VAR_CLOCK = clockid_t(CLOCK_REALTIME);
+  static constexpr auto const COND_VAR_CLOCK = clockid_t(CLOCK_MONOTONIC);
 }
 
 auto
@@ -2370,6 +2365,8 @@ wait
     a_spec.tv_nsec = a_nsec;
   }
 
+  regist(a_lock, a_deadline);
+
   auto const a_result =
   pthread_cond_timedwait
   (
@@ -2379,6 +2376,8 @@ wait
   );
 
   dango_assert((a_result == 0) || (a_result == ETIMEDOUT));
+
+  unregist(a_lock, a_deadline);
 }
 
 void
