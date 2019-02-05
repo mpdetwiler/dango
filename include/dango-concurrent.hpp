@@ -1362,6 +1362,7 @@ private:
   using cond_type = dango::detail::cond_var_base;
 private:
   static void remove(cond_type*)noexcept;
+  static auto list_empty(detail::cond_var_sentinel const*, detail::cond_var_elem const*)noexcept->bool;
   static auto current_bias()noexcept->dango::uint64;
   static auto bias_okay(dango::uint64&)noexcept->bool;
 public:
@@ -1895,7 +1896,7 @@ wait_empty
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(m_external_head->m_next == m_external_tail)
+    while(list_empty(m_external_head, m_external_tail))
     {
       if(!m_alive)
       {
@@ -1926,7 +1927,7 @@ poll_bias
   {
     do
     {
-      if(m_external_head->m_next == m_external_tail)
+      if(list_empty(m_external_head, m_external_tail))
       {
         return false;
       }
@@ -1960,11 +1961,23 @@ poll_bias
 
     dango::swap(m_external_head, m_internal_head);
     dango::swap(m_external_tail, m_internal_tail);
+
+    dango_assert(list_empty(m_external_head, m_external_tail));
   }
 
   while(pop_internal());
 
   return a_alive;
+}
+
+auto
+dango::
+detail::
+cond_var_registry::
+list_empty
+(detail::cond_var_sentinel const* const a_head, detail::cond_var_elem const* const a_tail)noexcept->bool
+{
+  return a_head->m_next == a_tail;
 }
 
 auto
@@ -2011,7 +2024,7 @@ pop_internal
 {
   dango_crit(m_mutex)
   {
-    if(m_internal_head->m_next == m_internal_tail)
+    if(list_empty(m_internal_head, m_internal_tail))
     {
       return false;
     }

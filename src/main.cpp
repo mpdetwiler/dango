@@ -6,66 +6,65 @@ auto
 main
 ()noexcept->dango::s_int
 {
-  dango::thread::sleep(1'000);
-  dango::thread::sleep_sa(1'000);
+  dango::thread a_threads[]{ null, null, null, null, null };
 
-  dango::mutex a_mutex{ };
-  dango::cond_var_mutex a_cond{ a_mutex };
+  auto a_id = dango::uint32(0);
 
+  for(auto& a_thread:a_threads)
   {
-    auto const a_deadline = dango::make_deadline_rel(30'000);
-
-    fprintf(stdout, "tick_count: %llu\n", dango::u_cent(dango::get_tick_count()));
-    fprintf(stdout, "tick_count_sa: %llu\n", dango::u_cent(dango::get_tick_count_sa()));
-    fprintf(stdout, "sleep...\n");
-
-    dango_crit_full(a_cond, a_crit)
-    {
-      while(!a_deadline.has_passed())
+    a_thread =
+    dango::thread::create
+    (
+      [a_id]()noexcept->void
       {
-        a_crit.wait(a_deadline);
+        auto a_tick = dango::get_tick_count();
+        auto a_tick_sa = dango::get_tick_count_sa();
 
-        fprintf(stdout, "wake\n");
+        fprintf
+        (
+          stderr,
+          "thread[%u] sleep... (%llu) (%llu)\n",
+          dango::u_int(a_id),
+          dango::u_cent(a_tick),
+          dango::u_cent(a_tick_sa)
+        );
+
+        dango::thread::sleep(30'000);
+
+        a_tick = dango::get_tick_count();
+        a_tick_sa = dango::get_tick_count_sa();
+
+        fprintf
+        (
+          stderr,
+          "thread[%u] sleep_sa... (%llu) (%llu)\n",
+          dango::u_int(a_id),
+          dango::u_cent(a_tick),
+          dango::u_cent(a_tick_sa)
+        );
+
+        dango::thread::sleep_sa(30'000);
+
+        a_tick = dango::get_tick_count();
+        a_tick_sa = dango::get_tick_count_sa();
+
+        fprintf
+        (
+          stderr,
+          "thread[%u] done (%llu) (%llu)\n",
+          dango::u_int(a_id),
+          dango::u_cent(a_tick),
+          dango::u_cent(a_tick_sa)
+        );
       }
-    }
+    );
+
+    ++a_id;
   }
 
+  for(auto const& a_thread:a_threads)
   {
-    auto const a_deadline = dango::make_deadline_rel_sa(30'000);
-
-    fprintf(stdout, "tick_count: %llu\n", dango::u_cent(dango::get_tick_count()));
-    fprintf(stdout, "tick_count_sa: %llu\n", dango::u_cent(dango::get_tick_count_sa()));
-    fprintf(stdout, "sleep_sa...\n");
-
-    dango_crit_full(a_cond, a_crit)
-    {
-      while(!a_deadline.has_passed())
-      {
-        a_crit.wait(a_deadline);
-
-        fprintf(stdout, "wake\n");
-      }
-    }
-  }
-
-  fprintf(stdout, "tick_count: %llu\n", dango::u_cent(dango::get_tick_count()));
-  fprintf(stdout, "tick_count_sa: %llu\n", dango::u_cent(dango::get_tick_count_sa()));
-
-  auto a_deadline = dango::make_deadline_rel(5);
-
-  for(auto a_i = uint32(0); a_i != uint32(40); ++a_i)
-  {
-    fprintf(stdout, "tick_count: %llu\n", dango::u_cent(dango::get_tick_count()));
-
-    dango_crit_full(a_cond, a_crit)
-    {
-      while(!a_deadline.has_passed())
-      {
-        a_crit.wait(a_deadline);
-      }
-    }
-
-    a_deadline.add(5);
+    a_thread.join();
   }
 
   return 0;
