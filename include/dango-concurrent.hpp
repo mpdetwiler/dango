@@ -614,9 +614,6 @@ private:
   void wait(mutex_type*, dango::deadline const&)noexcept;
   void notify(mutex_type*)noexcept;
   void notify_all(mutex_type*)noexcept;
-  void regist(mutex_type*, dango::deadline const&)noexcept;
-  void unregist(mutex_type*, dango::deadline const&)noexcept;
-  void process()noexcept;
 private:
   mutex_type* m_current_mutex;
   dango::usize m_ref_count;
@@ -1364,19 +1361,22 @@ final
 {
   friend dango::detail::cond_var_registry_access;
 private:
+  using mutex_type = dango::detail::mutex_base;
   using cond_type = dango::detail::cond_var_base;
 public:
-  [[nodiscard]] auto lock()noexcept->auto;
-  void add(cond_type*)noexcept;
-  void remove(cond_type*)noexcept;
+  void regist(cond_type*, mutex_type*, dango::deadline const&)noexcept;
+  void unregist(cond_type*, mutex_type*, dango::deadline const&)noexcept;
   void notify_exit()noexcept;
   void thread_func()noexcept;
 private:
   constexpr cond_var_registry()noexcept;
   ~cond_var_registry()noexcept = default;
+  void add(cond_type*)noexcept;
+  void remove(cond_type*)noexcept;
   auto wait_empty()noexcept->bool;
-  auto poll(dango::deadline&)noexcept->bool;
-  auto check_bias()noexcept->bool;
+  auto poll_bias(dango::deadline&)noexcept->bool;
+  auto bias_okay()noexcept->bool;
+  auto pop_internal()noexcept->bool;
 private:
   dango::static_mutex m_mutex;
   dango::static_cond_var_mutex m_cond;
@@ -1384,7 +1384,8 @@ private:
   detail::cond_var_sentinel m_tail_sentinel[dango::usize(2)];
   detail::cond_var_sentinel* m_external_head;
   detail::cond_var_sentinel* m_internal_head;
-  detail::cond_var_elem* m_tail;
+  detail::cond_var_elem* m_external_tail;
+  detail::cond_var_elem* m_internal_tail;
   bool m_alive;
   dango::uint64 m_last_bias;
 public:
@@ -1403,7 +1404,8 @@ m_head_sentinel{ { }, { } },
 m_tail_sentinel{ { }, { } },
 m_external_head{ &m_head_sentinel[0] },
 m_internal_head{ &m_head_sentinel[1] },
-m_tail{ &m_tail_sentinel[0] },
+m_external_tail{ &m_tail_sentinel[0] },
+m_internal_tail{ &m_tail_sentinel[1] },
 m_alive{ true },
 m_last_bias{ dango::uint64(0) }
 {
@@ -1707,14 +1709,114 @@ sleep_sa
 
 /*** cond_var_registry ***/
 
-auto
+void
 dango::
 detail::
 cond_var_registry::
-lock
-()noexcept->auto
+regist
+(
+  cond_type* const a_cond,
+  mutex_type* const a_mutex,
+  dango::deadline const& a_deadline
+)
+noexcept
 {
-  return m_cond.lock();
+  dango_assert(a_cond != nullptr);
+  dango_assert(a_mutex != nullptr);
+
+  if(!a_deadline.is_suspend_aware())
+  {
+    return;
+  }
+
+  dango_crit_full(m_cond, a_crit)
+  {
+    if(a_cond->m_ref_count++ != dango::usize(0))
+    {
+      return;
+    }
+
+    dango_assert(a_cond->m_current_mutex == nullptr);
+
+    a_cond->m_current_mutex = a_mutex;
+
+    add(a_cond);
+
+    a_crit.notify();
+  }
+}
+
+void
+dango::
+detail::
+cond_var_registry::
+unregist
+(
+  cond_type* const a_cond,
+  mutex_type* const a_mutex,
+  dango::deadline const& a_deadline
+)
+noexcept
+{
+  dango_assert(a_cond != nullptr);
+  dango_assert(a_mutex != nullptr);
+
+  if(!a_deadline.is_suspend_aware())
+  {
+    return;
+  }
+
+  dango_crit_full(m_cond, a_crit)
+  {
+    if(--a_cond->m_ref_count != dango::usize(0))
+    {
+      return;
+    }
+
+    dango_assert(a_cond->m_current_mutex == a_mutex);
+
+    a_cond->m_current_mutex = nullptr;
+
+    remove(a_cond);
+
+    a_crit.notify();
+  }
+}
+
+void
+dango::
+detail::
+cond_var_registry::
+notify_exit
+()noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    m_alive = false;
+
+    a_crit.notify();
+  }
+}
+
+void
+dango::
+detail::
+cond_var_registry::
+thread_func
+()noexcept
+{
+  do
+  {
+    if(wait_empty())
+    {
+      break;
+    }
+
+    auto a_deadline = dango::make_deadline_rel(dango::uint64(0));
+
+    while(poll_bias(a_deadline));
+  }
+  while(true);
 }
 
 void
@@ -1728,8 +1830,8 @@ add
   dango_assert(a_cond->m_prev == nullptr);
   dango_assert(a_cond->m_next == nullptr);
 
-  auto const a_prev = m_tail->m_prev;
-  auto const a_next = m_tail;
+  auto const a_prev = m_external_tail->m_prev;
+  auto const a_next = m_external_tail;
 
   dango_assert(a_prev->m_next == a_next);
   dango_assert(a_next->m_prev == a_prev);
@@ -1763,42 +1865,6 @@ remove
   a_cond->m_next = nullptr;
 }
 
-void
-dango::
-detail::
-cond_var_registry::
-notify_exit
-()noexcept
-{
-  dango_crit_full(m_cond, a_crit)
-  {
-    m_alive = false;
-
-    a_crit.notify();
-  }
-}
-
-void
-dango::
-detail::
-cond_var_registry::
-thread_func
-()noexcept
-{
-  do
-  {
-    if(wait_empty())
-    {
-      break;
-    }
-
-    auto a_deadline = dango::make_deadline_rel(dango::uint64(100));
-
-    while(poll(a_deadline));
-  }
-  while(true);
-}
-
 auto
 dango::
 detail::
@@ -1808,7 +1874,7 @@ wait_empty
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(m_external_head->m_next == m_tail)
+    while(m_external_head->m_next == m_external_tail)
     {
       if(!m_alive)
       {
@@ -1826,18 +1892,16 @@ auto
 dango::
 detail::
 cond_var_registry::
-poll
+poll_bias
 (dango::deadline& a_deadline)noexcept->bool
 {
   bool a_alive;
-  detail::cond_var_elem* a_head;
-  detail::cond_var_elem* a_tail;
 
   dango_crit_full(m_cond, a_crit)
   {
     do
     {
-      if(m_external_head->m_next == m_tail)
+      if(m_external_head->m_next == m_external_tail)
       {
         return false;
       }
@@ -1846,7 +1910,7 @@ poll
 
       if(a_deadline.has_passed())
       {
-        a_deadline.add(dango::uint64(100));
+        a_deadline.add(dango::uint64(1'000));
 
         break;
       }
@@ -1860,30 +1924,16 @@ poll
     }
     while(true);
 
-    if(check_bias())
+    if(bias_okay())
     {
       return a_alive;
     }
 
-    a_head = m_external_head->m_next;
-    a_tail = m_tail;
-
     dango::swap(m_external_head, m_internal_head);
-
-    m_tail = m_external_head->m_next;
+    dango::swap(m_external_tail, m_internal_tail);
   }
 
-  auto a_current = a_head;
-
-  while(a_current != a_tail)
-  {
-    auto const a_next = a_current->m_next;
-    auto const a_cond = static_cast<detail::cond_var_base*>(a_current);
-
-    a_cond->process();
-
-    a_current = a_next;
-  }
+  while(pop_internal());
 
   return a_alive;
 }
@@ -1892,7 +1942,7 @@ auto
 dango::
 detail::
 cond_var_registry::
-check_bias
+bias_okay
 ()noexcept->bool
 {
   auto const a_current = dango::get_tick_count();
@@ -1903,6 +1953,38 @@ check_bias
   m_last_bias = a_bias;
 
   return a_delta < dango::uint64(5);
+}
+
+auto
+dango::
+detail::
+cond_var_registry::
+pop_internal
+()noexcept->bool
+{
+  dango_crit(m_mutex)
+  {
+    if(m_internal_head->m_next == m_internal_tail)
+    {
+      return false;
+    }
+
+    auto const a_cond = static_cast<detail::cond_var_base*>(m_internal_head->m_next);
+
+    dango_assert(a_cond->m_ref_count != dango::usize(0));
+    dango_assert(a_cond->m_current_mutex != nullptr);
+
+    remove(a_cond);
+
+    add(a_cond);
+
+    dango_try_crit_cond(*a_cond, a_cond->m_current_mutex, a_crit)
+    {
+      a_crit.notify_all();
+    }
+  }
+
+  return true;
 }
 
 /*** cond_var_registry_thread ***/
@@ -1951,99 +2033,6 @@ cond_var_registry_thread::
   c_registry.notify_exit();
 
   m_thread.join();
-}
-
-/*** cond_var_base ***/
-
-void
-dango::
-detail::
-cond_var_base::
-regist
-(mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
-{
-  if(!a_deadline.is_suspend_aware())
-  {
-    return;
-  }
-
-  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
-
-  dango_crit_full(c_registry, a_crit)
-  {
-    auto const a_prev = m_ref_count++;
-
-    if(a_prev != dango::usize(0))
-    {
-      return;
-    }
-
-    dango_assert(m_current_mutex == nullptr);
-
-    m_current_mutex = a_lock;
-
-    c_registry.add(this);
-
-    a_crit.notify();
-  }
-}
-
-void
-dango::
-detail::
-cond_var_base::
-unregist
-(mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
-{
-  if(!a_deadline.is_suspend_aware())
-  {
-    return;
-  }
-
-  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
-
-  dango_crit_full(c_registry, a_crit)
-  {
-    auto const a_current = --m_ref_count;
-
-    if(a_current != dango::usize(0))
-    {
-      return;
-    }
-
-    dango_assert(m_current_mutex == a_lock);
-
-    m_current_mutex = nullptr;
-
-    c_registry.remove(this);
-
-    a_crit.notify();
-  }
-}
-
-void
-dango::
-detail::
-cond_var_base::
-process
-()noexcept
-{
-  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
-
-  dango_crit_full(c_registry, a_crit)
-  {
-    dango_assert(m_ref_count != dango::usize(0));
-    dango_assert(m_current_mutex != nullptr);
-
-    dango_crit_cond(*this, m_current_mutex, a_notify_crit)
-    {
-      a_notify_crit.notify_all();
-    }
-
-    c_registry.remove(this);
-
-    c_registry.add(this);
-  }
 }
 
 #ifdef __linux__
@@ -2365,7 +2354,9 @@ wait
     a_spec.tv_nsec = a_nsec;
   }
 
-  regist(a_lock, a_deadline);
+  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
+
+  c_registry.regist(this, a_lock, a_deadline);
 
   auto const a_result =
   pthread_cond_timedwait
@@ -2377,7 +2368,7 @@ wait
 
   dango_assert((a_result == 0) || (a_result == ETIMEDOUT));
 
-  unregist(a_lock, a_deadline);
+  c_registry.unregist(this, a_lock, a_deadline);
 }
 
 void
@@ -2861,7 +2852,9 @@ wait
 
   dango_assert(a_interval != u64(INFINITE));
 
-  regist(a_lock, a_deadline);
+  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
+
+  c_registry.regist(this, a_lock, a_deadline);
 
   SleepConditionVariableSRW
   (
@@ -2871,7 +2864,7 @@ wait
     ULONG(0)
   );
 
-  unregist(a_lock, a_deadline);
+  c_registry.unregist(this, a_lock, a_deadline);
 }
 
 void
