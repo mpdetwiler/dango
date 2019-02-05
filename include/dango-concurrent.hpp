@@ -1808,6 +1808,8 @@ wait_empty
   return false;
 }
 
+#include <cstdio>
+
 auto
 dango::
 detail::
@@ -1858,6 +1860,8 @@ poll
 
     m_tail = m_external_head->m_next;
   }
+
+  printf("processing\n");
 
   auto a_current = a_head;
 
