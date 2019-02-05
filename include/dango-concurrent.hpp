@@ -588,7 +588,7 @@ class alignas(dango::cache_align_type)
 dango::
 detail::
 cond_var_base:
-public dango::detail::cond_var_elem
+dango::detail::cond_var_elem
 {
   friend detail::cond_var_registry;
 private:
@@ -604,6 +604,9 @@ protected:
   auto lock(mutex_type*)noexcept->locker;
   auto try_lock(mutex_type*)noexcept->try_locker;
   void destroy()noexcept;
+public:
+  void notify()noexcept;
+  void notify_all()noexcept;
 private:
   template
   <typename tp_type>
@@ -612,10 +615,7 @@ private:
   void initialize()noexcept;
   void wait(mutex_type*)noexcept;
   void wait(mutex_type*, dango::deadline const&)noexcept;
-  void notify(mutex_type*)noexcept;
-  void notify_all(mutex_type*)noexcept;
 private:
-  mutex_type* m_current_mutex;
   dango::usize m_ref_count;
   detail::primitive_storage m_storage;
   dango::exec_once m_init;
@@ -638,8 +638,6 @@ public:
   ~locker()noexcept{ m_lock->release(); }
   void wait()const noexcept{ m_cond->wait(m_lock); }
   void wait(dango::deadline const& a_deadline)const noexcept{ m_cond->wait(m_lock, a_deadline); }
-  void notify()const noexcept{ m_cond->notify(m_lock); }
-  void notify_all()const noexcept{ m_cond->notify_all(m_lock); }
 private:
   mutex_type* const m_lock;
   cond_var_base* const m_cond;
@@ -664,8 +662,6 @@ public:
   explicit operator bool()const{ return m_lock != nullptr; }
   void wait()const noexcept{ m_cond->wait(m_lock); }
   void wait(dango::deadline const& a_deadline)const noexcept{ m_cond->wait(m_lock, a_deadline); }
-  void notify()const noexcept{ m_cond->notify(m_lock); }
-  void notify_all()const noexcept{ m_cond->notify_all(m_lock); }
 private:
   mutex_type* const m_lock;
   cond_var_base* const m_cond;
@@ -681,7 +677,6 @@ cond_var_base::
 cond_var_base
 ()noexcept:
 super_type{ },
-m_current_mutex{ nullptr },
 m_ref_count{ dango::usize(0) },
 m_storage{ },
 m_init{ }
@@ -735,7 +730,7 @@ dango
   class cond_var;
 }
 
-class
+struct
 dango::
 cond_var
 final:
@@ -797,7 +792,7 @@ dango
   class static_cond_var;
 }
 
-class
+struct
 dango::
 static_cond_var
 final:
@@ -850,7 +845,7 @@ dango
   class cond_var_mutex;
 }
 
-class
+struct
 dango::
 cond_var_mutex
 final:
@@ -916,7 +911,7 @@ dango
   class static_cond_var_mutex;
 }
 
-class
+struct
 dango::
 static_cond_var_mutex
 final:
@@ -1026,6 +1021,7 @@ public:
   explicit constexpr operator bool()const noexcept;
   auto is_alive()const noexcept->bool;
   void join()const noexcept;
+  void join(dango::deadline const&)const noexcept;
   constexpr auto dango_operator_is_null()const noexcept->bool;
   constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
 private:
@@ -1049,6 +1045,7 @@ public:
   void increment()noexcept;
   auto decrement()noexcept->bool;
   void wait()noexcept;
+  void wait(dango::deadline const&)noexcept;
   void notify_all()noexcept;
   auto is_alive()const noexcept->bool;
 private:
@@ -1361,11 +1358,10 @@ final
 {
   friend dango::detail::cond_var_registry_access;
 private:
-  using mutex_type = dango::detail::mutex_base;
   using cond_type = dango::detail::cond_var_base;
 public:
-  void regist(cond_type*, mutex_type*, dango::deadline const&)noexcept;
-  void unregist(cond_type*, mutex_type*, dango::deadline const&)noexcept;
+  void regist(cond_type*, dango::deadline const&)noexcept;
+  void unregist(cond_type*, dango::deadline const&)noexcept;
   void notify_exit()noexcept;
   void thread_func()noexcept;
 private:
@@ -1387,6 +1383,7 @@ private:
   detail::cond_var_elem* m_external_tail;
   detail::cond_var_elem* m_internal_tail;
   bool m_alive;
+  bool m_waiting;
   dango::uint64 m_last_bias;
 public:
   DANGO_IMMOBILE(cond_var_registry)
@@ -1407,6 +1404,7 @@ m_internal_head{ &m_head_sentinel[1] },
 m_external_tail{ &m_tail_sentinel[0] },
 m_internal_tail{ &m_tail_sentinel[1] },
 m_alive{ true },
+m_waiting{ false },
 m_last_bias{ dango::uint64(0) }
 {
   m_head_sentinel[0].m_next = &m_tail_sentinel[0];
@@ -1526,6 +1524,26 @@ void
 dango::
 thread::
 control_block::
+wait
+(dango::deadline const& a_deadline)noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    while(m_alive && !a_deadline.has_passed())
+    {
+      ++m_waiter_count;
+
+      a_crit.wait(a_deadline);
+
+      --m_waiter_count;
+    }
+  }
+}
+
+void
+dango::
+thread::
+control_block::
 notify_all
 ()noexcept
 {
@@ -1535,7 +1553,7 @@ notify_all
 
     if(m_waiter_count != dango::usize(0))
     {
-      a_crit.notify_all();
+      m_cond.notify_all();
     }
   }
 }
@@ -1622,6 +1640,17 @@ join
   dango_assert(m_control != nullptr);
 
   m_control->wait();
+}
+
+void
+dango::
+thread::
+join
+(dango::deadline const& a_deadline)const noexcept
+{
+  dango_assert(m_control != nullptr);
+
+  m_control->wait(a_deadline);
 }
 
 auto
@@ -1714,15 +1743,9 @@ dango::
 detail::
 cond_var_registry::
 regist
-(
-  cond_type* const a_cond,
-  mutex_type* const a_mutex,
-  dango::deadline const& a_deadline
-)
-noexcept
+(cond_type* const a_cond, dango::deadline const& a_deadline)noexcept
 {
   dango_assert(a_cond != nullptr);
-  dango_assert(a_mutex != nullptr);
 
   if(!a_deadline.is_suspend_aware())
   {
@@ -1736,13 +1759,12 @@ noexcept
       return;
     }
 
-    dango_assert(a_cond->m_current_mutex == nullptr);
-
-    a_cond->m_current_mutex = a_mutex;
-
     add(a_cond);
 
-    a_crit.notify();
+    if(m_waiting)
+    {
+      m_cond.notify();
+    }
   }
 }
 
@@ -1751,15 +1773,9 @@ dango::
 detail::
 cond_var_registry::
 unregist
-(
-  cond_type* const a_cond,
-  mutex_type* const a_mutex,
-  dango::deadline const& a_deadline
-)
-noexcept
+(cond_type* const a_cond, dango::deadline const& a_deadline)noexcept
 {
   dango_assert(a_cond != nullptr);
-  dango_assert(a_mutex != nullptr);
 
   if(!a_deadline.is_suspend_aware())
   {
@@ -1773,13 +1789,12 @@ noexcept
       return;
     }
 
-    dango_assert(a_cond->m_current_mutex == a_mutex);
-
-    a_cond->m_current_mutex = nullptr;
-
     remove(a_cond);
 
-    a_crit.notify();
+    if(m_waiting)
+    {
+      m_cond.notify();
+    }
   }
 }
 
@@ -1794,7 +1809,10 @@ notify_exit
   {
     m_alive = false;
 
-    a_crit.notify();
+    if(m_waiting)
+    {
+      m_cond.notify();
+    }
   }
 }
 
@@ -1881,7 +1899,11 @@ wait_empty
         return true;
       }
 
+      m_waiting = true;
+
       a_crit.wait();
+
+      m_waiting = false;
     }
   }
 
@@ -1920,7 +1942,11 @@ poll_bias
         break;
       }
 
+      m_waiting = true;
+
       a_crit.wait(a_deadline);
+
+      m_waiting = false;
     }
     while(true);
 
@@ -1972,16 +1998,12 @@ pop_internal
     auto const a_cond = static_cast<detail::cond_var_base*>(m_internal_head->m_next);
 
     dango_assert(a_cond->m_ref_count != dango::usize(0));
-    dango_assert(a_cond->m_current_mutex != nullptr);
 
     remove(a_cond);
 
     add(a_cond);
 
-    dango_try_crit_cond(*a_cond, a_cond->m_current_mutex, a_crit)
-    {
-      a_crit.notify_all();
-    }
+    a_cond->notify_all();
   }
 
   return true;
@@ -2356,7 +2378,7 @@ wait
 
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
-  c_registry.regist(this, a_lock, a_deadline);
+  c_registry.regist(this, a_deadline);
 
   auto const a_result =
   pthread_cond_timedwait
@@ -2368,7 +2390,7 @@ wait
 
   dango_assert((a_result == 0) || (a_result == ETIMEDOUT));
 
-  c_registry.unregist(this, a_lock, a_deadline);
+  c_registry.unregist(this, a_deadline);
 }
 
 void
@@ -2376,11 +2398,9 @@ dango::
 detail::
 cond_var_base::
 notify
-(mutex_type* const a_lock)noexcept
+()noexcept
 {
   using type = pthread_cond_t;
-
-  dango_assert(a_lock != nullptr);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
@@ -2397,11 +2417,9 @@ dango::
 detail::
 cond_var_base::
 notify_all
-(mutex_type* const a_lock)noexcept
+()noexcept
 {
   using type = pthread_cond_t;
-
-  dango_assert(a_lock != nullptr);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
@@ -2854,7 +2872,7 @@ wait
 
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
-  c_registry.regist(this, a_lock, a_deadline);
+  c_registry.regist(this, a_deadline);
 
   SleepConditionVariableSRW
   (
@@ -2864,7 +2882,7 @@ wait
     ULONG(0)
   );
 
-  c_registry.unregist(this, a_lock, a_deadline);
+  c_registry.unregist(this, a_deadline);
 }
 
 void
@@ -2872,11 +2890,9 @@ dango::
 detail::
 cond_var_base::
 notify
-(mutex_type* const a_lock)noexcept
+()noexcept
 {
   using type = CONDITION_VARIABLE;
-
-  dango_assert(a_lock != nullptr);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
@@ -2890,11 +2906,9 @@ dango::
 detail::
 cond_var_base::
 notify_all
-(mutex_type* const a_lock)noexcept
+()noexcept
 {
   using type = CONDITION_VARIABLE;
-
-  dango_assert(a_lock != nullptr);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
