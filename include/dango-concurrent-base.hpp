@@ -32,6 +32,8 @@ namespace
 dango::detail
 {
   void spin_yield(dango::uint32&)noexcept;
+
+  inline constexpr auto const c_spin_count_init = dango::uint32(128);
 }
 
 namespace
@@ -104,7 +106,7 @@ try_acquire
     return false;
   }
 
-  auto a_count = dango::uint32(0);
+  auto a_count = detail::c_spin_count_init;
 
   do
   {
@@ -217,7 +219,7 @@ has_executed
 {
   constexpr auto const acquire = dango::mem_order::acquire;
 
-  auto a_count = dango::uint32(0);
+  auto a_count = detail::c_spin_count_init;
 
   do
   {
@@ -253,7 +255,7 @@ reset
     return;
   }
 
-  auto a_count = dango::uint32(0);
+  auto a_count = detail::c_spin_count_init;
 
   do
   {
@@ -359,7 +361,7 @@ acquire
 {
   constexpr auto const acquire = dango::mem_order::acquire;
 
-  auto a_count = dango::uint32(0);
+  auto a_count = detail::c_spin_count_init;
 
   while(m_locked.exchange<acquire>(true))
   {
@@ -434,10 +436,10 @@ detail::
 spin_yield
 (dango::uint32& a_count)noexcept
 {
-  auto const a_current = a_count++;
-
-  if(a_current < dango::uint32(128))
+  if(a_count != dango::uint32(0))
   {
+    --a_count;
+
     __builtin_ia32_pause();
 
     return;

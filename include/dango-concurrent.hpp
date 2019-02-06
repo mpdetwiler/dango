@@ -16,27 +16,27 @@ dango
   auto get_tick_count_sa()noexcept->dango::uint64;
 }
 
-/*** deadline ***/
+/*** timeout ***/
 
 namespace
 dango
 {
-  class deadline;
+  class timeout;
 }
 
 class
 dango::
-deadline
+timeout
 {
 protected:
   using value_type = dango::uint64;
 protected:
   static constexpr auto safe_add(value_type, value_type)noexcept->value_type;
 protected:
-  constexpr deadline(value_type)noexcept;
+  constexpr timeout(value_type)noexcept;
 public:
-  virtual ~deadline()noexcept = default;
-  auto has_passed()const noexcept->bool;
+  virtual ~timeout()noexcept = default;
+  auto has_expired()const noexcept->bool;
   auto remaining()const noexcept->value_type;
   auto get()const noexcept->value_type;
   void set(value_type)noexcept;
@@ -46,15 +46,15 @@ public:
 private:
   virtual auto tick_count()const noexcept->value_type = 0;
 private:
-  value_type m_deadline;
+  value_type m_timeout;
 public:
-  DANGO_DELETE_DEFAULT(deadline)
-  DANGO_IMMOBILE(deadline)
+  DANGO_DELETE_DEFAULT(timeout)
+  DANGO_IMMOBILE(timeout)
 };
 
 constexpr auto
 dango::
-deadline::
+timeout::
 safe_add
 (value_type const a_lhs, value_type const a_rhs)noexcept->value_type
 {
@@ -73,136 +73,136 @@ safe_add
 
 constexpr
 dango::
-deadline::
-deadline
-(value_type const a_deadline)noexcept:
-m_deadline{ a_deadline }
+timeout::
+timeout
+(value_type const a_timeout)noexcept:
+m_timeout{ a_timeout }
 {
 
 }
 
 inline auto
 dango::
-deadline::
-has_passed
+timeout::
+has_expired
 ()const noexcept->bool
 {
-  return tick_count() >= m_deadline;
+  return tick_count() >= m_timeout;
 }
 
 inline auto
 dango::
-deadline::
+timeout::
 remaining
 ()const noexcept->value_type
 {
   auto const a_now = tick_count();
 
-  if(a_now >= m_deadline)
+  if(a_now >= m_timeout)
   {
     return value_type(0);
   }
 
-  return m_deadline - a_now;
+  return m_timeout - a_now;
 }
 
 inline auto
 dango::
-deadline::
+timeout::
 get
 ()const noexcept->value_type
 {
-  return m_deadline;
+  return m_timeout;
 }
 
 inline void
 dango::
-deadline::
+timeout::
 set
-(value_type const a_deadline)noexcept
+(value_type const a_timeout)noexcept
 {
-  m_deadline = a_deadline;
+  m_timeout = a_timeout;
 }
 
 inline void
 dango::
-deadline::
+timeout::
 set_rel
 (value_type const a_interval)noexcept
 {
   auto const a_now = tick_count();
 
-  m_deadline = safe_add(a_now, a_interval);
+  m_timeout = safe_add(a_now, a_interval);
 }
 
 inline void
 dango::
-deadline::
+timeout::
 add
 (value_type const a_val)noexcept
 {
-  m_deadline = safe_add(m_deadline, a_val);
+  m_timeout = safe_add(m_timeout, a_val);
 }
 
 namespace
 dango::detail
 {
-  struct deadline_unbiased;
+  struct timeout_unbiased;
 }
 
 struct
 dango::
 detail::
-deadline_unbiased
+timeout_unbiased
 final:
-dango::deadline
+dango::timeout
 {
 private:
-  using super_type = dango::deadline;
+  using super_type = dango::timeout;
 public:
-  static auto make(value_type)noexcept->deadline_unbiased;
-  static auto make_rel(value_type)noexcept->deadline_unbiased;
+  static auto make(value_type)noexcept->timeout_unbiased;
+  static auto make_rel(value_type)noexcept->timeout_unbiased;
 private:
-  constexpr deadline_unbiased(value_type)noexcept;
+  constexpr timeout_unbiased(value_type)noexcept;
 public:
-  virtual ~deadline_unbiased()noexcept override = default;
+  virtual ~timeout_unbiased()noexcept override = default;
   virtual auto is_suspend_aware()const noexcept->bool override;
 private:
   virtual auto tick_count()const noexcept->value_type override;
 public:
-  DANGO_DELETE_DEFAULT(deadline_unbiased)
-  DANGO_IMMOBILE(deadline_unbiased)
+  DANGO_DELETE_DEFAULT(timeout_unbiased)
+  DANGO_IMMOBILE(timeout_unbiased)
 };
 
 inline auto
 dango::
 detail::
-deadline_unbiased::
+timeout_unbiased::
 make
-(value_type const a_deadline)noexcept->deadline_unbiased
+(value_type const a_timeout)noexcept->timeout_unbiased
 {
-  return deadline_unbiased{ a_deadline };
+  return timeout_unbiased{ a_timeout };
 }
 
 inline auto
 dango::
 detail::
-deadline_unbiased::
+timeout_unbiased::
 make_rel
-(value_type const a_interval)noexcept->deadline_unbiased
+(value_type const a_interval)noexcept->timeout_unbiased
 {
   auto const a_now = dango::get_tick_count();
 
-  return deadline_unbiased{ safe_add(a_now, a_interval) };
+  return timeout_unbiased{ safe_add(a_now, a_interval) };
 }
 
 constexpr
 dango::
 detail::
-deadline_unbiased::
-deadline_unbiased
-(value_type const a_deadline)noexcept:
-super_type{ a_deadline }
+timeout_unbiased::
+timeout_unbiased
+(value_type const a_timeout)noexcept:
+super_type{ a_timeout }
 {
 
 }
@@ -210,7 +210,7 @@ super_type{ a_deadline }
 inline auto
 dango::
 detail::
-deadline_unbiased::
+timeout_unbiased::
 is_suspend_aware
 ()const noexcept->bool
 {
@@ -220,7 +220,7 @@ is_suspend_aware
 inline auto
 dango::
 detail::
-deadline_unbiased::
+timeout_unbiased::
 tick_count
 ()const noexcept->value_type
 {
@@ -230,62 +230,62 @@ tick_count
 namespace
 dango::detail
 {
-  struct deadline_biased;
+  struct timeout_biased;
 }
 
 struct
 dango::
 detail::
-deadline_biased
+timeout_biased
 final:
-dango::deadline
+dango::timeout
 {
 private:
-  using super_type = dango::deadline;
+  using super_type = dango::timeout;
 public:
-  static auto make(value_type)noexcept->deadline_biased;
-  static auto make_rel(value_type)noexcept->deadline_biased;
+  static auto make(value_type)noexcept->timeout_biased;
+  static auto make_rel(value_type)noexcept->timeout_biased;
 private:
-  constexpr deadline_biased(value_type)noexcept;
+  constexpr timeout_biased(value_type)noexcept;
 public:
-  virtual ~deadline_biased()noexcept override = default;
+  virtual ~timeout_biased()noexcept override = default;
   virtual auto is_suspend_aware()const noexcept->bool override;
 private:
   virtual auto tick_count()const noexcept->value_type override;
 public:
-  DANGO_DELETE_DEFAULT(deadline_biased)
-  DANGO_IMMOBILE(deadline_biased)
+  DANGO_DELETE_DEFAULT(timeout_biased)
+  DANGO_IMMOBILE(timeout_biased)
 };
 
 inline auto
 dango::
 detail::
-deadline_biased::
+timeout_biased::
 make
-(value_type const a_deadline)noexcept->deadline_biased
+(value_type const a_timeout)noexcept->timeout_biased
 {
-  return deadline_biased{ a_deadline };
+  return timeout_biased{ a_timeout };
 }
 
 inline auto
 dango::
 detail::
-deadline_biased::
+timeout_biased::
 make_rel
-(value_type const a_interval)noexcept->deadline_biased
+(value_type const a_interval)noexcept->timeout_biased
 {
   auto const a_now = dango::get_tick_count_sa();
 
-  return deadline_biased{ safe_add(a_now, a_interval) };
+  return timeout_biased{ safe_add(a_now, a_interval) };
 }
 
 constexpr
 dango::
 detail::
-deadline_biased::
-deadline_biased
-(value_type const a_deadline)noexcept:
-super_type{ a_deadline }
+timeout_biased::
+timeout_biased
+(value_type const a_timeout)noexcept:
+super_type{ a_timeout }
 {
 
 }
@@ -293,7 +293,7 @@ super_type{ a_deadline }
 inline auto
 dango::
 detail::
-deadline_biased::
+timeout_biased::
 is_suspend_aware
 ()const noexcept->bool
 {
@@ -303,54 +303,54 @@ is_suspend_aware
 inline auto
 dango::
 detail::
-deadline_biased::
+timeout_biased::
 tick_count
 ()const noexcept->value_type
 {
   return dango::get_tick_count_sa();
 }
 
-/*** make_deadline ***/
+/*** make_timeout ***/
 
 namespace
 dango
 {
-  auto make_deadline(dango::uint64)noexcept->detail::deadline_unbiased;
-  auto make_deadline_sa(dango::uint64)noexcept->detail::deadline_biased;
-  auto make_deadline_rel(dango::uint64)noexcept->detail::deadline_unbiased;
-  auto make_deadline_rel_sa(dango::uint64)noexcept->detail::deadline_biased;
+  auto make_timeout(dango::uint64)noexcept->detail::timeout_unbiased;
+  auto make_timeout_sa(dango::uint64)noexcept->detail::timeout_biased;
+  auto make_timeout_rel(dango::uint64)noexcept->detail::timeout_unbiased;
+  auto make_timeout_rel_sa(dango::uint64)noexcept->detail::timeout_biased;
 }
 
 inline auto
 dango::
-make_deadline
-(dango::uint64 const a_deadline)noexcept->detail::deadline_unbiased
+make_timeout
+(dango::uint64 const a_timeout)noexcept->detail::timeout_unbiased
 {
-  return detail::deadline_unbiased::make(a_deadline);
+  return detail::timeout_unbiased::make(a_timeout);
 }
 
 inline auto
 dango::
-make_deadline_sa
-(dango::uint64 const a_deadline)noexcept->detail::deadline_biased
+make_timeout_sa
+(dango::uint64 const a_timeout)noexcept->detail::timeout_biased
 {
-  return detail::deadline_biased::make(a_deadline);
+  return detail::timeout_biased::make(a_timeout);
 }
 
 inline auto
 dango::
-make_deadline_rel
-(dango::uint64 const a_interval)noexcept->detail::deadline_unbiased
+make_timeout_rel
+(dango::uint64 const a_interval)noexcept->detail::timeout_unbiased
 {
-  return detail::deadline_unbiased::make_rel(a_interval);
+  return detail::timeout_unbiased::make_rel(a_interval);
 }
 
 inline auto
 dango::
-make_deadline_rel_sa
-(dango::uint64 const a_interval)noexcept->detail::deadline_biased
+make_timeout_rel_sa
+(dango::uint64 const a_interval)noexcept->detail::timeout_biased
 {
-  return detail::deadline_biased::make_rel(a_interval);
+  return detail::timeout_biased::make_rel(a_interval);
 }
 
 /*** mutex_base ***/
@@ -611,7 +611,7 @@ private:
   void init()noexcept;
   void initialize()noexcept;
   void wait(mutex_type*)noexcept;
-  void wait(mutex_type*, dango::deadline const&)noexcept;
+  void wait(mutex_type*, dango::timeout const&)noexcept;
 private:
   dango::usize m_ref_count;
   dango::exec_once m_init;
@@ -634,7 +634,7 @@ public:
   { }
   ~locker()noexcept{ m_lock->release(); }
   void wait()const noexcept{ m_cond->wait(m_lock); }
-  void wait(dango::deadline const& a_deadline)const noexcept{ m_cond->wait(m_lock, a_deadline); }
+  void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(m_lock, a_timeout); }
 private:
   mutex_type* const m_lock;
   cond_var_base* const m_cond;
@@ -658,7 +658,7 @@ public:
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
   explicit operator bool()const{ return m_lock != nullptr; }
   void wait()const noexcept{ m_cond->wait(m_lock); }
-  void wait(dango::deadline const& a_deadline)const noexcept{ m_cond->wait(m_lock, a_deadline); }
+  void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(m_lock, a_timeout); }
 private:
   mutex_type* const m_lock;
   cond_var_base* const m_cond;
@@ -1018,7 +1018,7 @@ public:
   explicit constexpr operator bool()const noexcept;
   auto is_alive()const noexcept->bool;
   void join()const noexcept;
-  void join(dango::deadline const&)const noexcept;
+  void join(dango::timeout const&)const noexcept;
   constexpr auto dango_operator_is_null()const noexcept->bool;
   constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
 private:
@@ -1042,7 +1042,7 @@ public:
   void increment()noexcept;
   auto decrement()noexcept->bool;
   void wait()noexcept;
-  void wait(dango::deadline const&)noexcept;
+  void wait(dango::timeout const&)noexcept;
   void notify_all()noexcept;
   auto is_alive()const noexcept->bool;
 private:
@@ -1286,7 +1286,7 @@ dango::enable_if
 
   start_thread(thread_start_address<decltype(a_func)>, &a_func);
 
-  auto a_count = dango::uint32(0);
+  auto a_count = detail::c_spin_count_init;
 
   while(a_starting.load<acquire>())
   {
@@ -1362,8 +1362,8 @@ private:
   static auto current_bias()noexcept->dango::uint64;
   static auto bias_okay(dango::uint64&)noexcept->bool;
 public:
-  void regist(cond_type*, dango::deadline const&)noexcept;
-  void unregist(cond_type*, dango::deadline const&)noexcept;
+  void regist(cond_type*, dango::timeout const&)noexcept;
+  void unregist(cond_type*, dango::timeout const&)noexcept;
   void notify_exit()noexcept;
   void thread_func()noexcept;
 private:
@@ -1371,7 +1371,7 @@ private:
   ~cond_var_registry()noexcept = default;
   void add(cond_type*)noexcept;
   auto wait_empty()noexcept->bool;
-  auto poll_bias(dango::uint64&, dango::deadline&)noexcept->bool;
+  auto poll_bias(dango::uint64&, dango::timeout&)noexcept->bool;
   auto pop_internal()noexcept->bool;
 private:
   dango::static_mutex m_mutex;
@@ -1523,15 +1523,15 @@ dango::
 thread::
 control_block::
 wait
-(dango::deadline const& a_deadline)noexcept
+(dango::timeout const& a_timeout)noexcept
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(m_alive && !a_deadline.has_passed())
+    while(m_alive && !a_timeout.has_expired())
     {
       ++m_waiter_count;
 
-      a_crit.wait(a_deadline);
+      a_crit.wait(a_timeout);
 
       --m_waiter_count;
     }
@@ -1644,11 +1644,11 @@ void
 dango::
 thread::
 join
-(dango::deadline const& a_deadline)const noexcept
+(dango::timeout const& a_timeout)const noexcept
 {
   dango_assert(m_control != nullptr);
 
-  m_control->wait(a_deadline);
+  m_control->wait(a_timeout);
 }
 
 auto
@@ -1698,13 +1698,13 @@ sleep
     return;
   }
 
-  auto const a_deadline = dango::make_deadline_rel(a_interval);
+  auto const a_timeout = dango::make_timeout_rel(a_interval);
 
   dango_crit_full(s_cond, a_crit)
   {
-    while(!a_deadline.has_passed())
+    while(!a_timeout.has_expired())
     {
-      a_crit.wait(a_deadline);
+      a_crit.wait(a_timeout);
     }
   }
 }
@@ -1723,13 +1723,13 @@ sleep_sa
     return;
   }
 
-  auto const a_deadline = dango::make_deadline_rel_sa(a_interval);
+  auto const a_timeout = dango::make_timeout_rel_sa(a_interval);
 
   dango_crit_full(s_cond, a_crit)
   {
-    while(!a_deadline.has_passed())
+    while(!a_timeout.has_expired())
     {
-      a_crit.wait(a_deadline);
+      a_crit.wait(a_timeout);
     }
   }
 }
@@ -1741,11 +1741,11 @@ dango::
 detail::
 cond_var_registry::
 regist
-(cond_type* const a_cond, dango::deadline const& a_deadline)noexcept
+(cond_type* const a_cond, dango::timeout const& a_timeout)noexcept
 {
   dango_assert(a_cond != nullptr);
 
-  if(!a_deadline.is_suspend_aware())
+  if(!a_timeout.is_suspend_aware())
   {
     return;
   }
@@ -1771,11 +1771,11 @@ dango::
 detail::
 cond_var_registry::
 unregist
-(cond_type* const a_cond, dango::deadline const& a_deadline)noexcept
+(cond_type* const a_cond, dango::timeout const& a_timeout)noexcept
 {
   dango_assert(a_cond != nullptr);
 
-  if(!a_deadline.is_suspend_aware())
+  if(!a_timeout.is_suspend_aware())
   {
     return;
   }
@@ -1830,9 +1830,9 @@ thread_func
 
     auto a_bias = current_bias();
 
-    auto a_deadline = dango::make_deadline_rel(dango::uint64(0));
+    auto a_timeout = dango::make_timeout_rel(dango::uint64(0));
 
-    while(poll_bias(a_bias, a_deadline));
+    while(poll_bias(a_bias, a_timeout));
   }
   while(true);
 }
@@ -1915,7 +1915,7 @@ dango::
 detail::
 cond_var_registry::
 poll_bias
-(dango::uint64& a_prev_bias, dango::deadline& a_deadline)noexcept->bool
+(dango::uint64& a_prev_bias, dango::timeout& a_timeout)noexcept->bool
 {
   bool a_alive;
 
@@ -1930,9 +1930,9 @@ poll_bias
 
       a_alive = m_alive;
 
-      if(a_deadline.has_passed())
+      if(a_timeout.has_expired())
       {
-        a_deadline.add(dango::uint64(1'000));
+        a_timeout.add(dango::uint64(1'000));
 
         break;
       }
@@ -1944,7 +1944,7 @@ poll_bias
 
       m_waiting = true;
 
-      a_crit.wait(a_deadline);
+      a_crit.wait(a_timeout);
 
       m_waiting = false;
     }
@@ -2345,7 +2345,7 @@ dango::
 detail::
 cond_var_base::
 wait
-(mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
+(mutex_type* const a_lock, dango::timeout const& a_timeout)noexcept
 {
   dango_assert(a_lock != nullptr);
 
@@ -2353,7 +2353,7 @@ wait
   dango_assert(m_init.has_executed());
 #endif
 
-  auto const a_rem = a_deadline.remaining();
+  auto const a_rem = a_timeout.remaining();
 
   if(a_rem == dango::uint64(0))
   {
@@ -2362,11 +2362,11 @@ wait
 
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
-  c_registry.regist(this, a_deadline);
+  c_registry.regist(this, a_timeout);
 
   get()->wait(a_lock->get(), a_rem);
 
-  c_registry.unregist(this, a_deadline);
+  c_registry.unregist(this, a_timeout);
 }
 
 void
@@ -2457,7 +2457,7 @@ noexcept(false)
     dango_assert(a_result == 0);
   }
 
-  auto a_count = dango::uint32(0);
+  auto a_count = detail::c_spin_count_init;
 
   while(a_starting.load<acquire>())
   {
@@ -2491,7 +2491,9 @@ dango::concurrent_cpp
   )
   noexcept->dango::s_int;
 
-  static void spin_relax(dango::uint32&, dango::uint32)noexcept;
+  static auto spin_relax(dango::uint32&)noexcept->bool;
+
+  static constexpr auto const c_spin_count_init = dango::uint32(128);
 }
 
 void
@@ -2503,11 +2505,10 @@ lock
 ()noexcept
 {
   constexpr auto const acquire = dango::mem_order::acquire;
-  constexpr auto const c_max_spin = dango::uint32(128);
 
   state_type a_last;
 
-  auto a_count = dango::uint32(0);
+  auto a_count = concurrent_cpp::c_spin_count_init;
 
   do
   {
@@ -2520,10 +2521,8 @@ lock
         return;
       }
     }
-
-    concurrent_cpp::spin_relax(a_count, c_max_spin);
   }
-  while(a_count != c_max_spin);
+  while(concurrent_cpp::spin_relax(a_count));
 
   dango_assert(a_last != state::UNLOCKED);
 
@@ -2577,11 +2576,10 @@ relock
 ()noexcept
 {
   constexpr auto const acquire = dango::mem_order::acquire;
-  constexpr auto const c_max_spin = dango::uint32(128);
 
   state_type a_last;
 
-  auto a_count = dango::uint32(0);
+  auto a_count = concurrent_cpp::c_spin_count_init;
 
   do
   {
@@ -2596,10 +2594,8 @@ relock
         return;
       }
     }
-
-    concurrent_cpp::spin_relax(a_count, c_max_spin);
   }
-  while(a_count != c_max_spin);
+  while(concurrent_cpp::spin_relax(a_count));
 
   dango_assert(a_last != state::UNLOCKED);
 
@@ -2683,7 +2679,9 @@ notify
     }
   }
 
-  m_seq.add_fetch(seq_type(1));
+  constexpr auto const relaxed = dango::mem_order::relaxed;
+
+  m_seq.add_fetch<relaxed>(seq_type(1));
 
   concurrent_cpp::sys_futex
   (
@@ -2718,7 +2716,9 @@ notify_all
 
   dango_assert(a_mutex != nullptr);
 
-  m_seq.add_fetch(seq_type(1));
+  constexpr auto const relaxed = dango::mem_order::relaxed;
+
+  m_seq.add_fetch<relaxed>(seq_type(1));
 
   concurrent_cpp::sys_futex
   (
@@ -2741,7 +2741,9 @@ wait
 {
   dango_assert(a_mutex != nullptr);
 
-  auto const a_seq = m_seq.load();
+  constexpr auto const relaxed = dango::mem_order::relaxed;
+
+  auto const a_seq = m_seq.load<relaxed>();
 
   increment(a_mutex);
 
@@ -2772,7 +2774,9 @@ wait
 {
   dango_assert(a_mutex != nullptr);
 
-  auto const a_seq = m_seq.load();
+  constexpr auto const relaxed = dango::mem_order::relaxed;
+
+  auto const a_seq = m_seq.load<relaxed>();
 
   increment(a_mutex);
 
@@ -2936,23 +2940,31 @@ noexcept->dango::s_int
 }
 
 #ifndef DANGO_NO_MULTICORE
-static void
+static auto
 dango::
 concurrent_cpp::
 spin_relax
-(dango::uint32& a_count, dango::uint32 const)noexcept
+(dango::uint32& a_count)noexcept->bool
 {
-  ++a_count;
+  if(a_count == dango::uint32(0))
+  {
+    return false;
+  }
+
+  --a_count;
 
   __builtin_ia32_pause();
+
+  return true;
 }
 #else
+static auto
 dango::
 concurrent_cpp::
 spin_relax
-(dango::uint32& a_count, dango::uint32 const a_max_count)noexcept
+(dango::uint32&)noexcept->bool
 {
-  a_count = a_max_count;
+  return false;
 }
 #endif
 
@@ -3261,7 +3273,7 @@ dango::
 detail::
 cond_var_base::
 wait
-(mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
+(mutex_type* const a_lock, dango::timeout const& a_timeout)noexcept
 {
   dango_assert(a_lock != nullptr);
 
@@ -3269,7 +3281,7 @@ wait
   dango_assert(m_init.has_executed());
 #endif
 
-  auto const a_rem = a_deadline.remaining();
+  auto const a_rem = a_timeout.remaining();
 
   if(a_rem == dango::uint64(0))
   {
@@ -3278,11 +3290,11 @@ wait
 
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
-  c_registry.regist(this, a_deadline);
+  c_registry.regist(this, a_timeout);
 
   get()->wait(a_lock->get(), a_rem);
 
-  c_registry.unregist(this, a_deadline);
+  c_registry.unregist(this, a_timeout);
 }
 
 void
@@ -3373,7 +3385,7 @@ noexcept(false)
     dango_assert(a_result != 0);
   }
 
-  auto a_count = dango::uint32(0);
+  auto a_count = detail::c_spin_count_init;
 
   while(a_starting.load<acquire>())
   {
@@ -3517,7 +3529,7 @@ wait
 
   auto const a_spec = dango::min(a_interval, c_max_interval);
 
-  dango_assert(a_spec != u64(INFINITE));
+  dango_assert(DWORD(a_spec) != DWORD(INFINITE));
 
   SleepConditionVariableSRW
   (

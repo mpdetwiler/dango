@@ -46,6 +46,11 @@ flags = [
 	'-Wfatal-errors'
 ];
 
+#env.Append(CPPDEFINES = ('DANGO_CACHE_LINE_SIZE', '64'));
+#env.Append(CPPDEFINES = 'DANGO_NO_DEBUG');
+#env.Append(CPPDEFINES = 'DANGO_NO_MULTICORE');
+#env.Append(CPPDEFINES = 'DANGO_NEW_NOEXCEPT');
+
 if(target == 'win32'):
   env.Replace(CXX = 'i686-w64-mingw32-g++');
 elif(target == 'win64'):
