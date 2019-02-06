@@ -1,11 +1,23 @@
 #include "dango.hpp"
 
 #include <cstdio>
+#include <windows.h>
 
 auto
 main
 ()noexcept->dango::s_int
 {
+  {
+    TIMECAPS a_caps;
+
+    timeGetDevCaps(&a_caps, sizeof(a_caps));
+
+    printf("min period: %u\n", dango::u_int(a_caps.wPeriodMin));
+    printf("max period: %u\n", dango::u_int(a_caps.wPeriodMax));
+
+    timeBeginPeriod(a_caps.wPeriodMin);
+  }
+
   dango::thread a_threads[]{ null, null, null, null, null };
 
   dango::mutex a_mutex{ };

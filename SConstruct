@@ -54,9 +54,10 @@ elif(target == 'win64'):
 if(target == 'linux'):
   env.Append(LIBS = ['pthread']);
 elif(target == 'win32' or target == 'win64'):
+  env.Append(LIBS = ['winmm']);
   prog_name += '.exe';
   flags += ['-static-libgcc', '-static-libstdc++'];
-  env.Append(CPPDEFINES = ['WIN32_LEAN_AND_MEAN', ('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
+  env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
 
 header_paths += ['include/'];
 
