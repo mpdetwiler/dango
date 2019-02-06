@@ -8,6 +8,8 @@ main
 {
   dango::thread a_threads[]{ null, null, null, null, null };
 
+  dango::mutex a_mutex{ };
+
   auto a_id = dango::uint32(0);
 
   for(auto& a_thread:a_threads)
@@ -15,7 +17,7 @@ main
     a_thread =
     dango::thread::create
     (
-      [a_id]()noexcept->void
+      [a_id, &a_mutex]()noexcept->void
       {
         auto a_tick = dango::get_tick_count();
         auto a_tick_sa = dango::get_tick_count_sa();
@@ -44,6 +46,23 @@ main
         );
 
         dango::thread::sleep_sa(30'000);
+
+        a_tick = dango::get_tick_count();
+        a_tick_sa = dango::get_tick_count_sa();
+
+        fprintf
+        (
+          stderr,
+          "thread[%u] serial sleep... (%llu) (%llu)\n",
+          dango::u_int(a_id),
+          dango::u_cent(a_tick),
+          dango::u_cent(a_tick_sa)
+        );
+
+        dango_crit(a_mutex)
+        {
+          dango::thread::sleep(5'000);
+        }
 
         a_tick = dango::get_tick_count();
         a_tick_sa = dango::get_tick_count_sa();
