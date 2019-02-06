@@ -2720,12 +2720,14 @@ notify_all
 
   m_seq.add_fetch<relaxed>(seq_type(1));
 
+  constexpr auto const c_all = dango::uintptr(dango::integer::MAX_VAL<dango::s_int>);
+
   concurrent_cpp::sys_futex
   (
     m_seq.address(),
     FUTEX_REQUEUE_PRIVATE,
     dango::s_int(1),
-    reinterpret_cast<timespec const*>(dango::uintptr(dango::integer::MAX_VAL<dango::s_int>)),
+    reinterpret_cast<timespec const*>(c_all),
     a_mutex->futex_address(),
     dango::s_int(0)
   );
