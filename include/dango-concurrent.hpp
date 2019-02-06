@@ -390,8 +390,8 @@ private:
   auto try_acquire()noexcept->mutex_base*;
   void release()noexcept;
 private:
-  detail::primitive_storage m_storage;
   dango::exec_once m_init;
+  detail::primitive_storage m_storage;
 public:
   DANGO_IMMOBILE(mutex_base)
 };
@@ -437,8 +437,8 @@ detail::
 mutex_base::
 mutex_base
 ()noexcept:
-m_storage{ },
-m_init{ }
+m_init{ },
+m_storage{ }
 {
 
 }
@@ -614,8 +614,8 @@ private:
   void wait(mutex_type*, dango::deadline const&)noexcept;
 private:
   dango::usize m_ref_count;
-  detail::primitive_storage m_storage;
   dango::exec_once m_init;
+  detail::primitive_storage m_storage;
 public:
   DANGO_IMMOBILE(cond_var_base)
 };
@@ -675,8 +675,8 @@ cond_var_base
 ()noexcept:
 super_type{ },
 m_ref_count{ dango::usize(0) },
-m_storage{ },
-m_init{ }
+m_init{ },
+m_storage{ }
 {
 
 }
@@ -2156,7 +2156,7 @@ public:
   auto try_lock()noexcept->bool;
   void relock()noexcept;
   void unlock()noexcept;
-  auto address()noexcept->state_type*;
+  auto futex_address()noexcept->state_type*;
 private:
   dango::atomic<state_type> m_state;
 public:
@@ -2275,6 +2275,9 @@ public:
   void wait(mutex_ptr)noexcept;
   void wait(mutex_ptr, dango::uint64)noexcept;
 private:
+  void increment(mutex_ptr)noexcept;
+  void decrement(mutex_ptr)noexcept;
+private:
   dango::atomic<seq_type> m_seq;
   dango::spin_mutex m_lock;
   mutex_ptr m_mutex;
@@ -2350,11 +2353,9 @@ wait
   dango_assert(m_init.has_executed());
 #endif
 
-  using u64 = dango::uint64;
-
   auto const a_rem = a_deadline.remaining();
 
-  if(a_rem == u64(0))
+  if(a_rem == dango::uint64(0))
   {
     return;
   }
@@ -2473,31 +2474,6 @@ yield
   sched_yield();
 }
 
-static auto
-dango::
-concurrent_cpp::
-tick_count
-(clockid_t const a_clock)noexcept->dango::uint64
-{
-  using u64 = dango::uint64;
-
-  constexpr auto const c_mul = u64(1'000);
-  constexpr auto const c_div = u64(1'000'000);
-  constexpr auto const c_half = c_div / u64(2);
-
-  timespec a_spec;
-
-  auto const a_result =
-    clock_gettime(a_clock, &a_spec);
-
-  dango_assert(a_result == 0);
-
-  auto const a_sec = u64(a_spec.tv_sec);
-  auto const a_nsec = u64(a_spec.tv_nsec);
-
-  return (a_sec * c_mul) + (a_nsec / c_div) + u64((a_nsec % c_div) >= c_half);
-}
-
 /*** mutex_impl ***/
 
 namespace
@@ -2515,7 +2491,7 @@ dango::concurrent_cpp
   )
   noexcept->dango::s_int;
 
-  static void spin_relax(dango::uint32&)noexcept;
+  static void spin_relax(dango::uint32&, dango::uint32)noexcept;
 }
 
 void
@@ -2545,7 +2521,7 @@ lock
       }
     }
 
-    concurrent_cpp::spin_relax(a_count);
+    concurrent_cpp::spin_relax(a_count, c_max_spin);
   }
   while(a_count != c_max_spin);
 
@@ -2582,9 +2558,14 @@ try_lock
 {
   constexpr auto const acquire = dango::mem_order::acquire;
 
-  state_type a_expected = state::UNLOCKED;
+  state_type a_last = m_state.load<acquire>();
 
-  return m_state.compare_exchange<acquire, acquire>(a_expected, state::LOCKED);
+  if(a_last != state::UNLOCKED)
+  {
+    return false;
+  }
+
+  return m_state.compare_exchange<acquire, acquire>(a_last, state::LOCKED);
 }
 
 void
@@ -2616,7 +2597,7 @@ relock
       }
     }
 
-    concurrent_cpp::spin_relax(a_count);
+    concurrent_cpp::spin_relax(a_count, c_max_spin);
   }
   while(a_count != c_max_spin);
 
@@ -2678,7 +2659,7 @@ dango::
 detail::
 mutex_base::
 mutex_impl::
-address
+futex_address
 ()noexcept->state_type*
 {
   return m_state.address();
@@ -2745,7 +2726,7 @@ notify_all
     FUTEX_REQUEUE_PRIVATE,
     dango::s_int(1),
     reinterpret_cast<timespec const*>(dango::uintptr(dango::integer::MAX_VAL<dango::s_int>)),
-    a_mutex->address(),
+    a_mutex->futex_address(),
     dango::s_int(0)
   );
 }
@@ -2762,17 +2743,7 @@ wait
 
   auto const a_seq = m_seq.load();
 
-  dango_crit(m_lock)
-  {
-    if(m_wait_count++ == dango::usize(0))
-    {
-      dango_assert(m_mutex == nullptr);
-
-      m_mutex = a_mutex;
-    }
-
-    dango_assert(m_mutex == a_mutex);
-  }
+  increment(a_mutex);
 
   a_mutex->unlock();
 
@@ -2788,15 +2759,7 @@ wait
 
   a_mutex->relock();
 
-  dango_crit(m_lock)
-  {
-    dango_assert(m_mutex == a_mutex);
-
-    if(--m_wait_count == dango::usize(0))
-    {
-      m_mutex = nullptr;
-    }
-  }
+  decrement(a_mutex);
 }
 
 void
@@ -2807,25 +2770,15 @@ cond_var_impl::
 wait
 (mutex_ptr const a_mutex, dango::uint64 const a_interval)noexcept
 {
-  using u64 = dango::uint64;
-
   dango_assert(a_mutex != nullptr);
 
   auto const a_seq = m_seq.load();
 
-  dango_crit(m_lock)
-  {
-    if(m_wait_count++ == dango::usize(0))
-    {
-      dango_assert(m_mutex == nullptr);
-
-      m_mutex = a_mutex;
-    }
-
-    dango_assert(m_mutex == a_mutex);
-  }
+  increment(a_mutex);
 
   a_mutex->unlock();
+
+  using u64 = dango::uint64;
 
   timespec a_spec;
 
@@ -2850,6 +2803,38 @@ wait
 
   a_mutex->relock();
 
+  decrement(a_mutex);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+increment
+(mutex_ptr const a_mutex)noexcept
+{
+  dango_crit(m_lock)
+  {
+    if(m_wait_count++ == dango::usize(0))
+    {
+      dango_assert(m_mutex == nullptr);
+
+      m_mutex = a_mutex;
+    }
+
+    dango_assert(m_mutex == a_mutex);
+  }
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+decrement
+(mutex_ptr const a_mutex)noexcept
+{
   dango_crit(m_lock)
   {
     dango_assert(m_mutex == a_mutex);
@@ -2859,6 +2844,33 @@ wait
       m_mutex = nullptr;
     }
   }
+}
+
+/*** static ***/
+
+static auto
+dango::
+concurrent_cpp::
+tick_count
+(clockid_t const a_clock)noexcept->dango::uint64
+{
+  using u64 = dango::uint64;
+
+  constexpr auto const c_mul = u64(1'000);
+  constexpr auto const c_div = u64(1'000'000);
+  constexpr auto const c_half = c_div / u64(2);
+
+  timespec a_spec;
+
+  auto const a_result =
+    clock_gettime(a_clock, &a_spec);
+
+  dango_assert(a_result == 0);
+
+  auto const a_sec = u64(a_spec.tv_sec);
+  auto const a_nsec = u64(a_spec.tv_nsec);
+
+  return (a_sec * c_mul) + (a_nsec / c_div) + u64((a_nsec % c_div) >= c_half);
 }
 
 template
@@ -2923,21 +2935,26 @@ noexcept->dango::s_int
   return a_result;
 }
 
+#ifndef DANGO_NO_MULTICORE
 static void
 dango::
 concurrent_cpp::
 spin_relax
-(dango::uint32& a_count)noexcept
+(dango::uint32& a_count, dango::uint32 const)noexcept
 {
-  auto const a_current = a_count++;
-
-  if(a_current < dango::uint32(16))
-  {
-    return;
-  }
+  ++a_count;
 
   __builtin_ia32_pause();
 }
+#else
+dango::
+concurrent_cpp::
+spin_relax
+(dango::uint32& a_count, dango::uint32 const a_max_count)noexcept
+{
+  a_count = a_max_count;
+}
+#endif
 
 #endif /* __linux__ */
 
@@ -3051,20 +3068,36 @@ get_tick_count_sa
 
 /*** mutex_base ***/
 
-template
-<typename tp_type>
+class
+dango::
+detail::
+mutex_base::
+mutex_impl
+final
+{
+private:
+  using lock_type = SRWLOCK;
+public:
+  mutex_impl()noexcept;
+  ~mutex_impl()noexcept = default;
+  void lock()noexcept;
+  auto try_lock()noexcept->bool;
+  void unlock()noexcept;
+  auto lock_ptr()noexcept->lock_type*;
+private:
+  lock_type m_lock;
+public:
+  DANGO_IMMOBILE(mutex_impl)
+};
+
 auto
 dango::
 detail::
 mutex_base::
 get
-()noexcept->tp_type*
+()noexcept->mutex_impl*
 {
-  using type = SRWLOCK;
-
-  static_assert(dango::is_same<dango::remove_cv<tp_type>, type>);
-
-  return dango::launder(static_cast<type*>(m_storage.get()));
+  return dango::launder(static_cast<mutex_impl*>(m_storage.get()));
 }
 
 void
@@ -3074,14 +3107,12 @@ mutex_base::
 initialize
 ()noexcept
 {
-  using type = SRWLOCK;
+  using type = mutex_impl;
 
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  auto const a_prim = ::new (dango::placement, m_storage.get()) type;
-
-  InitializeSRWLock(a_prim);
+  ::new (dango::placement, m_storage.get()) type{ };
 }
 
 void
@@ -3091,7 +3122,10 @@ mutex_base::
 destroy
 ()noexcept
 {
-
+  if(m_init.has_executed())
+  {
+    dango::destructor(get());
+  }
 }
 
 auto
@@ -3101,13 +3135,11 @@ mutex_base::
 acquire
 ()noexcept->mutex_base*
 {
-  using type = SRWLOCK;
-
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
 #endif
 
-  AcquireSRWLockExclusive(get<type>());
+  get()->lock();
 
   return this;
 }
@@ -3119,15 +3151,11 @@ mutex_base::
 try_acquire
 ()noexcept->mutex_base*
 {
-  using type = SRWLOCK;
-
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
 #endif
 
-  auto const a_result = TryAcquireSRWLockExclusive(get<type>());
-
-  if(a_result)
+  if(get()->try_lock())
   {
     return this;
   }
@@ -3142,31 +3170,46 @@ mutex_base::
 release
 ()noexcept
 {
-  using type = SRWLOCK;
-
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
 #endif
 
-  ReleaseSRWLockExclusive(get<type>());
+  get()->unlock();
 }
 
 /*** cond_var_base ***/
 
-template
-<typename tp_type>
+class
+dango::
+detail::
+cond_var_base::
+cond_var_impl
+final
+{
+private:
+  using cond_type = CONDITION_VARIABLE;
+  using mutex_ptr = dango::detail::mutex_base::mutex_impl*;
+public:
+  cond_var_impl()noexcept;
+  ~cond_var_impl()noexcept = default;
+  void notify()noexcept;
+  void notify_all()noexcept;
+  void wait(mutex_ptr)noexcept;
+  void wait(mutex_ptr, dango::uint64)noexcept;
+private:
+  cond_type m_cond;
+public:
+  DANGO_IMMOBILE(cond_var_impl)
+};
+
 auto
 dango::
 detail::
 cond_var_base::
 get
-()noexcept->tp_type*
+()noexcept->cond_var_impl*
 {
-  using type = CONDITION_VARIABLE;
-
-  static_assert(dango::is_same<dango::remove_cv<tp_type>, type>);
-
-  return dango::launder(static_cast<type*>(m_storage.get()));
+  return dango::launder(static_cast<cond_var_impl*>(m_storage.get()));
 }
 
 void
@@ -3176,14 +3219,12 @@ cond_var_base::
 initialize
 ()noexcept
 {
-  using type = CONDITION_VARIABLE;
+  using type = cond_var_impl;
 
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  auto const a_prim = ::new (dango::placement, m_storage.get()) type;
-
-  InitializeConditionVariable(a_prim);
+  ::new (dango::placement, m_storage.get()) type{ };
 }
 
 void
@@ -3193,7 +3234,10 @@ cond_var_base::
 destroy
 ()noexcept
 {
-
+  if(m_init.has_executed())
+  {
+    dango::destructor(get());
+  }
 }
 
 void
@@ -3203,22 +3247,13 @@ cond_var_base::
 wait
 (mutex_type* const a_lock)noexcept
 {
-  using type = CONDITION_VARIABLE;
-  using lock_type = SRWLOCK;
-
   dango_assert(a_lock != nullptr);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
 #endif
 
-  SleepConditionVariableSRW
-  (
-    get<type>(),
-    a_lock->get<lock_type>(),
-    DWORD(INFINITE),
-    ULONG(0)
-  );
+  get()->wait(a_lock->get());
 }
 
 void
@@ -3228,41 +3263,24 @@ cond_var_base::
 wait
 (mutex_type* const a_lock, dango::deadline const& a_deadline)noexcept
 {
-  using type = CONDITION_VARIABLE;
-  using lock_type = SRWLOCK;
-
   dango_assert(a_lock != nullptr);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
 #endif
 
-  using u64 = dango::uint64;
-
-  constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
-
   auto const a_rem = a_deadline.remaining();
 
-  if(a_rem == u64(0))
+  if(a_rem == dango::uint64(0))
   {
     return;
   }
-
-  auto const a_interval = dango::min(a_rem, c_max_interval);
-
-  dango_assert(a_interval != u64(INFINITE));
 
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
   c_registry.regist(this, a_deadline);
 
-  SleepConditionVariableSRW
-  (
-    get<type>(),
-    a_lock->get<lock_type>(),
-    DWORD(a_interval),
-    ULONG(0)
-  );
+  get()->wait(a_lock->get(), a_rem);
 
   c_registry.unregist(this, a_deadline);
 }
@@ -3274,13 +3292,11 @@ cond_var_base::
 notify
 ()noexcept
 {
-  using type = CONDITION_VARIABLE;
-
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
 #endif
 
-  WakeConditionVariable(get<type>());
+  get()->notify();
 }
 
 void
@@ -3290,13 +3306,11 @@ cond_var_base::
 notify_all
 ()noexcept
 {
-  using type = CONDITION_VARIABLE;
-
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
 #endif
 
-  WakeAllConditionVariable(get<type>());
+  get()->notify_all();
 }
 
 /*** thread ***/
@@ -3375,6 +3389,146 @@ yield
 {
   Sleep(DWORD(0));
 }
+
+/*** mutex_impl ***/
+
+dango::
+detail::
+mutex_base::
+mutex_impl::
+mutex_impl
+()noexcept
+{
+  InitializeSRWLock(&m_lock);
+}
+
+void
+dango::
+detail::
+mutex_base::
+mutex_impl::
+lock
+()noexcept
+{
+  AcquireSRWLockExclusive(&m_lock);
+}
+
+auto
+dango::
+detail::
+mutex_base::
+mutex_impl::
+try_lock
+()noexcept->bool
+{
+  auto const a_result = TryAcquireSRWLockExclusive(&m_lock);
+
+  return bool(a_result);
+}
+
+void
+dango::
+detail::
+mutex_base::
+mutex_impl::
+unlock
+()noexcept
+{
+  ReleaseSRWLockExclusive(&m_lock);
+}
+
+auto
+dango::
+detail::
+mutex_base::
+mutex_impl::
+lock_ptr
+()noexcept->lock_type*
+{
+  return &m_lock;
+}
+
+/*** cond_var_impl ***/
+
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+cond_var_impl
+()noexcept
+{
+  InitializeConditionVariable(&m_cond);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+notify
+()noexcept
+{
+  WakeConditionVariable(&m_cond);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+notify_all
+()noexcept
+{
+  WakeAllConditionVariable(&m_cond);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+wait
+(mutex_ptr const a_mutex)noexcept
+{
+  dango_assert(a_mutex != nullptr);
+
+  SleepConditionVariableSRW
+  (
+    &m_cond,
+    a_mutex->lock_ptr(),
+    DWORD(INFINITE),
+    ULONG(0)
+  );
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+wait
+(mutex_ptr const a_mutex, dango::uint64 const a_interval)noexcept
+{
+  dango_assert(a_mutex != nullptr);
+
+  using u64 = dango::uint64;
+
+  constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
+
+  auto const a_spec = dango::min(a_interval, c_max_interval);
+
+  dango_assert(a_spec != u64(INFINITE));
+
+  SleepConditionVariableSRW
+  (
+    &m_cond,
+    a_mutex->lock_ptr(),
+    DWORD(a_spec),
+    ULONG(0)
+  );
+}
+
+/*** static ***/
 
 static auto
 dango::

@@ -436,11 +436,6 @@ spin_yield
 {
   auto const a_current = a_count++;
 
-  if(a_current < dango::uint32(16))
-  {
-    return;
-  }
-
   if(a_current < dango::uint32(128))
   {
     __builtin_ia32_pause();
