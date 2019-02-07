@@ -6,12 +6,6 @@ auto
 main
 ()noexcept->dango::s_int
 {
-  constexpr auto& c_agent = dango::detail::windows_timer_agent_access::s_timer_agent;
-
-  c_agent.increment();
-
-  c_agent.decrement();
-
   dango::thread a_threads[]{ null, null, null, null, null };
 
   dango::mutex a_mutex{ };
@@ -31,13 +25,13 @@ main
         fprintf
         (
           stderr,
-          "thread[%u] sleep... (%llu) (%llu)\n",
+          "thread[%u] sleep_hr... (%llu) (%llu)\n",
           dango::u_int(a_id),
           dango::u_cent(a_tick),
           dango::u_cent(a_tick_sa)
         );
 
-        dango::thread::sleep(30'000);
+        dango::thread::sleep_hr(30'000);
 
         a_tick = dango::get_tick_count();
         a_tick_sa = dango::get_tick_count_sa();
@@ -45,13 +39,13 @@ main
         fprintf
         (
           stderr,
-          "thread[%u] sleep_sa... (%llu) (%llu)\n",
+          "thread[%u] sleep_hr_sa... (%llu) (%llu)\n",
           dango::u_int(a_id),
           dango::u_cent(a_tick),
           dango::u_cent(a_tick_sa)
         );
 
-        dango::thread::sleep_sa(30'000);
+        dango::thread::sleep_hr_sa(30'000);
 
         a_tick = dango::get_tick_count();
         a_tick_sa = dango::get_tick_count_sa();
