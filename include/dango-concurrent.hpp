@@ -1310,7 +1310,7 @@ thread_start_address
 {
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
-  static_assert(dango::is_callable_ret<tp_func&, void>);
+  static_assert(dango::is_callable_ret<tp_func const&, void>);
   static_assert(dango::is_noexcept_destructible<tp_func>);
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);
@@ -1453,6 +1453,107 @@ dango::detail
 {
   DANGO_DEFINE_GLOBAL_INLINE_CV(s_cond_var_registry_thread, const, detail::cond_var_registry_thread{ })
 }
+
+#ifdef _WIN32
+/*** windows_timer_agent ***/
+
+namespace
+dango::detail
+{
+  class windows_timer_agent;
+  class windows_timer_agent_thread;
+  class windows_timer_agent_access;
+}
+
+class
+dango::
+detail::
+windows_timer_agent
+final
+{
+  friend dango::detail::windows_timer_agent_access;
+public:
+  void increment()noexcept;
+  void decrement()noexcept;
+  void notify_exit()noexcept;
+  void thread_func()noexcept;
+private:
+  constexpr windows_timer_agent()noexcept;
+  ~windows_timer_agent()noexcept = default;
+  void wait_not_timing()noexcept;
+  auto wait_timing(dango::timeout const&)noexcept->bool;
+private:
+  dango::static_mutex m_mutex;
+  dango::static_cond_var_mutex m_cond;
+  bool m_alive;
+  bool m_waiting;
+  bool m_active;
+  dango::uint32 m_min_period;
+  dango::usize m_req_count;
+public:
+  DANGO_IMMOBILE(windows_timer_agent)
+};
+
+constexpr
+dango::
+detail::
+windows_timer_agent::
+windows_timer_agent
+()noexcept:
+m_mutex{ },
+m_cond{ m_mutex },
+m_alive{ true },
+m_waiting{ false },
+m_active{ false },
+m_min_period{ dango::uint32(0) },
+m_req_count{ dango::usize(0) }
+{
+
+}
+
+class
+dango::
+detail::
+windows_timer_agent_access
+final
+{
+  friend dango::detail::windows_timer_agent_thread;
+public:
+  static dango::detail::windows_timer_agent s_timer_agent;
+public:
+  DANGO_UNINSTANTIABLE(windows_timer_agent_access)
+};
+
+inline dango::detail::windows_timer_agent
+dango::
+detail::
+windows_timer_agent_access::
+s_timer_agent{ };
+
+class
+dango::
+detail::
+windows_timer_agent_thread
+final
+{
+private:
+  static auto start_thread()noexcept->dango::thread;
+public:
+  windows_timer_agent_thread()noexcept;
+  ~windows_timer_agent_thread()noexcept;
+private:
+  dango::thread const m_thread;
+public:
+  DANGO_IMMOBILE(windows_timer_agent_thread)
+};
+
+namespace
+dango::detail
+{
+  DANGO_DEFINE_GLOBAL_INLINE_CV(s_windows_timer_agent_thread, const, detail::windows_timer_agent_thread{ })
+}
+
+#endif
 
 #ifdef DANGO_SOURCE_FILE
 
@@ -1892,8 +1993,13 @@ wait_empty
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(list_empty(m_external_head, m_external_tail))
+    do
     {
+      if(!list_empty(m_external_head, m_external_tail))
+      {
+        break;
+      }
+
       if(!m_alive)
       {
         return true;
@@ -1905,6 +2011,7 @@ wait_empty
 
       m_waiting = false;
     }
+    while(true);
   }
 
   return false;
@@ -2376,9 +2483,7 @@ cond_var_base::
 notify
 ()noexcept
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  init();
 
   get()->notify();
 }
@@ -2390,9 +2495,7 @@ cond_var_base::
 notify_all
 ()noexcept
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  init();
 
   get()->notify_all();
 }
@@ -2671,6 +2774,8 @@ cond_var_impl::
 notify
 ()noexcept
 {
+  constexpr auto const relaxed = dango::mem_order::relaxed;
+
   dango_crit(m_lock)
   {
     if(m_wait_count == dango::usize(0))
@@ -2678,8 +2783,6 @@ notify
       return;
     }
   }
-
-  constexpr auto const relaxed = dango::mem_order::relaxed;
 
   m_seq.add_fetch<relaxed>(seq_type(1));
 
@@ -2702,6 +2805,8 @@ cond_var_impl::
 notify_all
 ()noexcept
 {
+  constexpr auto const relaxed = dango::mem_order::relaxed;
+
   mutex_ptr a_mutex;
 
   dango_crit(m_lock)
@@ -2715,8 +2820,6 @@ notify_all
   }
 
   dango_assert(a_mutex != nullptr);
-
-  constexpr auto const relaxed = dango::mem_order::relaxed;
 
   m_seq.add_fetch<relaxed>(seq_type(1));
 
@@ -2741,9 +2844,9 @@ cond_var_impl::
 wait
 (mutex_ptr const a_mutex)noexcept
 {
-  dango_assert(a_mutex != nullptr);
-
   constexpr auto const relaxed = dango::mem_order::relaxed;
+
+  dango_assert(a_mutex != nullptr);
 
   auto const a_seq = m_seq.load<relaxed>();
 
@@ -2774,9 +2877,9 @@ cond_var_impl::
 wait
 (mutex_ptr const a_mutex, dango::uint64 const a_interval)noexcept
 {
-  dango_assert(a_mutex != nullptr);
-
   constexpr auto const relaxed = dango::mem_order::relaxed;
+
+  dango_assert(a_mutex != nullptr);
 
   auto const a_seq = m_seq.load<relaxed>();
 
@@ -2889,7 +2992,7 @@ thread_start_address
 {
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
-  static_assert(dango::is_callable_ret<tp_func&, void>);
+  static_assert(dango::is_callable_ret<tp_func const&, void>);
   static_assert(dango::is_noexcept_destructible<tp_func>);
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);
@@ -2975,10 +3078,6 @@ spin_relax
 #ifdef _WIN32
 
 #define DANGO_WINDOWS_VER 0x0601
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
 
 #ifdef WINVER
 #if (WINVER < DANGO_WINDOWS_VER)
@@ -3306,9 +3405,7 @@ cond_var_base::
 notify
 ()noexcept
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  init();
 
   get()->notify();
 }
@@ -3320,9 +3417,7 @@ cond_var_base::
 notify_all
 ()noexcept
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  init();
 
   get()->notify_all();
 }
@@ -3402,6 +3497,241 @@ yield
 ()noexcept
 {
   Sleep(DWORD(0));
+}
+
+/*** windows_timer_agent ***/
+
+#include <cstdio>
+
+void
+dango::
+detail::
+windows_timer_agent::
+increment
+()noexcept
+{
+  dango_crit(m_cond)
+  {
+    if(m_req_count++ != dango::usize(0))
+    {
+      return;
+    }
+
+    if(m_min_period == dango::uint32(0))
+    {
+      TIMECAPS a_caps;
+
+      timeGetDevCaps(&a_caps, sizeof(a_caps));
+
+      auto const a_min = dango::uint32(a_caps.wPeriodMin);
+
+      m_min_period = dango::max(dango::uint32(1), a_min);
+    }
+
+    if(!m_active)
+    {
+      printf("timeBeginPeriod\n");
+
+      timeBeginPeriod(m_min_period);
+    }
+
+    m_active = true;
+
+    if(m_waiting)
+    {
+      m_cond.notify();
+    }
+  }
+}
+
+void
+dango::
+detail::
+windows_timer_agent::
+decrement
+()noexcept
+{
+  dango_crit(m_cond)
+  {
+    if(--m_req_count != dango::usize(0))
+    {
+      return;
+    }
+
+    if(m_waiting)
+    {
+      m_cond.notify();
+    }
+  }
+}
+
+void
+dango::
+detail::
+windows_timer_agent::
+notify_exit
+()noexcept
+{
+  dango_crit(m_cond)
+  {
+    m_alive = false;
+
+    if(m_waiting)
+    {
+      m_cond.notify();
+    }
+  }
+}
+
+void
+dango::
+detail::
+windows_timer_agent::
+thread_func
+()noexcept
+{
+  do
+  {
+    wait_not_timing();
+
+    auto const a_timeout = dango::make_timeout_rel(dango::uint64(10'000));
+
+    if(wait_timing(a_timeout))
+    {
+      break;
+    }
+  }
+  while(true);
+}
+
+void
+dango::
+detail::
+windows_timer_agent::
+wait_not_timing
+()noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    do
+    {
+      if(m_active && (m_req_count == dango::uint32(0)))
+      {
+        break;
+      }
+
+      if(!m_alive)
+      {
+        break;
+      }
+
+      m_waiting = true;
+
+      a_crit.wait();
+
+      m_waiting = false;
+    }
+    while(true);
+  }
+}
+
+auto
+dango::
+detail::
+windows_timer_agent::
+wait_timing
+(dango::timeout const& a_timeout)noexcept->bool
+{
+  bool a_exit;
+
+  dango_crit_full(m_cond, a_crit)
+  {
+    do
+    {
+      a_exit = !m_alive;
+
+      if(m_req_count != dango::uint32(0))
+      {
+        return a_exit;
+      }
+
+      if(a_exit)
+      {
+        break;
+      }
+
+      if(a_timeout.has_expired())
+      {
+        break;
+      }
+
+      m_waiting = true;
+
+      a_crit.wait(a_timeout);
+
+      m_waiting = false;
+    }
+    while(true);
+
+    if(m_active)
+    {
+      printf("timeEndPeriod\n");
+
+      timeEndPeriod(m_min_period);
+    }
+
+    m_active = false;
+  }
+
+  return a_exit;
+}
+
+/***  ***/
+
+auto
+dango::
+detail::
+windows_timer_agent_thread::
+start_thread
+()noexcept->dango::thread
+{
+  constexpr auto& c_agent = detail::windows_timer_agent_access::s_timer_agent;
+
+  try
+  {
+    return dango::thread::create([]()noexcept->void{ c_agent.thread_func(); });
+  }
+  catch(...)
+  {
+#ifndef DANGO_NO_DEBUG
+    dango_unreachable_msg("windows timer agent thread creation failed");
+#else
+    dango::terminate();
+#endif
+  }
+}
+
+dango::
+detail::
+windows_timer_agent_thread::
+windows_timer_agent_thread
+()noexcept:
+m_thread{ start_thread() }
+{
+
+}
+
+dango::
+detail::
+windows_timer_agent_thread::
+~windows_timer_agent_thread
+()noexcept
+{
+  constexpr auto& c_agent = detail::windows_timer_agent_access::s_timer_agent;
+
+  c_agent.notify_exit();
+
+  m_thread.join();
 }
 
 /*** mutex_impl ***/
@@ -3616,7 +3946,7 @@ thread_start_address
 {
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
-  static_assert(dango::is_callable_ret<tp_func&, void>);
+  static_assert(dango::is_callable_ret<tp_func const&, void>);
   static_assert(dango::is_noexcept_destructible<tp_func>);
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);

@@ -6,16 +6,11 @@ auto
 main
 ()noexcept->dango::s_int
 {
-  /*{
-    TIMECAPS a_caps;
+  constexpr auto& c_agent = dango::detail::windows_timer_agent_access::s_timer_agent;
 
-    timeGetDevCaps(&a_caps, sizeof(a_caps));
+  c_agent.increment();
 
-    printf("min period: %u\n", dango::u_int(a_caps.wPeriodMin));
-    printf("max period: %u\n", dango::u_int(a_caps.wPeriodMax));
-
-    timeBeginPeriod(a_caps.wPeriodMin);
-  }*/
+  c_agent.decrement();
 
   dango::thread a_threads[]{ null, null, null, null, null };
 

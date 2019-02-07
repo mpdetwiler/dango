@@ -349,13 +349,12 @@ dango
 
 #ifdef DANGO_SOURCE_FILE
 
-#include "dango-atomic.hpp"
+#include "dango-concurrent-base.hpp"
 
 namespace
 dango::assert_cpp
 {
-  static dango::atomic<dango::assert_log_handler> s_assert_log_handler{ nullptr };
-  static dango::atomic<bool> s_assert_fail_once{ false };
+  dango::atomic<dango::assert_log_handler> s_assert_log_handler{ nullptr };
 }
 
 char const* const
@@ -385,9 +384,14 @@ detail::
 assert_fail_once
 ()noexcept
 {
-  bool const a_spin = assert_cpp::s_assert_fail_once.exchange(true);
+  static dango::atomic<bool> s_assert_fail_once{ false };
 
-  while(a_spin);
+  auto const a_spin = s_assert_fail_once.exchange<dango::mem_order::acquire>(true);
+
+  while(a_spin)
+  {
+    detail::thread_yield();
+  }
 }
 
 #include <stdio.h>
