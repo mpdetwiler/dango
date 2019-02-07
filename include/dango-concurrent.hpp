@@ -3790,8 +3790,6 @@ yield
 
 /*** windows_timer_agent ***/
 
-#include <cstdio>
-
 void
 dango::
 detail::
@@ -3824,8 +3822,6 @@ increment
 
     if(!m_active)
     {
-      printf("timeBeginPeriod\n");
-
       m_active = true;
 
       timeBeginPeriod(m_min_period);
@@ -3888,7 +3884,7 @@ thread_func
   {
     wait_not_timing();
 
-    auto const a_timeout = dango::make_timeout_rel(dango::uint64(10'000));
+    auto const a_timeout = dango::make_timeout_rel(dango::uint64(60'000));
 
     if(wait_timing(a_timeout))
     {
@@ -3972,8 +3968,6 @@ wait_timing
 
     if(m_active)
     {
-      printf("timeEndPeriod\n");
-
       m_active = false;
 
       timeEndPeriod(m_min_period);
