@@ -6,7 +6,7 @@ auto
 main
 ()noexcept->dango::s_int
 {
-  dango::thread a_threads[]{ null, null, null, null, null };
+  dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
 

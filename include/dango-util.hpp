@@ -366,6 +366,67 @@ DANGO_DEFINE_COMPARISON_FUNC(gequal, >= )
 
 #undef DANGO_DEFINE_COMPARISON_FUNC
 
+/*** logical ***/
+
+namespace
+dango
+{
+  constexpr auto logical_implication(bool, bool)noexcept->bool;
+  constexpr auto logical_equivalence(bool, bool)noexcept->bool;
+  constexpr auto logical_and(bool, bool)noexcept->bool;
+  constexpr auto logical_or(bool, bool)noexcept->bool;
+  constexpr auto logical_xor(bool, bool)noexcept->bool;
+  constexpr auto logical_not(bool)noexcept->bool;
+}
+
+constexpr auto
+dango::
+logical_implication
+(bool const a_lhs, bool const a_rhs)noexcept->bool
+{
+  return !a_lhs || a_rhs;
+}
+
+constexpr auto
+dango::
+logical_equivalence
+(bool const a_lhs, bool const a_rhs)noexcept->bool
+{
+  return a_lhs == a_rhs;
+}
+
+constexpr auto
+dango::
+logical_and
+(bool const a_lhs, bool const a_rhs)noexcept->bool
+{
+  return a_lhs && a_rhs;
+}
+
+constexpr auto
+dango::
+logical_or
+(bool const a_lhs, bool const a_rhs)noexcept->bool
+{
+  return a_lhs || a_rhs;
+}
+
+constexpr auto
+dango::
+logical_xor
+(bool const a_lhs, bool const a_rhs)noexcept->bool
+{
+  return a_lhs != a_rhs;
+}
+
+constexpr auto
+dango::
+logical_not
+(bool const a_arg)noexcept->bool
+{
+  return !a_arg;
+}
+
 /*** next_multiple ***/
 
 namespace

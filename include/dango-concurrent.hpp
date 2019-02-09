@@ -1116,6 +1116,7 @@ private:
   using thread_start_func = void(*)(void*)noexcept(false);
   class control_block;
   class notifier;
+  struct construct_tag;
 private:
   static auto new_control_block()noexcept->control_block*;
 
@@ -1150,8 +1151,9 @@ public:
   static void sleep_sa(dango::uint64)noexcept;
   static void sleep_hr_sa(dango::uint64)noexcept;
 private:
-  thread()noexcept;
+  thread(construct_tag)noexcept;
 public:
+  constexpr thread()noexcept;
   constexpr thread(dango::null_tag)noexcept;
   thread(thread const&)noexcept;
   thread(thread&&)noexcept;
@@ -1252,6 +1254,16 @@ inline dango::uint64 const
 dango::
 thread::
 s_tick_count_sa_init = dango::get_tick_count_sa();
+
+constexpr
+dango::
+thread::
+thread
+()noexcept:
+thread{ dango::null }
+{
+
+}
 
 constexpr
 dango::
@@ -1625,8 +1637,8 @@ public:
 private:
   constexpr windows_timer_agent()noexcept;
   ~windows_timer_agent()noexcept = default;
-  void wait_not_timing()noexcept;
-  auto wait_timing(dango::timeout const&)noexcept->bool;
+  auto wait()noexcept->bool;
+  auto timed_wait(dango::timeout const&)noexcept->bool;
 private:
   dango::static_mutex m_mutex;
   dango::static_cond_var_mutex m_cond;
@@ -1949,10 +1961,19 @@ notifier::
 
 /*** thread ***/
 
+struct
+dango::
+thread::
+construct_tag
+final
+{
+  DANGO_TAG_TYPE(construct_tag)
+};
+
 dango::
 thread::
 thread
-()noexcept:
+(construct_tag const)noexcept:
 m_control{ new_control_block() }
 {
 
@@ -2017,7 +2038,7 @@ thread::
 self
 ()noexcept->thread const&
 {
-  thread_local thread const t_thread{ };
+  thread_local thread const t_thread{ construct_tag{ } };
 
   thread_local notifier const t_notifier{ t_thread };
 
@@ -3804,11 +3825,6 @@ increment
       return;
     }
 
-    if(!m_alive)
-    {
-      return;
-    }
-
     if(m_min_period == dango::uint32(0))
     {
       TIMECAPS a_caps;
@@ -3848,6 +3864,13 @@ decrement
       return;
     }
 
+    if(!m_alive && m_active)
+    {
+      m_active = false;
+
+      timeEndPeriod(m_min_period);
+    }
+
     if(m_waiting)
     {
       m_cond.notify();
@@ -3882,38 +3905,50 @@ thread_func
 {
   do
   {
-    wait_not_timing();
+    if(wait())
+    {
+      break;
+    }
 
     auto const a_timeout = dango::make_timeout_rel(dango::uint64(60'000));
 
-    if(wait_timing(a_timeout))
+    if(timed_wait(a_timeout))
     {
       break;
     }
   }
   while(true);
+
+  dango_crit(m_mutex)
+  {
+    if(m_active && m_req_count == dango::usize(0))
+    {
+      m_active = false;
+
+      timeEndPeriod(m_min_period);
+    }
+  }
 }
 
-void
+auto
 dango::
 detail::
 windows_timer_agent::
-wait_not_timing
-()noexcept
+wait
+()noexcept->bool
 {
   dango_crit_full(m_cond, a_crit)
   {
     do
     {
-      if(m_active)
-      {
-        if(m_req_count == dango::uint32(0))
-        {
-          break;
-        }
-      }
+      dango_assert(dango::logical_implication(m_req_count != dango::uint32(0), m_active));
 
       if(!m_alive)
+      {
+        return true;
+      }
+
+      if(m_active && m_req_count == dango::usize(0))
       {
         break;
       }
@@ -3926,31 +3961,31 @@ wait_not_timing
     }
     while(true);
   }
+
+  return false;
 }
 
 auto
 dango::
 detail::
 windows_timer_agent::
-wait_timing
+timed_wait
 (dango::timeout const& a_timeout)noexcept->bool
 {
-  bool a_exit;
-
   dango_crit_full(m_cond, a_crit)
   {
     do
     {
-      a_exit = !m_alive;
+      dango_assert(dango::logical_implication(m_req_count != dango::uint32(0), m_active));
 
-      if(m_req_count != dango::uint32(0))
+      if(!m_alive)
       {
-        return a_exit;
+        return true;
       }
 
-      if(a_exit)
+      if(m_req_count != dango::usize(0))
       {
-        break;
+        return false;
       }
 
       if(a_timeout.has_expired())
@@ -3966,18 +4001,17 @@ wait_timing
     }
     while(true);
 
-    if(m_active)
-    {
-      m_active = false;
+    dango_assert(m_active);
 
-      timeEndPeriod(m_min_period);
-    }
+    m_active = false;
+
+    timeEndPeriod(m_min_period);
   }
 
-  return a_exit;
+  return false;
 }
 
-/***  ***/
+/*** windows_timer_agent_thread ***/
 
 auto
 dango::
