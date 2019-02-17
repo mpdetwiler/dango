@@ -1634,7 +1634,7 @@ dango::detail
   }
 
   template
-  <typename tp_from,typename tp_to>
+  <typename... tp_anything>
   constexpr auto
   is_convertible_help
   (...)noexcept->bool
@@ -1736,40 +1736,34 @@ dango::detail
 
   template
   <
-    typename tp_func,
     typename tp_ret,
+	typename tp_func,
     typename... tp_args,
-    typename tp_enabled_ret = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...)),
-    dango::enable_if<dango::is_convertible<tp_enabled_ret, tp_ret>> = dango::enable_val
+    typename tp_enabled_ret = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...))
   >
   constexpr auto
   is_callable_help
   (detail::is_callable_ret_normal_tag const)noexcept->bool
   {
-    return true;
+    return dango::is_convertible<tp_enabled_ret, tp_ret>;
   }
 
   template
   <
-    typename tp_func,
     typename tp_ret,
+	typename tp_func,
     typename... tp_args,
-    typename tp_enabled_ret = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...)),
-    dango::enable_if<dango::is_convertible<tp_enabled_ret, tp_ret>> = dango::enable_val
+    typename tp_enabled_ret = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...))
   >
   constexpr auto
   is_callable_help
   (detail::is_callable_ret_noexcept_tag const)noexcept->bool
   {
-    return noexcept(dango::declval<tp_func>()(dango::declval<tp_args>()...));
+    return dango::is_noexcept_convertible<tp_enabled_ret, tp_ret> && noexcept(dango::declval<tp_func>()(dango::declval<tp_args>()...));
   }
 
   template
-  <
-    typename tp_func,
-    typename tp_ret,
-    typename... tp_args
-  >
+  <typename... tp_anything>
   constexpr auto
   is_callable_help
   (...)noexcept->bool
@@ -1792,14 +1786,14 @@ dango
     detail::is_callable_help<tp_func, tp_args...>(detail::is_callable_noexcept);
 
   template
-  <typename tp_func, typename tp_ret, typename... tp_args>
+  <typename tp_ret, typename tp_func, typename... tp_args>
   constexpr bool const is_callable_ret =
-    detail::is_callable_help<tp_func, tp_ret, tp_args...>(detail::is_callable_ret_normal);
+    detail::is_callable_help<tp_ret, tp_func, tp_args...>(detail::is_callable_ret_normal);
 
   template
-  <typename tp_func, typename tp_ret, typename... tp_args>
+  <typename tp_ret, typename tp_func, typename... tp_args>
   constexpr bool const is_noexcept_callable_ret =
-    detail::is_callable_help<tp_func, tp_ret, tp_args...>(detail::is_callable_ret_noexcept);
+    detail::is_callable_help<tp_ret, tp_func, tp_args...>(detail::is_callable_ret_noexcept);
 }
 
 /*** is_constructible is_trivial_constructible is_noexcept_constructible ***/
@@ -1874,7 +1868,7 @@ dango::detail
   }
 
   template
-  <typename tp_type, typename... tp_args>
+  <typename... tp_anything>
   constexpr auto
   is_constructible_help
   (...)noexcept->bool

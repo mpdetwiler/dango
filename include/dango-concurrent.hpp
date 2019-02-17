@@ -1212,7 +1212,7 @@ public:
   create(tp_func&&)noexcept(false)->
   dango::enable_if
   <
-    dango::is_callable_ret<dango::decay<tp_func>&, void> &&
+    dango::is_callable_ret<void, dango::decay<tp_func>&> &&
     dango::is_noexcept_destructible<dango::decay<tp_func>>,
     thread
   >;
@@ -1456,7 +1456,7 @@ create
 (tp_func&& a_thread_func)noexcept(false)->
 dango::enable_if
 <
-  dango::is_callable_ret<dango::decay<tp_func>&, void> &&
+  dango::is_callable_ret<void, dango::decay<tp_func>&> &&
   dango::is_noexcept_destructible<dango::decay<tp_func>>,
   thread
 >
@@ -1537,7 +1537,7 @@ thread_start_address
 {
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
-  static_assert(dango::is_callable_ret<tp_func const&, void>);
+  static_assert(dango::is_callable_ret<void, tp_func const&>);
   static_assert(dango::is_noexcept_destructible<tp_func>);
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);
@@ -3280,7 +3280,7 @@ thread_start_address
 {
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
-  static_assert(dango::is_callable_ret<tp_func const&, void>);
+  static_assert(dango::is_callable_ret<void, tp_func const&>);
   static_assert(dango::is_noexcept_destructible<tp_func>);
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);
@@ -4264,7 +4264,7 @@ thread_start_address
 {
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
-  static_assert(dango::is_callable_ret<tp_func const&, void>);
+  static_assert(dango::is_callable_ret<void, tp_func const&>);
   static_assert(dango::is_noexcept_destructible<tp_func>);
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);
