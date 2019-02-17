@@ -749,5 +749,108 @@ dango::enable_if
   return tp_ret{ dango::forward<tp_func>(a_func) };
 }
 
+/*** invoker ***/
+
+namespace
+dango::detail
+{
+  template
+  <
+    typename tp_type,
+    typename tp_nocv = dango::remove_cv<tp_type>,
+    typename tp_enabled = dango::enable_tag
+  >
+  struct invoker_help;
+
+  template
+  <typename tp_type, typename tp_func, typename tp_class>
+  struct
+  invoker_help
+  <tp_type, tp_func tp_class::*, dango::enable_if<dango::is_func<tp_func>>>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using invoker = typename detail::invoker_help<tp_type>::type;
+}
+
+template
+<
+  typename tp_type,
+  typename tp_nocv,
+  typename tp_enabled
+>
+struct
+dango::
+detail::
+invoker_help
+final
+{
+  using type = tp_type;
+
+  DANGO_UNINSTANTIABLE(invoker_help)
+};
+
+template
+<typename tp_type, typename tp_func, typename tp_class>
+struct
+dango::
+detail::
+invoker_help
+<tp_type, tp_func tp_class::*, dango::enable_if<dango::is_func<tp_func>>>
+final
+{
+public:
+  using type = invoker_help;
+private:
+  using value_type = tp_func tp_class::*;
+public:
+  explicit constexpr invoker_help(value_type const a_method)noexcept:m_method{ a_method }{ }
+  constexpr invoker_help(invoker_help const&)noexcept = default;
+  constexpr invoker_help(invoker_help&&)noexcept = default;
+  ~invoker_help()noexcept = default;
+  constexpr auto operator = (invoker_help const&)&noexcept->invoker_help& = default;
+  constexpr auto operator = (invoker_help&&)&noexcept->invoker_help& = default;
+
+  template
+  <
+    typename tp_first,
+    typename... tp_args,
+    typename tp_enabled =
+      decltype(((dango::declval<tp_first>()).*(dango::declval<value_type const&>()))(dango::declval<tp_args>()...))
+  >
+  constexpr auto
+  operator ()
+  (tp_first&& a_class, tp_args&&... a_args)const
+  noexcept(noexcept(((dango::declval<tp_first>()).*(dango::declval<value_type const&>()))(dango::declval<tp_args>()...)))->
+  decltype(auto)
+  {
+    return (a_class.*m_method)(dango::forward<tp_args>(a_args)...);
+  }
+
+  template
+  <
+    typename tp_first,
+    typename... tp_args,
+    typename tp_enabled =
+      decltype(((dango::declval<tp_first* const&>())->*(dango::declval<value_type const&>()))(dango::declval<tp_args>()...))
+  >
+  constexpr auto
+  operator ()
+  (tp_first* const a_class, tp_args&&... a_args)const
+  noexcept(noexcept(((dango::declval<tp_first* const&>())->*(dango::declval<value_type const&>()))(dango::declval<tp_args>()...)))->
+  decltype(auto)
+  {
+    return (a_class->*m_method)(dango::forward<tp_args>(a_args)...);
+  }
+private:
+  value_type m_method;
+public:
+  DANGO_DELETE_DEFAULT(invoker_help)
+};
+
 #endif
 

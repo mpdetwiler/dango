@@ -78,6 +78,13 @@ main
       }
     );
 
+    dango::invoker<decltype(&dango::thread::is_alive)> a_inv{ &dango::thread::is_alive };
+
+    static_assert(dango::is_noexcept_callable_ret<decltype(a_inv), bool, dango::thread const&>);
+    static_assert(dango::is_noexcept_callable_ret<decltype(a_inv), bool, dango::thread const*>);
+
+    dango_assert(a_inv(a_thread));
+
     ++a_id;
   }
 

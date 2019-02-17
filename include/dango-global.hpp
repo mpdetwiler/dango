@@ -387,11 +387,7 @@ namespace \
 name##_namespace \
 { \
   using value_type = decltype(__VA_ARGS__) cv; \
-  static_assert \
-  ( \
-    !dango::is_array<value_type> && \
-    dango::is_object<value_type> \
-  ); \
+  static_assert(!dango::is_array<value_type> && dango::is_object<value_type>); \
   using return_type = dango::remove_cv<value_type>; \
   linkage auto \
   construct \
