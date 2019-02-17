@@ -2031,7 +2031,7 @@ dango::detail
   }
 
   template
-  <typename tp_type, typename tp_arg>
+  <typename... tp_anything>
   constexpr auto
   is_assignable_help
   (...)noexcept->bool

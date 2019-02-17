@@ -95,7 +95,7 @@ dango::enable_if
   void
 >
 {
-  tp_type a_temp{dango::move(a_arg1)};
+  tp_type a_temp{ dango::move(a_arg1) };
 
   a_arg1 = dango::move(a_arg2);
 
