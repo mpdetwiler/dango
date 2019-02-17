@@ -1678,7 +1678,7 @@ public:
 namespace
 dango::detail
 {
-  //DANGO_DEFINE_GLOBAL_INLINE_CV(s_cond_var_registry_thread, const, detail::cond_var_registry_thread{ })
+  DANGO_DEFINE_GLOBAL_INLINE_CV(s_cond_var_registry_thread, const, detail::cond_var_registry_thread{ })
 }
 
 #ifdef _WIN32
