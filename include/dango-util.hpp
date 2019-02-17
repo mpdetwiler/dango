@@ -828,7 +828,7 @@ public:
   noexcept(noexcept(((dango::declval<tp_first>()).*(dango::declval<value_type const&>()))(dango::declval<tp_args>()...)))->
   decltype(auto)
   {
-    return (a_class.*m_method)(dango::forward<tp_args>(a_args)...);
+    return ((dango::forward<tp_first>(a_class)).*m_method)(dango::forward<tp_args>(a_args)...);
   }
 
   template

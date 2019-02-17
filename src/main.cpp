@@ -91,6 +91,10 @@ main
   for(auto const& a_thread:a_threads)
   {
     a_thread.join();
+
+    dango::invoker<decltype(&dango::thread::is_alive)> a_inv{ &dango::thread::is_alive };
+
+    dango_assert(!a_inv(&a_thread));
   }
 
   return 0;
