@@ -2565,7 +2565,7 @@ mutex_base::
 get
 ()noexcept->mutex_impl*
 {
-  return dango::launder(static_cast<mutex_impl*>(m_storage.get()));
+  return static_cast<mutex_impl*>(m_storage.get());
 }
 
 void
@@ -2688,7 +2688,7 @@ cond_var_base::
 get
 ()noexcept->cond_var_impl*
 {
-  return dango::launder(static_cast<cond_var_impl*>(m_storage.get()));
+  return static_cast<cond_var_impl*>(m_storage.get());
 }
 
 void
@@ -3498,7 +3498,7 @@ mutex_base::
 get
 ()noexcept->mutex_impl*
 {
-  return dango::launder(static_cast<mutex_impl*>(m_storage.get()));
+  return static_cast<mutex_impl*>(m_storage.get());
 }
 
 void
@@ -3610,7 +3610,7 @@ cond_var_base::
 get
 ()noexcept->cond_var_impl*
 {
-  return dango::launder(static_cast<cond_var_impl*>(m_storage.get()));
+  return static_cast<cond_var_impl*>(m_storage.get());
 }
 
 void
