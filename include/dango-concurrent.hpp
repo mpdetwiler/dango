@@ -43,6 +43,7 @@ public:
   void set_rel(value_type)noexcept;
   void add(value_type)noexcept;
   virtual auto is_suspend_aware()const noexcept->bool = 0;
+  virtual auto requires_high_resolution()const noexcept->bool = 0;
 private:
   virtual auto tick_count()const noexcept->value_type = 0;
 private:
@@ -160,6 +161,8 @@ dango::timeout
 {
 private:
   using super_type = dango::timeout;
+protected:
+  static auto get_tc()noexcept->value_type{ return dango::get_tick_count(); }
 public:
   static auto make(value_type)noexcept->timeout_impl;
   static auto make_rel(value_type)noexcept->timeout_impl;
@@ -168,6 +171,7 @@ protected:
 public:
   virtual ~timeout_impl()noexcept override = default;
   virtual auto is_suspend_aware()const noexcept->bool override final;
+  virtual auto requires_high_resolution()const noexcept->bool override;
 private:
   virtual auto tick_count()const noexcept->value_type override final;
 public:
@@ -192,7 +196,7 @@ timeout_impl::
 make_rel
 (value_type const a_interval)noexcept->timeout_impl
 {
-  auto const a_now = dango::get_tick_count();
+  auto const a_now = get_tc();
 
   return timeout_impl{ safe_add(a_now, a_interval) };
 }
@@ -222,10 +226,20 @@ inline auto
 dango::
 detail::
 timeout_impl::
+requires_high_resolution
+()const noexcept->bool
+{
+  return false;
+}
+
+inline auto
+dango::
+detail::
+timeout_impl::
 tick_count
 ()const noexcept->value_type
 {
-  return dango::get_tick_count();
+  return get_tc();
 }
 
 /*** timeout_impl_hr ***/
@@ -249,9 +263,10 @@ public:
   static auto make(value_type)noexcept->timeout_impl_hr;
   static auto make_rel(value_type)noexcept->timeout_impl_hr;
 private:
-  timeout_impl_hr(value_type)noexcept;
+  constexpr timeout_impl_hr(value_type)noexcept;
 public:
-  virtual ~timeout_impl_hr()noexcept override;
+  virtual ~timeout_impl_hr()noexcept override = default;
+  virtual auto requires_high_resolution()const noexcept->bool override;
 public:
   DANGO_DELETE_DEFAULT(timeout_impl_hr)
   DANGO_IMMOBILE(timeout_impl_hr)
@@ -274,9 +289,30 @@ timeout_impl_hr::
 make_rel
 (value_type const a_interval)noexcept->timeout_impl_hr
 {
-  auto const a_now = dango::get_tick_count();
+  auto const a_now = get_tc();
 
   return timeout_impl_hr{ safe_add(a_now, a_interval) };
+}
+
+constexpr
+dango::
+detail::
+timeout_impl_hr::
+timeout_impl_hr
+(value_type const a_timeout)noexcept:
+super_type{ a_timeout }
+{
+
+}
+
+inline auto
+dango::
+detail::
+timeout_impl_hr::
+requires_high_resolution
+()const noexcept->bool
+{
+  return true;
 }
 
 /*** timeout_impl_sa ***/
@@ -295,6 +331,8 @@ dango::timeout
 {
 private:
   using super_type = dango::timeout;
+protected:
+  static auto get_tc()noexcept->value_type{ return dango::get_tick_count_sa(); }
 public:
   static auto make(value_type)noexcept->timeout_impl_sa;
   static auto make_rel(value_type)noexcept->timeout_impl_sa;
@@ -303,6 +341,7 @@ protected:
 public:
   virtual ~timeout_impl_sa()noexcept override = default;
   virtual auto is_suspend_aware()const noexcept->bool override final;
+  virtual auto requires_high_resolution()const noexcept->bool override;
 private:
   virtual auto tick_count()const noexcept->value_type override final;
 public:
@@ -327,7 +366,7 @@ timeout_impl_sa::
 make_rel
 (value_type const a_interval)noexcept->timeout_impl_sa
 {
-  auto const a_now = dango::get_tick_count_sa();
+  auto const a_now = get_tc();
 
   return timeout_impl_sa{ safe_add(a_now, a_interval) };
 }
@@ -357,10 +396,20 @@ inline auto
 dango::
 detail::
 timeout_impl_sa::
+requires_high_resolution
+()const noexcept->bool
+{
+  return false;
+}
+
+inline auto
+dango::
+detail::
+timeout_impl_sa::
 tick_count
 ()const noexcept->value_type
 {
-  return dango::get_tick_count_sa();
+  return get_tc();
 }
 
 /*** timeout_impl_hr_sa ***/
@@ -384,9 +433,10 @@ public:
   static auto make(value_type)noexcept->timeout_impl_hr_sa;
   static auto make_rel(value_type)noexcept->timeout_impl_hr_sa;
 private:
-  timeout_impl_hr_sa(value_type)noexcept;
+  constexpr timeout_impl_hr_sa(value_type)noexcept;
 public:
-  virtual ~timeout_impl_hr_sa()noexcept override;
+  virtual ~timeout_impl_hr_sa()noexcept override = default;
+  virtual auto requires_high_resolution()const noexcept->bool override;
 public:
   DANGO_DELETE_DEFAULT(timeout_impl_hr_sa)
   DANGO_IMMOBILE(timeout_impl_hr_sa)
@@ -409,9 +459,30 @@ timeout_impl_hr_sa::
 make_rel
 (value_type const a_interval)noexcept->timeout_impl_hr_sa
 {
-  auto const a_now = dango::get_tick_count_sa();
+  auto const a_now = get_tc();
 
   return timeout_impl_hr_sa{ safe_add(a_now, a_interval) };
+}
+
+constexpr
+dango::
+detail::
+timeout_impl_hr_sa::
+timeout_impl_hr_sa
+(value_type const a_timeout)noexcept:
+super_type{ a_timeout }
+{
+
+}
+
+inline auto
+dango::
+detail::
+timeout_impl_hr_sa::
+requires_high_resolution
+()const noexcept->bool
+{
+  return true;
 }
 
 /*** make_timeout ***/
@@ -1607,7 +1678,7 @@ public:
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL_INLINE_CV(s_cond_var_registry_thread, const, detail::cond_var_registry_thread{ })
+  //DANGO_DEFINE_GLOBAL_INLINE_CV(s_cond_var_registry_thread, const, detail::cond_var_registry_thread{ })
 }
 
 #ifdef _WIN32
@@ -1630,8 +1701,8 @@ final
 {
   friend dango::detail::windows_timer_agent_access;
 public:
-  void increment()noexcept;
-  void decrement()noexcept;
+  void activate(dango::timeout const&)noexcept;
+  void deactivate(dango::timeout const&)noexcept;
   void notify_exit()noexcept;
   void thread_func()noexcept;
 private:
@@ -1675,8 +1746,7 @@ windows_timer_agent_access
 final
 {
   friend dango::detail::windows_timer_agent_thread;
-  friend dango::detail::timeout_impl_hr;
-  friend dango::detail::timeout_impl_hr_sa;
+  friend dango::detail::cond_var_base;
 private:
   static dango::detail::windows_timer_agent s_agent;
 public:
@@ -1711,98 +1781,6 @@ dango::detail
 {
   DANGO_DEFINE_GLOBAL_INLINE_CV(s_windows_timer_agent_thread, const, detail::windows_timer_agent_thread{ })
 }
-
-#endif
-
-#ifdef _WIN32
-
-inline
-dango::
-detail::
-timeout_impl_hr::
-timeout_impl_hr
-(dango::uint64 const a_timeout)noexcept:
-super_type{ a_timeout }
-{
-  constexpr auto& c_agent = dango::detail::windows_timer_agent_access::s_agent;
-
-  c_agent.increment();
-}
-
-inline
-dango::
-detail::
-timeout_impl_hr::
-~timeout_impl_hr
-()noexcept
-{
-  constexpr auto& c_agent = dango::detail::windows_timer_agent_access::s_agent;
-
-  c_agent.decrement();
-}
-
-inline
-dango::
-detail::
-timeout_impl_hr_sa::
-timeout_impl_hr_sa
-(dango::uint64 const a_timeout)noexcept:
-super_type{ a_timeout }
-{
-  constexpr auto& c_agent = dango::detail::windows_timer_agent_access::s_agent;
-
-  c_agent.increment();
-}
-
-inline
-dango::
-detail::
-timeout_impl_hr_sa::
-~timeout_impl_hr_sa
-()noexcept
-{
-  constexpr auto& c_agent = dango::detail::windows_timer_agent_access::s_agent;
-
-  c_agent.decrement();
-}
-
-#else
-
-inline
-dango::
-detail::
-timeout_impl_hr::
-timeout_impl_hr
-(dango::uint64 const a_timeout)noexcept:
-super_type{ a_timeout }
-{
-
-}
-
-inline
-dango::
-detail::
-timeout_impl_hr::
-~timeout_impl_hr
-()noexcept = default;
-
-inline
-dango::
-detail::
-timeout_impl_hr_sa::
-timeout_impl_hr_sa
-(dango::uint64 const a_timeout)noexcept:
-super_type{ a_timeout }
-{
-
-}
-
-inline
-dango::
-detail::
-timeout_impl_hr_sa::
-~timeout_impl_hr_sa
-()noexcept = default;
 
 #endif
 
@@ -3699,13 +3677,18 @@ wait
     return;
   }
 
+  constexpr auto& c_agent = detail::windows_timer_agent_access::s_agent;
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
+
+  c_agent.activate(a_timeout);
 
   c_registry.regist(this, a_timeout);
 
   get()->wait(a_lock->get(), a_rem);
 
   c_registry.unregist(this, a_timeout);
+
+  c_agent.deactivate(a_timeout);
 }
 
 void
@@ -3815,9 +3798,14 @@ void
 dango::
 detail::
 windows_timer_agent::
-increment
-()noexcept
+activate
+(dango::timeout const& a_timeout)noexcept
 {
+  if(!a_timeout.requires_high_resolution())
+  {
+    return;
+  }
+
   dango_crit(m_cond)
   {
     if(m_req_count++ != dango::usize(0))
@@ -3854,9 +3842,14 @@ void
 dango::
 detail::
 windows_timer_agent::
-decrement
-()noexcept
+deactivate
+(dango::timeout const& a_timeout)noexcept
 {
+  if(!a_timeout.requires_high_resolution())
+  {
+    return;
+  }
+
   dango_crit(m_cond)
   {
     if(--m_req_count != dango::usize(0))
