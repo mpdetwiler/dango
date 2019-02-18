@@ -1577,7 +1577,167 @@ dango
   constexpr bool const is_base_of = __is_base_of(tp_base, tp_derived);
 }
 
-/*** is_convertible is_noexcept_convertible ***/
+/*** is_destructible is_trivial_destructible is_noexcept_destructible has_virtual_destructor ***/
+
+namespace
+dango::detail
+{
+  enum class
+  is_destructible_normal_tag:
+  dango::uint32
+  {
+
+  };
+
+  inline constexpr detail::is_destructible_normal_tag const is_destructible_normal{ };
+
+  enum class
+  is_destructible_trivial_tag:
+  dango::uint32
+  {
+
+  };
+
+  inline constexpr detail::is_destructible_trivial_tag const is_destructible_trivial{ };
+
+  enum class
+  is_destructible_noexcept_tag:
+  dango::uint32
+  {
+
+  };
+
+  inline constexpr detail::is_destructible_noexcept_tag const is_destructible_noexcept{ };
+
+  enum class
+  is_destructible_virtual_tag:
+  dango::uint32
+  {
+
+  };
+
+  inline constexpr detail::is_destructible_virtual_tag const is_destructible_virtual{ };
+
+  template
+  <
+    typename tp_type,
+    typename tp_base = dango::remove_cv<tp_type>,
+    typename tp_enabled = decltype(dango::declval<tp_base&>().~tp_base())
+  >
+  constexpr auto
+  is_destructible_help
+  (detail::is_destructible_normal_tag const)noexcept->bool
+  {
+    return true;
+  }
+
+  template
+  <
+    typename tp_type,
+    typename tp_base = dango::remove_cv<tp_type>,
+    typename tp_enabled = decltype(dango::declval<tp_base&>().~tp_base())
+  >
+  constexpr auto
+  is_destructible_help
+  (detail::is_destructible_trivial_tag const)noexcept->bool
+  {
+    return __has_trivial_destructor(tp_base);
+  }
+
+  template
+  <
+    typename tp_type,
+    typename tp_base = dango::remove_cv<tp_type>,
+    typename tp_enabled = decltype(dango::declval<tp_base&>().~tp_base())
+  >
+  constexpr auto
+  is_destructible_help
+  (detail::is_destructible_noexcept_tag const)noexcept->bool
+  {
+    return noexcept(dango::declval<tp_base&>().~tp_base());
+  }
+
+  template
+  <
+    typename tp_type,
+    typename tp_base = dango::remove_cv<tp_type>,
+    typename tp_enabled = decltype(dango::declval<tp_base&>().~tp_base())
+  >
+  constexpr auto
+  is_destructible_help
+  (detail::is_destructible_virtual_tag const)noexcept->bool
+  {
+    return __has_virtual_destructor(tp_base);
+  }
+
+  template
+  <typename tp_anything>
+  constexpr auto
+  is_destructible_help
+  (...)noexcept->bool
+  {
+    return false;
+  }
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_destructible =
+    detail::is_destructible_help<tp_type>(detail::is_destructible_normal);
+
+  template
+  <typename tp_type>
+  constexpr bool const is_destructible<tp_type&> = true;
+  template
+  <typename tp_type>
+  constexpr bool const is_destructible<tp_type&&> = true;
+  template
+  <typename tp_type, dango::usize tp_size>
+  constexpr bool const is_destructible<tp_type[tp_size]> =
+    dango::is_destructible<tp_type>;
+
+
+  template
+  <typename tp_type>
+  constexpr bool const is_trivial_destructible =
+    detail::is_destructible_help<tp_type>(detail::is_destructible_trivial);
+
+  template
+  <typename tp_type>
+  constexpr bool const is_trivial_destructible<tp_type&> = true;
+  template
+  <typename tp_type>
+  constexpr bool const is_trivial_destructible<tp_type&&> = true;
+
+  template
+  <typename tp_type>
+  constexpr bool const is_noexcept_destructible =
+    detail::is_destructible_help<tp_type>(detail::is_destructible_noexcept);
+
+  template
+  <typename tp_type>
+  constexpr bool const is_noexcept_destructible<tp_type&> = true;
+  template
+  <typename tp_type>
+  constexpr bool const is_noexcept_destructible<tp_type&&> = true;
+
+  template
+  <typename tp_type>
+  constexpr bool const has_virtual_destructor =
+    detail::is_destructible_help<tp_type>(detail::is_destructible_virtual);
+
+  template
+  <typename tp_type>
+  constexpr bool const has_virtual_destructor<tp_type&> = false;
+  template
+  <typename tp_type>
+  constexpr bool const has_virtual_destructor<tp_type&&> = false;
+}
+
+/*** is_convertible is_noexcept_convertible is_convertible_ret is_noexcept_convertible_ret ***/
 
 namespace
 dango::detail
@@ -1649,20 +1809,43 @@ dango
   template
   <typename tp_from, typename tp_to>
   constexpr bool const is_convertible =
-    (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
+    !dango::is_array<tp_to> &&
+    !dango::is_func<tp_to> &&
     (
-      !dango::is_array<tp_to> &&
-      !dango::is_func<tp_to> &&
+      (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
       detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_normal)
     );
+
 
   template
   <typename tp_from, typename tp_to>
   constexpr bool const is_noexcept_convertible =
-    (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
+    !dango::is_array<tp_to> &&
+    !dango::is_func<tp_to> &&
     (
-      !dango::is_array<tp_to> &&
-      !dango::is_func<tp_to> &&
+      (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
+      detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_noexcept)
+    );
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const is_convertible_ret =
+    !dango::is_array<tp_to> &&
+    !dango::is_func<tp_to> &&
+    (
+      dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>> ||
+      detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_normal)
+    );
+
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const is_noexcept_convertible_ret =
+    !dango::is_array<tp_to> &&
+    !dango::is_func<tp_to> &&
+    (
+      (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
+      (dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>> && dango::is_noexcept_destructible<tp_to>) ||
       detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_noexcept)
     );
 }
@@ -1737,7 +1920,7 @@ dango::detail
   template
   <
     typename tp_ret,
-	typename tp_func,
+    typename tp_func,
     typename... tp_args,
     typename tp_enabled_ret = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...))
   >
@@ -1745,13 +1928,13 @@ dango::detail
   is_callable_help
   (detail::is_callable_ret_normal_tag const)noexcept->bool
   {
-    return dango::is_convertible<tp_enabled_ret, tp_ret>;
+    return dango::is_convertible_ret<tp_enabled_ret, tp_ret>;
   }
 
   template
   <
     typename tp_ret,
-	typename tp_func,
+    typename tp_func,
     typename... tp_args,
     typename tp_enabled_ret = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...))
   >
@@ -1759,7 +1942,7 @@ dango::detail
   is_callable_help
   (detail::is_callable_ret_noexcept_tag const)noexcept->bool
   {
-    return dango::is_noexcept_convertible<tp_enabled_ret, tp_ret> && noexcept(dango::declval<tp_func>()(dango::declval<tp_args>()...));
+    return dango::is_noexcept_convertible_ret<tp_enabled_ret, tp_ret> && noexcept(dango::declval<tp_func>()(dango::declval<tp_args>()...));
   }
 
   template
@@ -1828,6 +2011,15 @@ dango::detail
 
   inline constexpr detail::is_constructible_noexcept_tag const is_constructible_noexcept{ };
 
+  enum class
+  is_constructible_noexcept_placement_tag:
+  dango::uint32
+  {
+
+  };
+
+  inline constexpr detail::is_constructible_noexcept_placement_tag const is_constructible_noexcept_placement{ };
+
   template
   <
     typename tp_type,
@@ -1866,6 +2058,31 @@ dango::detail
   {
     return noexcept(tp_type(dango::declval<tp_args>()...));
   }
+}
+
+[[nodiscard]] constexpr auto
+operator new
+(dango::usize, dango::detail::is_constructible_noexcept_placement_tag, void*)noexcept->void*;
+
+constexpr void
+operator delete
+(void*, dango::detail::is_constructible_noexcept_placement_tag, void*)noexcept;
+
+namespace
+dango::detail
+{
+  template
+  <
+    typename tp_type,
+    typename... tp_args,
+    dango::enable_if<__is_constructible(tp_type, tp_args...)> = dango::enable_val
+  >
+  constexpr auto
+  is_constructible_help
+  (detail::is_constructible_noexcept_placement_tag const)noexcept->bool
+  {
+    return noexcept(::new (detail::is_constructible_noexcept_placement, nullptr) tp_type(dango::declval<tp_args>()...));
+  }
 
   template
   <typename... tp_anything>
@@ -1894,6 +2111,41 @@ dango
   <typename tp_type, typename... tp_args>
   constexpr bool const is_noexcept_constructible =
     detail::is_constructible_help<tp_type, tp_args...>(detail::is_constructible_noexcept);
+
+  template
+  <typename tp_type>
+  constexpr bool const is_noexcept_constructible<tp_type[]> =
+    dango::is_noexcept_constructible<tp_type>;
+
+  template
+  <typename tp_type, dango::usize tp_size>
+  constexpr bool const is_noexcept_constructible<tp_type[tp_size]> =
+    dango::is_noexcept_constructible<tp_type>;
+
+  template
+  <typename tp_type, typename... tp_args>
+  constexpr bool const is_noexcept_placement_constructible =
+    detail::is_constructible_help<tp_type, tp_args...>(detail::is_constructible_noexcept_placement);
+
+  template
+  <typename tp_type, typename... tp_args>
+  constexpr bool const is_noexcept_placement_constructible<tp_type&, tp_args...> =
+    dango::is_constructible<tp_type&, tp_args...>;
+
+  template
+  <typename tp_type, typename... tp_args>
+  constexpr bool const is_noexcept_placement_constructible<tp_type&&, tp_args...> =
+    dango::is_constructible<tp_type&&, tp_args...>;
+
+  template
+  <typename tp_type>
+  constexpr bool const is_noexcept_placement_constructible<tp_type[]> =
+    dango::is_noexcept_placement_constructible<tp_type>;
+
+  template
+  <typename tp_type, dango::usize tp_size>
+  constexpr bool const is_noexcept_placement_constructible<tp_type[tp_size]> =
+    dango::is_noexcept_placement_constructible<tp_type>;
 }
 
 /*** is_default_constructible is_trivial_default_constructible is_noexcept_default_constructible ***/
@@ -2099,166 +2351,6 @@ dango
   <typename tp_type>
   constexpr bool const is_noexcept_move_assignable =
     dango::is_noexcept_assignable<tp_type&, tp_type&&>;
-}
-
-/*** is_destructible is_trivial_destructible is_noexcept_destructible has_noexcept_destructor ***/
-
-namespace
-dango::detail
-{
-  enum class
-  is_destructible_normal_tag:
-  dango::uint32
-  {
-
-  };
-
-  inline constexpr detail::is_destructible_normal_tag const is_destructible_normal{ };
-
-  enum class
-  is_destructible_trivial_tag:
-  dango::uint32
-  {
-
-  };
-
-  inline constexpr detail::is_destructible_trivial_tag const is_destructible_trivial{ };
-
-  enum class
-  is_destructible_noexcept_tag:
-  dango::uint32
-  {
-
-  };
-
-  inline constexpr detail::is_destructible_noexcept_tag const is_destructible_noexcept{ };
-
-  enum class
-  is_destructible_virtual_tag:
-  dango::uint32
-  {
-
-  };
-
-  inline constexpr detail::is_destructible_virtual_tag const is_destructible_virtual{ };
-
-  template
-  <
-    typename tp_type,
-    typename tp_base = dango::remove_cv<tp_type>,
-    typename tp_enabled = decltype(dango::declval<tp_base&>().~tp_base())
-  >
-  constexpr auto
-  is_destructible_help
-  (detail::is_destructible_normal_tag const)noexcept->bool
-  {
-    return true;
-  }
-
-  template
-  <
-    typename tp_type,
-    typename tp_base = dango::remove_cv<tp_type>,
-    typename tp_enabled = decltype(dango::declval<tp_base&>().~tp_base())
-  >
-  constexpr auto
-  is_destructible_help
-  (detail::is_destructible_trivial_tag const)noexcept->bool
-  {
-    return __has_trivial_destructor(tp_base);
-  }
-
-  template
-  <
-    typename tp_type,
-    typename tp_base = dango::remove_cv<tp_type>,
-    typename tp_enabled = decltype(dango::declval<tp_base&>().~tp_base())
-  >
-  constexpr auto
-  is_destructible_help
-  (detail::is_destructible_noexcept_tag const)noexcept->bool
-  {
-    return noexcept(dango::declval<tp_base&>().~tp_base());
-  }
-
-  template
-  <
-    typename tp_type,
-    typename tp_base = dango::remove_cv<tp_type>,
-    typename tp_enabled = decltype(dango::declval<tp_base&>().~tp_base())
-  >
-  constexpr auto
-  is_destructible_help
-  (detail::is_destructible_virtual_tag const)noexcept->bool
-  {
-    return __has_virtual_destructor(tp_base);
-  }
-
-  template
-  <typename tp_type>
-  constexpr auto
-  is_destructible_help
-  (...)noexcept->bool
-  {
-    return false;
-  }
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_destructible =
-    detail::is_destructible_help<tp_type>(detail::is_destructible_normal);
-
-  template
-  <typename tp_type>
-  constexpr bool const is_destructible<tp_type&> = true;
-  template
-  <typename tp_type>
-  constexpr bool const is_destructible<tp_type&&> = true;
-  template
-  <typename tp_type, dango::usize tp_size>
-  constexpr bool const is_destructible<tp_type[tp_size]> =
-    dango::is_destructible<tp_type>;
-
-
-  template
-  <typename tp_type>
-  constexpr bool const is_trivial_destructible =
-    detail::is_destructible_help<tp_type>(detail::is_destructible_trivial);
-
-  template
-  <typename tp_type>
-  constexpr bool const is_trivial_destructible<tp_type&> = true;
-  template
-  <typename tp_type>
-  constexpr bool const is_trivial_destructible<tp_type&&> = true;
-
-  template
-  <typename tp_type>
-  constexpr bool const is_noexcept_destructible =
-    detail::is_destructible_help<tp_type>(detail::is_destructible_noexcept);
-
-  template
-  <typename tp_type>
-  constexpr bool const is_noexcept_destructible<tp_type&> = true;
-  template
-  <typename tp_type>
-  constexpr bool const is_noexcept_destructible<tp_type&&> = true;
-
-  template
-  <typename tp_type>
-  constexpr bool const has_virtual_destructor =
-    detail::is_destructible_help<tp_type>(detail::is_destructible_virtual);
-
-  template
-  <typename tp_type>
-  constexpr bool const has_virtual_destructor<tp_type&> = false;
-  template
-  <typename tp_type>
-  constexpr bool const has_virtual_destructor<tp_type&&> = false;
 }
 
 /*** underlying_type ***/

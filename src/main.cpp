@@ -6,6 +6,13 @@ auto
 main
 ()noexcept->dango::s_int
 {
+  auto const make_mutex = []()noexcept->dango::mutex{ return dango::mutex{ }; };
+
+  static_assert(dango::is_callable_ret<dango::mutex, decltype(make_mutex)>);
+  static_assert(dango::is_noexcept_callable_ret<dango::mutex, decltype(make_mutex)>);
+
+  auto a_temp = make_mutex();
+
   dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
@@ -82,7 +89,7 @@ main
 
     static_assert(dango::is_noexcept_callable_ret<bool, decltype(a_inv), dango::thread const&>);
     static_assert(dango::is_noexcept_callable_ret<bool, decltype(a_inv), dango::thread const*>);
-		
+
     dango_assert(a_inv(a_thread));
 
     ++a_id;

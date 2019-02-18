@@ -476,20 +476,15 @@ private:
   static_assert(dango::is_same<func_type, tp_func>);
 public:
   template
-  <
-    typename tp_func_type = func_type,
-    dango::enable_if<dango::is_copy_constructible<tp_func_type>> = dango::enable_val
-  >
+  <typename tp_func_type, dango::enable_if<dango::is_constructible<func_type, tp_func_type>> = dango::enable_val>
   explicit constexpr
-  scope_guard(func_type const&)noexcept(dango::is_noexcept_copy_constructible<func_type>);
+  scope_guard
+  (tp_func_type&& a_func)noexcept(dango::is_noexcept_placement_constructible<func_type, tp_func_type>):
+  m_func{ dango::forward<tp_func_type>(a_func) },
+  m_dismissed{ false }
+  {
 
-  template
-  <
-    typename tp_func_type = func_type,
-    dango::enable_if<dango::is_move_constructible<tp_func_type>> = dango::enable_val
-  >
-  explicit constexpr
-  scope_guard(func_type&&)noexcept(dango::is_noexcept_move_constructible<func_type>);
+  }
 
   ~scope_guard()noexcept;
   void dismiss()noexcept;
@@ -500,46 +495,6 @@ public:
   DANGO_DELETE_DEFAULT(scope_guard)
   DANGO_IMMOBILE(scope_guard)
 };
-
-template
-<typename tp_func>
-template
-<
-  typename tp_func_type,
-  dango::enable_if<dango::is_copy_constructible<tp_func_type>>
->
-constexpr
-dango::
-detail::
-scope_guard<tp_func>::
-scope_guard
-(func_type const& a_func)
-noexcept(dango::is_noexcept_copy_constructible<func_type>):
-m_func{ a_func },
-m_dismissed{ false }
-{
-
-}
-
-template
-<typename tp_func>
-template
-<
-  typename tp_func_type,
-  dango::enable_if<dango::is_move_constructible<tp_func_type>>
->
-constexpr
-dango::
-detail::
-scope_guard<tp_func>::
-scope_guard
-(func_type&& a_func)
-noexcept(dango::is_noexcept_move_constructible<func_type>):
-m_func{ dango::move(a_func) },
-m_dismissed{ false }
-{
-
-}
 
 template
 <typename tp_func>
@@ -634,20 +589,14 @@ private:
   static_assert(dango::is_same<func_type, tp_func>);
 public:
   template
-  <
-    typename tp_func_type = func_type,
-    dango::enable_if<dango::is_copy_constructible<tp_func_type>> = dango::enable_val
-  >
+  <typename tp_func_type, dango::enable_if<dango::is_constructible<func_type, tp_func_type>> = dango::enable_val>
   explicit constexpr
-  finally_guard(func_type const&)noexcept(dango::is_noexcept_copy_constructible<func_type>);
+  finally_guard
+  (tp_func_type&& a_func)noexcept(dango::is_noexcept_placement_constructible<func_type, tp_func_type>):
+  m_func{ dango::forward<tp_func_type>(a_func) }
+  {
 
-  template
-  <
-    typename tp_func_type = func_type,
-    dango::enable_if<dango::is_move_constructible<tp_func_type>> = dango::enable_val
-  >
-  explicit constexpr
-  finally_guard(func_type&&)noexcept(dango::is_noexcept_move_constructible<func_type>);
+  }
 
   ~finally_guard()noexcept;
 private:
@@ -656,44 +605,6 @@ public:
   DANGO_DELETE_DEFAULT(finally_guard)
   DANGO_IMMOBILE(finally_guard)
 };
-
-template
-<typename tp_func>
-template
-<
-  typename tp_func_type,
-  dango::enable_if<dango::is_copy_constructible<tp_func_type>>
->
-constexpr
-dango::
-detail::
-finally_guard<tp_func>::
-finally_guard
-(func_type const& a_func)
-noexcept(dango::is_noexcept_copy_constructible<func_type>):
-m_func{ a_func }
-{
-
-}
-
-template
-<typename tp_func>
-template
-<
-  typename tp_func_type,
-  dango::enable_if<dango::is_move_constructible<tp_func_type>>
->
-constexpr
-dango::
-detail::
-finally_guard<tp_func>::
-finally_guard
-(func_type&& a_func)
-noexcept(dango::is_noexcept_move_constructible<func_type>):
-m_func{ dango::move(a_func) }
-{
-
-}
 
 template
 <typename tp_func>
