@@ -1695,6 +1695,9 @@ dango
   <typename tp_type>
   constexpr bool const is_destructible<tp_type&&> = true;
   template
+  <typename tp_type>
+  constexpr bool const is_destructible<tp_type[]> = false;
+  template
   <typename tp_type, dango::usize tp_size>
   constexpr bool const is_destructible<tp_type[tp_size]> =
     dango::is_destructible<tp_type>;
@@ -1711,6 +1714,13 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_trivial_destructible<tp_type&&> = true;
+  template
+  <typename tp_type>
+  constexpr bool const is_trivial_destructible<tp_type[]> = false;
+  template
+  <typename tp_type, dango::usize tp_size>
+  constexpr bool const is_trivial_destructible<tp_type[tp_size]> =
+    dango::is_trivial_destructible<tp_type>;
 
   template
   <typename tp_type>
@@ -1723,6 +1733,13 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_noexcept_destructible<tp_type&&> = true;
+  template
+  <typename tp_type>
+  constexpr bool const is_noexcept_destructible<tp_type[]> = false;
+  template
+  <typename tp_type, dango::usize tp_size>
+  constexpr bool const is_noexcept_destructible<tp_type[tp_size]> =
+    dango::is_noexcept_destructible<tp_type>;
 
   template
   <typename tp_type>
@@ -1735,6 +1752,12 @@ dango
   template
   <typename tp_type>
   constexpr bool const has_virtual_destructor<tp_type&&> = false;
+  template
+  <typename tp_type>
+  constexpr bool const has_virtual_destructor<tp_type[]> = false;
+  template
+  <typename tp_type, dango::usize tp_size>
+  constexpr bool const has_virtual_destructor<tp_type[tp_size]> = false;
 }
 
 /*** is_convertible is_noexcept_convertible is_convertible_ret is_noexcept_convertible_ret ***/
@@ -1833,7 +1856,8 @@ dango
     !dango::is_array<tp_to> &&
     !dango::is_func<tp_to> &&
     (
-      dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>> ||
+      (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
+      (dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>> && dango::is_destructible<tp_to>) ||
       detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_normal)
     );
 
@@ -2116,7 +2140,6 @@ dango
   <typename tp_type>
   constexpr bool const is_noexcept_constructible<tp_type[]> =
     dango::is_noexcept_constructible<tp_type>;
-
   template
   <typename tp_type, dango::usize tp_size>
   constexpr bool const is_noexcept_constructible<tp_type[tp_size]> =
@@ -2130,18 +2153,15 @@ dango
   template
   <typename tp_type, typename... tp_args>
   constexpr bool const is_noexcept_placement_constructible<tp_type&, tp_args...> =
-    dango::is_constructible<tp_type&, tp_args...>;
-
+    dango::is_noexcept_constructible<tp_type&, tp_args...>;
   template
   <typename tp_type, typename... tp_args>
   constexpr bool const is_noexcept_placement_constructible<tp_type&&, tp_args...> =
-    dango::is_constructible<tp_type&&, tp_args...>;
-
+    dango::is_noexcept_constructible<tp_type&&, tp_args...>;
   template
   <typename tp_type>
   constexpr bool const is_noexcept_placement_constructible<tp_type[]> =
     dango::is_noexcept_placement_constructible<tp_type>;
-
   template
   <typename tp_type, dango::usize tp_size>
   constexpr bool const is_noexcept_placement_constructible<tp_type[tp_size]> =
