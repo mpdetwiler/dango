@@ -1671,10 +1671,10 @@ dango::detail
   }
 
   template
-  <typename tp_anything>
+  <typename tp_anything, typename tp_tag>
   constexpr auto
   is_destructible_help
-  (...)noexcept->bool
+  (tp_tag const)noexcept->bool
   {
     return false;
   }
@@ -1817,10 +1817,10 @@ dango::detail
   }
 
   template
-  <typename... tp_anything>
+  <typename... tp_anything, typename tp_tag>
   constexpr auto
   is_convertible_help
-  (...)noexcept->bool
+  (tp_tag const)noexcept->bool
   {
     return false;
   }
@@ -1970,10 +1970,10 @@ dango::detail
   }
 
   template
-  <typename... tp_anything>
+  <typename... tp_anything, typename tp_tag>
   constexpr auto
   is_callable_help
-  (...)noexcept->bool
+  (tp_tag const)noexcept->bool
   {
     return false;
   }
@@ -2109,10 +2109,10 @@ dango::detail
   }
 
   template
-  <typename... tp_anything>
+  <typename... tp_anything, typename tp_tag>
   constexpr auto
   is_constructible_help
-  (...)noexcept->bool
+  (tp_tag const)noexcept->bool
   {
     return false;
   }
@@ -2303,10 +2303,10 @@ dango::detail
   }
 
   template
-  <typename... tp_anything>
+  <typename... tp_anything, typename tp_tag>
   constexpr auto
   is_assignable_help
-  (...)noexcept->bool
+  (tp_tag const)noexcept->bool
   {
     return false;
   }
