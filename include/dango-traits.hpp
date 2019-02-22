@@ -2186,7 +2186,7 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_noexcept_default_constructible =
-    dango::is_noexcept_constructible<tp_type>;
+    dango::is_noexcept_placement_constructible<tp_type>;
 }
 
 /*** is_copy_constructible is_trivial_copy_constructible is_noexcept_copy_constructible ***/
@@ -2207,7 +2207,7 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_noexcept_copy_constructible =
-    dango::is_noexcept_constructible<tp_type, tp_type const&>;
+    dango::is_noexcept_placement_constructible<tp_type, tp_type const&>;
 }
 
 /*** is_move_constructible is_trivial_move_constructible is_noexcept_move_constructible ***/
@@ -2228,7 +2228,7 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_noexcept_move_constructible =
-    dango::is_noexcept_constructible<tp_type, tp_type&&>;
+    dango::is_noexcept_placement_constructible<tp_type, tp_type&&>;
 }
 
 /*** is_assignable is_trivial_assignable is_noexcept_assignable ***/
