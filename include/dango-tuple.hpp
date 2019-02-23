@@ -2,6 +2,7 @@
 #define __DANGO_TUPLE_HPP__ 1
 
 #include "dango-traits.hpp"
+#include "dango-util.hpp"
 #include "dango-mem.hpp"
 
 namespace
@@ -211,12 +212,11 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    typename tp_value_type = value_type,
+    dango::usize tp_index,
     dango::enable_if
     <
-      tp_tp_index == dango::usize(0) &&
-      dango::is_ref<tp_value_type>
+      dango::is_equal(tp_index, dango::usize(0)) &&
+      dango::is_ref<value_type>
     > = dango::enable_val
   >
   constexpr auto
@@ -227,13 +227,12 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    typename tp_value_type = value_type,
+    dango::usize tp_index,
     dango::enable_if
     <
-      tp_tp_index == dango::usize(0) &&
-      !dango::is_ref<tp_value_type> &&
-      !dango::is_const<tp_value_type>
+      dango::is_equal(tp_index, dango::usize(0)) &&
+      !dango::is_ref<value_type> &&
+      !dango::is_const<value_type>
     > = dango::enable_val
   >
   constexpr auto
@@ -244,13 +243,12 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    typename tp_value_type = value_type,
+    dango::usize tp_index,
     dango::enable_if
     <
-      tp_tp_index == dango::usize(0) &&
-      !dango::is_ref<tp_value_type> &&
-      !dango::is_const<tp_value_type>
+      dango::is_equal(tp_index, dango::usize(0)) &&
+      !dango::is_ref<value_type> &&
+      !dango::is_const<value_type>
     > = dango::enable_val
   >
   constexpr auto
@@ -261,13 +259,12 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    typename tp_value_type = value_type,
+    dango::usize tp_index,
     dango::enable_if
     <
-      tp_tp_index == dango::usize(0) &&
-      !dango::is_ref<tp_value_type> &&
-      dango::is_const<tp_value_type>
+      dango::is_equal(tp_index, dango::usize(0)) &&
+      !dango::is_ref<value_type> &&
+      dango::is_const<value_type>
     > = dango::enable_val
   >
   constexpr auto
@@ -338,12 +335,11 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    typename tp_value_type = value_type,
+    dango::usize tp_index,
     dango::enable_if
     <
-      tp_tp_index == dango::usize(0) &&
-      dango::is_ref<tp_value_type>
+      dango::is_equal(tp_index, dango::usize(0)) &&
+      dango::is_ref<value_type>
     > = dango::enable_val
   >
   constexpr auto
@@ -354,13 +350,12 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    typename tp_value_type = value_type,
+    dango::usize tp_index,
     dango::enable_if
     <
-      tp_tp_index == dango::usize(0) &&
-      !dango::is_ref<tp_value_type> &&
-      !dango::is_const<tp_value_type>
+      dango::is_equal(tp_index, dango::usize(0)) &&
+      !dango::is_ref<value_type> &&
+      !dango::is_const<value_type>
     > = dango::enable_val
   >
   constexpr auto
@@ -371,13 +366,12 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    typename tp_value_type = value_type,
+    dango::usize tp_index,
     dango::enable_if
     <
-      tp_tp_index == dango::usize(0) &&
-      !dango::is_ref<tp_value_type> &&
-      !dango::is_const<tp_value_type>
+      dango::is_equal(tp_index, dango::usize(0)) &&
+      !dango::is_ref<value_type> &&
+      !dango::is_const<value_type>
     > = dango::enable_val
   >
   constexpr auto
@@ -388,13 +382,12 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    typename tp_value_type = value_type,
+    dango::usize tp_index,
     dango::enable_if
     <
-      tp_tp_index == dango::usize(0) &&
-      !dango::is_ref<tp_value_type> &&
-      dango::is_const<tp_value_type>
+      dango::is_equal(tp_index, dango::usize(0)) &&
+      !dango::is_ref<value_type> &&
+      dango::is_const<value_type>
     > = dango::enable_val
   >
   constexpr auto
@@ -405,24 +398,24 @@ public:
 
   template
   <
-    dango::usize tp_tp_index,
-    dango::enable_if<tp_tp_index != dango::usize(0)> = dango::enable_val
+    dango::usize tp_index,
+    dango::enable_if<!dango::is_equal(tp_index, dango::usize(0))> = dango::enable_val
   >
   constexpr auto
   get()noexcept->decltype(auto)
   {
-    return super_type::template get<tp_tp_index - dango::usize(1)>();
+    return super_type::template get<tp_index - dango::usize(1)>();
   }
 
   template
   <
-    dango::usize tp_tp_index,
-    dango::enable_if<tp_tp_index != dango::usize(0)> = dango::enable_val
+    dango::usize tp_index,
+    dango::enable_if<!dango::is_equal(tp_index, dango::usize(0))> = dango::enable_val
   >
   constexpr auto
   get()const noexcept->decltype(auto)
   {
-    return super_type::template get<tp_tp_index - dango::usize(1)>();
+    return super_type::template get<tp_index - dango::usize(1)>();
   }
 private:
   value_type m_value;
@@ -491,6 +484,8 @@ detail::
 make_tuple_storage_help<tp_pack, tp_first, tp_next...>
 final
 {
+  static_assert((dango::is_ref<tp_first> && ... && dango::is_ref<tp_next>));
+
   using make_type = detail::make_tuple_storage_help<tp_pack, tp_next...>;
 
   template
@@ -512,7 +507,71 @@ final
   DANGO_UNINSTANTIABLE(make_tuple_storage_help)
 };
 
+/*** tuple ***/
 
+namespace
+dango
+{
+  template
+  <typename... tp_types>
+  class tuple;
+
+  template<>
+  class tuple<>;
+}
+
+template
+<typename... tp_types>
+class
+dango::
+tuple
+final
+{
+private:
+  using pack_type = detail::tuple_pack_reverse<tp_types...>;
+  using storage_type = detail::tuple_storage<pack_type>;
+public:
+  template
+  <
+    typename... tp_args,
+    typename tp_enabled = decltype(detail::make_tuple_storage<pack_type>(dango::declval<tp_args>()...)),
+    dango::enable_if<dango::is_equal(sizeof...(tp_args), pack_type::c_size)> = dango::enable_val
+  >
+  constexpr
+  tuple(tp_args&&... a_args)
+  noexcept(noexcept(detail::make_tuple_storage<pack_type>(dango::declval<tp_args>()...))):
+  m_storage(detail::make_tuple_storage<pack_type>(dango::forward<tp_args>(a_args)...))
+  {
+
+  }
+
+  template
+  <
+    dango::usize tp_index,
+    dango::enable_if<dango::is_lesser(tp_index, pack_type::c_size)> = dango::enable_val
+  >
+  constexpr auto
+  get()noexcept->decltype(auto)
+  {
+    return m_storage.template get<pack_type::c_size - dango::usize(1) - tp_index>();
+  }
+
+  template
+  <
+    dango::usize tp_index,
+    dango::enable_if<dango::is_lesser(tp_index, pack_type::c_size)> = dango::enable_val
+  >
+  constexpr auto
+  get()const noexcept->decltype(auto)
+  {
+    return m_storage.template get<pack_type::c_size - dango::usize(1) - tp_index>();
+  }
+private:
+  storage_type m_storage;
+};
+
+
+inline constexpr dango::tuple<int, float, double> const c_tup{ 1, 2, 3 };
 
 #endif
 

@@ -3,10 +3,28 @@
 #include <cstdio>
 #include <tuple>
 
+struct
+immobile
+final
+{
+public:
+  explicit constexpr immobile(int const a_int)noexcept:m_int{ a_int }{ }
+  ~immobile()noexcept = default;
+private:
+  int const m_int;
+public:
+  DANGO_IMMOBILE(immobile)
+};
+
 auto
 main
 ()noexcept->dango::s_int
 {
+  dango::tuple<int&&, immobile, immobile> const a_tup{ 5, 4, 3 };
+
+  static_assert(dango::is_same<decltype(a_tup.get<0>()), int&&>);
+  static_assert(dango::is_same<decltype(a_tup.get<1>()), immobile const&>);
+
   dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
