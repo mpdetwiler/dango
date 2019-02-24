@@ -479,7 +479,7 @@ public:
   <typename tp_func_type, dango::enable_if<dango::is_constructible<func_type, tp_func_type>> = dango::enable_val>
   explicit constexpr
   scope_guard
-  (tp_func_type&& a_func)noexcept(dango::is_noexcept_placement_constructible<func_type, tp_func_type>):
+  (tp_func_type&& a_func)noexcept(dango::is_noexcept_constructible<func_type, tp_func_type>):
   m_func{ dango::forward<tp_func_type>(a_func) },
   m_dismissed{ false }
   {
@@ -592,7 +592,7 @@ public:
   <typename tp_func_type, dango::enable_if<dango::is_constructible<func_type, tp_func_type>> = dango::enable_val>
   explicit constexpr
   finally_guard
-  (tp_func_type&& a_func)noexcept(dango::is_noexcept_placement_constructible<func_type, tp_func_type>):
+  (tp_func_type&& a_func)noexcept(dango::is_noexcept_constructible<func_type, tp_func_type>):
   m_func{ dango::forward<tp_func_type>(a_func) }
   {
 

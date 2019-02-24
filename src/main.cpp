@@ -20,7 +20,9 @@ auto
 main
 ()noexcept->dango::s_int
 {
-  dango::tuple<int&&, immobile, immobile> const a_tup{ 5, 4, 3 };
+  dango::tuple<int&&, immobile, int, float> const a_tup{ 5, 42, dango::skip_init, dango::value_init };
+
+  dango::tuple<int const, float, double> a_default_tup{ };
 
   static_assert(dango::is_same<decltype(a_tup.get<0>()), int&&>);
   static_assert(dango::is_same<decltype(a_tup.get<1>()), immobile const&>);

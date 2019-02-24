@@ -3,7 +3,6 @@
 
 #include "dango-traits.hpp"
 #include "dango-util.hpp"
-#include "dango-mem.hpp"
 
 namespace
 dango::detail
@@ -14,7 +13,11 @@ dango::detail
   tuple_pack
   final
   {
-    static inline constexpr dango::usize const c_size = sizeof...(tp_types);
+    static constexpr auto
+    size()noexcept->dango::usize
+    {
+      return sizeof...(tp_types);
+    }
 
     DANGO_UNINSTANTIABLE(tuple_pack)
   };
@@ -161,6 +164,38 @@ final
 };
 
 namespace
+dango
+{
+  struct
+  value_init_tag
+  final
+  {
+    DANGO_TAG_TYPE(value_init_tag)
+  };
+
+  inline constexpr dango::value_init_tag const value_init{ };
+
+  struct
+  skip_init_tag
+  final
+  {
+    DANGO_TAG_TYPE(skip_init_tag)
+  };
+
+  inline constexpr dango::skip_init_tag const skip_init{ };
+}
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_arg>
+  constexpr bool const is_tuple_tag =
+    dango::is_same<dango::remove_cvref<tp_arg>, dango::value_init_tag> ||
+    dango::is_same<dango::remove_cvref<tp_arg>, dango::skip_init_tag>;
+}
+
+namespace
 dango::detail
 {
   template
@@ -184,18 +219,64 @@ detail::
 tuple_storage<dango::detail::tuple_pack<tp_first>>
 {
 public:
-  using value_type = detail::tuple_value_type<tp_first>;
+  using value_type = tp_first;
+  static_assert(dango::is_same<value_type, detail::tuple_value_type<value_type>>);
+  static_assert(dango::is_noexcept_destructible<value_type>);
 public:
   template
   <
+    typename tp_value_type = value_type,
+    dango::enable_if<dango::is_default_constructible<tp_value_type>> = dango::enable_val
+  >
+  constexpr
+  tuple_storage()
+  noexcept(dango::is_noexcept_default_constructible<value_type>):
+  m_value{ }
+  {
+
+  }
+
+  template
+  <
     typename tp_arg,
-    dango::enable_if<dango::is_constructible<value_type, tp_arg>> = dango::enable_val
+    dango::enable_if
+    <
+      !detail::is_tuple_tag<tp_arg> &&
+      dango::is_constructible<value_type, tp_arg>
+    > = dango::enable_val
   >
   explicit constexpr
   tuple_storage
   (tp_arg&& a_arg)
-  noexcept(dango::is_noexcept_placement_constructible<value_type, tp_arg>):
+  noexcept(dango::is_noexcept_constructible<value_type, tp_arg>):
   m_value(dango::forward<tp_arg>(a_arg))
+  {
+
+  }
+
+  template
+  <
+    typename tp_value_type = value_type,
+    dango::enable_if<dango::is_default_constructible<tp_value_type>> = dango::enable_val
+  >
+  explicit constexpr
+  tuple_storage
+  (dango::value_init_tag const)
+  noexcept(dango::is_noexcept_default_constructible<value_type>):
+  m_value{ }
+  {
+
+  }
+
+  template
+  <
+    typename tp_value_type = value_type,
+    dango::enable_if<dango::is_default_constructible<tp_value_type>> = dango::enable_val
+  >
+  explicit constexpr
+  tuple_storage
+  (dango::skip_init_tag const)
+  noexcept(dango::is_noexcept_default_constructible<value_type>)
   {
 
   }
@@ -208,7 +289,7 @@ public:
   (tuple_storage&&)
   noexcept(dango::is_noexcept_move_constructible<value_type>) = default;
 
-  ~tuple_storage()noexcept(dango::is_noexcept_destructible<value_type>) = default;
+  ~tuple_storage()noexcept = default;
 
   template
   <
@@ -274,8 +355,6 @@ public:
   }
 private:
   value_type m_value;
-public:
-  DANGO_DELETE_DEFAULT(tuple_storage)
 };
 
 template
@@ -286,17 +365,42 @@ detail::
 tuple_storage<dango::detail::tuple_pack<tp_first, tp_next...>>:
 public dango::detail::tuple_storage<dango::detail::tuple_pack<tp_next...>>
 {
+public:
+  using value_type = tp_first;
+  static_assert(dango::is_same<value_type, detail::tuple_value_type<value_type>>);
+  static_assert(dango::is_noexcept_destructible<value_type>);
 private:
   using super_type = dango::detail::tuple_storage<dango::detail::tuple_pack<tp_next...>>;
 public:
-  using value_type = detail::tuple_value_type<tp_first>;
-public:
+  template
+  <
+    typename tp_value_type = value_type,
+    dango::enable_if
+    <
+      dango::is_default_constructible<tp_value_type> &&
+      dango::is_default_constructible<super_type>
+    > = dango::enable_val
+  >
+  constexpr
+  tuple_storage()
+  noexcept
+  (
+    dango::is_noexcept_default_constructible<value_type> &&
+    dango::is_noexcept_default_constructible<super_type>
+  ):
+  super_type{ },
+  m_value{ }
+  {
+
+  }
+
   template
   <
     typename tp_arg,
     typename... tp_args,
     dango::enable_if
     <
+      !detail::is_tuple_tag<tp_arg> &&
       dango::is_constructible<value_type, tp_arg> &&
       dango::is_constructible<super_type, tp_args...>
     > = dango::enable_val
@@ -306,11 +410,56 @@ public:
   (tp_arg&& a_arg, tp_args&&... a_args)
   noexcept
   (
-    dango::is_noexcept_placement_constructible<value_type, tp_arg> &&
-    dango::is_noexcept_placement_constructible<super_type, tp_args...>
+    dango::is_noexcept_constructible<value_type, tp_arg> &&
+    dango::is_noexcept_constructible<super_type, tp_args...>
   ):
   super_type(dango::forward<tp_args>(a_args)...),
   m_value(dango::forward<tp_arg>(a_arg))
+  {
+
+  }
+
+  template
+  <
+    typename... tp_args,
+    dango::enable_if
+    <
+      dango::is_default_constructible<value_type> &&
+      dango::is_constructible<super_type, tp_args...>
+    > = dango::enable_val
+  >
+  explicit constexpr
+  tuple_storage
+  (dango::value_init_tag const, tp_args&&... a_args)
+  noexcept
+  (
+    dango::is_noexcept_default_constructible<value_type> &&
+    dango::is_noexcept_constructible<super_type, tp_args...>
+  ):
+  super_type(dango::forward<tp_args>(a_args)...),
+  m_value{ }
+  {
+
+  }
+
+  template
+  <
+    typename... tp_args,
+    dango::enable_if
+    <
+      dango::is_default_constructible<value_type> &&
+      dango::is_constructible<super_type, tp_args...>
+    > = dango::enable_val
+  >
+  explicit constexpr
+  tuple_storage
+  (dango::skip_init_tag const, tp_args&&... a_args)
+  noexcept
+  (
+    dango::is_noexcept_default_constructible<value_type> &&
+    dango::is_noexcept_constructible<super_type, tp_args...>
+  ):
+  super_type(dango::forward<tp_args>(a_args)...)
   {
 
   }
@@ -331,7 +480,7 @@ public:
     dango::is_noexcept_move_constructible<super_type>
   ) = default;
 
-  ~tuple_storage()noexcept(dango::is_noexcept_destructible<value_type>) = default;
+  ~tuple_storage()noexcept = default;
 
   template
   <
@@ -419,8 +568,6 @@ public:
   }
 private:
   value_type m_value;
-public:
-  DANGO_DELETE_DEFAULT(tuple_storage)
 };
 
 namespace
@@ -468,7 +615,7 @@ final
   static constexpr auto
   make
   (tp_args&&... a_args)
-  noexcept(dango::is_noexcept_placement_constructible<ret_type, tp_args...>)->ret_type
+  noexcept(dango::is_noexcept_constructible<ret_type, tp_args...>)->ret_type
   {
     return ret_type{ dango::forward<tp_args>(a_args)... };
   }
@@ -495,10 +642,7 @@ final
   (tp_first a_first, tp_next... a_next, tp_args&&... a_args)
   noexcept
   (
-    noexcept
-    (
-      ::new (dango::placement, nullptr) auto{ make_type::make(dango::declval<tp_next>()..., dango::declval<tp_first>(), dango::declval<tp_args>()...) }
-    )
+    noexcept(make_type::make(dango::declval<tp_next>()..., dango::declval<tp_first>(), dango::declval<tp_args>()...))
   )->auto
   {
     return make_type::make(dango::forward<tp_next>(a_next)..., dango::forward<tp_first>(a_first), dango::forward<tp_args>(a_args)...);
@@ -527,15 +671,33 @@ dango::
 tuple
 final
 {
+  static_assert
+  (
+    (... && dango::is_noexcept_destructible<detail::tuple_value_type<tp_types>>),
+    "dango::tuple only supports noexcept-destructible types"
+  );
 private:
-  using pack_type = detail::tuple_pack_reverse<tp_types...>;
+  using pack_type = detail::tuple_pack_reverse<detail::tuple_value_type<tp_types>...>;
   using storage_type = detail::tuple_storage<pack_type>;
 public:
   template
   <
+    typename tp_storage_type = storage_type,
+    dango::enable_if<dango::is_default_constructible<tp_storage_type>> = dango::enable_val
+  >
+  constexpr
+  tuple()
+  noexcept(dango::is_noexcept_default_constructible<storage_type>):
+  m_storage{ }
+  {
+
+  }
+
+  template
+  <
     typename... tp_args,
     typename tp_enabled = decltype(detail::make_tuple_storage<pack_type>(dango::declval<tp_args>()...)),
-    dango::enable_if<dango::is_equal(sizeof...(tp_args), pack_type::c_size)> = dango::enable_val
+    dango::enable_if<dango::is_equal(sizeof...(tp_args), pack_type::size())> = dango::enable_val
   >
   constexpr
   tuple(tp_args&&... a_args)
@@ -548,30 +710,32 @@ public:
   template
   <
     dango::usize tp_index,
-    dango::enable_if<dango::is_lesser(tp_index, pack_type::c_size)> = dango::enable_val
+    dango::enable_if<dango::is_lesser(tp_index, pack_type::size())> = dango::enable_val
   >
   constexpr auto
   get()noexcept->decltype(auto)
   {
-    return m_storage.template get<pack_type::c_size - dango::usize(1) - tp_index>();
+    return m_storage.template get<pack_type::size() - dango::usize(1) - tp_index>();
   }
 
   template
   <
     dango::usize tp_index,
-    dango::enable_if<dango::is_lesser(tp_index, pack_type::c_size)> = dango::enable_val
+    dango::enable_if<dango::is_lesser(tp_index, pack_type::size())> = dango::enable_val
   >
   constexpr auto
   get()const noexcept->decltype(auto)
   {
-    return m_storage.template get<pack_type::c_size - dango::usize(1) - tp_index>();
+    return m_storage.template get<pack_type::size() - dango::usize(1) - tp_index>();
   }
+
+  ~tuple()noexcept = default;
 private:
   storage_type m_storage;
 };
 
 
-inline constexpr dango::tuple<int, float, double> const c_tup{ 1, 2, 3 };
+inline constexpr dango::tuple<int, float, double> const c_tup{ dango::value_init, dango::value_init, 3 };
 
 #endif
 
