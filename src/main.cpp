@@ -8,6 +8,7 @@ immobile
 final
 {
 public:
+  constexpr immobile()noexcept:m_int{ 0 }{ }
   explicit constexpr immobile(int const a_int)noexcept:m_int{ a_int }{ }
   ~immobile()noexcept = default;
 private:
@@ -16,13 +17,21 @@ public:
   DANGO_IMMOBILE(immobile)
 };
 
+struct
+thing
+{
+  int m_int;
+  float m_float;
+  double m_double;
+};
+
 auto
 main
 ()noexcept->dango::s_int
 {
-  dango::tuple<int&&, immobile, int, float> const a_tup{ 5, 42, dango::skip_init, dango::value_init };
+  dango::tuple<int&&, immobile, int, float> const a_tup{ 5, dango::skip_init, dango::skip_init, dango::value_init };
 
-  dango::tuple<int const, float, double> a_default_tup{ };
+  dango::tuple<thing const, float, double> const a_default_tup{ thing{ 1, 1.0f, 2.0 }, dango::skip_init, dango::value_init };
 
   static_assert(dango::is_same<decltype(a_tup.get<0>()), int&&>);
   static_assert(dango::is_same<decltype(a_tup.get<1>()), immobile const&>);
