@@ -8,8 +8,8 @@ immobile
 final
 {
 public:
-  constexpr immobile()noexcept:m_int{ 0 }{ }
-  explicit constexpr immobile(int const a_int)noexcept:m_int{ a_int }{ }
+  constexpr immobile()noexcept:m_int{ 42 }{ }
+  constexpr explicit immobile(int const a_int)noexcept(false):m_int{ a_int }{ if(a_int != 42){ throw a_int; } }
   ~immobile()noexcept = default;
 private:
   int const m_int;
@@ -27,14 +27,23 @@ thing
 
 auto
 main
-()noexcept->dango::s_int
+()noexcept(false)->dango::s_int
 {
-  dango::tuple<int&&, immobile, int, float> const a_tup{ 5, dango::skip_init, dango::skip_init, dango::value_init };
+  try
+  {
+    dango::tuple<int&&, immobile, int, float> const a_tup{ 5, 123, dango::skip_init, dango::value_init };
 
-  dango::tuple<thing const, float, double> const a_default_tup{ thing{ 1, 1.0f, 2.0 }, dango::skip_init, dango::value_init };
+    static_assert(dango::is_same<decltype(a_tup.get<0>()), int&&>);
+    static_assert(dango::is_same<decltype(a_tup.get<1>()), immobile const&>);
+  }
+  catch(int const& a_int)
+  {
+    printf("caught %i\n", a_int);
+  }
 
-  static_assert(dango::is_same<decltype(a_tup.get<0>()), int&&>);
-  static_assert(dango::is_same<decltype(a_tup.get<1>()), immobile const&>);
+  static_assert(!noexcept(dango::tuple<int&&, immobile, int, float>{ 5, 42, dango::skip_init, dango::value_init }));
+
+  dango::tuple<thing, float, double> const a_default_tup{ dango::skip_init, dango::skip_init, dango::value_init };
 
   dango::thread a_threads[10];
 
