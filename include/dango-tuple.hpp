@@ -936,6 +936,24 @@ public:
   {
 
   }
+public:
+  template
+  <
+    dango::usize... tp_indices,
+    typename... tp_args,
+    dango::enable_if
+    <
+      dango::is_equal(sizeof...(tp_types), sizeof...(tp_indices)) &&
+      dango::is_equal(sizeof...(tp_types), sizeof...(tp_args))
+    > = dango::enable_val
+  >
+  constexpr
+  tuple
+  (dango::index_seq<tp_indices...> const, tuple<tp_args...> const& a_tup)
+  noexcept
+  {
+
+  }
 private:
   storage_type m_storage;
 };

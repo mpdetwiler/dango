@@ -3,7 +3,7 @@
 
 #include "dango-traits.hpp"
 
-/*** integer_sequence ***/
+/*** integer_seq ***/
 
 namespace
 dango
@@ -20,6 +20,10 @@ dango
   template
   <typename tp_int, tp_int tp_len>
   using make_integer_seq = dango::integer_seq<tp_int, __integer_pack(tp_len)...>;
+
+  template
+  <dango::usize... tp_indices>
+  using index_seq = dango::integer_seq<dango::usize, tp_indices...>;
 
   template
   <dango::usize tp_len>
