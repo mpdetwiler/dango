@@ -41,6 +41,18 @@ main
     printf("caught %i\n", a_int);
   }
 
+  {
+    dango::tuple<dango::value_init_tag> a_tup{ dango::skip_init };
+
+    dango::tuple<int> a_copy{ a_tup };
+  }
+
+  {
+    dango::tuple<dango::tuple<int&&>> a_tup{ 42 };
+
+    dango::tuple<dango::tuple<int>> a_copy{ a_tup };
+  }
+
   static_assert(!noexcept(dango::tuple<int&&, immobile, int, float>{ 5, 42, dango::skip_init, dango::value_init }));
 
   dango::tuple<thing, float, double> const a_default_tup{ dango::skip_init, dango::skip_init, dango::value_init };
@@ -137,5 +149,20 @@ main
   }
 
   return 0;
+}
+
+auto
+test_func
+(dango::tuple<dango::uint32, dango::uint32, dango::uint64>& a_tup)noexcept->dango::uint32
+{
+  auto a_copy = dango::move(a_tup);
+
+  a_copy = a_copy;
+
+  a_copy.get<0>() += a_copy.get<1>();
+  a_copy.get<1>() += a_tup.get<0>();
+  a_tup.get<2>() = a_copy.get<1>();
+
+  return a_tup.get<0>();
 }
 
