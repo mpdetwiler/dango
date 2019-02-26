@@ -41,23 +41,30 @@ main
     printf("caught %i\n", a_int);
   }
 
+  try
   {
-    dango::tuple<dango::value_init_tag> a_tup{ dango::skip_init };
+    dango::tuple<dango::value_init_tag, dango::value_init_tag> a_tag_tup{ };
 
-    dango::tuple<int> a_copy{ a_tup };
+    dango::tuple<dango::tuple<int const>> const a_tup{ dango::tuple<int const>{ 10 } };
+
+    dango::tuple<dango::tuple<immobile>> a_copy{ a_tup };
+  }
+  catch(int const& a_int)
+  {
+    printf("caught %i\n", a_int);
   }
 
-  {
+  /*{
     dango::tuple<dango::tuple<int&&>> a_tup{ 42 };
 
     dango::tuple<dango::tuple<int>> a_copy{ a_tup };
-  }
+  }*/
 
   static_assert(!noexcept(dango::tuple<int&&, immobile, int, float>{ 5, 42, dango::skip_init, dango::value_init }));
 
   dango::tuple<thing, float, double> const a_default_tup{ dango::skip_init, dango::skip_init, dango::value_init };
 
-  dango::thread a_threads[10];
+  /*dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
 
@@ -146,7 +153,7 @@ main
     dango::invoker<decltype(&dango::thread::is_alive)> a_inv{ &dango::thread::is_alive };
 
     dango_assert(!a_inv(&a_thread));
-  }
+  }*/
 
   return 0;
 }
