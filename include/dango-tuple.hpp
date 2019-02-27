@@ -1377,6 +1377,9 @@ public:
     return assign(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tp_tuple_arg>(a_tup));
   }
 private:
+
+/*** operator ->* helper ***/
+
   template
   <
     dango::usize... tp_indices,
@@ -1413,6 +1416,9 @@ private:
     return dango::forward<tp_func>(a_func)(get<tp_indices>()...);
   }
 public:
+
+/*** operator ->* ***/
+
   template
   <
     typename tp_func,
