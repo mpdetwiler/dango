@@ -25,11 +25,13 @@ thing
   double m_double;
 };
 
+#include<memory>
+
 auto
 main
 ()noexcept(false)->dango::s_int
 {
-  try
+  /*try
   {
     dango::tuple<int&&, immobile, int, float> const a_tup{ 5, 123, dango::skip_init, dango::value_init };
 
@@ -39,15 +41,23 @@ main
   catch(int const& a_int)
   {
     printf("caught %i\n", a_int);
-  }
+  }*/
 
   try
   {
-    dango::tuple<dango::value_init_tag, dango::value_init_tag> a_tag_tup{ };
+    dango::tuple<dango::value_init_tag> a_tag_tup{ };
 
-    dango::tuple<dango::tuple<int const>> const a_tup{ dango::tuple<int const>{ 10 } };
+    dango::tuple<std::unique_ptr<float>> a_tup{ nullptr };
 
-    dango::tuple<dango::tuple<immobile>> a_copy{ a_tup };
+    dango::tuple<std::unique_ptr<float> const> a_copy( dango::move(a_tup) );
+
+    int i = 10;
+
+    dango::tuple<int const, int> a_tie{ i, i };
+
+    dango::tuple<int, int> a_temp{ };
+
+    static_assert(noexcept(a_temp = a_tie));
   }
   catch(int const& a_int)
   {
@@ -59,10 +69,6 @@ main
 
     dango::tuple<dango::tuple<int>> a_copy{ a_tup };
   }*/
-
-  static_assert(!noexcept(dango::tuple<int&&, immobile, int, float>{ 5, 42, dango::skip_init, dango::value_init }));
-
-  dango::tuple<thing, float, double> const a_default_tup{ dango::skip_init, dango::skip_init, dango::value_init };
 
   /*dango::thread a_threads[10];
 
