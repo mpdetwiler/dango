@@ -45,25 +45,15 @@ main
 
   try
   {
-    dango::tuple<dango::value_init_tag> a_tag_tup{ };
+    using ptr_type = std::unique_ptr<float>;
 
-    dango::tuple<std::unique_ptr<float>> a_tup{ nullptr };
+    dango::tuple<ptr_type, ptr_type> a_tup{ nullptr, nullptr };
 
-    dango::tuple<std::unique_ptr<float> const> a_copy( dango::move(a_tup) );
+    dango::tuple<ptr_type const, ptr_type const> a_copy( dango::move(a_tup) );
 
-    int i = 10;
+    dango::tuple<ptr_type> a_tup2{ nullptr };
 
-    dango::tuple<int const, int, int> const a_tie{ i, 12, 5 };
-
-    dango::tuple<int, int, int> a_temp{ };
-
-    static_assert(noexcept(a_temp = a_tie));
-
-    a_temp = a_tie;
-
-    int const m = a_tie->*[](int const& a, int const b, int const c)noexcept->int{ return dango::max(a, b, c); };
-
-    dango_assert(m == 12);
+    dango::tuple<dango::tuple<ptr_type const>> { dango::move(a_tup2) };
   }
   catch(int const& a_int)
   {

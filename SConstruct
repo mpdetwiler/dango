@@ -35,6 +35,7 @@ header_paths = [];
 flags = [
 #	'-S',
 #	'-Ofast',
+# '-v',
 	'-flto',
 	'-O2',
 	'-std=c++17',
