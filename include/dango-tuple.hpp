@@ -1232,6 +1232,9 @@ public:
   }
 
 private:
+
+/*** private assign helpers ***/
+
   template
   <
     dango::usize tp_index,
@@ -1291,7 +1294,6 @@ private:
 
     return *this;
   }
-public:
 
 /*** private converting assign ***/
 
@@ -1341,6 +1343,8 @@ public:
     return move_assign<sizeof...(tp_types) - dango::usize(1)>(dango::forward<tp_tuple_arg>(a_tup));
   }
 
+public:
+
 /*** converting assign ***/
 
   template
@@ -1371,6 +1375,70 @@ public:
   noexcept(noexcept(dango::declval<tuple&>().assign(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::declval<tp_tuple_arg>())))->tuple&
   {
     return assign(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tp_tuple_arg>(a_tup));
+  }
+private:
+  template
+  <
+    dango::usize... tp_indices,
+    typename tp_func,
+    dango::enable_if
+    <
+      dango::is_equal(sizeof...(tp_types), sizeof...(tp_indices)) &&
+      dango::is_callable<tp_func, decltype(dango::declval<tuple&>().template get<tp_indices>())...>
+    > = dango::enable_val
+  >
+  constexpr auto
+  call
+  (dango::index_seq<tp_indices...> const, tp_func&& a_func)
+  noexcept(dango::is_noexcept_callable<tp_func, decltype(dango::declval<tuple&>().template get<tp_indices>())...>)->decltype(auto)
+  {
+    return dango::forward<tp_func>(a_func)(get<tp_indices>()...);
+  }
+
+  template
+  <
+    dango::usize... tp_indices,
+    typename tp_func,
+    dango::enable_if
+    <
+      dango::is_equal(sizeof...(tp_types), sizeof...(tp_indices)) &&
+      dango::is_callable<tp_func, decltype(dango::declval<tuple const&>().template get<tp_indices>())...>
+    > = dango::enable_val
+  >
+  constexpr auto
+  call
+  (dango::index_seq<tp_indices...> const, tp_func&& a_func)const
+  noexcept(dango::is_noexcept_callable<tp_func, decltype(dango::declval<tuple const&>().template get<tp_indices>())...>)->decltype(auto)
+  {
+    return dango::forward<tp_func>(a_func)(get<tp_indices>()...);
+  }
+public:
+  template
+  <
+    typename tp_func,
+    typename tp_enabled =
+      decltype(dango::declval<tuple&>().call(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::declval<tp_func>()))
+  >
+  constexpr auto
+  operator ->*
+  (tp_func&& a_func)
+  noexcept(noexcept(dango::declval<tuple&>().call(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::declval<tp_func>())))->decltype(auto)
+  {
+    return call(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tp_func>(a_func));
+  }
+
+  template
+  <
+    typename tp_func,
+    typename tp_enabled =
+      decltype(dango::declval<tuple const&>().call(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::declval<tp_func>()))
+  >
+  constexpr auto
+  operator ->*
+  (tp_func&& a_func)const
+  noexcept(noexcept(dango::declval<tuple const&>().call(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::declval<tp_func>())))->decltype(auto)
+  {
+    return call(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tp_func>(a_func));
   }
 private:
   storage_type m_storage;

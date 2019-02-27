@@ -53,11 +53,17 @@ main
 
     int i = 10;
 
-    dango::tuple<int const, int> a_tie{ i, i };
+    dango::tuple<int const, int, int> const a_tie{ i, 12, 5 };
 
-    dango::tuple<int, int> a_temp{ };
+    dango::tuple<int, int, int> a_temp{ };
 
     static_assert(noexcept(a_temp = a_tie));
+
+    a_temp = a_tie;
+
+    int const m = a_tie->*[](int const& a, int const b, int const c)noexcept->int{ return dango::max(a, b, c); };
+
+    dango_assert(m == 12);
   }
   catch(int const& a_int)
   {
