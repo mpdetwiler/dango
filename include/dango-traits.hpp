@@ -1582,38 +1582,38 @@ dango
 namespace
 dango::detail
 {
-  enum class
-  is_destructible_normal_tag:
-  dango::uint32
+  struct
+  is_destructible_normal_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_destructible_normal_tag)
   };
 
   inline constexpr detail::is_destructible_normal_tag const is_destructible_normal{ };
 
-  enum class
-  is_destructible_trivial_tag:
-  dango::uint32
+  struct
+  is_destructible_trivial_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_destructible_trivial_tag)
   };
 
   inline constexpr detail::is_destructible_trivial_tag const is_destructible_trivial{ };
 
-  enum class
-  is_destructible_noexcept_tag:
-  dango::uint32
+  struct
+  is_destructible_noexcept_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_destructible_noexcept_tag)
   };
 
   inline constexpr detail::is_destructible_noexcept_tag const is_destructible_noexcept{ };
 
-  enum class
-  is_destructible_virtual_tag:
-  dango::uint32
+  struct
+  is_destructible_virtual_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_destructible_virtual_tag)
   };
 
   inline constexpr detail::is_destructible_virtual_tag const is_destructible_virtual{ };
@@ -1770,20 +1770,20 @@ dango::detail
   constexpr void
   is_convertible_test(tp_arg)noexcept;
 
-  enum class
-  is_convertible_normal_tag:
-  dango::uint32
+  struct
+  is_convertible_normal_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_convertible_normal_tag)
   };
 
   inline constexpr detail::is_convertible_normal_tag const is_convertible_normal{ };
 
-  enum class
-  is_convertible_noexcept_tag:
-  dango::uint32
+  struct
+  is_convertible_noexcept_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_convertible_noexcept_tag)
   };
 
   inline constexpr detail::is_convertible_noexcept_tag const is_convertible_noexcept{ };
@@ -1879,38 +1879,38 @@ dango
 namespace
 dango::detail
 {
-  enum class
-  is_callable_normal_tag:
-  dango::uint32
+  struct
+  is_callable_normal_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_callable_normal_tag)
   };
 
   inline constexpr detail::is_callable_normal_tag const is_callable_normal{ };
 
-  enum class
-  is_callable_noexcept_tag:
-  dango::uint32
+  struct
+  is_callable_noexcept_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_callable_noexcept_tag)
   };
 
   inline constexpr detail::is_callable_noexcept_tag const is_callable_noexcept{ };
 
-  enum class
-  is_callable_ret_normal_tag:
-  dango::uint32
+  struct
+  is_callable_ret_normal_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_callable_ret_normal_tag)
   };
 
   inline constexpr detail::is_callable_ret_normal_tag const is_callable_ret_normal{ };
 
-  enum class
-  is_callable_ret_noexcept_tag:
-  dango::uint32
+  struct
+  is_callable_ret_noexcept_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_callable_ret_noexcept_tag)
   };
 
   inline constexpr detail::is_callable_ret_noexcept_tag const is_callable_ret_noexcept{ };
@@ -2008,29 +2008,29 @@ dango
 namespace
 dango::detail
 {
-  enum class
-  is_constructible_normal_tag:
-  dango::uint32
+  struct
+  is_constructible_normal_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_constructible_normal_tag)
   };
 
   inline constexpr detail::is_constructible_normal_tag const is_constructible_normal{ };
 
-  enum class
-  is_constructible_trivial_tag:
-  dango::uint32
+  struct
+  is_constructible_trivial_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_constructible_trivial_tag)
   };
 
   inline constexpr detail::is_constructible_trivial_tag const is_constructible_trivial{ };
 
-  enum class
-  is_constructible_noexcept_tag:
-  dango::uint32
+  struct
+  is_constructible_noexcept_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_constructible_noexcept_tag)
   };
 
   inline constexpr detail::is_constructible_noexcept_tag const is_constructible_noexcept{ };
@@ -2180,29 +2180,29 @@ dango
 namespace
 dango::detail
 {
-  enum class
-  is_assignable_normal_tag:
-  dango::uint32
+  struct
+  is_assignable_normal_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_assignable_normal_tag)
   };
 
   inline constexpr detail::is_assignable_normal_tag const is_assignable_normal{ };
 
-  enum class
-  is_assignable_trivial_tag:
-  dango::uint32
+  struct
+  is_assignable_trivial_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_assignable_trivial_tag)
   };
 
   inline constexpr detail::is_assignable_trivial_tag const is_assignable_trivial{ };
 
-  enum class
-  is_assignable_noexcept_tag:
-  dango::uint32
+  struct
+  is_assignable_noexcept_tag
+  final
   {
-
+    DANGO_TAG_TYPE(is_assignable_noexcept_tag)
   };
 
   inline constexpr detail::is_assignable_noexcept_tag const is_assignable_noexcept{ };
