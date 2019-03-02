@@ -67,3 +67,13 @@ static_assert(!dango::is_move_assignable<dango::tuple<immobile>>);
 static_assert(!dango::is_move_assignable<dango::tuple<immobile, immobile>>);
 static_assert(!dango::is_move_assignable<dango::tuple<immobile, immobile, immobile>>);
 
+static_assert(dango::is_constructible<dango::tuple<int const&, float const&, bool const&>, dango::tuple<int&, float&, bool&> const&>);
+static_assert(dango::is_constructible<dango::tuple<int const&, float const&, bool const&>, dango::tuple<int&, float&, bool&>&&>);
+static_assert(!dango::is_assignable<dango::tuple<int const&, float const&, bool const&>, dango::tuple<int&, float&, bool&> const&>);
+static_assert(!dango::is_assignable<dango::tuple<int const&, float const&, bool const&>, dango::tuple<int&, float&, bool&> &&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float&, bool&>, dango::tuple<int&, float&, bool&> const&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float&, bool&>, dango::tuple<int&, float&, bool&>&&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float&, bool&>, dango::tuple<int, float, bool> const&>);
+static_assert(!dango::is_assignable<dango::tuple<int&&, float&&, bool&&>, dango::tuple<int, float, bool>&&>);
+static_assert(dango::is_constructible<dango::tuple<int&&, float&&, bool&&>, dango::tuple<int, float, bool>&&>);
+

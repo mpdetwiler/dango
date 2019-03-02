@@ -1229,8 +1229,8 @@ public:
       dango::is_equal(sizeof...(tp_types), sizeof...(tp_args)) &&
       !(... && dango::is_same<tp_types, tp_args>) &&
       dango::is_equal(sizeof...(tp_types), dango::usize(1)) &&
-      !detail::tuple_is_constructible<tp_types..., tp_tuple_arg> &&
-      !detail::tuple_is_convertible<tp_tuple_arg, tp_types...> &&
+      (... && !detail::tuple_is_constructible<tp_types, tp_tuple_arg>) &&
+      (... && !detail::tuple_is_convertible<tp_tuple_arg, tp_types>) &&
       construct_test<false, sizeof...(tp_types), tp_tuple_arg>(detail::tuple_normal_test)
     > = dango::enable_val
   >
@@ -1273,8 +1273,8 @@ public:
       dango::is_equal(sizeof...(tp_types), sizeof...(tp_args)) &&
       !(... && dango::is_same<tp_types, tp_args>) &&
       dango::is_equal(sizeof...(tp_types), dango::usize(1)) &&
-      !detail::tuple_is_constructible<tp_types..., tp_tuple_arg> &&
-      !detail::tuple_is_convertible<tp_tuple_arg, tp_types...> &&
+      (... && !detail::tuple_is_constructible<tp_types, tp_tuple_arg>) &&
+      (... && !detail::tuple_is_convertible<tp_tuple_arg, tp_types>) &&
       construct_test<true, sizeof...(tp_types), tp_tuple_arg>(detail::tuple_normal_test)
     > = dango::enable_val
   >
@@ -1319,8 +1319,8 @@ public:
       dango::is_equal(sizeof...(tp_types), sizeof...(tp_args)) &&
       !(... && dango::is_same<tp_types, tp_args>) &&
       dango::is_equal(sizeof...(tp_types), dango::usize(1)) &&
-      !detail::tuple_is_constructible<tp_types..., tp_tuple_arg> &&
-      !detail::tuple_is_convertible<tp_tuple_arg, tp_types...> &&
+      (... && !detail::tuple_is_constructible<tp_types, tp_tuple_arg>) &&
+      (... && !detail::tuple_is_convertible<tp_tuple_arg, tp_types>) &&
       construct_test<false, sizeof...(tp_types), tp_tuple_arg>(detail::tuple_normal_test)
     > = dango::enable_val
   >
@@ -1363,8 +1363,8 @@ public:
       dango::is_equal(sizeof...(tp_types), sizeof...(tp_args)) &&
       !(... && dango::is_same<tp_types, tp_args>) &&
       dango::is_equal(sizeof...(tp_types), dango::usize(1)) &&
-      !detail::tuple_is_constructible<tp_types..., tp_tuple_arg> &&
-      !detail::tuple_is_convertible<tp_tuple_arg, tp_types...> &&
+      (... && !detail::tuple_is_constructible<tp_types, tp_tuple_arg>) &&
+      (... && !detail::tuple_is_convertible<tp_tuple_arg, tp_types>) &&
       construct_test<true, sizeof...(tp_types), tp_tuple_arg>(detail::tuple_normal_test)
     > = dango::enable_val
   >
