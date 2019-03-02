@@ -121,7 +121,11 @@ dango::detail
   template
   <typename tp_ret, typename... tp_args, bool tp_noexcept>
   struct tuple_value_type_help<tp_ret(tp_args...)noexcept(tp_noexcept)>;
+}
 
+namespace
+dango
+{
   template
   <typename tp_type>
   using tuple_value_type = typename detail::tuple_value_type_help<tp_type>::type;
@@ -180,6 +184,84 @@ final
 };
 
 namespace
+dango::detail
+{
+  template
+  <typename tp_value_type, bool tp_const>
+  struct tuple_get_type_help;
+  template
+  <typename tp_value_type, bool tp_const>
+  struct tuple_get_type_help<tp_value_type&, tp_const>;
+  template
+  <typename tp_value_type, bool tp_const>
+  struct tuple_get_type_help<tp_value_type&&, tp_const>;
+  template
+  <typename tp_value_type, bool tp_const>
+  struct tuple_get_type_help<tp_value_type const, tp_const>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type, bool tp_const = false>
+  using tuple_get_type =
+    typename detail::tuple_get_type_help<dango::tuple_value_type<tp_type>, tp_const>::type;
+}
+
+template
+<typename tp_value_type, bool tp_const>
+struct
+dango::
+detail::
+tuple_get_type_help
+final
+{
+  using type = dango::conditional<tp_const, tp_value_type const, tp_value_type>&;
+
+  DANGO_UNINSTANTIABLE(tuple_get_type_help)
+};
+
+template
+<typename tp_value_type, bool tp_const>
+struct
+dango::
+detail::
+tuple_get_type_help<tp_value_type&, tp_const>
+final
+{
+  using type = tp_value_type&;
+
+  DANGO_UNINSTANTIABLE(tuple_get_type_help)
+};
+
+template
+<typename tp_value_type, bool tp_const>
+struct
+dango::
+detail::
+tuple_get_type_help<tp_value_type&&, tp_const>
+final
+{
+  using type = tp_value_type&&;
+
+  DANGO_UNINSTANTIABLE(tuple_get_type_help)
+};
+
+template
+<typename tp_value_type, bool tp_const>
+struct
+dango::
+detail::
+tuple_get_type_help<tp_value_type const, tp_const>
+final
+{
+  using type = tp_value_type const&;
+
+  DANGO_UNINSTANTIABLE(tuple_get_type_help)
+};
+
+namespace
 dango
 {
   struct
@@ -205,14 +287,14 @@ namespace
 dango::detail
 {
   template
-  <typename tp_type, typename tp_value_type = detail::tuple_value_type<tp_type>>
+  <typename tp_value_type>
   constexpr bool const is_skip_constructible_help =
     dango::is_trivial_default_constructible<tp_value_type> ?
     !is_const<tp_value_type> :
     dango::is_default_constructible<tp_value_type>;
 
   template
-  <typename tp_type, typename tp_value_type = detail::tuple_value_type<tp_type>>
+  <typename tp_value_type>
   constexpr bool const is_noexcept_skip_constructible_help =
     dango::is_trivial_default_constructible<tp_value_type> ?
     !is_const<tp_value_type> :
@@ -224,73 +306,75 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_skip_constructible = detail::is_skip_constructible_help<tp_type>;
+  constexpr bool const is_skip_constructible =
+    detail::is_skip_constructible_help<dango::tuple_value_type<tp_type>>;
 
   template
   <typename tp_type>
-  constexpr bool const is_noexcept_skip_constructible = detail::is_noexcept_skip_constructible_help<tp_type>;
+  constexpr bool const is_noexcept_skip_constructible =
+    detail::is_noexcept_skip_constructible_help<dango::tuple_value_type<tp_type>>;
 }
 
 namespace
 dango::detail
 {
   template
-  <typename tp_arg, typename tp_tag = dango::remove_cvref<tp_arg>>
+  <typename tp_tag>
   constexpr bool const is_tuple_tag_help =
     dango::is_same<tp_tag, dango::value_init_tag> ||
     dango::is_same<tp_tag, dango::skip_init_tag>;
 
   template
   <typename tp_arg>
-  constexpr bool const is_tuple_tag = detail::is_tuple_tag_help<tp_arg>;
+  constexpr bool const is_tuple_tag = detail::is_tuple_tag_help<dango::remove_cvref<tp_arg>>;
 
   template
   <
-    typename tp_type,
+    typename tp_value_type,
     typename tp_arg,
-    typename tp_value_type = detail::tuple_value_type<tp_type>,
     typename tp_tag = dango::remove_cvref<tp_arg>
   >
   constexpr bool const tuple_is_constructible_help =
     (dango::is_same<tp_tag, dango::value_init_tag> && dango::is_default_constructible<tp_value_type>) ||
-    (dango::is_same<tp_tag, dango::skip_init_tag> && detail::is_skip_constructible_help<tp_type, tp_value_type>) ||
+    (dango::is_same<tp_tag, dango::skip_init_tag> && detail::is_skip_constructible_help<tp_value_type>) ||
     dango::is_constructible<tp_value_type, tp_arg>;
 
   template
   <typename tp_type, typename tp_arg>
-  constexpr bool const tuple_is_constructible = detail::tuple_is_constructible_help<tp_type, tp_arg>;
+  constexpr bool const tuple_is_constructible =
+    detail::tuple_is_constructible_help<dango::tuple_value_type<tp_type>, tp_arg>;
 
   template
   <
-    typename tp_type,
+    typename tp_value_type,
     typename tp_arg,
-    typename tp_value_type = detail::tuple_value_type<tp_type>,
     typename tp_tag = dango::remove_cvref<tp_arg>
   >
   constexpr bool const tuple_is_noexcept_constructible_help =
     (dango::is_same<tp_tag, dango::value_init_tag> && dango::is_noexcept_default_constructible<tp_value_type>) ||
-    (dango::is_same<tp_tag, dango::skip_init_tag> && detail::is_noexcept_skip_constructible_help<tp_type, tp_value_type>) ||
+    (dango::is_same<tp_tag, dango::skip_init_tag> && detail::is_noexcept_skip_constructible_help<tp_value_type>) ||
     dango::is_noexcept_constructible<tp_value_type, tp_arg>;
 
   template
   <typename tp_type, typename tp_arg>
-  constexpr bool const tuple_is_noexcept_constructible = detail::tuple_is_noexcept_constructible_help<tp_type, tp_arg>;
+  constexpr bool const tuple_is_noexcept_constructible =
+    detail::tuple_is_noexcept_constructible_help<dango::tuple_value_type<tp_type>, tp_arg>;
 
   template
   <
     typename tp_arg,
-    typename tp_type,
-    typename tp_tag = dango::remove_cvref<tp_arg>,
-    typename tp_value_type = detail::tuple_value_type<tp_type>
+    typename tp_value_type,
+    typename tp_tag = dango::remove_cvref<tp_arg>
   >
   constexpr bool const tuple_is_convertible_help =
     (dango::is_same<tp_tag, dango::value_init_tag> && dango::is_default_constructible<tp_value_type>) ||
-    (dango::is_same<tp_tag, dango::skip_init_tag> && detail::is_skip_constructible_help<tp_type, tp_value_type>) ||
+    (dango::is_same<tp_tag, dango::skip_init_tag> && detail::is_skip_constructible_help<tp_value_type>) ||
     dango::is_convertible<tp_arg, tp_value_type>;
 
   template
   <typename tp_arg, typename tp_type>
-  constexpr bool const tuple_is_convertible = detail::tuple_is_convertible_help<tp_arg, tp_type>;
+  constexpr bool const tuple_is_convertible =
+    detail::tuple_is_convertible_help<tp_arg, dango::tuple_value_type<tp_type>>;
 }
 
 namespace
@@ -317,7 +401,7 @@ detail::
 tuple_storage<dango::detail::tuple_pack<tp_first>>
 {
 public:
-  using value_type = detail::tuple_value_type<tp_first>;
+  using value_type = dango::tuple_value_type<tp_first>;
   static_assert(dango::is_same<value_type, tp_first>);
   static_assert(dango::is_noexcept_destructible<value_type>);
 public:
@@ -474,7 +558,7 @@ tuple_storage<dango::detail::tuple_pack<tp_first, tp_next...>>:
 public dango::detail::tuple_storage<dango::detail::tuple_pack<tp_next...>>
 {
 public:
-  using value_type = detail::tuple_value_type<tp_first>;
+  using value_type = dango::tuple_value_type<tp_first>;
   static_assert(dango::is_same<value_type, tp_first>);
   static_assert(dango::is_noexcept_destructible<value_type>);
 private:
@@ -816,12 +900,12 @@ final
 
   static_assert
   (
-    (... && dango::is_noexcept_destructible<detail::tuple_value_type<tp_types>>),
+    (... && dango::is_noexcept_destructible<dango::tuple_value_type<tp_types>>),
     "dango::tuple only supports noexcept-destructible types"
   );
 private:
   using storage_type =
-    detail::tuple_storage<detail::tuple_pack_reverse<detail::tuple_value_type<tp_types>...>>;
+    detail::tuple_storage<detail::tuple_pack_reverse<dango::tuple_value_type<tp_types>...>>;
   static_assert(dango::is_noexcept_destructible<storage_type>);
 public:
   static constexpr auto
@@ -1490,7 +1574,7 @@ private:
     <
       dango::is_equal(sizeof...(tp_types), sizeof...(tp_indices)) &&
       dango::is_equal(sizeof...(tp_types), sizeof...(tp_args)) &&
-      (... && !dango::is_ref<detail::tuple_value_type<tp_types>>) &&
+      (... && !dango::is_ref<dango::tuple_value_type<tp_types>>) &&
       (
         ... &&
         dango::is_assignable
@@ -1528,7 +1612,7 @@ private:
     <
       dango::is_equal(sizeof...(tp_types), sizeof...(tp_indices)) &&
       dango::is_equal(sizeof...(tp_types), sizeof...(tp_args)) &&
-      (... && !dango::is_ref<detail::tuple_value_type<tp_types>>) &&
+      (... && !dango::is_ref<dango::tuple_value_type<tp_types>>) &&
       (
         ... &&
         dango::is_assignable
@@ -1557,49 +1641,6 @@ private:
     return move_assign<sizeof...(tp_types) - dango::usize(1)>(dango::forward<tp_tuple_arg>(a_tup));
   }
 
-/*** converting assign test ***/
-
-  template
-  <
-    dango::usize tp_tuple_size,
-    typename tp_tuple_arg,
-    typename tp_enabled =
-      decltype(dango::declval<tuple&>().assign(dango::make_index_seq<tp_tuple_size>{ }, dango::declval<tp_tuple_arg>()))
-  >
-  static constexpr auto
-  assign_test
-  (detail::tuple_normal_test_tag const)noexcept->bool
-  {
-    return true;
-  }
-
-  template
-  <
-    dango::usize tp_tuple_size,
-    typename tp_tuple_arg,
-    typename tp_enabled =
-      decltype(dango::declval<tuple&>().assign(dango::make_index_seq<tp_tuple_size>{ }, dango::declval<tp_tuple_arg>()))
-  >
-  static constexpr auto
-  assign_test
-  (detail::tuple_noexcept_test_tag const)noexcept->bool
-  {
-    return noexcept(dango::declval<tuple&>().assign(dango::make_index_seq<tp_tuple_size>{ }, dango::declval<tp_tuple_arg>()));
-  }
-
-  template
-  <
-    dango::usize tp_tuple_size,
-    typename tp_tuple_arg,
-    typename tp_tag
-  >
-  static constexpr auto
-  assign_test
-  (tp_tag const)noexcept->bool
-  {
-    return false;
-  }
-
 public:
 
 /*** converting assign ***/
@@ -1607,16 +1648,19 @@ public:
   template
   <
     typename... tp_args,
-    typename tp_tuple_arg = tuple<tp_args...> const&,
     dango::enable_if
     <
-      assign_test<sizeof...(tp_types), tp_tuple_arg>(detail::tuple_normal_test)
+      dango::is_equal(sizeof...(tp_types), sizeof...(tp_args)) &&
+      !(... && dango::is_same<tp_types, tp_args>) &&
+      (... && !dango::is_ref<dango::tuple_value_type<tp_types>>) &&
+      (... && dango::is_assignable<dango::tuple_get_type<tp_types, false>, dango::tuple_get_type<tp_args, true>>)
     > = dango::enable_val
   >
   constexpr auto
   operator =
   (tuple<tp_args...> const& a_tup)&
-  noexcept(assign_test<sizeof...(tp_types), tp_tuple_arg>(detail::tuple_noexcept_test))->tuple&
+  noexcept
+  ((... && dango::is_noexcept_assignable<dango::tuple_get_type<tp_types, false>, dango::tuple_get_type<tp_args, true>>))->tuple&
   {
     return assign(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
   }
@@ -1624,129 +1668,45 @@ public:
   template
   <
     typename... tp_args,
-    typename tp_tuple_arg = tuple<tp_args...>&&,
     dango::enable_if
     <
-      assign_test<sizeof...(tp_types), tp_tuple_arg>(detail::tuple_normal_test)
+      dango::is_equal(sizeof...(tp_types), sizeof...(tp_args)) &&
+      !(... && dango::is_same<tp_types, tp_args>) &&
+      (... && !dango::is_ref<dango::tuple_value_type<tp_types>>) &&
+      (... && dango::is_assignable<dango::tuple_get_type<tp_types, false>, dango::remove_ref<dango::tuple_get_type<tp_args, false>>&&>)
     > = dango::enable_val
   >
   constexpr auto
   operator =
   (tuple<tp_args...>&& a_tup)&
-  noexcept(assign_test<sizeof...(tp_types), tp_tuple_arg>(detail::tuple_noexcept_test))->tuple&
+  noexcept
+  ((... && dango::is_noexcept_assignable<dango::tuple_get_type<tp_types, false>, dango::remove_ref<dango::tuple_get_type<tp_args, false>>&&>))->tuple&
   {
-    return assign(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tp_tuple_arg>(a_tup));
+    return assign(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tuple<tp_args...>&&>(a_tup));
   }
-
 private:
 
-/*** operator ->* helper ***/
+/*** call ***/
 
   template
-  <
-    dango::usize... tp_indices,
-    typename tp_func,
-    typename tp_tuple_arg = tuple&,
-    dango::enable_if
-    <
-      dango::is_equal(sizeof...(tp_types), sizeof...(tp_indices)) &&
-      dango::is_callable
-      <
-        dango::remove_ref<tp_func>&,
-        decltype(dango::declval<tp_tuple_arg>().template get<tp_indices>())...
-      >
-    > = dango::enable_val
-  >
+  <dango::usize... tp_indices, typename tp_func>
   constexpr auto
   call
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)
-  noexcept
-  (
-    dango::is_noexcept_callable
-    <
-      dango::remove_ref<tp_func>&,
-      decltype(dango::declval<tp_tuple_arg>().template get<tp_indices>())...
-    >
-  )->decltype(auto)
+  noexcept(false)->decltype(auto)
   {
     return a_func(get<tp_indices>()...);
   }
 
   template
-  <
-    dango::usize... tp_indices,
-    typename tp_func,
-    typename tp_tuple_arg = tuple const&,
-    dango::enable_if
-    <
-      dango::is_equal(sizeof...(tp_types), sizeof...(tp_indices)) &&
-      dango::is_callable
-      <
-        dango::remove_ref<tp_func>&,
-        decltype(dango::declval<tp_tuple_arg>().template get<tp_indices>())...
-      >
-    > = dango::enable_val
-  >
+  <dango::usize... tp_indices, typename tp_func>
   constexpr auto
   call
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)const
-  noexcept
-  (
-    dango::is_noexcept_callable
-    <
-      dango::remove_ref<tp_func>&,
-      decltype(dango::declval<tp_tuple_arg>().template get<tp_indices>())...
-    >
-  )->decltype(auto)
+  noexcept(false)->decltype(auto)
   {
     return a_func(get<tp_indices>()...);
   }
-
-/*** call test ***/
-
-template
-<
-  dango::usize tp_tuple_size,
-  typename tp_tuple_arg,
-  typename tp_func,
-  typename tp_enabled =
-    decltype(dango::declval<tp_tuple_arg>().call(dango::make_index_seq<tp_tuple_size>{ }, dango::declval<tp_func>()))
->
-static constexpr auto
-call_test
-(detail::tuple_normal_test_tag const)noexcept->bool
-{
-  return true;
-}
-
-template
-<
-  dango::usize tp_tuple_size,
-  typename tp_tuple_arg,
-  typename tp_func,
-  typename tp_enabled =
-    decltype(dango::declval<tp_tuple_arg>().call(dango::make_index_seq<tp_tuple_size>{ }, dango::declval<tp_func>()))
->
-static constexpr auto
-call_test
-(detail::tuple_noexcept_test_tag const)noexcept->bool
-{
-  return noexcept(dango::declval<tp_tuple_arg>().call(dango::make_index_seq<tp_tuple_size>{ }, dango::declval<tp_func>()));
-}
-
-template
-<
-  dango::usize tp_tuple_size,
-  typename tp_tuple_arg,
-  typename tp_func,
-  typename tp_tag
->
-static constexpr auto
-call_test
-(tp_tag const)noexcept->bool
-{
-  return false;
-}
 
 public:
 
@@ -1755,16 +1715,15 @@ public:
   template
   <
     typename tp_func,
-    typename tp_tuple_arg = tuple&,
     dango::enable_if
     <
-      call_test<sizeof...(tp_types), tp_tuple_arg, tp_func>(detail::tuple_normal_test)
+      dango::is_callable<dango::remove_ref<tp_func>&, dango::tuple_get_type<tp_types, false>...>
     > = dango::enable_val
   >
   constexpr auto
   operator ->*
   (tp_func&& a_func)
-  noexcept(call_test<sizeof...(tp_types), tp_tuple_arg, tp_func>(detail::tuple_noexcept_test))->decltype(auto)
+  noexcept(dango::is_noexcept_callable<dango::remove_ref<tp_func>&, dango::tuple_get_type<tp_types, false>...>)->decltype(auto)
   {
     return call(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tp_func>(a_func));
   }
@@ -1772,16 +1731,15 @@ public:
   template
   <
     typename tp_func,
-    typename tp_tuple_arg = tuple const&,
     dango::enable_if
     <
-      call_test<sizeof...(tp_types), tp_tuple_arg, tp_func>(detail::tuple_normal_test)
+      dango::is_callable<dango::remove_ref<tp_func>&, dango::tuple_get_type<tp_types, true>...>
     > = dango::enable_val
   >
   constexpr auto
   operator ->*
   (tp_func&& a_func)const
-  noexcept(call_test<sizeof...(tp_types), tp_tuple_arg, tp_func>(detail::tuple_noexcept_test))->decltype(auto)
+  noexcept(dango::is_noexcept_callable<dango::remove_ref<tp_func>&, dango::tuple_get_type<tp_types, true>...>)->decltype(auto)
   {
     return call(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tp_func>(a_func));
   }

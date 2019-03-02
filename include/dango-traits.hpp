@@ -1002,7 +1002,7 @@ dango
   template
   <bool tp_cond, typename tp_true_type, typename tp_false_type>
   using conditional =
-    typename detail::conditional_help<tp_cond, tp_true_type, tp_false_type>;
+    typename detail::conditional_help<tp_cond, tp_true_type, tp_false_type>::type;
 }
 
 template
