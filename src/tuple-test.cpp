@@ -34,8 +34,8 @@ static_assert(dango::is_noexcept_default_constructible<dango::tuple<immobile>>);
 static_assert(dango::is_noexcept_default_constructible<dango::tuple<immobile, immobile>>);
 static_assert(dango::is_noexcept_default_constructible<dango::tuple<immobile, immobile, immobile>>);
 
-static_assert(dango::is_constructible<dango::tuple<immobile>, dango::value_init_tag>);
-/*static_assert(dango::is_noexcept_constructible<dango::tuple<immobile, immobile>, dango::value_init_tag, dango::value_init_tag>);
+static_assert(dango::is_noexcept_constructible<dango::tuple<immobile>, dango::value_init_tag const&>);
+static_assert(dango::is_noexcept_constructible<dango::tuple<immobile, immobile>, dango::value_init_tag, dango::value_init_tag>);
 static_assert(dango::is_noexcept_constructible<dango::tuple<immobile, immobile, immobile>, dango::value_init_tag, dango::value_init_tag, dango::value_init_tag>);
 
 static_assert(dango::is_noexcept_constructible<dango::tuple<immobile>, dango::skip_init_tag>);
@@ -76,13 +76,11 @@ static_assert(!dango::is_assignable<dango::tuple<int&, float&, bool&>, dango::tu
 static_assert(!dango::is_assignable<dango::tuple<int&, float&, bool&>, dango::tuple<int, float, bool> const&>);
 static_assert(!dango::is_assignable<dango::tuple<int&&, float&&, bool&&>, dango::tuple<int, float, bool>&&>);
 static_assert(dango::is_constructible<dango::tuple<int&&, float&&, bool&&>, dango::tuple<int, float, bool>&&>);
-*/
-/*
+
+
 void
 tuple_test_func()noexcept
 {
-  dango::tuple<immobile, immobile> const a_tup{ };
-
-  dango::tuple<immobile, immobile> a_copy{ a_tup };
-}*/
+  dango::tuple<immobile, immobile> const a_tup{ dango::value_init, dango::skip_init };
+}
 

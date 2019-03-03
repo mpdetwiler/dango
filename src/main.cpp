@@ -49,7 +49,9 @@ main
 
     dango::tuple<ptr_type, ptr_type> a_tup{ nullptr, nullptr };
 
-    dango::tuple<ptr_type const, ptr_type const> a_copy( dango::move(a_tup) );
+    auto a_copy{ dango::move(a_tup) };
+
+    dango::tuple<ptr_type const, ptr_type const> a_copy2( dango::move(a_tup) );
 
     dango::tuple<ptr_type> a_tup2{ nullptr };
 
