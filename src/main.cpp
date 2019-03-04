@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <tuple>
+#include <string>
 
 struct
 immobile
@@ -25,55 +26,12 @@ thing
   double m_double;
 };
 
-#include<memory>
+#include <memory>
 
 auto
 main
 ()noexcept(false)->dango::s_int
 {
-  {
-    dango::tuple<int, int> a_tup{ };
-
-    auto a_copy = a_tup;
-  }
-
-  /*try
-  {
-    dango::tuple<int&&, immobile, int, float> const a_tup{ 5, 123, dango::skip_init, dango::value_init };
-
-    static_assert(dango::is_same<decltype(a_tup.get<0>()), int&&>);
-    static_assert(dango::is_same<decltype(a_tup.get<1>()), immobile const&>);
-  }
-  catch(int const& a_int)
-  {
-    printf("caught %i\n", a_int);
-  }*/
-
-  try
-  {
-    using ptr_type = std::unique_ptr<float>;
-
-    dango::tuple<ptr_type, ptr_type> a_tup{ nullptr, nullptr };
-
-    auto a_copy{ dango::move(a_tup) };
-
-    dango::tuple<ptr_type const, ptr_type const> a_copy2( dango::move(a_tup) );
-
-    dango::tuple<ptr_type> a_tup2{ nullptr };
-
-    dango::tuple<dango::tuple<ptr_type const>> { dango::move(a_tup2) };
-  }
-  catch(int const& a_int)
-  {
-    printf("caught %i\n", a_int);
-  }
-
-  /*{
-    dango::tuple<dango::tuple<int&&>> a_tup{ 42 };
-
-    dango::tuple<dango::tuple<int>> a_copy{ a_tup };
-  }*/
-
   /*dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
