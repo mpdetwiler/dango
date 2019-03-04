@@ -797,8 +797,6 @@ final
   DANGO_UNINSTANTIABLE(make_tuple_storage_help)
 };
 
-#include <cstdio>
-
 /*** tuple ***/
 
 namespace
@@ -909,107 +907,25 @@ public:
 
   }
 
-  template
-  <
-    bool tp_enabled = (... && dango::is_copy_constructible<dango::tuple_value_type<tp_types>>),
-    dango::enable_if<tp_enabled> = dango::enable_val
-  >
   constexpr
   tuple(tuple const& a_tup)
-  noexcept((... && dango::is_noexcept_copy_constructible<dango::tuple_value_type<tp_types>>)):
-  m_storage{ a_tup.m_storage }
-  {
+  noexcept((... && dango::is_noexcept_copy_constructible<dango::tuple_value_type<tp_types>>)) = default;
 
-  }
-
-  template
-  <
-    bool tp_enabled = (... && dango::is_copy_constructible<dango::tuple_value_type<tp_types>>),
-    dango::enable_if<!tp_enabled> = dango::enable_val
-  >
-  constexpr
-  tuple(tuple const& a_tup)noexcept = delete;
-
-  template
-  <
-    bool tp_enabled = (... && dango::is_move_constructible<dango::tuple_value_type<tp_types>>),
-    dango::enable_if<tp_enabled> = dango::enable_val
-  >
   constexpr
   tuple(tuple&& a_tup)
-  noexcept((... && dango::is_noexcept_move_constructible<dango::tuple_value_type<tp_types>>)):
-  m_storage{ dango::move(a_tup.m_storage) }
-  {
-
-  }
-
-  template
-  <
-    bool tp_enabled = (... && dango::is_move_constructible<dango::tuple_value_type<tp_types>>),
-    dango::enable_if<!tp_enabled> = dango::enable_val
-  >
-  constexpr
-  tuple(tuple&& a_tup)noexcept = delete;
+  noexcept((... && dango::is_noexcept_move_constructible<dango::tuple_value_type<tp_types>>)) = default;
 
   ~tuple()noexcept = default;
 
-  template
-  <
-    bool tp_enabled =
-      (... && !dango::is_ref<dango::tuple_value_type<tp_types>>) &&
-      (... && dango::is_copy_assignable<dango::tuple_value_type<tp_types>>),
-    dango::enable_if<tp_enabled> = dango::enable_val
-  >
   constexpr auto
   operator =
   (tuple const& a_tup)&
-  noexcept((... && dango::is_noexcept_copy_assignable<dango::tuple_value_type<tp_types>>))->tuple&
-  {
-    m_storage = a_tup.m_storage;
+  noexcept((... && dango::is_noexcept_copy_assignable<dango::tuple_value_type<tp_types>>))->tuple& = default;
 
-    return *this;
-  }
-
-  template
-  <
-    bool tp_enabled =
-      (... && !dango::is_ref<dango::tuple_value_type<tp_types>>) &&
-      (... && dango::is_copy_assignable<dango::tuple_value_type<tp_types>>),
-    dango::enable_if<!tp_enabled> = dango::enable_val
-  >
-  constexpr auto
-  operator =
-  (tuple const& a_tup)&
-  noexcept = delete;
-
-  template
-  <
-    bool tp_enabled =
-      (... && !dango::is_ref<dango::tuple_value_type<tp_types>>) &&
-      (... && dango::is_move_assignable<dango::tuple_value_type<tp_types>>),
-    dango::enable_if<tp_enabled> = dango::enable_val
-  >
   constexpr auto
   operator =
   (tuple&& a_tup)&
-  noexcept((... && dango::is_noexcept_move_assignable<dango::tuple_value_type<tp_types>>))->tuple&
-  {
-    m_storage = dango::move(a_tup.m_storage);
-
-    return *this;
-  }
-
-  template
-  <
-    bool tp_enabled =
-      (... && !dango::is_ref<dango::tuple_value_type<tp_types>>) &&
-      (... && dango::is_move_assignable<dango::tuple_value_type<tp_types>>),
-    dango::enable_if<!tp_enabled> = dango::enable_val
-  >
-  constexpr auto
-  operator =
-  (tuple&& a_tup)&
-  noexcept = delete;
+  noexcept((... && dango::is_noexcept_move_assignable<dango::tuple_value_type<tp_types>>))->tuple& = default;
 
   template
   <

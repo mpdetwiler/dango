@@ -31,6 +31,12 @@ auto
 main
 ()noexcept(false)->dango::s_int
 {
+  {
+    dango::tuple<int, int> a_tup{ };
+
+    auto a_copy = a_tup;
+  }
+
   /*try
   {
     dango::tuple<int&&, immobile, int, float> const a_tup{ 5, 123, dango::skip_init, dango::value_init };
