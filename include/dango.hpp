@@ -15,5 +15,13 @@
 #include "dango-concurrent.hpp"
 #include "dango-global.hpp"
 
+#ifdef DANGO_SOURCE_FILE
+
+#include "dango-assert-source.hpp"
+#include "dango-mem-source.hpp"
+#include "dango-concurrent-source.hpp"
+
+#endif
+
 #endif
 
