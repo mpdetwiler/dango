@@ -4,34 +4,20 @@
 #include <tuple>
 #include <string>
 
-struct
-immobile
-final
-{
-public:
-  constexpr immobile()noexcept:m_int{ 42 }{ }
-  constexpr explicit immobile(int const a_int)noexcept(false):m_int{ a_int }{ if(a_int != 42){ throw a_int; } }
-  ~immobile()noexcept = default;
-private:
-  int const m_int;
-public:
-  DANGO_IMMOBILE(immobile)
-};
-
-struct
-thing
-{
-  int m_int;
-  float m_float;
-  double m_double;
-};
-
-#include <memory>
-
 auto
 main
 ()noexcept(false)->dango::s_int
 {
+  {
+    dango::tuple<int, int, int> a_tup{ };
+
+    dango::tuple<int const, int const, int const> a_tup2{ 1, 2, 3 };
+
+    a_tup = a_tup2;
+
+    a_tup->*[](int const a, int const b, int const c)noexcept->void{ printf("{ %i, %i, %i }\n", a, b, c); };
+  }
+
   /*dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
