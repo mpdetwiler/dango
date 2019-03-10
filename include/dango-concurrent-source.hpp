@@ -773,7 +773,7 @@ start_thread
 
   try
   {
-    return dango::thread::create(true, []()noexcept->void{ c_registry.thread_func(); });
+    return dango::thread::create_daemon([]()noexcept->void{ c_registry.thread_func(); });
   }
   catch(...)
   {
@@ -2343,7 +2343,7 @@ start_thread
 
   try
   {
-    return dango::thread::create(true, []()noexcept->void{ c_agent.thread_func(); });
+    return dango::thread::create_daemon([]()noexcept->void{ c_agent.thread_func(); });
   }
   catch(...)
   {

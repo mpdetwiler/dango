@@ -33,7 +33,6 @@ main
     a_thread =
     dango::thread::create
     (
-      false,
       [&a_mutex](dango::uint32 const a_id, dango::uint64 const a_start_tick)noexcept->void
       {
         dango_assert(!dango::thread::self().is_daemon());

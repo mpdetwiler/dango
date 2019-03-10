@@ -1195,11 +1195,11 @@ private:
 
   template
   <typename tp_func, typename... tp_args>
-  class thread_func_block;
+  class runnable;
 
   template
   <typename tp_func>
-  class thread_func_block<tp_func>;
+  class runnable<tp_func>;
 private:
   static auto new_control_block(bool)noexcept->control_block*;
   static auto thread_self_init(bool)noexcept->thread const&;
@@ -1223,6 +1223,28 @@ public:
   <typename tp_func, typename... tp_args>
   static auto
   create(bool, tp_func&&, tp_args&&...)noexcept(false)->
+  dango::enable_if
+  <
+    (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
+    dango::thread
+  >;
+
+  template
+  <typename tp_func, typename... tp_args>
+  static auto
+  create(tp_func&&, tp_args&&...)noexcept(false)->
+  dango::enable_if
+  <
+    (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
+    dango::thread
+  >;
+
+  template
+  <typename tp_func, typename... tp_args>
+  static auto
+  create_daemon(tp_func&&, tp_args&&...)noexcept(false)->
   dango::enable_if
   <
     (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
@@ -1418,14 +1440,14 @@ m_tail{ }
   m_tail.m_prev = &m_head;
 }
 
-/*** thread_func_block ***/
+/*** runnable ***/
 
 template
 <typename tp_func, typename... tp_args>
 class alignas(dango::cache_align_type)
 dango::
 thread::
-thread_func_block
+runnable
 final
 {
 public:
@@ -1433,19 +1455,20 @@ public:
   operator new
   (dango::usize const a_size)dango_new_noexcept(true)->void*
   {
-    return dango::operator_new(a_size, alignof(thread_func_block)).dismiss();
+    return dango::operator_new(a_size, alignof(runnable)).dismiss();
   }
+
   static void
   operator delete
   (void* const a_ptr, dango::usize const a_size)noexcept
   {
-    dango::operator_delete(a_ptr, a_size, alignof(thread_func_block));
+    dango::operator_delete(a_ptr, a_size, alignof(runnable));
   }
 public:
   template
   <typename tp_tp_func, typename... tp_tp_args>
   explicit constexpr
-  thread_func_block
+  runnable
   (tp_tp_func&& a_func, tp_tp_args&&... a_args)noexcept(false):
   m_func{ dango::forward<tp_tp_func>(a_func) },
   m_args{ dango::forward<tp_tp_args>(a_args)... }
@@ -1453,9 +1476,10 @@ public:
 
   }
 
-  ~thread_func_block()noexcept = default;
+  ~runnable()noexcept = default;
 
-  void call()noexcept(false)
+  constexpr void
+  run()noexcept(false)
   {
     m_args->*m_func;
   }
@@ -1463,8 +1487,8 @@ private:
   tp_func m_func;
   dango::tuple<tp_args...> m_args;
 public:
-  DANGO_DELETE_DEFAULT(thread_func_block)
-  DANGO_IMMOBILE(thread_func_block)
+  DANGO_DELETE_DEFAULT(runnable)
+  DANGO_IMMOBILE(runnable)
 };
 
 template
@@ -1472,7 +1496,7 @@ template
 class alignas(dango::cache_align_type)
 dango::
 thread::
-thread_func_block<tp_func>
+runnable<tp_func>
 final
 {
 public:
@@ -1480,36 +1504,38 @@ public:
   operator new
   (dango::usize const a_size)dango_new_noexcept(true)->void*
   {
-    return dango::operator_new(a_size, alignof(thread_func_block)).dismiss();
+    return dango::operator_new(a_size, alignof(runnable)).dismiss();
   }
+
   static void
   operator delete
   (void* const a_ptr, dango::usize const a_size)noexcept
   {
-    dango::operator_delete(a_ptr, a_size, alignof(thread_func_block));
+    dango::operator_delete(a_ptr, a_size, alignof(runnable));
   }
 public:
   template
   <typename tp_tp_func>
   explicit constexpr
-  thread_func_block
+  runnable
   (tp_tp_func&& a_func)noexcept(false):
   m_func{ dango::forward<tp_tp_func>(a_func) }
   {
 
   }
 
-  ~thread_func_block()noexcept = default;
+  ~runnable()noexcept = default;
 
-  void call()noexcept(false)
+  constexpr void
+  run()noexcept(false)
   {
     m_func();
   }
 private:
   tp_func m_func;
 public:
-  DANGO_DELETE_DEFAULT(thread_func_block)
-  DANGO_IMMOBILE(thread_func_block)
+  DANGO_DELETE_DEFAULT(runnable)
+  DANGO_IMMOBILE(runnable)
 };
 
 /*** thread ***/
@@ -1710,16 +1736,16 @@ dango::enable_if
   constexpr auto const acquire = dango::mem_order::acquire;
   constexpr auto const release = dango::mem_order::release;
 
-  using func_type = thread_func_block<dango::decay<tp_func>, dango::decay<tp_args>...>;
+  using run_type = runnable<dango::decay<tp_func>, dango::decay<tp_args>...>;
 
-  auto const a_func_block = new func_type{ dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)... };
+  auto const a_runnable = new run_type{ dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)... };
 
   auto a_guard =
   dango::make_guard
   (
-    [a_func_block]()noexcept->void
+    [a_runnable]()noexcept->void
     {
-      delete a_func_block;
+      delete a_runnable;
     }
   );
 
@@ -1730,7 +1756,7 @@ dango::enable_if
   auto a_func =
   [
     a_daemon,
-    a_func_block,
+    a_runnable,
     &a_ret,
     &a_starting
   ]
@@ -1743,27 +1769,63 @@ dango::enable_if
     auto const a_fin =
     dango::make_finally
     (
-      [a_func_block]()noexcept->void
+      [a_runnable]()noexcept->void
       {
-        delete a_func_block;
+        delete a_runnable;
       }
     );
 
-    a_func_block->call();
+    a_runnable->run();
   };
 
   start_thread(thread_start_address<decltype(a_func)>, &a_func);
 
-  auto a_count = detail::c_spin_count_init;
-
-  while(a_starting.load<acquire>())
   {
-    detail::spin_yield(a_count);
+    auto a_count = detail::c_spin_count_init;
+
+    while(a_starting.load<acquire>())
+    {
+      detail::spin_yield(a_count);
+    }
   }
 
   a_guard.dismiss();
 
   return a_ret;
+}
+
+template
+<typename tp_func, typename... tp_args>
+auto
+dango::
+thread::
+create
+(tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->
+dango::enable_if
+<
+  (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
+  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
+  dango::thread
+>
+{
+  return thread::create(false, dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)...);
+}
+
+template
+<typename tp_func, typename... tp_args>
+auto
+dango::
+thread::
+create_daemon
+(tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->
+dango::enable_if
+<
+  (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
+  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
+  dango::thread
+>
+{
+  return thread::create(true, dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)...);
 }
 
 template
