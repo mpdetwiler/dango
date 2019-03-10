@@ -32,8 +32,10 @@ dango::
 thread::
 control_block::
 control_block
-()noexcept:
+(bool const a_daemon)noexcept:
+control_elem{ },
 m_ref_count{ dango::usize(1) },
+m_daemon{ a_daemon },
 m_mutex{ },
 m_cond{ m_mutex },
 m_alive{ true },
@@ -113,6 +115,96 @@ is_alive
   }
 }
 
+/*** registry ***/
+
+void
+dango::
+thread::
+registry::
+regist
+(control_block* const a_elem)noexcept
+{
+  dango_crit(m_mutex)
+  {
+    dango_assert(a_elem != nullptr);
+    dango_assert(a_elem->m_prev == nullptr);
+    dango_assert(a_elem->m_next == nullptr);
+
+    auto const a_prev = m_tail.m_prev;
+    auto const a_next = &m_tail;
+
+    dango_assert(a_prev->m_next == a_next);
+    dango_assert(a_next->m_prev == a_prev);
+
+    a_elem->m_prev = a_prev;
+    a_elem->m_next = a_next;
+    a_next->m_prev = a_elem;
+    a_prev->m_next = a_elem;
+  }
+}
+
+void
+dango::
+thread::
+registry::
+unregist
+(control_block* const a_elem)noexcept
+{
+  dango_crit(m_mutex)
+  {
+    dango_assert(a_elem != nullptr);
+    dango_assert(a_elem->m_prev != nullptr);
+    dango_assert(a_elem->m_next != nullptr);
+
+    auto const a_prev = a_elem->m_prev;
+    auto const a_next = a_elem->m_next;
+
+    dango_assert(a_prev->m_next == a_elem);
+    dango_assert(a_next->m_prev == a_elem);
+
+    a_next->m_prev = a_prev;
+    a_prev->m_next = a_next;
+    a_elem->m_prev = nullptr;
+    a_elem->m_next = nullptr;
+  }
+}
+
+void
+dango::
+thread::
+registry::
+join_all
+()noexcept
+{
+  while(join_head());
+}
+
+auto
+dango::
+thread::
+registry::
+join_head
+()noexcept->bool
+{
+  dango::thread a_thread{ dango::null };
+
+  dango_crit(m_mutex)
+  {
+    if(m_head.m_next == &m_tail)
+    {
+      return false;
+    }
+
+    auto const a_control = static_cast<control_block*>(m_head.m_next);
+
+    a_thread = thread{ a_control };
+  }
+
+  a_thread.join();
+
+  return true;
+}
+
 /*** notifier ***/
 
 class
@@ -122,7 +214,7 @@ notifier
 final
 {
 public:
-  constexpr notifier(thread const&)noexcept;
+  notifier(thread const&)noexcept;
   ~notifier()noexcept;
 private:
   control_block* const m_control;
@@ -131,7 +223,6 @@ public:
   DANGO_IMMOBILE(notifier)
 };
 
-constexpr
 dango::
 thread::
 notifier::
@@ -139,7 +230,12 @@ notifier
 (thread const& a_thread)noexcept:
 m_control{ a_thread.m_control }
 {
+  if(m_control->is_daemon())
+  {
+    return;
+  }
 
+  dango::thread::s_registry.regist(m_control);
 }
 
 dango::
@@ -149,6 +245,13 @@ notifier::
 ()noexcept
 {
   m_control->notify_all();
+
+  if(m_control->is_daemon())
+  {
+    return;
+  }
+
+  dango::thread::s_registry.unregist(m_control);
 }
 
 /*** thread ***/
@@ -165,10 +268,19 @@ final
 dango::
 thread::
 thread
-(construct_tag const)noexcept:
-m_control{ new_control_block() }
+(construct_tag const, bool const a_daemon)noexcept:
+m_control{ new_control_block(a_daemon) }
 {
 
+}
+
+dango::
+thread::
+thread
+(control_block* const a_control)noexcept:
+m_control{ a_control }
+{
+  a_control->increment();
 }
 
 auto
@@ -208,11 +320,11 @@ auto
 dango::
 thread::
 new_control_block
-()noexcept->control_block*
+(bool const a_daemon)noexcept->control_block*
 {
   try
   {
-    return new control_block{ };
+    return new control_block{ a_daemon };
   }
   catch(...)
   {
@@ -227,10 +339,10 @@ new_control_block
 auto
 dango::
 thread::
-self
-()noexcept->thread const&
+thread_self_init
+(bool const a_daemon)noexcept->thread const&
 {
-  thread_local thread const t_thread{ construct_tag{ } };
+  thread_local thread const t_thread{ construct_tag{ }, a_daemon };
 
   thread_local notifier const t_notifier{ t_thread };
 
@@ -661,7 +773,7 @@ start_thread
 
   try
   {
-    return dango::thread::create([]()noexcept->void{ c_registry.thread_func(); });
+    return dango::thread::create(true, []()noexcept->void{ c_registry.thread_func(); });
   }
   catch(...)
   {
@@ -2231,7 +2343,7 @@ start_thread
 
   try
   {
-    return dango::thread::create([]()noexcept->void{ c_agent.thread_func(); });
+    return dango::thread::create(true, []()noexcept->void{ c_agent.thread_func(); });
   }
   catch(...)
   {

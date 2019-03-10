@@ -8,6 +8,8 @@ auto
 main
 ()noexcept(false)->dango::s_int
 {
+  auto const a_guard = dango::thread::main_join_finally();
+
   {
     dango::tuple<int, int, int> a_tup{ };
 
@@ -18,7 +20,9 @@ main
     a_tup->*[](int const a, int const b, int const c)noexcept->void{ printf("{ %i, %i, %i }\n", a, b, c); };
   }
 
-  /*dango::thread a_threads[10];
+  dango_assert(dango::thread::self().is_daemon());
+
+  dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
 
@@ -29,8 +33,11 @@ main
     a_thread =
     dango::thread::create
     (
+      false,
       [a_id, &a_mutex]()noexcept->void
       {
+        dango_assert(!dango::thread::self().is_daemon());
+
         auto a_tick = dango::get_tick_count();
         auto a_tick_sa = dango::get_tick_count_sa();
 
@@ -90,17 +97,12 @@ main
       }
     );
 
-    dango::invoker<decltype(&dango::thread::is_alive)> a_inv{ &dango::thread::is_alive };
-
-    static_assert(dango::is_noexcept_callable_ret<bool, decltype(a_inv), dango::thread const&>);
-    static_assert(dango::is_noexcept_callable_ret<bool, decltype(a_inv), dango::thread const*>);
-
-    dango_assert(a_inv(a_thread));
+    dango_assert(!a_thread.is_daemon());
 
     ++a_id;
   }
 
-  for(auto const& a_thread:a_threads)
+  /*for(auto const& a_thread:a_threads)
   {
     a_thread.join();
 
@@ -110,20 +112,5 @@ main
   }*/
 
   return 0;
-}
-
-auto
-test_func
-(dango::tuple<dango::uint32, dango::uint32, dango::uint64>& a_tup)noexcept->dango::uint32
-{
-  auto a_copy = dango::move(a_tup);
-
-  a_copy = a_copy;
-
-  a_copy.get<0>() += a_copy.get<1>();
-  a_copy.get<1>() += a_tup.get<0>();
-  a_tup.get<2>() = a_copy.get<1>();
-
-  return a_tup.get<0>();
 }
 

@@ -1185,31 +1185,35 @@ final
 {
 private:
   using thread_start_func = void(*)(void*)noexcept(false);
+  class control_elem;
+  class control_sentinel;
   class control_block;
+  class registry;
   class notifier;
   struct construct_tag;
 private:
-  static auto new_control_block()noexcept->control_block*;
-
-  static void
-  start_thread
-  (thread_start_func, void*)noexcept(false);
+  static auto new_control_block(bool)noexcept->control_block*;
+  static auto thread_self_init(bool)noexcept->thread const&;
+  static void start_thread(thread_start_func, void*)noexcept(false);
 
   template
   <typename tp_func>
   static void thread_start_address(void*)noexcept(false);
 
+  static registry s_registry;
   static thread const& s_main_init;
   static dango::uint64 const s_tick_count_init;
   static dango::uint64 const s_tick_count_sa_init;
 public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
+  static void main_join()noexcept;
+  [[nodiscard]] static auto main_join_finally()noexcept;
 
   template
   <typename tp_func>
   static auto
-  create(tp_func&&)noexcept(false)->
+  create(bool, tp_func&&)noexcept(false)->
   dango::enable_if
   <
     dango::is_callable_ret<void, dango::decay<tp_func>&> &&
@@ -1222,7 +1226,8 @@ public:
   static void sleep_sa(dango::uint64)noexcept;
   static void sleep_hr_sa(dango::uint64)noexcept;
 private:
-  thread(construct_tag)noexcept;
+  explicit thread(construct_tag, bool)noexcept;
+  explicit thread(control_block*)noexcept;
 public:
   constexpr thread()noexcept;
   constexpr thread(dango::null_tag)noexcept;
@@ -1236,10 +1241,51 @@ public:
   auto is_alive()const noexcept->bool;
   void join()const noexcept;
   void join(dango::timeout const&)const noexcept;
+  constexpr auto is_daemon()const noexcept->bool;
   constexpr auto dango_operator_is_null()const noexcept->bool;
   constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
 private:
   control_block* m_control;
+};
+
+/*** control_elem ***/
+
+class
+dango::
+thread::
+control_elem
+{
+  friend dango::thread::registry;
+protected:
+  constexpr
+  control_elem()noexcept:
+  m_prev{ nullptr },
+  m_next{ nullptr }
+  {
+
+  }
+  ~control_elem()noexcept = default;
+private:
+  control_elem* m_prev;
+  control_elem* m_next;
+public:
+  DANGO_IMMOBILE(control_elem)
+};
+
+/*** control_sentinel ***/
+
+class
+dango::
+thread::
+control_sentinel
+final:
+public dango::thread::control_elem
+{
+public:
+  constexpr control_sentinel()noexcept = default;
+  ~control_sentinel()noexcept = default;
+public:
+  DANGO_IMMOBILE(control_sentinel)
 };
 
 /*** control_block ***/
@@ -1248,13 +1294,14 @@ class
 dango::
 thread::
 control_block
-final
+final:
+public dango::thread::control_elem
 {
 public:
   static auto operator new(dango::usize)dango_new_noexcept(true)->void*;
   static void operator delete(void*)noexcept;
 public:
-  constexpr control_block()noexcept;
+  explicit constexpr control_block(bool)noexcept;
   ~control_block()noexcept;
   void increment()noexcept;
   auto decrement()noexcept->bool;
@@ -1262,13 +1309,16 @@ public:
   void wait(dango::timeout const&)noexcept;
   void notify_all()noexcept;
   auto is_alive()const noexcept->bool;
+  constexpr auto is_daemon()const noexcept->bool;
 private:
   dango::atomic<dango::usize> m_ref_count;
+  bool const m_daemon;
   mutable dango::mutex m_mutex;
   mutable dango::cond_var_mutex m_cond;
   bool m_alive;
   dango::usize m_waiter_count;
 public:
+  DANGO_DELETE_DEFAULT(control_block)
   DANGO_IMMOBILE(control_block)
 };
 
@@ -1296,7 +1346,9 @@ control_block::
 increment
 ()noexcept
 {
-  m_ref_count.add_fetch(dango::usize(1));
+  auto const a_prev = m_ref_count.fetch_add(dango::usize(1));
+
+  dango_assert(a_prev != dango::usize(0));
 }
 
 inline auto
@@ -1309,7 +1361,60 @@ decrement
   return m_ref_count.sub_fetch(dango::usize(1)) == dango::usize(0);
 }
 
+constexpr auto
+dango::
+thread::
+control_block::
+is_daemon
+()const noexcept->bool
+{
+  return m_daemon;
+}
+
+/*** registry ***/
+
+class
+dango::
+thread::
+registry
+final
+{
+public:
+  constexpr registry()noexcept;
+  ~registry()noexcept = default;
+  void regist(control_block*)noexcept;
+  void unregist(control_block*)noexcept;
+  void join_all()noexcept;
+private:
+  auto join_head()noexcept->bool;
+private:
+  dango::static_mutex m_mutex;
+  control_sentinel m_head;
+  control_sentinel m_tail;
+public:
+  DANGO_IMMOBILE(registry)
+};
+
+constexpr
+dango::
+thread::
+registry::
+registry
+()noexcept:
+m_mutex{ },
+m_head{ },
+m_tail{ }
+{
+  m_head.m_next = &m_tail;
+  m_tail.m_prev = &m_head;
+}
+
 /*** thread ***/
+
+inline dango::thread::registry
+dango::
+thread::
+s_registry{ };
 
 inline dango::thread const&
 dango::
@@ -1325,6 +1430,33 @@ inline dango::uint64 const
 dango::
 thread::
 s_tick_count_sa_init = dango::get_tick_count_sa();
+
+inline auto
+dango::
+thread::
+self
+()noexcept->thread const&
+{
+  return thread_self_init(true);
+}
+
+inline void
+dango::
+thread::
+main_join
+()noexcept
+{
+  dango::thread::s_registry.join_all();
+}
+
+inline auto
+dango::
+thread::
+main_join_finally
+()noexcept->auto
+{
+  return dango::make_finally(dango::thread::main_join);
+}
 
 constexpr
 dango::
@@ -1432,6 +1564,17 @@ operator bool
 constexpr auto
 dango::
 thread::
+is_daemon
+()const noexcept->bool
+{
+  dango_assert(m_control != nullptr);
+
+  return m_control->is_daemon();
+}
+
+constexpr auto
+dango::
+thread::
 dango_operator_is_null
 ()const noexcept->bool
 {
@@ -1453,7 +1596,7 @@ auto
 dango::
 thread::
 create
-(tp_func&& a_thread_func)noexcept(false)->
+(bool const a_daemon, tp_func&& a_thread_func)noexcept(false)->
 dango::enable_if
 <
   dango::is_callable_ret<void, dango::decay<tp_func>&> &&
@@ -1486,6 +1629,7 @@ dango::enable_if
 
   auto a_func =
   [
+    a_daemon,
     a_mem = a_mem.get(),
     &a_thread_func = *a_thread_func_ptr,
     &a_ret,
@@ -1493,7 +1637,7 @@ dango::enable_if
   ]
   ()noexcept(false)->void
   {
-    a_ret = dango::thread::self();
+    a_ret = thread_self_init(a_daemon);
 
     a_starting.store<release>(false);
 
