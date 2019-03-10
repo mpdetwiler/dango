@@ -26,7 +26,7 @@ main
 
   dango::mutex a_mutex{ };
 
-  auto a_id = dango::uint32(0);
+  auto a_count = dango::uint32(0);
 
   for(auto& a_thread:a_threads)
   {
@@ -34,9 +34,17 @@ main
     dango::thread::create
     (
       false,
-      [a_id, &a_mutex]()noexcept->void
+      [&a_mutex](dango::uint32 const a_id, dango::uint64 const a_start_tick)noexcept->void
       {
         dango_assert(!dango::thread::self().is_daemon());
+
+        fprintf
+        (
+          stderr,
+          "thread[%u] start tick: %llu\n",
+          dango::u_int(a_id),
+          dango::u_cent(a_start_tick)
+        );
 
         auto a_tick = dango::get_tick_count();
         auto a_tick_sa = dango::get_tick_count_sa();
@@ -94,12 +102,14 @@ main
           dango::u_cent(a_tick),
           dango::u_cent(a_tick_sa)
         );
-      }
+      },
+      a_count,
+      dango::get_tick_count()
     );
 
     dango_assert(!a_thread.is_daemon());
 
-    ++a_id;
+    ++a_count;
   }
 
   /*for(auto const& a_thread:a_threads)
