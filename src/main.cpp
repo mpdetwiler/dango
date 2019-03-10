@@ -4,6 +4,14 @@
 #include <tuple>
 #include <string>
 
+struct
+elem_test
+final:
+dango::list_elem<elem_test>
+{
+
+};
+
 auto
 main
 ()noexcept(false)->dango::s_int
@@ -19,6 +27,10 @@ main
 
     a_tup->*[](int const a, int const b, int const c)noexcept->void{ printf("{ %i, %i, %i }\n", a, b, c); };
   }
+
+  dango::list<elem_test> const a_list{ };
+
+  a_list.for_each([](elem_test const* const)noexcept->void{ });
 
   dango_assert(dango::thread::self().is_daemon());
 

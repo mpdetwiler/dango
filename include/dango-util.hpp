@@ -790,5 +790,170 @@ public:
   DANGO_DELETE_DEFAULT(invoker_help)
 };
 
+/*** list ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_elem>
+  class list_elem;
+
+  template
+  <
+    typename tp_elem,
+    bool tp_enabled =
+      !dango::is_const<tp_elem> &&
+      !dango::is_volatile<tp_elem> &&
+      !dango::is_array<tp_elem> &&
+      dango::is_object<tp_elem> &&
+      dango::is_base_of<dango::list_elem<tp_elem>, tp_elem>
+  >
+  class list;
+
+  template
+  <typename tp_elem>
+  class list<tp_elem, true>;
+}
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_elem>
+  class list_sentinel;
+}
+
+template
+<typename tp_elem>
+class
+dango::
+list_elem
+{
+  friend dango::list<tp_elem, true>;
+protected:
+  constexpr
+  list_elem()noexcept:
+  m_prev{ nullptr },
+  m_next{ nullptr }
+  {
+
+  }
+
+  ~list_elem()noexcept = default;
+private:
+  list_elem* m_prev;
+  list_elem* m_next;
+public:
+  DANGO_IMMOBILE(list_elem)
+};
+
+template
+<typename tp_elem>
+class
+dango::
+detail::
+list_sentinel
+final:
+public dango::list_elem<tp_elem>
+{
+private:
+  using super_type = dango::list_elem<tp_elem>;
+public:
+  constexpr
+  list_sentinel()noexcept:
+  super_type{ }
+  {
+
+  }
+
+  ~list_sentinel()noexcept = default;
+public:
+  DANGO_IMMOBILE(list_sentinel)
+};
+
+template
+<typename tp_elem>
+class
+dango::
+list<tp_elem, true>
+final
+{
+private:
+  using elem_ptr = tp_elem*;
+  using elem_const_ptr = tp_elem const*;
+  using elem_type = dango::list_elem<tp_elem>;
+  using sentinel_type = dango::detail::list_sentinel<tp_elem>;
+public:
+  static constexpr void remove(elem_ptr)noexcept;
+public:
+  constexpr
+  list()noexcept:
+  m_head{ },
+  m_tail{ }
+  {
+    m_head.m_next = &m_tail;
+    m_tail.m_prev = &m_head;
+  }
+  ~list()noexcept = default;
+  constexpr void insert_first(elem_ptr)noexcept;
+  constexpr void insert_last(elem_ptr)noexcept;
+  constexpr auto remove_first()noexcept->elem_ptr;
+  constexpr auto remove_last()noexcept->elem_ptr;
+  constexpr auto first()noexcept->elem_ptr;
+  constexpr auto last()noexcept->elem_ptr;
+  constexpr auto first()const noexcept->elem_const_ptr;
+  constexpr auto last()const noexcept->elem_const_ptr;
+
+  template
+  <typename tp_func>
+  constexpr auto
+  for_each
+  (tp_func&& a_func)noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>)->
+  dango::enable_if<is_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>, void>
+  {
+    elem_type* a_current = m_head.m_next;
+    elem_type const* const a_end = &m_tail;
+
+    while(a_current != a_end)
+    {
+      elem_type* const a_next = a_current->m_next;
+
+      auto const a_elem = static_cast<elem_ptr>(a_current);
+
+      a_func(a_elem);
+
+      a_current = a_next;
+    }
+  }
+
+  template
+  <typename tp_func>
+  constexpr auto
+  for_each
+  (tp_func&& a_func)const noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>)->
+  dango::enable_if<is_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>, void>
+  {
+    elem_type const* a_current = m_head.m_next;
+    elem_type const* const a_end = &m_tail;
+
+    while(a_current != a_end)
+    {
+      elem_type const* const a_next = a_current->m_next;
+
+      auto const a_elem = static_cast<elem_const_ptr>(a_current);
+
+      a_func(a_elem);
+
+      a_current = a_next;
+    }
+  }
+private:
+  sentinel_type m_head;
+  sentinel_type m_tail;
+public:
+  DANGO_IMMOBILE(list)
+};
+
 #endif
 
