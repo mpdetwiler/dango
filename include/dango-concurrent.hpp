@@ -1201,6 +1201,7 @@ public:
   create(bool, tp_func&&, tp_args&&...)noexcept(false)->
   dango::enable_if
   <
+    (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
     (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
     dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
     dango::thread
@@ -1212,6 +1213,7 @@ public:
   create(tp_func&&, tp_args&&...)noexcept(false)->
   dango::enable_if
   <
+    (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
     (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
     dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
     dango::thread
@@ -1223,6 +1225,7 @@ public:
   create_daemon(tp_func&&, tp_args&&...)noexcept(false)->
   dango::enable_if
   <
+    (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
     (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
     dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
     dango::thread
@@ -1663,6 +1666,7 @@ create
 (bool const a_daemon, tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->
 dango::enable_if
 <
+  (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
   (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
   dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
   dango::thread
@@ -1738,6 +1742,7 @@ create
 (tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->
 dango::enable_if
 <
+  (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
   (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
   dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
   dango::thread
@@ -1755,6 +1760,7 @@ create_daemon
 (tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->
 dango::enable_if
 <
+  (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
   (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
   dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
   dango::thread

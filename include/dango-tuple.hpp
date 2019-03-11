@@ -579,24 +579,24 @@ public:
   explicit constexpr
   tuple_storage
   (tuple_storage const&)
-  noexcept(dango::is_noexcept_copy_constructible<value_type> && dango::is_noexcept_copy_constructible<super_type>) = default;
+  noexcept((dango::is_noexcept_copy_constructible<value_type> && ... && dango::is_noexcept_copy_constructible<tp_next>)) = default;
 
   explicit constexpr
   tuple_storage
   (tuple_storage&&)
-  noexcept(dango::is_noexcept_move_constructible<value_type> && dango::is_noexcept_move_constructible<super_type>) = default;
+  noexcept((dango::is_noexcept_move_constructible<value_type> && ... && dango::is_noexcept_move_constructible<tp_next>)) = default;
 
   ~tuple_storage()noexcept = default;
 
   constexpr auto
   operator =
   (tuple_storage const&)&
-  noexcept(dango::is_noexcept_copy_assignable<value_type> && dango::is_noexcept_copy_assignable<super_type>)->tuple_storage& = default;
+  noexcept((dango::is_noexcept_copy_assignable<value_type> && ... && dango::is_noexcept_copy_assignable<tp_next>))->tuple_storage& = default;
 
   constexpr auto
   operator =
   (tuple_storage&&)&
-  noexcept(dango::is_noexcept_move_assignable<value_type> && dango::is_noexcept_move_assignable<super_type>)->tuple_storage& = default;
+  noexcept((dango::is_noexcept_move_assignable<value_type> && ... && dango::is_noexcept_move_assignable<tp_next>))->tuple_storage& = default;
 
   template
   <
@@ -782,10 +782,6 @@ dango::
 tuple
 final
 {
-  template
-  <typename... tp_tp_types>
-  friend class dango::tuple;
-
   static_assert
   (
     (... && dango::is_noexcept_destructible<dango::tuple_value_type<tp_types>>),
