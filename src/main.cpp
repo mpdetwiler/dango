@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <tuple>
 #include <string>
+#include <memory>
 
 struct
 elem_test
@@ -19,13 +20,13 @@ main
   auto const a_guard = dango::thread::main_join_finally();
 
   {
-    dango::tuple<int, int, int> a_tup{ };
+    int a_arr[] = { 1, 2, 3 };
 
-    dango::tuple<int const, int const, int const> a_tup2{ 1, 2, 3 };
+    dango::tuple<int&, int&, int&, std::unique_ptr<double>> a_tup{ a_arr[0], a_arr[1], a_arr[2], nullptr };
 
-    a_tup = a_tup2;
+    dango::tuple<int const&, int&, int&, std::unique_ptr<double>> a_tup2{ dango::move(a_tup) };
 
-    a_tup->*[](int const a, int const b, int const c)noexcept->void{ printf("{ %i, %i, %i }\n", a, b, c); };
+    //a_tup2->*[](int const a, int const b, int const c)noexcept->void{ printf("{ %i, %i, %i }\n", a, b, c); };
   }
 
   dango::intrusive_list<elem_test> const a_list{ };
