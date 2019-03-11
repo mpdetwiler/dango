@@ -1068,7 +1068,8 @@ public:
   <typename tp_func>
   constexpr auto
   for_each
-  (tp_func&& a_func)noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>)->
+  (tp_func&& a_func)
+  noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>)->
   dango::enable_if<is_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>, void>
   {
     elem_type* a_current = m_head.m_next;
@@ -1090,7 +1091,8 @@ public:
   <typename tp_func>
   constexpr auto
   for_each
-  (tp_func&& a_func)const noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>)->
+  (tp_func&& a_func)const
+  noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>)->
   dango::enable_if<is_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>, void>
   {
     elem_type const* a_current = m_head.m_next;
