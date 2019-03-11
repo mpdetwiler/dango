@@ -543,8 +543,7 @@ public:
     dango::enable_if
     <
       dango::is_equal(sizeof...(tp_next), sizeof...(tp_args)) &&
-      !detail::is_tuple_tag<tp_arg> &&
-      !dango::is_same<dango::remove_cvref<tp_arg>, tuple_storage>
+      !detail::is_tuple_tag<tp_arg>
     > = dango::enable_val
   >
   explicit constexpr
