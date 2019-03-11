@@ -770,41 +770,19 @@ super_type{ }
 namespace
 dango::detail
 {
-  class cond_var_elem;
   class cond_var_base;
   class cond_var_registry;
 }
-
-class
-dango::
-detail::
-cond_var_elem
-{
-  friend dango::detail::cond_var_registry;
-private:
-  using value_type = dango::detail::cond_var_elem*;
-protected:
-  constexpr cond_var_elem()noexcept:
-  m_prev{ nullptr },
-  m_next{ nullptr }
-  { }
-  ~cond_var_elem()noexcept = default;
-private:
-  value_type m_prev;
-  value_type m_next;
-public:
-  DANGO_IMMOBILE(cond_var_elem)
-};
 
 class alignas(dango::cache_align_type)
 dango::
 detail::
 cond_var_base:
-dango::detail::cond_var_elem
+public dango::intrusive_list_elem<cond_var_base>
 {
-  friend detail::cond_var_registry;
+  friend dango::detail::cond_var_registry;
 private:
-  using super_type = dango::detail::cond_var_elem;
+  using super_type = dango::intrusive_list_elem<cond_var_base>;
   class cond_var_impl;
   class locker;
   class try_locker;
@@ -1187,8 +1165,6 @@ final
 private:
   using thread_start_func = void(*)(void*)noexcept(false);
   struct construct_tag;
-  class control_elem;
-  class control_sentinel;
   class control_block;
   class registry;
   class notifier;
@@ -1279,46 +1255,6 @@ private:
   control_block* m_control;
 };
 
-/*** control_elem ***/
-
-class
-dango::
-thread::
-control_elem
-{
-  friend dango::thread::registry;
-protected:
-  constexpr
-  control_elem()noexcept:
-  m_prev{ nullptr },
-  m_next{ nullptr }
-  {
-
-  }
-  ~control_elem()noexcept = default;
-private:
-  control_elem* m_prev;
-  control_elem* m_next;
-public:
-  DANGO_IMMOBILE(control_elem)
-};
-
-/*** control_sentinel ***/
-
-class
-dango::
-thread::
-control_sentinel
-final:
-public dango::thread::control_elem
-{
-public:
-  constexpr control_sentinel()noexcept = default;
-  ~control_sentinel()noexcept = default;
-public:
-  DANGO_IMMOBILE(control_sentinel)
-};
-
 /*** control_block ***/
 
 class
@@ -1326,8 +1262,10 @@ dango::
 thread::
 control_block
 final:
-public dango::thread::control_elem
+public dango::intrusive_list_elem<control_block>
 {
+private:
+  using super_type = dango::intrusive_list_elem<control_block>;
 public:
   static auto operator new(dango::usize)dango_new_noexcept(true)->void*;
   static void operator delete(void*, dango::usize)noexcept;
@@ -1417,11 +1355,10 @@ public:
   void unregist(control_block*)noexcept;
   void join_all()noexcept;
 private:
-  auto join_head()noexcept->bool;
+  auto join_first()noexcept->bool;
 private:
   dango::static_mutex m_mutex;
-  control_sentinel m_head;
-  control_sentinel m_tail;
+  dango::intrusive_list<control_block> m_list;
 public:
   DANGO_IMMOBILE(registry)
 };
@@ -1433,11 +1370,9 @@ registry::
 registry
 ()noexcept:
 m_mutex{ },
-m_head{ },
-m_tail{ }
+m_list{ }
 {
-  m_head.m_next = &m_tail;
-  m_tail.m_prev = &m_head;
+
 }
 
 /*** runnable ***/
@@ -1854,26 +1789,9 @@ namespace
 dango::detail
 {
   class cond_var_registry;
-  class cond_var_sentinel;
   class cond_var_registry_thread;
   class cond_var_registry_access;
 }
-
-class
-dango::
-detail::
-cond_var_sentinel
-final:
-public dango::detail::cond_var_elem
-{
-private:
-  using super_type = dango::detail::cond_var_elem;
-public:
-  constexpr cond_var_sentinel()noexcept:super_type{ }{ }
-  ~cond_var_sentinel()noexcept = default;
-public:
-  DANGO_IMMOBILE(cond_var_sentinel)
-};
 
 class
 dango::
@@ -1884,9 +1802,9 @@ final
   friend dango::detail::cond_var_registry_access;
 private:
   using cond_type = dango::detail::cond_var_base;
+  using list_type = dango::intrusive_list<cond_type>;
 private:
   static void remove(cond_type*)noexcept;
-  static auto list_empty(detail::cond_var_sentinel const*, detail::cond_var_elem const*)noexcept->bool;
   static auto current_bias()noexcept->dango::uint64;
   static auto bias_okay(dango::uint64&)noexcept->bool;
 public:
@@ -1904,12 +1822,9 @@ private:
 private:
   dango::static_mutex m_mutex;
   dango::static_cond_var_mutex m_cond;
-  detail::cond_var_sentinel m_head_sentinel[dango::usize(2)];
-  detail::cond_var_sentinel m_tail_sentinel[dango::usize(2)];
-  detail::cond_var_sentinel* m_external_head;
-  detail::cond_var_sentinel* m_internal_head;
-  detail::cond_var_elem* m_external_tail;
-  detail::cond_var_elem* m_internal_tail;
+  list_type m_list[2];
+  list_type* m_external_list;
+  list_type* m_internal_list;
   bool m_alive;
   bool m_waiting;
 public:
@@ -1924,19 +1839,13 @@ cond_var_registry
 ()noexcept:
 m_mutex{ },
 m_cond{ m_mutex },
-m_head_sentinel{ { }, { } },
-m_tail_sentinel{ { }, { } },
-m_external_head{ &m_head_sentinel[0] },
-m_internal_head{ &m_head_sentinel[1] },
-m_external_tail{ &m_tail_sentinel[0] },
-m_internal_tail{ &m_tail_sentinel[1] },
+m_list{ { }, { } },
+m_external_list{ &m_list[0] },
+m_internal_list{ &m_list[1] },
 m_alive{ true },
 m_waiting{ false }
 {
-  m_head_sentinel[0].m_next = &m_tail_sentinel[0];
-  m_tail_sentinel[0].m_prev = &m_head_sentinel[0];
-  m_head_sentinel[1].m_next = &m_tail_sentinel[1];
-  m_tail_sentinel[1].m_prev = &m_head_sentinel[1];
+
 }
 
 class

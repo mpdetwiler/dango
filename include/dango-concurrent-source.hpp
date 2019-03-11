@@ -29,7 +29,7 @@ thread::
 control_block::
 control_block
 (bool const a_daemon)noexcept:
-control_elem{ },
+super_type{ },
 m_ref_count{ dango::usize(1) },
 m_daemon{ a_daemon },
 m_mutex{ },
@@ -122,20 +122,7 @@ regist
 {
   dango_crit(m_mutex)
   {
-    dango_assert(a_elem != nullptr);
-    dango_assert(a_elem->m_prev == nullptr);
-    dango_assert(a_elem->m_next == nullptr);
-
-    auto const a_prev = m_tail.m_prev;
-    auto const a_next = &m_tail;
-
-    dango_assert(a_prev->m_next == a_next);
-    dango_assert(a_next->m_prev == a_prev);
-
-    a_elem->m_prev = a_prev;
-    a_elem->m_next = a_next;
-    a_next->m_prev = a_elem;
-    a_prev->m_next = a_elem;
+    m_list.add_last(a_elem);
   }
 }
 
@@ -148,20 +135,7 @@ unregist
 {
   dango_crit(m_mutex)
   {
-    dango_assert(a_elem != nullptr);
-    dango_assert(a_elem->m_prev != nullptr);
-    dango_assert(a_elem->m_next != nullptr);
-
-    auto const a_prev = a_elem->m_prev;
-    auto const a_next = a_elem->m_next;
-
-    dango_assert(a_prev->m_next == a_elem);
-    dango_assert(a_next->m_prev == a_elem);
-
-    a_next->m_prev = a_prev;
-    a_prev->m_next = a_next;
-    a_elem->m_prev = nullptr;
-    a_elem->m_next = nullptr;
+    m_list.remove(a_elem);
   }
 }
 
@@ -172,26 +146,26 @@ registry::
 join_all
 ()noexcept
 {
-  while(join_head());
+  while(join_first());
 }
 
 auto
 dango::
 thread::
 registry::
-join_head
+join_first
 ()noexcept->bool
 {
   dango::thread a_thread{ dango::null };
 
   dango_crit(m_mutex)
   {
-    if(m_head.m_next == &m_tail)
+    if(m_list.is_empty())
     {
       return false;
     }
 
-    auto const a_control = static_cast<control_block*>(m_head.m_next);
+    auto const a_control = m_list.first();
 
     a_thread = thread{ a_control };
   }
@@ -555,20 +529,7 @@ cond_var_registry::
 add
 (cond_type* const a_cond)noexcept
 {
-  dango_assert(a_cond != nullptr);
-  dango_assert(a_cond->m_prev == nullptr);
-  dango_assert(a_cond->m_next == nullptr);
-
-  auto const a_prev = m_external_tail->m_prev;
-  auto const a_next = m_external_tail;
-
-  dango_assert(a_prev->m_next == a_next);
-  dango_assert(a_next->m_prev == a_prev);
-
-  a_cond->m_prev = a_prev;
-  a_cond->m_next = a_next;
-  a_next->m_prev = a_cond;
-  a_prev->m_next = a_cond;
+  m_external_list->add_last(a_cond);
 }
 
 void
@@ -578,20 +539,7 @@ cond_var_registry::
 remove
 (cond_type* const a_cond)noexcept
 {
-  dango_assert(a_cond != nullptr);
-  dango_assert(a_cond->m_prev != nullptr);
-  dango_assert(a_cond->m_next != nullptr);
-
-  auto const a_prev = a_cond->m_prev;
-  auto const a_next = a_cond->m_next;
-
-  dango_assert(a_prev->m_next == a_cond);
-  dango_assert(a_next->m_prev == a_cond);
-
-  a_next->m_prev = a_prev;
-  a_prev->m_next = a_next;
-  a_cond->m_prev = nullptr;
-  a_cond->m_next = nullptr;
+  list_type::remove(a_cond);
 }
 
 auto
@@ -605,7 +553,7 @@ wait_empty
   {
     do
     {
-      if(!list_empty(m_external_head, m_external_tail))
+      if(!m_external_list->is_empty())
       {
         break;
       }
@@ -640,7 +588,7 @@ poll_bias
   {
     do
     {
-      if(list_empty(m_external_head, m_external_tail))
+      if(m_external_list->is_empty())
       {
         return false;
       }
@@ -672,25 +620,14 @@ poll_bias
       return a_alive;
     }
 
-    dango::swap(m_external_head, m_internal_head);
-    dango::swap(m_external_tail, m_internal_tail);
+    dango::swap(m_external_list, m_internal_list);
 
-    dango_assert(list_empty(m_external_head, m_external_tail));
+    dango_assert(m_external_list->is_empty());
   }
 
   while(pop_internal());
 
   return a_alive;
-}
-
-auto
-dango::
-detail::
-cond_var_registry::
-list_empty
-(detail::cond_var_sentinel const* const a_head, detail::cond_var_elem const* const a_tail)noexcept->bool
-{
-  return a_head->m_next == a_tail;
 }
 
 auto
@@ -737,12 +674,12 @@ pop_internal
 {
   dango_crit(m_mutex)
   {
-    if(list_empty(m_internal_head, m_internal_tail))
+    if(m_internal_list->is_empty())
     {
       return false;
     }
 
-    auto const a_cond = static_cast<detail::cond_var_base*>(m_internal_head->m_next);
+    auto const a_cond = m_internal_list->first();
 
     dango_assert(a_cond->m_ref_count != dango::usize(0));
 

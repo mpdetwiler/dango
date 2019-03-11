@@ -7,7 +7,7 @@
 struct
 elem_test
 final:
-dango::list_elem<elem_test>
+dango::intrusive_list_elem<elem_test>
 {
 
 };
@@ -28,7 +28,7 @@ main
     a_tup->*[](int const a, int const b, int const c)noexcept->void{ printf("{ %i, %i, %i }\n", a, b, c); };
   }
 
-  dango::list<elem_test> const a_list{ };
+  dango::intrusive_list<elem_test> const a_list{ };
 
   a_list.for_each([](elem_test const* const)noexcept->void{ });
 
