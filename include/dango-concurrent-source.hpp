@@ -200,12 +200,10 @@ notifier
 (thread const& a_thread)noexcept:
 m_control{ a_thread.m_control }
 {
-  if(m_control->is_daemon())
+  if(!m_control->is_daemon())
   {
-    return;
+    dango::thread::s_registry.regist(m_control);
   }
-
-  dango::thread::s_registry.regist(m_control);
 }
 
 dango::
@@ -214,14 +212,12 @@ notifier::
 ~notifier
 ()noexcept
 {
-  m_control->notify_all();
-
-  if(m_control->is_daemon())
+  if(!m_control->is_daemon())
   {
-    return;
+    dango::thread::s_registry.unregist(m_control);
   }
 
-  dango::thread::s_registry.unregist(m_control);
+  m_control->notify_all();
 }
 
 /*** thread ***/
