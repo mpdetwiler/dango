@@ -246,7 +246,9 @@ thread
 (control_block* const a_control)noexcept:
 m_control{ a_control }
 {
-  a_control->increment();
+  dango_assert(m_control != nullptr);
+
+  m_control->increment();
 }
 
 auto
@@ -1932,10 +1934,10 @@ wait
     return;
   }
 
-  constexpr auto& c_agent = detail::windows_timer_agent_access::s_agent;
+  constexpr auto& c_manager = detail::windows_timer_res_access::s_manager;
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
-  c_agent.activate(a_timeout);
+  c_manager.activate(a_timeout);
 
   c_registry.regist(this, a_timeout);
 
@@ -1943,7 +1945,7 @@ wait
 
   c_registry.unregist(this, a_timeout);
 
-  c_agent.deactivate(a_timeout);
+  c_manager.deactivate(a_timeout);
 }
 
 void
@@ -2047,12 +2049,12 @@ yield
   Sleep(DWORD(0));
 }
 
-/*** windows_timer_agent ***/
+/*** windows_timer_res_manager ***/
 
 void
 dango::
 detail::
-windows_timer_agent::
+windows_timer_res_manager::
 activate
 (dango::timeout const& a_timeout)noexcept
 {
@@ -2096,7 +2098,7 @@ activate
 void
 dango::
 detail::
-windows_timer_agent::
+windows_timer_res_manager::
 deactivate
 (dango::timeout const& a_timeout)noexcept
 {
@@ -2129,7 +2131,7 @@ deactivate
 void
 dango::
 detail::
-windows_timer_agent::
+windows_timer_res_manager::
 notify_exit
 ()noexcept
 {
@@ -2147,7 +2149,7 @@ notify_exit
 void
 dango::
 detail::
-windows_timer_agent::
+windows_timer_res_manager::
 thread_func
 ()noexcept
 {
@@ -2181,7 +2183,7 @@ thread_func
 auto
 dango::
 detail::
-windows_timer_agent::
+windows_timer_res_manager::
 wait
 ()noexcept->bool
 {
@@ -2216,7 +2218,7 @@ wait
 auto
 dango::
 detail::
-windows_timer_agent::
+windows_timer_res_manager::
 timed_wait
 (dango::timeout const& a_timeout)noexcept->bool
 {
@@ -2259,25 +2261,25 @@ timed_wait
   return false;
 }
 
-/*** windows_timer_agent_thread ***/
+/*** windows_timer_res_daemon ***/
 
 auto
 dango::
 detail::
-windows_timer_agent_thread::
+windows_timer_res_daemon::
 start_thread
 ()noexcept->dango::thread
 {
-  constexpr auto& c_agent = detail::windows_timer_agent_access::s_agent;
+  constexpr auto& c_manager = detail::windows_timer_res_access::s_manager;
 
   try
   {
-    return dango::thread::create_daemon([]()noexcept->void{ c_agent.thread_func(); });
+    return dango::thread::create_daemon([]()noexcept->void{ c_manager.thread_func(); });
   }
   catch(...)
   {
 #ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg("windows timer agent thread creation failed");
+    dango_unreachable_msg("windows timer-res manager thread creation failed");
 #else
     dango::terminate();
 #endif
@@ -2286,8 +2288,8 @@ start_thread
 
 dango::
 detail::
-windows_timer_agent_thread::
-windows_timer_agent_thread
+windows_timer_res_daemon::
+windows_timer_res_daemon
 ()noexcept:
 m_thread{ start_thread() }
 {
@@ -2296,13 +2298,13 @@ m_thread{ start_thread() }
 
 dango::
 detail::
-windows_timer_agent_thread::
-~windows_timer_agent_thread
+windows_timer_res_daemon::
+~windows_timer_res_daemon
 ()noexcept
 {
-  constexpr auto& c_agent = detail::windows_timer_agent_access::s_agent;
+  constexpr auto& c_manager = detail::windows_timer_res_access::s_manager;
 
-  c_agent.notify_exit();
+  c_manager.notify_exit();
 
   m_thread.join();
 }

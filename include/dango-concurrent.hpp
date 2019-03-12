@@ -1899,31 +1899,31 @@ dango::detail
 
 #ifdef _WIN32
 
-/*** windows_timer_agent ***/
+/*** windows_timer_res_manager ***/
 
 namespace
 dango::detail
 {
-  class windows_timer_agent;
-  class windows_timer_agent_thread;
-  class windows_timer_agent_access;
+  class windows_timer_res_manager;
+  class windows_timer_res_daemon;
+  class windows_timer_res_access;
 }
 
 class
 dango::
 detail::
-windows_timer_agent
+windows_timer_res_manager
 final
 {
-  friend dango::detail::windows_timer_agent_access;
+  friend dango::detail::windows_timer_res_access;
 public:
   void activate(dango::timeout const&)noexcept;
   void deactivate(dango::timeout const&)noexcept;
   void notify_exit()noexcept;
   void thread_func()noexcept;
 private:
-  constexpr windows_timer_agent()noexcept;
-  ~windows_timer_agent()noexcept = default;
+  constexpr windows_timer_res_manager()noexcept;
+  ~windows_timer_res_manager()noexcept = default;
   auto wait()noexcept->bool;
   auto timed_wait(dango::timeout const&)noexcept->bool;
 private:
@@ -1935,14 +1935,14 @@ private:
   dango::uint32 m_min_period;
   dango::usize m_req_count;
 public:
-  DANGO_IMMOBILE(windows_timer_agent)
+  DANGO_IMMOBILE(windows_timer_res_manager)
 };
 
 constexpr
 dango::
 detail::
-windows_timer_agent::
-windows_timer_agent
+windows_timer_res_manager::
+windows_timer_res_manager
 ()noexcept:
 m_mutex{ },
 m_cond{ m_mutex },
@@ -1958,44 +1958,44 @@ m_req_count{ dango::usize(0) }
 class
 dango::
 detail::
-windows_timer_agent_access
+windows_timer_res_access
 final
 {
-  friend dango::detail::windows_timer_agent_thread;
+  friend dango::detail::windows_timer_res_daemon;
   friend dango::detail::cond_var_base;
 private:
-  static dango::detail::windows_timer_agent s_agent;
+  static dango::detail::windows_timer_res_manager s_manager;
 public:
-  DANGO_UNINSTANTIABLE(windows_timer_agent_access)
+  DANGO_UNINSTANTIABLE(windows_timer_res_access)
 };
 
-inline dango::detail::windows_timer_agent
+inline dango::detail::windows_timer_res_manager
 dango::
 detail::
-windows_timer_agent_access::
-s_agent{ };
+windows_timer_res_access::
+s_manager{ };
 
 class
 dango::
 detail::
-windows_timer_agent_thread
+windows_timer_res_daemon
 final
 {
 private:
   static auto start_thread()noexcept->dango::thread;
 public:
-  windows_timer_agent_thread()noexcept;
-  ~windows_timer_agent_thread()noexcept;
+  windows_timer_res_daemon()noexcept;
+  ~windows_timer_res_daemon()noexcept;
 private:
   dango::thread const m_thread;
 public:
-  DANGO_IMMOBILE(windows_timer_agent_thread)
+  DANGO_IMMOBILE(windows_timer_res_daemon)
 };
 
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL_INLINE_CV(s_windows_timer_agent_thread, const, detail::windows_timer_agent_thread{ })
+  DANGO_DEFINE_GLOBAL_INLINE_CV(s_windows_timer_res_daemon, const, detail::windows_timer_res_daemon{ })
 }
 
 #endif
