@@ -159,180 +159,6 @@ dango::enable_if<dango::is_int<tp_int>, bool>
   return tp_int(a_arg & (a_arg - tp_int(1))) == tp_int(0);
 }
 
-/*** min max ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  constexpr auto
-  min
-  (tp_type)noexcept->
-  dango::enable_if
-  <
-    dango::is_arithmetic<tp_type>,
-    dango::remove_cv<tp_type>
-  >;
-
-  template
-  <typename tp_type>
-  constexpr auto
-  min
-  (tp_type, tp_type)noexcept->
-  dango::enable_if
-  <
-    dango::is_arithmetic<tp_type>,
-    dango::remove_cv<tp_type>
-  >;
-
-  template
-  <typename tp_type, typename... tp_types>
-  constexpr auto
-  min
-  (tp_type, tp_type, tp_types...)
-  noexcept->
-  dango::enable_if
-  <
-    (dango::is_arithmetic<tp_type> && ... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
-    dango::remove_cv<tp_type>
-  >;
-
-  template
-  <typename tp_type>
-  constexpr auto
-  max
-  (tp_type)noexcept->
-  dango::enable_if
-  <
-    dango::is_arithmetic<tp_type>,
-    dango::remove_cv<tp_type>
-  >;
-
-  template
-  <typename tp_type>
-  constexpr auto
-  max
-  (tp_type, tp_type)noexcept->
-  dango::enable_if
-  <
-    dango::is_arithmetic<tp_type>,
-    dango::remove_cv<tp_type>
-  >;
-
-  template
-  <typename tp_type, typename... tp_types>
-  constexpr auto
-  max
-  (tp_type, tp_type, tp_types...)
-  noexcept->
-  dango::enable_if
-  <
-    (dango::is_arithmetic<tp_type> && ... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
-    dango::remove_cv<tp_type>
-  >;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-min
-(tp_type const a_arg)noexcept->
-dango::enable_if
-<
-  dango::is_arithmetic<tp_type>,
-  dango::remove_cv<tp_type>
->
-{
-  return a_arg;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-min
-(tp_type const a_arg1, tp_type const a_arg2)noexcept->
-dango::enable_if
-<
-  dango::is_arithmetic<tp_type>,
-  dango::remove_cv<tp_type>
->
-{
-  return a_arg1 < a_arg2 ? a_arg1 : a_arg2;
-}
-
-template
-<typename tp_type, typename... tp_types>
-constexpr auto
-dango::
-min
-(
-  tp_type const a_arg1,
-  tp_type const a_arg2,
-  tp_types... a_args
-)
-noexcept->
-dango::enable_if
-<
-  (dango::is_arithmetic<tp_type> && ... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
-  dango::remove_cv<tp_type>
->
-{
-  return dango::min(a_arg1, dango::min(a_arg2, a_args...));
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-max
-(tp_type const a_arg)noexcept->
-dango::enable_if
-<
-  dango::is_arithmetic<tp_type>,
-  dango::remove_cv<tp_type>
->
-{
-  return a_arg;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-max
-(tp_type const a_arg1, tp_type const a_arg2)noexcept->
-dango::enable_if
-<
-  dango::is_arithmetic<tp_type>,
-  dango::remove_cv<tp_type>
->
-{
-  return a_arg1 > a_arg2 ? a_arg1 : a_arg2;
-}
-
-template
-<typename tp_type, typename... tp_types>
-constexpr auto
-dango::
-max
-(
-  tp_type const a_arg1,
-  tp_type const a_arg2,
-  tp_types... a_args
-)
-noexcept->
-dango::enable_if
-<
-  (dango::is_arithmetic<tp_type> && ... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
-  dango::remove_cv<tp_type>
->
-{
-  return dango::max(a_arg1, dango::max(a_arg2, a_args...));
-}
-
 /*** is_equal is_lesser is_greater is_lequal is_gequal ***/
 
 namespace
@@ -393,6 +219,188 @@ DANGO_DEFINE_COMPARISON_FUNC(lequal, <= )
 DANGO_DEFINE_COMPARISON_FUNC(gequal, >= )
 
 #undef DANGO_DEFINE_COMPARISON_FUNC
+
+/*** min max ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto
+  min
+  (tp_type)noexcept->
+  dango::enable_if
+  <
+    dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
+    dango::remove_cv<tp_type>
+  >;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  min
+  (tp_type, tp_type)noexcept->
+  dango::enable_if
+  <
+    dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
+    dango::remove_cv<tp_type>
+  >;
+
+  template
+  <typename tp_type, typename... tp_types>
+  constexpr auto
+  min
+  (tp_type, tp_type, tp_types...)
+  noexcept->
+  dango::enable_if
+  <
+    !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
+    (dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
+    (... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
+    dango::remove_cv<tp_type>
+  >;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  max
+  (tp_type)noexcept->
+  dango::enable_if
+  <
+    dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
+    dango::remove_cv<tp_type>
+  >;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  max
+  (tp_type, tp_type)noexcept->
+  dango::enable_if
+  <
+    dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
+    dango::remove_cv<tp_type>
+  >;
+
+  template
+  <typename tp_type, typename... tp_types>
+  constexpr auto
+  max
+  (tp_type, tp_type, tp_types...)
+  noexcept->
+  dango::enable_if
+  <
+    !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
+    (dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
+    (... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
+    dango::remove_cv<tp_type>
+  >;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+min
+(tp_type const a_arg)noexcept->
+dango::enable_if
+<
+  dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
+  dango::remove_cv<tp_type>
+>
+{
+  return a_arg;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+min
+(tp_type const a_arg1, tp_type const a_arg2)noexcept->
+dango::enable_if
+<
+  dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
+  dango::remove_cv<tp_type>
+>
+{
+  return a_arg1 < a_arg2 ? a_arg1 : a_arg2;
+}
+
+template
+<typename tp_type, typename... tp_types>
+constexpr auto
+dango::
+min
+(
+  tp_type const a_arg1,
+  tp_type const a_arg2,
+  tp_types... a_args
+)
+noexcept->
+dango::enable_if
+<
+  !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
+  (dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
+  (... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
+  dango::remove_cv<tp_type>
+>
+{
+  return dango::min(a_arg1, dango::min(a_arg2, a_args...));
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+max
+(tp_type const a_arg)noexcept->
+dango::enable_if
+<
+  dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
+  dango::remove_cv<tp_type>
+>
+{
+  return a_arg;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+max
+(tp_type const a_arg1, tp_type const a_arg2)noexcept->
+dango::enable_if
+<
+  dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
+  dango::remove_cv<tp_type>
+>
+{
+  return a_arg1 > a_arg2 ? a_arg1 : a_arg2;
+}
+
+template
+<typename tp_type, typename... tp_types>
+constexpr auto
+dango::
+max
+(
+  tp_type const a_arg1,
+  tp_type const a_arg2,
+  tp_types... a_args
+)
+noexcept->
+dango::enable_if
+<
+  !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
+  (dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
+  (... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
+  dango::remove_cv<tp_type>
+>
+{
+  return dango::max(a_arg1, dango::max(a_arg2, a_args...));
+}
 
 /*** logical ***/
 

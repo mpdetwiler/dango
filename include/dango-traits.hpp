@@ -1255,29 +1255,6 @@ dango
   constexpr bool const is_class = __is_class(tp_type);
 }
 
-/*** is_ptr ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_ptr_help = false;
-
-  template
-  <typename tp_type>
-  constexpr bool const is_ptr_help<tp_type*> = true;
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_ptr =
-    detail::is_ptr_help<dango::remove_cv<tp_type>>;
-}
-
 /*** is_lvalue_ref ***/
 
 namespace
@@ -1329,6 +1306,101 @@ dango
     dango::is_same<tp_type const volatile, dango::remove_cv<tp_type>>;
 }
 
+/*** is_ptr ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_ptr_help = false;
+
+  template
+  <typename tp_type>
+  constexpr bool const is_ptr_help<tp_type*> = true;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_ptr =
+    detail::is_ptr_help<dango::remove_cv<tp_type>>;
+}
+
+/*** is_func_ptr ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_func_ptr_help = false;
+
+  template
+  <typename tp_type>
+  constexpr bool const is_func_ptr_help<tp_type*> =
+    dango::is_func<tp_type>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_func_ptr =
+    detail::is_func_ptr_help<dango::remove_cv<tp_type>>;
+}
+
+/*** is_object_ptr ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_object_ptr_help = false;
+
+  template
+  <typename tp_type>
+  constexpr bool const is_object_ptr_help<tp_type*> =
+    !dango::is_void<tp_type> && !dango::is_func<tp_type>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_object_ptr =
+    detail::is_object_ptr_help<dango::remove_cv<tp_type>>;
+}
+
+/*** is_void_ptr ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_void_ptr_help = false;
+
+  template
+  <typename tp_type>
+  constexpr bool const is_void_ptr_help<tp_type*> =
+    dango::is_void<tp_type>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_void_ptr =
+    detail::is_void_ptr_help<dango::remove_cv<tp_type>>;
+}
+
 /*** is_member_ptr ***/
 
 namespace
@@ -1375,14 +1447,14 @@ namespace dango
     detail::is_member_func_ptr_help<dango::remove_cv<tp_type>>;
 }
 
-/*** is_member_data_ptr ***/
+/*** is_member_object_ptr ***/
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_member_data_ptr =
+  constexpr bool const is_member_object_ptr =
     dango::is_member_ptr<tp_type> && !dango::is_member_func_ptr<tp_type>;
 }
 
