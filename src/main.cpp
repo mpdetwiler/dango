@@ -5,13 +5,43 @@
 #include <string>
 #include <memory>
 
-struct
-elem_test
-final:
-dango::intrusive_list_elem<elem_test>
-{
+thread_local char t_string[] = "abcdefghijklmnopqrstuvwxyzABCEDFGHIJKLMNOPQRSTUVWXYZ0123456789";
+thread_local char t_string2[] = "12345";
 
+struct
+string_accessor
+final
+{
+  string_accessor()noexcept
+  {
+    printf("ctor: string=%p\n", (void const*)(&t_string[0]));
+    printf("ctor: %s\n", t_string);
+  }
+
+  ~string_accessor()noexcept
+  {
+    dango::thread::create_daemon([]()noexcept->void{ printf("dtor thread\n"); }).join();
+
+    printf("dtor: string=%p string2=%p\n", (void const*)(&t_string[0]), (void const*)(&t_string2[0]));
+
+    printf("dtor string2: %s\n", t_string2);
+
+    t_string2[0] = 'X';
+    t_string2[1] = 'Y';
+    t_string2[2] = 'Z';
+
+    printf("dtor string2: %s\n", t_string2);
+
+    printf("dtor: %s\n", t_string);
+
+    t_string2[20] = '$';
+
+    printf("dtor: %s\n", t_string);
+  }
 };
+
+
+static string_accessor const s_access{ };
 
 auto
 main
@@ -19,7 +49,7 @@ main
 {
   auto const a_guard = dango::thread::main_join_finally();
 
-  {
+  /*{
     int a_arr[] = { 1, 2, 3 };
 
     dango::tuple<int&&, int&, int, std::unique_ptr<double>> a_tup{ dango::move(a_arr[0]), a_arr[1], a_arr[2], nullptr };
@@ -28,10 +58,6 @@ main
 
     a_tup2->*[](int const a, int const b, int const c, auto const&)noexcept->void{ printf("{ %i, %i, %i }\n", a, b, c); };
   }
-
-  dango::intrusive_list<elem_test> const a_list{ };
-
-  a_list.for_each([](elem_test const* const)noexcept->void{ });
 
   dango_assert(dango::thread::self().is_daemon());
 
@@ -122,7 +148,7 @@ main
     dango_assert(!a_thread.is_daemon());
 
     ++a_count;
-  }
+  }*/
 
   /*for(auto const& a_thread:a_threads)
   {
