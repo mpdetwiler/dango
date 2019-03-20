@@ -36,6 +36,7 @@ flags = [
 #	'-S',
 #	'-Ofast',
 # '-v',
+#  '-fsanitize=address',
 	'-flto',
 	'-O2',
 	'-std=c++17',

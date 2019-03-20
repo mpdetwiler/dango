@@ -32,9 +32,9 @@ final
 
     printf("dtor string2: %s\n", t_string2);
 
-    printf("dtor: %s\n", t_string);
+    t_string2[3] = '@';
 
-    t_string2[20] = '$';
+    t_string[0] = '$';
 
     printf("dtor: %s\n", t_string);
   }
@@ -49,7 +49,7 @@ main
 {
   auto const a_guard = dango::thread::main_join_finally();
 
-  /*{
+  {
     int a_arr[] = { 1, 2, 3 };
 
     dango::tuple<int&&, int&, int, std::unique_ptr<double>> a_tup{ dango::move(a_arr[0]), a_arr[1], a_arr[2], nullptr };
@@ -61,7 +61,7 @@ main
 
   dango_assert(dango::thread::self().is_daemon());
 
-  dango::thread a_threads[10];
+  /*dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
 
