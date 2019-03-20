@@ -244,12 +244,14 @@ noexcept
     detail::assert_fail_log(a_expr, a_msg, a_loc);
 
     __builtin_trap();
+
+    while(true);
   }
 }
 
 #ifndef DANGO_NO_DEBUG
-#define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond, "")
-#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), #cond, "", loc)
+#define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond, nullptr)
+#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), #cond, nullptr, loc)
 #define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), #cond, msg)
 #define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), #cond, msg, loc)
 #else

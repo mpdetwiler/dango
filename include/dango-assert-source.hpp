@@ -32,12 +32,27 @@ get_assert_log_handler
   return assert_cpp::s_assert_log_handler.load();
 }
 
+#include <cstdio>
+
 void
 dango::
 detail::
 assert_fail_once
 ()noexcept
 {
+  thread_local bool t_recursion = false;
+
+  if(t_recursion)
+  {
+    fprintf(stderr, "assertion failure entered recursively\n");
+
+    __builtin_trap();
+
+    while(true);
+  }
+
+  t_recursion = true;
+
   static dango::atomic<bool> s_assert_fail_once{ false };
 
   auto const a_spin = s_assert_fail_once.exchange<dango::mem_order::acquire>(true);
@@ -47,8 +62,6 @@ assert_fail_once
     detail::thread_yield();
   }
 }
-
-#include <stdio.h>
 
 void
 dango::
@@ -61,15 +74,30 @@ default_assert_log_handler
 )
 noexcept
 {
+  if(a_msg)
+  {
+    fprintf
+    (
+      stderr,
+      "%s[%u]: %s: assertion \"%s\" failed:\n%s\n",
+      a_loc.file(),
+      dango::u_int(a_loc.line()),
+      a_loc.function(),
+      a_expr,
+      a_msg
+    );
+
+    return;
+  }
+
   fprintf
   (
     stderr,
-    "%s[%u] %s: assertion[%s] failed: %s\n",
+    "%s[%u]: %s: assertion \"%s\" failed\n",
     a_loc.file(),
     dango::u_int(a_loc.line()),
     a_loc.function(),
-    a_expr,
-    a_msg
+    a_expr
   );
 }
 

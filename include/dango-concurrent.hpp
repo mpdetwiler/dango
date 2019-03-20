@@ -7,6 +7,7 @@
 #include "dango-mem.hpp"
 #include "dango-global.hpp"
 #include "dango-tuple.hpp"
+#include "dango-intrusive-list.hpp"
 
 /*** get_tick_count ***/
 
@@ -1777,6 +1778,7 @@ thread::
 thread_start_address
 (void* const a_data)noexcept(false)
 {
+  static_assert(!dango::is_ref<tp_func>);
   static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
   static_assert(dango::is_noexcept_move_constructible<tp_func>);
   static_assert(dango::is_callable_ret<void, tp_func const&>);
@@ -1784,7 +1786,7 @@ thread_start_address
 
   auto const a_func_ptr = static_cast<tp_func*>(a_data);
 
-  auto const a_func = dango::move(*a_func_ptr);
+  tp_func const a_func = dango::move(*a_func_ptr);
 
   a_func();
 }
