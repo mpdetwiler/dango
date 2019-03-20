@@ -1918,6 +1918,17 @@ windows_timer_res_manager
 final
 {
   friend dango::detail::windows_timer_res_access;
+private:
+  enum class
+  timer_state:
+  dango::uint8
+  {
+    ACTIVATED, DEACTIVATING, DEACTIVATED
+  };
+private:
+  static auto query_min_period()noexcept->dango::uint32;
+  static void begin_period()noexcept;
+  static void end_period()noexcept;
 public:
   void activate(dango::timeout const&)noexcept;
   void deactivate(dango::timeout const&)noexcept;
@@ -1933,8 +1944,7 @@ private:
   dango::static_cond_var_mutex m_cond;
   bool m_alive;
   bool m_waiting;
-  bool m_active;
-  dango::uint32 m_min_period;
+  timer_state m_timer_state;
   dango::usize m_req_count;
 public:
   DANGO_IMMOBILE(windows_timer_res_manager)
@@ -1950,8 +1960,7 @@ m_mutex{ },
 m_cond{ m_mutex },
 m_alive{ true },
 m_waiting{ false },
-m_active{ false },
-m_min_period{ dango::uint32(0) },
+m_timer_state{ timer_state::DEACTIVATED },
 m_req_count{ dango::usize(0) }
 {
 

@@ -2052,6 +2052,84 @@ yield
 
 /*** windows_timer_res_manager ***/
 
+auto
+dango::
+detail::
+windows_timer_res_manager::
+query_min_period
+()noexcept->dango::uint32
+{
+  constexpr auto c_query =
+  []()noexcept->dango::uint32
+  {
+      TIMECAPS a_caps;
+
+      auto const a_error = timeGetDevCaps(&a_caps, sizeof(a_caps));
+
+      if(a_error == MMSYSERR_NOERROR)
+      {
+        return dango::uint32(a_caps.wPeriodMin);
+      }
+
+#ifndef DANGO_NO_DEBUG
+      dango_unreachable_msg("timeGetDevCaps failed");
+#else
+      dango::terminate();
+#endif
+  };
+
+  static auto const a_period = c_query();
+
+  return a_period;
+}
+
+void
+dango::
+detail::
+windows_timer_res_manager::
+begin_period
+()noexcept
+{
+  auto const a_period = query_min_period();
+
+  auto const a_error = timeBeginPeriod(UINT(a_period));
+
+  if(a_error == TIMERR_NOERROR)
+  {
+    return;
+  }
+
+#ifndef DANGO_NO_DEBUG
+  dango_unreachable_msg("timeBeginPeriod failed");
+#else
+  dango::terminate();
+#endif
+}
+
+void
+dango::
+detail::
+windows_timer_res_manager::
+end_period
+()noexcept
+{
+  auto const a_period = query_min_period();
+
+  auto const a_error = timeEndPeriod(UINT(a_period));
+
+  if(a_error == TIMERR_NOERROR)
+  {
+    return;
+  }
+
+#ifndef DANGO_NO_DEBUG
+  dango_unreachable_msg("timeEndPeriod failed");
+#else
+  dango::terminate();
+#endif
+}
+
+
 void
 dango::
 detail::
@@ -2068,26 +2146,19 @@ activate
   {
     if(m_req_count++ != dango::usize(0))
     {
+      dango_assert(m_timer_state == timer_state::ACTIVATED);
+
       return;
     }
 
-    if(m_min_period == dango::uint32(0))
+    dango_assert(m_timer_state != timer_state::ACTIVATED);
+
+    if(m_timer_state == timer_state::DEACTIVATED)
     {
-      TIMECAPS a_caps;
-
-      timeGetDevCaps(&a_caps, sizeof(a_caps));
-
-      auto const a_min = dango::uint32(a_caps.wPeriodMin);
-
-      m_min_period = dango::max(dango::uint32(1), a_min);
+      begin_period();
     }
 
-    if(!m_active)
-    {
-      m_active = true;
-
-      timeBeginPeriod(m_min_period);
-    }
+    m_timer_state = timer_state::ACTIVATED;
 
     if(m_waiting)
     {
@@ -2110,17 +2181,23 @@ deactivate
 
   dango_crit(m_cond)
   {
+    dango_assert(m_timer_state == timer_state::ACTIVATED);
+
     if(--m_req_count != dango::usize(0))
     {
       return;
     }
 
-    if(!m_alive && m_active)
+    if(!m_alive)
     {
-      m_active = false;
+      end_period();
 
-      timeEndPeriod(m_min_period);
+      m_timer_state = timer_state::DEACTIVATED;
+
+      return;
     }
+
+    m_timer_state = timer_state::DEACTIVATING;
 
     if(m_waiting)
     {
@@ -2138,7 +2215,16 @@ notify_exit
 {
   dango_crit(m_cond)
   {
+    dango_assert(m_alive);
+
     m_alive = false;
+
+    if(m_timer_state == timer_state::DEACTIVATING)
+    {
+      end_period();
+
+      m_timer_state = timer_state::DEACTIVATED;
+    }
 
     if(m_waiting)
     {
@@ -2169,16 +2255,6 @@ thread_func
     }
   }
   while(true);
-
-  dango_crit(m_mutex)
-  {
-    if(m_active && m_req_count == dango::usize(0))
-    {
-      m_active = false;
-
-      timeEndPeriod(m_min_period);
-    }
-  }
 }
 
 auto
@@ -2192,14 +2268,12 @@ wait
   {
     do
     {
-      dango_assert(dango::logical_implication(m_req_count != dango::uint32(0), m_active));
-
       if(!m_alive)
       {
         return true;
       }
 
-      if(m_active && m_req_count == dango::usize(0))
+      if(m_timer_state == timer_state::DEACTIVATING)
       {
         break;
       }
@@ -2227,14 +2301,12 @@ timed_wait
   {
     do
     {
-      dango_assert(dango::logical_implication(m_req_count != dango::uint32(0), m_active));
-
       if(!m_alive)
       {
         return true;
       }
 
-      if(m_req_count != dango::usize(0))
+      if(m_timer_state != timer_state::DEACTIVATING)
       {
         return false;
       }
@@ -2252,11 +2324,11 @@ timed_wait
     }
     while(true);
 
-    dango_assert(m_active);
+    dango_assert(m_timer_state == timer_state::DEACTIVATING);
 
-    m_active = false;
+    end_period();
 
-    timeEndPeriod(m_min_period);
+    m_timer_state = timer_state::DEACTIVATED;
   }
 
   return false;
