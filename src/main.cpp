@@ -5,44 +5,6 @@
 #include <string>
 #include <memory>
 
-thread_local char t_string[] = "abcdefghijklmnopqrstuvwxyzABCEDFGHIJKLMNOPQRSTUVWXYZ0123456789";
-thread_local char t_string2[] = "12345";
-
-struct
-string_accessor
-final
-{
-  string_accessor()noexcept
-  {
-    printf("ctor: string=%p\n", (void const*)(&t_string[0]));
-    printf("ctor: %s\n", t_string);
-  }
-
-  ~string_accessor()noexcept
-  {
-    dango::thread::create_daemon([]()noexcept->void{ printf("dtor thread\n"); }).join();
-
-    printf("dtor: string=%p string2=%p\n", (void const*)(&t_string[0]), (void const*)(&t_string2[0]));
-
-    printf("dtor string2: %s\n", t_string2);
-
-    t_string2[0] = 'X';
-    t_string2[1] = 'Y';
-    t_string2[2] = 'Z';
-
-    printf("dtor string2: %s\n", t_string2);
-
-    t_string2[3] = '@';
-
-    t_string[0] = '$';
-
-    printf("dtor: %s\n", t_string);
-  }
-};
-
-
-static string_accessor const s_access{ };
-
 auto
 main
 ()noexcept(false)->dango::s_int
@@ -61,7 +23,7 @@ main
 
   dango_assert(dango::thread::self().is_daemon());
 
-  /*dango::thread a_threads[10];
+  dango::thread a_threads[10];
 
   dango::mutex a_mutex{ };
 
@@ -72,17 +34,9 @@ main
     a_thread =
     dango::thread::create
     (
-      [&a_mutex](dango::uint32 const a_id, dango::uint64 const a_start_tick)noexcept->void
+      [&a_mutex](dango::uint32 const a_id)noexcept->void
       {
         dango_assert(!dango::thread::self().is_daemon());
-
-        fprintf
-        (
-          stderr,
-          "thread[%u] start tick: %llu\n",
-          dango::u_int(a_id),
-          dango::u_cent(a_start_tick)
-        );
 
         auto a_tick = dango::get_tick_count();
         auto a_tick_sa = dango::get_tick_count_sa();
@@ -141,14 +95,13 @@ main
           dango::u_cent(a_tick_sa)
         );
       },
-      a_count,
-      dango::get_tick_count()
+      a_count
     );
 
     dango_assert(!a_thread.is_daemon());
 
     ++a_count;
-  }*/
+  }
 
   /*for(auto const& a_thread:a_threads)
   {
