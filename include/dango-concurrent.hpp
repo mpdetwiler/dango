@@ -1906,10 +1906,24 @@ dango::detail
 namespace
 dango::detail
 {
+  class windows_timer_res_access;
   class windows_timer_res_manager;
   class windows_timer_res_daemon;
-  class windows_timer_res_access;
 }
+
+class
+dango::
+detail::
+windows_timer_res_access
+final
+{
+  friend dango::detail::windows_timer_res_daemon;
+  friend dango::detail::cond_var_base;
+private:
+  static dango::detail::windows_timer_res_manager s_manager;
+public:
+  DANGO_UNINSTANTIABLE(windows_timer_res_access)
+};
 
 class
 dango::
@@ -1926,7 +1940,7 @@ private:
     ACTIVATED, DEACTIVATING, DEACTIVATED
   };
 private:
-  static auto query_min_period()noexcept->dango::uint32;
+  static auto min_period()noexcept->dango::uint32;
   static void begin_period()noexcept;
   static void end_period()noexcept;
 public:
@@ -1945,46 +1959,10 @@ private:
   bool m_alive;
   bool m_waiting;
   timer_state m_timer_state;
-  dango::usize m_req_count;
+  dango::usize m_count;
 public:
   DANGO_IMMOBILE(windows_timer_res_manager)
 };
-
-constexpr
-dango::
-detail::
-windows_timer_res_manager::
-windows_timer_res_manager
-()noexcept:
-m_mutex{ },
-m_cond{ m_mutex },
-m_alive{ true },
-m_waiting{ false },
-m_timer_state{ timer_state::DEACTIVATED },
-m_req_count{ dango::usize(0) }
-{
-
-}
-
-class
-dango::
-detail::
-windows_timer_res_access
-final
-{
-  friend dango::detail::windows_timer_res_daemon;
-  friend dango::detail::cond_var_base;
-private:
-  static dango::detail::windows_timer_res_manager s_manager;
-public:
-  DANGO_UNINSTANTIABLE(windows_timer_res_access)
-};
-
-inline dango::detail::windows_timer_res_manager
-dango::
-detail::
-windows_timer_res_access::
-s_manager{ };
 
 class
 dango::

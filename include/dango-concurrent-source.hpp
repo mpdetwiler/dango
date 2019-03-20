@@ -1936,6 +1936,7 @@ wait
   }
 
   constexpr auto& c_manager = detail::windows_timer_res_access::s_manager;
+
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
   c_manager.activate(a_timeout);
@@ -2050,13 +2051,37 @@ yield
   Sleep(DWORD(0));
 }
 
+/*** windows_timer_res_access ***/
+
+constexpr
+dango::
+detail::
+windows_timer_res_manager::
+windows_timer_res_manager
+()noexcept:
+m_mutex{ },
+m_cond{ m_mutex },
+m_alive{ true },
+m_waiting{ false },
+m_timer_state{ timer_state::DEACTIVATED },
+m_count{ dango::usize(0) }
+{
+
+}
+
+dango::detail::windows_timer_res_manager
+dango::
+detail::
+windows_timer_res_access::
+s_manager{ };
+
 /*** windows_timer_res_manager ***/
 
 auto
 dango::
 detail::
 windows_timer_res_manager::
-query_min_period
+min_period
 ()noexcept->dango::uint32
 {
   constexpr auto c_query =
@@ -2078,9 +2103,9 @@ query_min_period
 #endif
   };
 
-  static auto const a_period = c_query();
+  static auto const s_period = c_query();
 
-  return a_period;
+  return s_period;
 }
 
 void
@@ -2090,7 +2115,7 @@ windows_timer_res_manager::
 begin_period
 ()noexcept
 {
-  auto const a_period = query_min_period();
+  auto const a_period = min_period();
 
   auto const a_error = timeBeginPeriod(UINT(a_period));
 
@@ -2113,7 +2138,7 @@ windows_timer_res_manager::
 end_period
 ()noexcept
 {
-  auto const a_period = query_min_period();
+  auto const a_period = min_period();
 
   auto const a_error = timeEndPeriod(UINT(a_period));
 
@@ -2129,7 +2154,6 @@ end_period
 #endif
 }
 
-
 void
 dango::
 detail::
@@ -2144,7 +2168,7 @@ activate
 
   dango_crit(m_cond)
   {
-    if(m_req_count++ != dango::usize(0))
+    if(m_count++ != dango::usize(0))
     {
       dango_assert(m_timer_state == timer_state::ACTIVATED);
 
@@ -2156,7 +2180,13 @@ activate
     if(m_timer_state == timer_state::DEACTIVATED)
     {
       begin_period();
+
+      m_timer_state = timer_state::ACTIVATED;
+
+      return;
     }
+
+    dango_assert(m_timer_state == timer_state::DEACTIVATING);
 
     m_timer_state = timer_state::ACTIVATED;
 
@@ -2183,7 +2213,7 @@ deactivate
   {
     dango_assert(m_timer_state == timer_state::ACTIVATED);
 
-    if(--m_req_count != dango::usize(0))
+    if(--m_count != dango::usize(0))
     {
       return;
     }
