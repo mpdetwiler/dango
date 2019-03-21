@@ -18,6 +18,30 @@ dango
   auto get_tick_count_sa()noexcept->dango::uint64;
 }
 
+namespace
+dango::detail
+{
+  auto tick_count_suspend_bias(dango::uint64*)noexcept->dango::uint64;
+}
+
+inline auto
+dango::
+get_tick_count()noexcept->dango::uint64
+{
+  dango::uint64 a_bias;
+
+  auto const a_tick_count_sa = detail::tick_count_suspend_bias(&a_bias);
+
+  return a_tick_count_sa - a_bias;
+}
+
+inline auto
+dango::
+get_tick_count_sa()noexcept->dango::uint64
+{
+  return detail::tick_count_suspend_bias(nullptr);
+}
+
 /*** timeout ***/
 
 namespace
@@ -35,7 +59,7 @@ protected:
 protected:
   static constexpr auto safe_add(value_type, value_type)noexcept->value_type;
 protected:
-  constexpr timeout(value_type)noexcept;
+  explicit constexpr timeout(value_type)noexcept;
 public:
   virtual ~timeout()noexcept = default;
   auto has_expired()const noexcept->bool;
@@ -169,7 +193,7 @@ public:
   static auto make(value_type)noexcept->timeout_impl;
   static auto make_rel(value_type)noexcept->timeout_impl;
 protected:
-  constexpr timeout_impl(value_type)noexcept;
+  explicit constexpr timeout_impl(value_type)noexcept;
 public:
   virtual ~timeout_impl()noexcept override = default;
   virtual auto is_suspend_aware()const noexcept->bool override final;
@@ -265,7 +289,7 @@ public:
   static auto make(value_type)noexcept->timeout_impl_hr;
   static auto make_rel(value_type)noexcept->timeout_impl_hr;
 private:
-  constexpr timeout_impl_hr(value_type)noexcept;
+  explicit constexpr timeout_impl_hr(value_type)noexcept;
 public:
   virtual ~timeout_impl_hr()noexcept override = default;
   virtual auto requires_high_resolution()const noexcept->bool override;
@@ -339,7 +363,7 @@ public:
   static auto make(value_type)noexcept->timeout_impl_sa;
   static auto make_rel(value_type)noexcept->timeout_impl_sa;
 protected:
-  constexpr timeout_impl_sa(value_type)noexcept;
+  explicit constexpr timeout_impl_sa(value_type)noexcept;
 public:
   virtual ~timeout_impl_sa()noexcept override = default;
   virtual auto is_suspend_aware()const noexcept->bool override final;
@@ -435,7 +459,7 @@ public:
   static auto make(value_type)noexcept->timeout_impl_hr_sa;
   static auto make_rel(value_type)noexcept->timeout_impl_hr_sa;
 private:
-  constexpr timeout_impl_hr_sa(value_type)noexcept;
+  explicit constexpr timeout_impl_hr_sa(value_type)noexcept;
 public:
   virtual ~timeout_impl_hr_sa()noexcept override = default;
   virtual auto requires_high_resolution()const noexcept->bool override;
@@ -1189,7 +1213,6 @@ private:
   static registry s_registry;
   static thread const& s_main_init;
   static dango::uint64 const s_tick_count_init;
-  static dango::uint64 const s_tick_count_sa_init;
 public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
@@ -1232,10 +1255,11 @@ public:
     dango::thread
   >;
 
-  static void sleep(dango::uint64)noexcept;
-  static void sleep_hr(dango::uint64)noexcept;
-  static void sleep_sa(dango::uint64)noexcept;
-  static void sleep_hr_sa(dango::uint64)noexcept;
+  static void sleep(dango::timeout const&)noexcept;
+  static void sleep_rel(dango::uint64)noexcept;
+  static void sleep_rel_hr(dango::uint64)noexcept;
+  static void sleep_rel_sa(dango::uint64)noexcept;
+  static void sleep_rel_hr_sa(dango::uint64)noexcept;
 private:
   explicit thread(construct_tag, bool)noexcept;
   explicit thread(control_block*)noexcept;
@@ -1493,11 +1517,6 @@ inline dango::uint64 const
 dango::
 thread::
 s_tick_count_init = dango::get_tick_count();
-
-inline dango::uint64 const
-dango::
-thread::
-s_tick_count_sa_init = dango::get_tick_count_sa();
 
 inline auto
 dango::

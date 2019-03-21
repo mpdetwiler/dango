@@ -44,13 +44,13 @@ main
         fprintf
         (
           stderr,
-          "thread[%u] sleep_hr... (%llu) (%llu)\n",
+          "thread[%u] sleep_rel_hr... (%llu) (%llu)\n",
           dango::u_int(a_id),
           dango::u_cent(a_tick),
           dango::u_cent(a_tick_sa)
         );
 
-        dango::thread::sleep_hr(30'000);
+        dango::thread::sleep_rel_hr(30'000);
 
         a_tick = dango::get_tick_count();
         a_tick_sa = dango::get_tick_count_sa();
@@ -58,13 +58,13 @@ main
         fprintf
         (
           stderr,
-          "thread[%u] sleep_hr_sa... (%llu) (%llu)\n",
+          "thread[%u] sleep_rel_hr_sa... (%llu) (%llu)\n",
           dango::u_int(a_id),
           dango::u_cent(a_tick),
           dango::u_cent(a_tick_sa)
         );
 
-        dango::thread::sleep_hr_sa(30'000);
+        dango::thread::sleep_rel_hr_sa(30'000);
 
         a_tick = dango::get_tick_count();
         a_tick_sa = dango::get_tick_count_sa();
@@ -72,7 +72,7 @@ main
         fprintf
         (
           stderr,
-          "thread[%u] serial sleep... (%llu) (%llu)\n",
+          "thread[%u] serial sleep_rel... (%llu) (%llu)\n",
           dango::u_int(a_id),
           dango::u_cent(a_tick),
           dango::u_cent(a_tick_sa)
@@ -80,7 +80,7 @@ main
 
         dango_crit(a_mutex)
         {
-          dango::thread::sleep(5'000);
+          dango::thread::sleep_rel(5'000);
         }
 
         a_tick = dango::get_tick_count();
