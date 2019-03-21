@@ -715,8 +715,9 @@ cond_var_registry_thread::
 namespace
 dango::concurrent_cpp
 {
-  static auto tick_count(clockid_t)noexcept->dango::uint64;
-  static auto suspend_bias_tick_count_sa(dango::uint64&)noexcept->dango::uint64;
+  static auto tick_count_help(clockid_t)noexcept->dango::uint64;
+  static auto suspend_bias_help(dango::uint64&)noexcept->dango::uint64;
+  static auto tick_count_suspend_bias_help(dango::uint64&)noexcept->dango::uint64;
 }
 
 auto
@@ -725,30 +726,14 @@ detail::
 tick_count_suspend_bias
 (dango::uint64* const a_suspend_bias)noexcept->dango::uint64
 {
-  constexpr auto const c_impl =
-  [](dango::uint64& a_bias)noexcept->dango::uint64
-  {
-    dango::uint64 a_count;
-
-    do
-    {
-      a_bias = concurrent_cpp::suspend_bias_tick_count_sa(a_count);
-    }
-    while(a_bias != concurrent_cpp::suspend_bias_tick_count_sa(a_count));
-
-    return a_count;
-  };
-
   static auto s_init_bias_mutable = dango::uint64(0);
-  static auto const s_init_count = c_impl(s_init_bias_mutable);
+  static auto const s_init_count = concurrent_cpp::tick_count_suspend_bias_help(s_init_bias_mutable);
 
   constexpr auto const& c_init_bias = s_init_bias_mutable;
 
   dango::uint64 a_bias;
 
-  auto const a_count = c_impl(a_bias);
-
-  a_bias = dango::max(a_bias, c_init_bias);
+  auto const a_count = concurrent_cpp::tick_count_suspend_bias_help(a_bias);
 
   dango_assert(a_bias >= c_init_bias);
 
@@ -1483,7 +1468,7 @@ decrement
 static auto
 dango::
 concurrent_cpp::
-tick_count
+tick_count_help
 (clockid_t const a_clock)noexcept->dango::uint64
 {
   using u64 = dango::uint64;
@@ -1507,16 +1492,57 @@ tick_count
 static auto
 dango::
 concurrent_cpp::
-suspend_bias_tick_count_sa
+suspend_bias_help
 (dango::uint64& a_tick_count_sa)noexcept->dango::uint64
 {
-  auto const a_tick_count = concurrent_cpp::tick_count(CLOCK_MONOTONIC);
+  using u64 = dango::uint64;
 
-  a_tick_count_sa = concurrent_cpp::tick_count(CLOCK_BOOTTIME);
+  u64 x0;
+  u64 x1;
 
-  dango_assert(a_tick_count_sa >= a_tick_count);
+  {
+    u64 y0;
+    u64 y1;
 
-  return a_tick_count_sa - a_tick_count;
+    do
+    {
+      x0 = concurrent_cpp::tick_count_help(CLOCK_MONOTONIC);
+      x1 = concurrent_cpp::tick_count_help(CLOCK_BOOTTIME);
+
+      y0 = concurrent_cpp::tick_count_help(CLOCK_MONOTONIC);
+      y1 = concurrent_cpp::tick_count_help(CLOCK_BOOTTIME);
+    }
+    while((x0 != y0) || (x1 != y1));
+  }
+
+  dango_assert(x1 >= x0);
+
+  a_tick_count_sa = x1;
+
+  return x1 - x0;
+}
+
+static auto
+dango::
+concurrent_cpp::
+tick_count_suspend_bias_help
+(dango::uint64& a_bias)noexcept->dango::uint64
+{
+  static dango::spin_mutex s_lock{ };
+  static auto s_prev = dango::uint64(0);
+
+  dango::uint64 a_count;
+
+  dango_crit(s_lock)
+  {
+    a_bias = concurrent_cpp::suspend_bias_help(a_count);
+
+    a_bias = dango::max(a_bias, s_prev);
+
+    s_prev = a_bias;
+  }
+
+  return a_count;
 }
 
 template
@@ -1678,8 +1704,6 @@ tick_count_suspend_bias
 
     a_result = s_current;
   }
-
-  a_bias = dango::max(a_bias, c_init_bias);
 
   dango_assert(a_bias >= c_init_bias);
 
