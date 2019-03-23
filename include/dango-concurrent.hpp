@@ -37,9 +37,7 @@ dango::
 get_tick_count
 ()noexcept->dango::uint64
 {
-  constexpr auto const c_index = dango::usize(0);
-
-  auto const a_init = detail::init_tick_count().get<c_index>();
+  auto const a_init = detail::init_tick_count().first();
 
   auto const a_count = detail::tick_count();
 
@@ -51,9 +49,7 @@ dango::
 get_tick_count_sa
 ()noexcept->dango::uint64
 {
-  constexpr auto const c_index = dango::usize(1);
-
-  auto const a_init = detail::init_tick_count().get<c_index>();
+  auto const a_init = detail::init_tick_count().second();
 
   auto const a_count = detail::tick_count_sa();
 
@@ -65,9 +61,7 @@ dango::
 get_suspend_bias
 ()noexcept->dango::uint64
 {
-  constexpr auto const c_index = dango::usize(2);
-
-  auto const a_init = detail::init_tick_count().get<c_index>();
+  auto const a_init = detail::init_tick_count().third();
 
   auto const a_count = detail::suspend_bias();
 

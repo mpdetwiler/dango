@@ -773,6 +773,10 @@ dango
 
   template<>
   class tuple<>;
+
+  template
+  <typename tp_first, typename tp_second>
+  using pair = dango::tuple<tp_first, tp_second>;
 }
 
 template
@@ -917,6 +921,13 @@ public:
     return get<dango::usize(0)>();
   }
 
+  constexpr auto
+  first
+  ()const noexcept->decltype(auto)
+  {
+    return get<dango::usize(0)>();
+  }
+
   template
   <
     dango::usize tp_tuple_size = sizeof...(tp_types),
@@ -932,11 +943,35 @@ public:
   template
   <
     dango::usize tp_tuple_size = sizeof...(tp_types),
+    dango::enable_if<dango::is_gequal(tp_tuple_size, dango::usize(2))> = dango::enable_val
+  >
+  constexpr auto
+  second
+  ()const noexcept->decltype(auto)
+  {
+    return get<dango::usize(1)>();
+  }
+
+  template
+  <
+    dango::usize tp_tuple_size = sizeof...(tp_types),
     dango::enable_if<dango::is_gequal(tp_tuple_size, dango::usize(3))> = dango::enable_val
   >
   constexpr auto
   third
   ()noexcept->decltype(auto)
+  {
+    return get<dango::usize(2)>();
+  }
+
+  template
+  <
+    dango::usize tp_tuple_size = sizeof...(tp_types),
+    dango::enable_if<dango::is_gequal(tp_tuple_size, dango::usize(3))> = dango::enable_val
+  >
+  constexpr auto
+  third
+  ()const noexcept->decltype(auto)
   {
     return get<dango::usize(2)>();
   }

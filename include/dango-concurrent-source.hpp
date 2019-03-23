@@ -1686,7 +1686,7 @@ spin_relax
 namespace
 dango::concurrent_cpp
 {
-  using time_spec = dango::tuple<dango::uint64, dango::uint32>;
+  using time_spec = dango::pair<dango::uint64, dango::uint64>;
 
   static auto perf_freq()noexcept->dango::uint64;
   static auto perf_count()noexcept->dango::uint64;
@@ -2602,7 +2602,8 @@ perf_count_suspend_bias
 {
   using u64 = dango::uint64;
 
-  static auto& s_bias_ref = *reinterpret_cast<ULONGLONG const volatile*>(dango::uintptr(0x7FFE0000 + 0x3B0));
+  static auto& s_bias_ref =
+    *reinterpret_cast<ULONGLONG const volatile*>(dango::uintptr(0x7FFE0000 + 0x3B0));
 
   u64 a_bias;
   u64 a_count;
@@ -2625,7 +2626,6 @@ concurrent_cpp::
 time_spec_from_perf
 (dango::uint64 const a_count, dango::uint64 const a_freq)noexcept->concurrent_cpp::time_spec
 {
-  using u32 = dango::uint32;
   using u64 = dango::uint64;
 
   constexpr auto const c_billion = u64(1'000'000'000);
@@ -2633,7 +2633,7 @@ time_spec_from_perf
   auto const a_div = a_count / a_freq;
   auto const a_mod = a_count % a_freq;
 
-  return concurrent_cpp::time_spec{ a_div, u32((a_mod * c_billion) / a_freq) };
+  return concurrent_cpp::time_spec{ a_div, (a_mod * c_billion) / a_freq };
 }
 
 static void
@@ -2642,31 +2642,22 @@ concurrent_cpp::
 time_spec_add
 (concurrent_cpp::time_spec& a_spec, concurrent_cpp::time_spec const& a_add)noexcept
 {
-  using u32 = dango::uint32;
   using u64 = dango::uint64;
 
   constexpr auto const c_billion = u64(1'000'000'000);
-  constexpr auto const c_sec = dango::usize(0);
-  constexpr auto const c_nsec = dango::usize(1);
 
-  dango_assert(u64(a_spec.get<c_nsec>()) < c_billion);
-  dango_assert(u64(a_add.get<c_nsec>()) < c_billion);
+  dango_assert(a_spec.second() < c_billion);
+  dango_assert(a_add.second() < c_billion);
 
-  u64 a_sec = a_spec.get<c_sec>();
-  u64 a_nsec = u64(a_spec.get<c_nsec>());
+  a_spec.first() += a_add.first();
+  a_spec.second() += a_add.second();
 
-  a_sec += a_add.get<c_sec>();
-  a_nsec += u64(a_add.get<c_nsec>());
+  auto const a_overflow = u64(a_spec.second() >= c_billion);
 
-  auto const a_overflow = u64(a_nsec >= c_billion);
+  a_spec.first() += a_overflow;
+  a_spec.second() -= a_overflow * c_billion;
 
-  a_sec += a_overflow;
-  a_nsec -= a_overflow * c_billion;
-
-  dango_assert(a_nsec < c_billion);
-
-  a_spec.get<c_sec>() = a_sec;
-  a_spec.get<c_nsec>() = u32(a_nsec);
+  dango_assert(a_spec.second() < c_billion);
 }
 
 static auto
@@ -2675,14 +2666,10 @@ concurrent_cpp::
 tick_count_help
 (dango::uint64* const a_suspend_bias)noexcept->dango::uint64
 {
-  using u32 = dango::uint32;
   using u64 = dango::uint64;
 
-  constexpr auto const c_sec = dango::usize(0);
-  constexpr auto const c_nsec = dango::usize(1);
-
   static dango::spin_mutex s_lock{ };
-  static concurrent_cpp::time_spec s_current{ u64(0), u32(0) };
+  static concurrent_cpp::time_spec s_current{ u64(0), u64(0) };
   static auto s_init_bias = u64(0);
   static auto s_prev_count = concurrent_cpp::perf_count_suspend_bias(s_init_bias);
 
@@ -2703,8 +2690,8 @@ tick_count_help
 
     concurrent_cpp::time_spec_add(s_current, a_delta);
 
-    a_sec = s_current.get<c_sec>();
-    a_nsec = u64(s_current.get<c_nsec>());
+    a_sec = s_current.first();
+    a_nsec = s_current.second();
   }
 
   dango_assert(a_bias >= s_init_bias);
