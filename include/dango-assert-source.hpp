@@ -32,8 +32,6 @@ get_assert_log_handler
   return assert_cpp::s_assert_log_handler.load();
 }
 
-#include <cstdio>
-
 void
 dango::
 detail::
@@ -100,8 +98,6 @@ noexcept
     a_expr
   );
 }
-
-#include <exception>
 
 auto
 dango::

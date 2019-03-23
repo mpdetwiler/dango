@@ -1,5 +1,5 @@
 #ifndef __DANGO_MACRO_HPP__
-#define __DANGO_MACRO_HPP__ 1
+#define __DANGO_MACRO_HPP__
 
 #define DANGO_UNCOPYABLE(name) \
   constexpr name(name const&)noexcept = delete; \

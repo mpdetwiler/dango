@@ -1,7 +1,13 @@
 #ifndef __DANGO_TRAITS_HPP__
-#define __DANGO_TRAITS_HPP__ 1
+#define __DANGO_TRAITS_HPP__
 
-#include "dango-def.hpp"
+/*** incomplete_type ***/
+
+namespace
+dango
+{
+  struct incomplete_type;
+}
 
 /*** declval ***/
 

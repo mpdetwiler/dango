@@ -1,8 +1,6 @@
 #ifndef __DANGO_ATOMIC_HPP__
 #define __DANGO_ATOMIC_HPP__
 
-#include "dango-traits.hpp"
-
 namespace
 dango
 {

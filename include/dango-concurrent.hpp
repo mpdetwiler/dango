@@ -1,13 +1,5 @@
 #ifndef __DANGO_CONCURRENT_HPP__
-#define __DANGO_CONCURRENT_HPP__ 1
-
-#include "dango-concurrent-base.hpp"
-#include "dango-int.hpp"
-#include "dango-assert.hpp"
-#include "dango-mem.hpp"
-#include "dango-global.hpp"
-#include "dango-tuple.hpp"
-#include "dango-intrusive-list.hpp"
+#define __DANGO_CONCURRENT_HPP__
 
 /*** get_tick_count ***/
 

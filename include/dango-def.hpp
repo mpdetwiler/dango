@@ -11,8 +11,6 @@
 #define restrict dango_restrict
 #endif
 
-#include "dango-macro.hpp"
-
 namespace
 dango
 {

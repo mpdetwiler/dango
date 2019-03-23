@@ -1,7 +1,5 @@
 #ifndef __DANGO_UTIL_HPP__
-#define __DANGO_UTIL_HPP__ 1
-
-#include "dango-traits.hpp"
+#define __DANGO_UTIL_HPP__
 
 /*** integer_seq ***/
 

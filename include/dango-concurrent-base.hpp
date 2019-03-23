@@ -1,10 +1,5 @@
 #ifndef __DANGO_CONCURRENT_BASE_HPP__
-#define __DANGO_CONCURRENT_BASE_HPP__ 1
-
-#include "dango-macro.hpp"
-#include "dango-traits.hpp"
-#include "dango-atomic.hpp"
-#include "dango-util.hpp"
+#define __DANGO_CONCURRENT_BASE_HPP__
 
 /*** dango_crit ***/
 

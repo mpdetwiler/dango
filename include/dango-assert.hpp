@@ -1,8 +1,5 @@
 #ifndef __DANGO_ASSERT_HPP__
-#define __DANGO_ASSERT_HPP__ 1
-
-#include "dango-macro.hpp"
-#include "dango-def.hpp"
+#define __DANGO_ASSERT_HPP__
 
 /*** source_location ***/
 

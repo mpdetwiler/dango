@@ -1,7 +1,5 @@
 #ifndef __DANGO_OPERATOR_HPP__
-#define __DANGO_OPERATOR_HPP__ 1
-
-#include "dango-traits.hpp"
+#define __DANGO_OPERATOR_HPP__
 
 /*** dango_operator_is_null ***/
 

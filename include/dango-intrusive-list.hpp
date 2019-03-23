@@ -1,8 +1,5 @@
 #ifndef __DANGO_INTRUSIVE_LIST_HPP__
-#define __DANGO_INTRUSIVE_LIST_HPP__ 1
-
-#include "dango-traits.hpp"
-#include "dango-assert.hpp"
+#define __DANGO_INTRUSIVE_LIST_HPP__
 
 /*** intrusive_list ***/
 

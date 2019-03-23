@@ -1,7 +1,5 @@
 #ifdef DANGO_SOURCE_FILE
 
-#include <new>
-
 auto
 dango::
 operator_new

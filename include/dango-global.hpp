@@ -1,7 +1,5 @@
 #ifndef __DANGO_GLOBAL_HPP__
-#define __DANGO_GLOBAL_HPP__ 1
-
-#include "dango-concurrent-base.hpp"
+#define __DANGO_GLOBAL_HPP__
 
 #define DANGO_GLOBAL_STORAGE_ENABLE_SPEC(type, ret, construct) \
 type, \

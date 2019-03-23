@@ -1,8 +1,5 @@
 #ifndef __DANGO_TUPLE_HPP__
-#define __DANGO_TUPLE_HPP__ 1
-
-#include "dango-traits.hpp"
-#include "dango-util.hpp"
+#define __DANGO_TUPLE_HPP__
 
 namespace
 dango::detail

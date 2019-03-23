@@ -1,9 +1,5 @@
 #ifndef __DANGO_MEM_HPP__
-#define __DANGO_MEM_HPP__ 1
-
-#include "dango-util.hpp"
-#include "dango-assert.hpp"
-#include "dango-macro.hpp"
+#define __DANGO_MEM_HPP__
 
 /*** placement new ***/
 
