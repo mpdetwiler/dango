@@ -16,30 +16,62 @@ dango
 {
   auto get_tick_count()noexcept->dango::uint64;
   auto get_tick_count_sa()noexcept->dango::uint64;
+  auto get_suspend_bias()noexcept->dango::uint64;
 }
 
 namespace
 dango::detail
 {
-  auto tick_count_suspend_bias(dango::uint64*)noexcept->dango::uint64;
+  auto tick_count()noexcept->dango::uint64;
+  auto tick_count_sa()noexcept->dango::uint64;
+  auto suspend_bias()noexcept->dango::uint64;
+
+  using tick_count_tuple =
+    dango::tuple<dango::uint64, dango::uint64, dango::uint64>;
+
+  auto init_tick_count()noexcept->detail::tick_count_tuple const&;
 }
 
 inline auto
 dango::
-get_tick_count()noexcept->dango::uint64
+get_tick_count
+()noexcept->dango::uint64
 {
-  dango::uint64 a_bias;
+  constexpr auto const c_index = dango::usize(0);
 
-  auto const a_tick_count_sa = detail::tick_count_suspend_bias(&a_bias);
+  auto const a_init = detail::init_tick_count().get<c_index>();
 
-  return a_tick_count_sa - a_bias;
+  auto const a_count = detail::tick_count();
+
+  return a_count - a_init;
 }
 
 inline auto
 dango::
-get_tick_count_sa()noexcept->dango::uint64
+get_tick_count_sa
+()noexcept->dango::uint64
 {
-  return detail::tick_count_suspend_bias(nullptr);
+  constexpr auto const c_index = dango::usize(1);
+
+  auto const a_init = detail::init_tick_count().get<c_index>();
+
+  auto const a_count = detail::tick_count_sa();
+
+  return a_count - a_init;
+}
+
+inline auto
+dango::
+get_suspend_bias
+()noexcept->dango::uint64
+{
+  constexpr auto const c_index = dango::usize(2);
+
+  auto const a_init = detail::init_tick_count().get<c_index>();
+
+  auto const a_count = detail::suspend_bias();
+
+  return a_count - a_init;
 }
 
 /*** timeout ***/
@@ -1832,7 +1864,6 @@ private:
   using list_type = dango::intrusive_list<cond_type>;
 private:
   static void remove(cond_type*)noexcept;
-  static auto current_bias()noexcept->dango::uint64;
   static auto bias_okay(dango::uint64&)noexcept->bool;
 public:
   void regist(cond_type*, dango::timeout const&)noexcept;
