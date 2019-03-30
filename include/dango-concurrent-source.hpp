@@ -793,15 +793,13 @@ mutex_impl
 final
 {
 private:
-  using state_type = dango::sint32;
-  enum
-  state:
-  state_type
-  {
-    UNLOCKED, LOCKED, CONTENDED
-  };
+  using state_type = dango::s_int;
+private:
+  static state_type const UNLOCKED;
+  static state_type const LOCKED;
+  static state_type const CONTENDED;
 public:
-  constexpr mutex_impl()noexcept:m_state{ state::UNLOCKED }{ }
+  constexpr mutex_impl()noexcept;
   ~mutex_impl()noexcept = default;
   void lock()noexcept;
   auto try_lock()noexcept->bool;
@@ -809,10 +807,42 @@ public:
   void unlock()noexcept;
   auto futex_address()noexcept->state_type*;
 private:
-  dango::atomic<state_type> m_state;
+  state_type m_state;
 public:
   DANGO_IMMOBILE(mutex_impl)
 };
+
+constexpr dango::detail::mutex_base::mutex_impl::state_type const
+dango::
+detail::
+mutex_base::
+mutex_impl::
+UNLOCKED = state_type(0);
+
+constexpr dango::detail::mutex_base::mutex_impl::state_type const
+dango::
+detail::
+mutex_base::
+mutex_impl::
+LOCKED = state_type(1);
+
+constexpr dango::detail::mutex_base::mutex_impl::state_type const
+dango::
+detail::
+mutex_base::
+mutex_impl::
+CONTENDED = state_type(2);
+
+constexpr
+dango::
+detail::
+mutex_base::
+mutex_impl::
+mutex_impl()noexcept:
+m_state{ UNLOCKED }
+{
+
+}
 
 auto
 dango::
@@ -912,7 +942,7 @@ final
 {
 private:
   using mutex_ptr = dango::detail::mutex_base::mutex_impl*;
-  using seq_type = dango::sint32;
+  using seq_type = dango::s_int;
 public:
   constexpr cond_var_impl()noexcept:
   m_seq{ seq_type(0) },
@@ -929,7 +959,7 @@ private:
   void increment(mutex_ptr)noexcept;
   void decrement(mutex_ptr)noexcept;
 private:
-  dango::atomic<seq_type> m_seq;
+  seq_type m_seq;
   dango::spin_mutex m_lock;
   mutex_ptr m_mutex;
   dango::usize m_wait_count;
@@ -1159,11 +1189,11 @@ lock
 
   do
   {
-    a_last = m_state.load<acquire>();
+    a_last = dango::atomic_load<acquire>(&m_state);
 
-    if(a_last == state::UNLOCKED)
+    if(a_last == UNLOCKED)
     {
-      if(m_state.compare_exchange<acquire, acquire>(a_last, state::LOCKED))
+      if(dango::atomic_compare_exchange<acquire, acquire>(&m_state, &a_last, LOCKED))
       {
         return;
       }
@@ -1171,26 +1201,26 @@ lock
   }
   while(concurrent_cpp::spin_relax(a_count));
 
-  dango_assert(a_last != state::UNLOCKED);
+  dango_assert(a_last != UNLOCKED);
 
-  if(a_last == state::LOCKED)
+  if(a_last == LOCKED)
   {
-    a_last = m_state.exchange<acquire>(state::CONTENDED);
+    a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
   }
 
-  while(a_last != state::UNLOCKED)
+  while(a_last != UNLOCKED)
   {
     concurrent_cpp::sys_futex
     (
-      m_state.address(),
+      &m_state,
       FUTEX_WAIT_PRIVATE,
-      state::CONTENDED,
+      CONTENDED,
       nullptr,
       nullptr,
       dango::s_int(0)
     );
 
-    a_last = m_state.exchange<acquire>(state::CONTENDED);
+    a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
   }
 }
 
@@ -1204,14 +1234,14 @@ try_lock
 {
   constexpr auto const acquire = dango::mem_order::acquire;
 
-  state_type a_last = m_state.load<acquire>();
+  state_type a_last = dango::atomic_load<acquire>(&m_state);
 
-  if(a_last != state::UNLOCKED)
+  if(a_last != UNLOCKED)
   {
     return false;
   }
 
-  return m_state.compare_exchange<acquire, acquire>(a_last, state::LOCKED);
+  return dango::atomic_compare_exchange<acquire, acquire>(&m_state, &a_last, LOCKED);
 }
 
 void
@@ -1230,13 +1260,13 @@ relock
 
   do
   {
-    a_last = m_state.load<acquire>();
+    a_last = dango::atomic_load<acquire>(&m_state);
 
-    if(a_last == state::UNLOCKED)
+    if(a_last == UNLOCKED)
     {
-      a_last = m_state.exchange<acquire>(state::CONTENDED);
+      a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
 
-      if(a_last == state::UNLOCKED)
+      if(a_last == UNLOCKED)
       {
         return;
       }
@@ -1244,26 +1274,26 @@ relock
   }
   while(concurrent_cpp::spin_relax(a_count));
 
-  dango_assert(a_last != state::UNLOCKED);
+  dango_assert(a_last != UNLOCKED);
 
-  if(a_last == state::LOCKED)
+  if(a_last == LOCKED)
   {
-    a_last = m_state.exchange<acquire>(state::CONTENDED);
+    a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
   }
 
-  while(a_last != state::UNLOCKED)
+  while(a_last != UNLOCKED)
   {
     concurrent_cpp::sys_futex
     (
-      m_state.address(),
+      &m_state,
       FUTEX_WAIT_PRIVATE,
-      state::CONTENDED,
+      CONTENDED,
       nullptr,
       nullptr,
       dango::s_int(0)
     );
 
-    a_last = m_state.exchange<acquire>(state::CONTENDED);
+    a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
   }
 }
 
@@ -1277,18 +1307,18 @@ unlock
 {
   constexpr auto const release = dango::mem_order::release;
 
-  auto const a_last = m_state.exchange<release>(state::UNLOCKED);
+  auto const a_last = dango::atomic_exchange<release>(&m_state, UNLOCKED);
 
-  dango_assert(a_last != state::UNLOCKED);
+  dango_assert(a_last != UNLOCKED);
 
-  if(a_last == state::LOCKED)
+  if(a_last == LOCKED)
   {
     return;
   }
 
   concurrent_cpp::sys_futex
   (
-    m_state.address(),
+    &m_state,
     FUTEX_WAKE_PRIVATE,
     dango::s_int(1),
     nullptr,
@@ -1305,7 +1335,7 @@ mutex_impl::
 futex_address
 ()noexcept->state_type*
 {
-  return m_state.address();
+  return &m_state;
 }
 
 /*** cond_var_impl ***/
@@ -1328,11 +1358,11 @@ notify
     }
   }
 
-  m_seq.add_fetch<relaxed>(seq_type(1));
+  dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
 
   concurrent_cpp::sys_futex
   (
-    m_seq.address(),
+    &m_seq,
     FUTEX_WAKE_PRIVATE,
     dango::s_int(1),
     nullptr,
@@ -1365,13 +1395,13 @@ notify_all
 
   dango_assert(a_mutex != nullptr);
 
-  m_seq.add_fetch<relaxed>(seq_type(1));
+  dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
 
   constexpr auto const c_all = dango::uintptr(dango::integer::MAX_VAL<dango::s_int>);
 
   concurrent_cpp::sys_futex
   (
-    m_seq.address(),
+    &m_seq,
     FUTEX_REQUEUE_PRIVATE,
     dango::s_int(1),
     reinterpret_cast<timespec const*>(c_all),
@@ -1392,7 +1422,7 @@ wait
 
   dango_assert(a_mutex != nullptr);
 
-  auto const a_seq = m_seq.load<relaxed>();
+  auto const a_seq = dango::atomic_load<relaxed>(&m_seq);
 
   increment(a_mutex);
 
@@ -1400,7 +1430,7 @@ wait
 
   concurrent_cpp::sys_futex
   (
-    m_seq.address(),
+    &m_seq,
     FUTEX_WAIT_PRIVATE,
     a_seq,
     nullptr,
@@ -1425,7 +1455,7 @@ wait
 
   dango_assert(a_mutex != nullptr);
 
-  auto const a_seq = m_seq.load<relaxed>();
+  auto const a_seq = dango::atomic_load<relaxed>(&m_seq);
 
   increment(a_mutex);
 
@@ -1446,7 +1476,7 @@ wait
 
   concurrent_cpp::sys_futex
   (
-    m_seq.address(),
+    &m_seq,
     FUTEX_WAIT_PRIVATE,
     a_seq,
     &a_spec,
