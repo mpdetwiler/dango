@@ -2617,18 +2617,22 @@ time_spec_add
 
   constexpr auto const c_billion = u64(1'000'000'000);
 
-  dango_assert(a_spec.second() < c_billion);
-  dango_assert(a_add.second() < c_billion);
+  auto& [a_s1, a_n1] = a_spec;
 
-  a_spec.first() += a_add.first();
-  a_spec.second() += a_add.second();
+  auto const& [a_s2, a_n2] = a_add;
 
-  auto const a_overflow = u64(a_spec.second() >= c_billion);
+  dango_assert(a_n1 < c_billion);
+  dango_assert(a_n2 < c_billion);
 
-  a_spec.first() += a_overflow;
-  a_spec.second() -= a_overflow * c_billion;
+  a_s1 += a_s2;
+  a_n1 += a_n2;
 
-  dango_assert(a_spec.second() < c_billion);
+  auto const a_overflow = u64(a_n1 >= c_billion);
+
+  a_s1 += a_overflow;
+  a_n1 -= a_overflow * c_billion;
+
+  dango_assert(a_n1 < c_billion);
 }
 
 static auto

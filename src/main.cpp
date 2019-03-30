@@ -1,7 +1,6 @@
 #include "dango.hpp"
 
 #include <cstdio>
-#include <tuple>
 #include <string>
 #include <memory>
 
@@ -10,6 +9,23 @@ main
 ()noexcept(false)->dango::s_int
 {
   auto const a_guard = dango::thread::main_join_finally();
+
+  {
+    auto const a_tup = dango::tuple<int, int, char const[6]>{ 1, 2, "hello" };
+
+    auto& [a, b, c] = a_tup;
+
+    static_assert(dango::is_same<decltype(a), int const>);
+    static_assert(dango::is_same<decltype(b), int const>);
+    static_assert(dango::is_same<decltype(c), char const(&)[6]>);
+
+    dango_assert(a == 5);
+    dango_assert(b == 2);
+
+    //a = 4;
+
+    //dango_assert(a_tup.first() == 4);
+  }
 
   {
     int a_arr[] = { 1, 2, 3 };
