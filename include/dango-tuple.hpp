@@ -776,123 +776,6 @@ dango
   using pair = dango::tuple<tp_first, tp_second>;
 }
 
-namespace
-std
-{
-  template
-  <typename tp_type>
-  class tuple_size;
-
-  template
-  <typename... tp_types>
-  struct
-  tuple_size<dango::tuple<tp_types...>>
-  {
-    static dango::usize const value;
-
-    DANGO_UNINSTANTIABLE(tuple_size)
-  };
-
-  template
-  <typename... tp_types>
-  constexpr dango::usize const
-  tuple_size<dango::tuple<tp_types...>>::
-  value = sizeof...(tp_types);
-
-  template
-  <typename... tp_types>
-  struct
-  tuple_size<dango::tuple<tp_types...> const>
-  final:
-  std::tuple_size<dango::tuple<tp_types...>>
-  {
-    DANGO_UNINSTANTIABLE(tuple_size)
-  };
-
-  template
-  <typename... tp_types>
-  struct
-  tuple_size<dango::tuple<tp_types...> volatile>
-  final:
-  std::tuple_size<dango::tuple<tp_types...>>
-  {
-    DANGO_UNINSTANTIABLE(tuple_size)
-  };
-
-  template
-  <typename... tp_types>
-  struct
-  tuple_size<dango::tuple<tp_types...> const volatile>
-  final:
-  std::tuple_size<dango::tuple<tp_types...>>
-  {
-    DANGO_UNINSTANTIABLE(tuple_size)
-  };
-
-  template
-  <dango::usize tp_index, typename tp_type>
-  class tuple_element;
-
-  template
-  <typename tp_first, typename... tp_next>
-  struct
-  tuple_element<dango::usize(0), dango::tuple<tp_first, tp_next...>>
-  final
-  {
-    using type = dango::tuple_value_type<tp_first>;
-
-    DANGO_UNINSTANTIABLE(tuple_element)
-  };
-
-  template
-  <dango::usize tp_index, typename tp_first, typename... tp_next>
-  struct
-  tuple_element<tp_index, dango::tuple<tp_first, tp_next...>>
-  final
-  {
-    using type =
-      typename std::tuple_element<tp_index - dango::usize(1), dango::tuple<tp_next...>>::type;
-
-    DANGO_UNINSTANTIABLE(tuple_element)
-  };
-
-  template
-  <dango::usize tp_index, typename... tp_types>
-  struct
-  tuple_element<tp_index, dango::tuple<tp_types...> const>
-  final
-  {
-    using type =
-      typename std::tuple_element<tp_index, dango::tuple<tp_types...>>::type const;
-
-    DANGO_UNINSTANTIABLE(tuple_element)
-  };
-
-  template
-  <dango::usize tp_index, typename... tp_types>
-  struct
-  tuple_element<tp_index, dango::tuple<tp_types...> volatile>
-  final
-  {
-    using type =
-      typename std::tuple_element<tp_index, dango::tuple<tp_types...>>::type volatile;
-
-    DANGO_UNINSTANTIABLE(tuple_element)
-  };
-
-  template
-  <dango::usize tp_index, typename... tp_types>
-  struct
-  tuple_element<tp_index, dango::tuple<tp_types...> const volatile>
-  final
-  {
-    using type =
-      typename std::tuple_element<tp_index, dango::tuple<tp_types...>>::type const volatile;
-
-    DANGO_UNINSTANTIABLE(tuple_element)
-  };
-}
-
 template
 <typename... tp_types>
 class
@@ -1562,6 +1445,190 @@ public:
     return a_func();
   }
 };
+
+/*** structured bindings ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename... tp_types>
+  struct tuple_size_help;
+
+  template
+  <dango::usize tp_index, typename tp_first, typename... tp_next>
+  struct tuple_element_help;
+
+  template
+  <typename tp_first, typename... tp_next>
+  struct
+  tuple_element_help<dango::usize(0), tp_first, tp_next...>;
+}
+
+template
+<typename... tp_types>
+struct
+dango::
+detail::
+tuple_size_help
+{
+  static dango::usize const value;
+
+  DANGO_UNINSTANTIABLE(tuple_size_help)
+};
+
+template
+<typename... tp_types>
+constexpr dango::usize const
+dango::
+detail::
+tuple_size_help<tp_types...>::
+value = sizeof...(tp_types);
+
+template
+<dango::usize tp_index, typename tp_first, typename... tp_next>
+struct
+dango::
+detail::
+tuple_element_help
+final
+{
+  using type =
+    typename dango::detail::tuple_element_help<tp_index - dango::usize(1), tp_next...>::type;
+
+  DANGO_UNINSTANTIABLE(tuple_element_help)
+};
+
+template
+<typename tp_first, typename... tp_next>
+struct
+dango::
+detail::
+tuple_element_help<dango::usize(0), tp_first, tp_next...>
+final
+{
+  using type = dango::tuple_value_type<tp_first>;
+
+  DANGO_UNINSTANTIABLE(tuple_element_help)
+};
+
+namespace
+std
+{
+  template
+  <typename tp_type>
+  class tuple_size;
+
+  template
+  <typename... tp_types>
+  struct
+  tuple_size<dango::tuple<tp_types...>>
+  final:
+  dango::detail::tuple_size_help<tp_types...>
+  {
+    DANGO_UNINSTANTIABLE(tuple_size)
+  };
+
+  template
+  <typename... tp_types>
+  struct
+  tuple_size<dango::tuple<tp_types...> const>
+  final:
+  dango::detail::tuple_size_help<tp_types...>
+  {
+    DANGO_UNINSTANTIABLE(tuple_size)
+  };
+
+  template
+  <typename... tp_types>
+  struct
+  tuple_size<dango::tuple<tp_types...> volatile>
+  final:
+  dango::detail::tuple_size_help<tp_types...>
+  {
+    DANGO_UNINSTANTIABLE(tuple_size)
+  };
+
+  template
+  <typename... tp_types>
+  struct
+  tuple_size<dango::tuple<tp_types...> const volatile>
+  final:
+  dango::detail::tuple_size_help<tp_types...>
+  {
+    DANGO_UNINSTANTIABLE(tuple_size)
+  };
+
+  template
+  <dango::usize tp_index, typename tp_type>
+  class tuple_element;
+
+  template
+  <dango::usize tp_index, typename... tp_types>
+  struct
+  tuple_element
+  <tp_index, dango::tuple<tp_types...>>
+  final
+  {
+    using type =
+      typename dango::detail::tuple_element_help<tp_index, tp_types...>::type;
+
+    DANGO_UNINSTANTIABLE(tuple_element)
+  };
+
+  template
+  <dango::usize tp_index, typename... tp_types>
+  struct
+  tuple_element<tp_index, dango::tuple<tp_types...> const>
+  final
+  {
+    using type =
+      typename dango::detail::tuple_element_help<tp_index, tp_types...>::type const;
+
+    DANGO_UNINSTANTIABLE(tuple_element)
+  };
+
+  template
+  <dango::usize tp_index, typename... tp_types>
+  struct
+  tuple_element<tp_index, dango::tuple<tp_types...> volatile>
+  final
+  {
+    using type =
+      typename dango::detail::tuple_element_help<tp_index, tp_types...>::type volatile;
+
+    DANGO_UNINSTANTIABLE(tuple_element)
+  };
+
+  template
+  <dango::usize tp_index, typename... tp_types>
+  struct
+  tuple_element<tp_index, dango::tuple<tp_types...> const volatile>
+  final
+  {
+    using type =
+      typename dango::detail::tuple_element_help<tp_index, tp_types...>::type const volatile;
+
+    DANGO_UNINSTANTIABLE(tuple_element)
+  };
+
+  template
+  <dango::usize tp_index>
+  struct
+  tuple_element<tp_index, dango::tuple<>>;
+  template
+  <dango::usize tp_index>
+  struct
+  tuple_element<tp_index, dango::tuple<> const>;
+  template
+  <dango::usize tp_index>
+  struct
+  tuple_element<tp_index, dango::tuple<> volatile>;
+  template
+  <dango::usize tp_index>
+  struct
+  tuple_element<tp_index, dango::tuple<> const volatile>;
+}
 
 #endif
 

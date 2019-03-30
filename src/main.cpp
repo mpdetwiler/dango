@@ -19,12 +19,20 @@ main
     static_assert(dango::is_same<decltype(b), int const>);
     static_assert(dango::is_same<decltype(c), char const(&)[6]>);
 
-    dango_assert(a == 5);
+    dango_assert(a == 1);
     dango_assert(b == 2);
 
     //a = 4;
 
     //dango_assert(a_tup.first() == 4);
+
+    int array[5];
+
+    int const* x = &array[0];
+
+    dango::atomic_fetch_add(&x, 4);
+
+    dango_assert(x == &array[4]);
   }
 
   {
