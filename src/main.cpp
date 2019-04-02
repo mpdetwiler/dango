@@ -4,6 +4,9 @@
 #include <string>
 #include <memory>
 
+static_assert(dango::is_nullable<dango::null_tag>);
+static_assert(dango::is_nullable<dango::thread>);
+
 auto
 main
 ()noexcept(false)->dango::s_int

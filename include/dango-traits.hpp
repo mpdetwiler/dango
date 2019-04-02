@@ -1037,6 +1037,45 @@ final
   DANGO_UNINSTANTIABLE(conditional_help)
 };
 
+/*** test tags ***/
+
+namespace
+dango::detail
+{
+  struct
+  normal_test_tag
+  final
+  {
+    DANGO_TAG_TYPE(normal_test_tag)
+  };
+
+  struct
+  trivial_test_tag
+  final
+  {
+    DANGO_TAG_TYPE(trivial_test_tag)
+  };
+
+  struct
+  noexcept_test_tag
+  final
+  {
+    DANGO_TAG_TYPE(noexcept_test_tag)
+  };
+
+  struct
+  virtual_test_tag
+  final
+  {
+    DANGO_TAG_TYPE(virtual_test_tag)
+  };
+
+  inline constexpr detail::normal_test_tag const normal_test_val{ };
+  inline constexpr detail::trivial_test_tag const trivial_test_val{ };
+  inline constexpr detail::noexcept_test_tag const noexcept_test_val{ };
+  inline constexpr detail::virtual_test_tag const virtual_test_val{ };
+}
+
 /*** is_void ***/
 
 namespace
@@ -1660,42 +1699,6 @@ dango
 namespace
 dango::detail
 {
-  struct
-  is_destructible_normal_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_destructible_normal_tag)
-  };
-
-  inline constexpr detail::is_destructible_normal_tag const is_destructible_normal{ };
-
-  struct
-  is_destructible_trivial_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_destructible_trivial_tag)
-  };
-
-  inline constexpr detail::is_destructible_trivial_tag const is_destructible_trivial{ };
-
-  struct
-  is_destructible_noexcept_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_destructible_noexcept_tag)
-  };
-
-  inline constexpr detail::is_destructible_noexcept_tag const is_destructible_noexcept{ };
-
-  struct
-  is_destructible_virtual_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_destructible_virtual_tag)
-  };
-
-  inline constexpr detail::is_destructible_virtual_tag const is_destructible_virtual{ };
-
   template
   <
     typename tp_type,
@@ -1704,7 +1707,7 @@ dango::detail
   >
   constexpr auto
   is_destructible_help
-  (detail::is_destructible_normal_tag const)noexcept->bool
+  (detail::normal_test_tag const)noexcept->bool
   {
     return true;
   }
@@ -1717,7 +1720,7 @@ dango::detail
   >
   constexpr auto
   is_destructible_help
-  (detail::is_destructible_trivial_tag const)noexcept->bool
+  (detail::trivial_test_tag const)noexcept->bool
   {
     return __has_trivial_destructor(tp_base);
   }
@@ -1730,7 +1733,7 @@ dango::detail
   >
   constexpr auto
   is_destructible_help
-  (detail::is_destructible_noexcept_tag const)noexcept->bool
+  (detail::noexcept_test_tag const)noexcept->bool
   {
     return noexcept(dango::declval<tp_base&>().~tp_base());
   }
@@ -1743,7 +1746,7 @@ dango::detail
   >
   constexpr auto
   is_destructible_help
-  (detail::is_destructible_virtual_tag const)noexcept->bool
+  (detail::virtual_test_tag const)noexcept->bool
   {
     return __has_virtual_destructor(tp_base);
   }
@@ -1764,7 +1767,7 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_destructible =
-    detail::is_destructible_help<tp_type>(detail::is_destructible_normal);
+    detail::is_destructible_help<tp_type>(detail::normal_test_val);
 
   template
   <typename tp_type>
@@ -1784,7 +1787,7 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_trivial_destructible =
-    detail::is_destructible_help<tp_type>(detail::is_destructible_trivial);
+    detail::is_destructible_help<tp_type>(detail::trivial_test_val);
 
   template
   <typename tp_type>
@@ -1803,7 +1806,7 @@ dango
   template
   <typename tp_type>
   constexpr bool const is_noexcept_destructible =
-    detail::is_destructible_help<tp_type>(detail::is_destructible_noexcept);
+    detail::is_destructible_help<tp_type>(detail::noexcept_test_val);
 
   template
   <typename tp_type>
@@ -1822,7 +1825,7 @@ dango
   template
   <typename tp_type>
   constexpr bool const has_virtual_destructor =
-    detail::is_destructible_help<tp_type>(detail::is_destructible_virtual);
+    detail::is_destructible_help<tp_type>(detail::virtual_test_val);
 
   template
   <typename tp_type>
@@ -1848,24 +1851,6 @@ dango::detail
   constexpr void
   is_convertible_test(tp_arg)noexcept;
 
-  struct
-  is_convertible_normal_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_convertible_normal_tag)
-  };
-
-  inline constexpr detail::is_convertible_normal_tag const is_convertible_normal{ };
-
-  struct
-  is_convertible_noexcept_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_convertible_noexcept_tag)
-  };
-
-  inline constexpr detail::is_convertible_noexcept_tag const is_convertible_noexcept{ };
-
   template
   <
     typename tp_from,
@@ -1875,7 +1860,7 @@ dango::detail
   >
   constexpr auto
   is_convertible_help
-  (detail::is_convertible_normal_tag const)noexcept->bool
+  (detail::normal_test_tag const)noexcept->bool
   {
     return true;
   }
@@ -1889,7 +1874,7 @@ dango::detail
   >
   constexpr auto
   is_convertible_help
-  (detail::is_convertible_noexcept_tag const)noexcept->bool
+  (detail::noexcept_test_tag const)noexcept->bool
   {
     return noexcept(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()));
   }
@@ -1914,9 +1899,8 @@ dango
     !dango::is_func<tp_to> &&
     (
       (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
-      detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_normal)
+      detail::is_convertible_help<tp_from, tp_to>(detail::normal_test_val)
     );
-
 
   template
   <typename tp_from, typename tp_to>
@@ -1925,7 +1909,7 @@ dango
     !dango::is_func<tp_to> &&
     (
       (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
-      detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_noexcept)
+      detail::is_convertible_help<tp_from, tp_to>(detail::noexcept_test_val)
     );
 
   template
@@ -1936,9 +1920,8 @@ dango
     (
       (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
       (dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>> && dango::is_destructible<tp_to>) ||
-      detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_normal)
+      detail::is_convertible_help<tp_from, tp_to>(detail::normal_test_val)
     );
-
 
   template
   <typename tp_from, typename tp_to>
@@ -1948,7 +1931,7 @@ dango
     (
       (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
       (dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>> && dango::is_noexcept_destructible<tp_to>) ||
-      detail::is_convertible_help<tp_from, tp_to>(detail::is_convertible_noexcept)
+      detail::is_convertible_help<tp_from, tp_to>(detail::noexcept_test_val)
     );
 }
 
@@ -1957,42 +1940,6 @@ dango
 namespace
 dango::detail
 {
-  struct
-  is_callable_normal_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_callable_normal_tag)
-  };
-
-  inline constexpr detail::is_callable_normal_tag const is_callable_normal{ };
-
-  struct
-  is_callable_noexcept_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_callable_noexcept_tag)
-  };
-
-  inline constexpr detail::is_callable_noexcept_tag const is_callable_noexcept{ };
-
-  struct
-  is_callable_ret_normal_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_callable_ret_normal_tag)
-  };
-
-  inline constexpr detail::is_callable_ret_normal_tag const is_callable_ret_normal{ };
-
-  struct
-  is_callable_ret_noexcept_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_callable_ret_noexcept_tag)
-  };
-
-  inline constexpr detail::is_callable_ret_noexcept_tag const is_callable_ret_noexcept{ };
-
   template
   <
     typename tp_func,
@@ -2001,7 +1948,7 @@ dango::detail
   >
   constexpr auto
   is_callable_help
-  (detail::is_callable_normal_tag const)noexcept->bool
+  (detail::normal_test_tag const)noexcept->bool
   {
     return true;
   }
@@ -2014,9 +1961,18 @@ dango::detail
   >
   constexpr auto
   is_callable_help
-  (detail::is_callable_noexcept_tag const)noexcept->bool
+  (detail::noexcept_test_tag const)noexcept->bool
   {
     return noexcept(dango::declval<tp_func>()(dango::declval<tp_args>()...));
+  }
+
+  template
+  <typename... tp_anything, typename tp_tag>
+  constexpr auto
+  is_callable_help
+  (tp_tag const)noexcept->bool
+  {
+    return false;
   }
 
   template
@@ -2027,8 +1983,8 @@ dango::detail
     typename tp_enabled_ret = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...))
   >
   constexpr auto
-  is_callable_help
-  (detail::is_callable_ret_normal_tag const)noexcept->bool
+  is_callable_ret_help
+  (detail::normal_test_tag const)noexcept->bool
   {
     return dango::is_convertible_ret<tp_enabled_ret, tp_ret>;
   }
@@ -2041,8 +1997,8 @@ dango::detail
     typename tp_enabled_ret = decltype(dango::declval<tp_func>()(dango::declval<tp_args>()...))
   >
   constexpr auto
-  is_callable_help
-  (detail::is_callable_ret_noexcept_tag const)noexcept->bool
+  is_callable_ret_help
+  (detail::noexcept_test_tag const)noexcept->bool
   {
     return dango::is_noexcept_convertible_ret<tp_enabled_ret, tp_ret> && noexcept(dango::declval<tp_func>()(dango::declval<tp_args>()...));
   }
@@ -2050,7 +2006,7 @@ dango::detail
   template
   <typename... tp_anything, typename tp_tag>
   constexpr auto
-  is_callable_help
+  is_callable_ret_help
   (tp_tag const)noexcept->bool
   {
     return false;
@@ -2063,22 +2019,22 @@ dango
   template
   <typename tp_func, typename... tp_args>
   constexpr bool const is_callable =
-    detail::is_callable_help<tp_func, tp_args...>(detail::is_callable_normal);
+    detail::is_callable_help<tp_func, tp_args...>(detail::normal_test_val);
 
   template
   <typename tp_func, typename... tp_args>
   constexpr bool const is_noexcept_callable =
-    detail::is_callable_help<tp_func, tp_args...>(detail::is_callable_noexcept);
+    detail::is_callable_help<tp_func, tp_args...>(detail::noexcept_test_val);
 
   template
   <typename tp_ret, typename tp_func, typename... tp_args>
   constexpr bool const is_callable_ret =
-    detail::is_callable_help<tp_ret, tp_func, tp_args...>(detail::is_callable_ret_normal);
+    detail::is_callable_ret_help<tp_ret, tp_func, tp_args...>(detail::normal_test_val);
 
   template
   <typename tp_ret, typename tp_func, typename... tp_args>
   constexpr bool const is_noexcept_callable_ret =
-    detail::is_callable_help<tp_ret, tp_func, tp_args...>(detail::is_callable_ret_noexcept);
+    detail::is_callable_ret_help<tp_ret, tp_func, tp_args...>(detail::noexcept_test_val);
 }
 
 /*** is_constructible is_trivial_constructible is_noexcept_constructible ***/
@@ -2086,33 +2042,6 @@ dango
 namespace
 dango::detail
 {
-  struct
-  is_constructible_normal_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_constructible_normal_tag)
-  };
-
-  inline constexpr detail::is_constructible_normal_tag const is_constructible_normal{ };
-
-  struct
-  is_constructible_trivial_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_constructible_trivial_tag)
-  };
-
-  inline constexpr detail::is_constructible_trivial_tag const is_constructible_trivial{ };
-
-  struct
-  is_constructible_noexcept_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_constructible_noexcept_tag)
-  };
-
-  inline constexpr detail::is_constructible_noexcept_tag const is_constructible_noexcept{ };
-
   template
   <
     typename tp_type,
@@ -2121,7 +2050,7 @@ dango::detail
   >
   constexpr auto
   is_constructible_help
-  (detail::is_constructible_normal_tag const)noexcept->bool
+  (detail::normal_test_tag const)noexcept->bool
   {
     return true;
   }
@@ -2134,7 +2063,7 @@ dango::detail
   >
   constexpr auto
   is_constructible_help
-  (detail::is_constructible_trivial_tag const)noexcept->bool
+  (detail::trivial_test_tag const)noexcept->bool
   {
     return __is_trivially_constructible(tp_type, tp_args...);
   }
@@ -2147,7 +2076,7 @@ dango::detail
   >
   constexpr auto
   is_constructible_help
-  (detail::is_constructible_noexcept_tag const)noexcept->bool
+  (detail::noexcept_test_tag const)noexcept->bool
   {
     return noexcept(tp_type(dango::declval<tp_args>()...));
   }
@@ -2168,17 +2097,17 @@ dango
   template
   <typename tp_type, typename... tp_args>
   constexpr bool const is_constructible =
-    detail::is_constructible_help<tp_type, tp_args...>(detail::is_constructible_normal);
+    detail::is_constructible_help<tp_type, tp_args...>(detail::normal_test_val);
 
   template
   <typename tp_type, typename... tp_args>
   constexpr bool const is_trivial_constructible =
-    detail::is_constructible_help<tp_type, tp_args...>(detail::is_constructible_trivial);
+    detail::is_constructible_help<tp_type, tp_args...>(detail::trivial_test_val);
 
   template
   <typename tp_type, typename... tp_args>
   constexpr bool const is_noexcept_constructible =
-    detail::is_constructible_help<tp_type, tp_args...>(detail::is_constructible_noexcept);
+    detail::is_constructible_help<tp_type, tp_args...>(detail::noexcept_test_val);
 
   template
   <typename tp_type>
@@ -2258,33 +2187,6 @@ dango
 namespace
 dango::detail
 {
-  struct
-  is_assignable_normal_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_assignable_normal_tag)
-  };
-
-  inline constexpr detail::is_assignable_normal_tag const is_assignable_normal{ };
-
-  struct
-  is_assignable_trivial_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_assignable_trivial_tag)
-  };
-
-  inline constexpr detail::is_assignable_trivial_tag const is_assignable_trivial{ };
-
-  struct
-  is_assignable_noexcept_tag
-  final
-  {
-    DANGO_TAG_TYPE(is_assignable_noexcept_tag)
-  };
-
-  inline constexpr detail::is_assignable_noexcept_tag const is_assignable_noexcept{ };
-
   template
   <
     typename tp_type,
@@ -2293,7 +2195,7 @@ dango::detail
   >
   constexpr auto
   is_assignable_help
-  (detail::is_assignable_normal_tag const)noexcept->bool
+  (detail::normal_test_tag const)noexcept->bool
   {
     return true;
   }
@@ -2306,7 +2208,7 @@ dango::detail
   >
   constexpr auto
   is_assignable_help
-  (detail::is_assignable_trivial_tag const)noexcept->bool
+  (detail::trivial_test_tag const)noexcept->bool
   {
     return __is_trivially_assignable(tp_type, tp_arg);
   }
@@ -2319,7 +2221,7 @@ dango::detail
   >
   constexpr auto
   is_assignable_help
-  (detail::is_assignable_noexcept_tag const)noexcept->bool
+  (detail::noexcept_test_tag const)noexcept->bool
   {
     return noexcept(dango::declval<tp_type>() = dango::declval<tp_arg>());
   }
@@ -2340,17 +2242,17 @@ dango
   template
   <typename tp_type, typename tp_arg>
   constexpr bool const is_assignable =
-    detail::is_assignable_help<tp_type, tp_arg>(detail::is_assignable_normal);
+    detail::is_assignable_help<tp_type, tp_arg>(detail::normal_test_val);
 
   template
   <typename tp_type, typename tp_arg>
   constexpr bool const is_trivial_assignable =
-    detail::is_assignable_help<tp_type, tp_arg>(detail::is_assignable_trivial);
+    detail::is_assignable_help<tp_type, tp_arg>(detail::trivial_test_val);
 
   template
   <typename tp_type, typename tp_arg>
   constexpr bool const is_noexcept_assignable =
-    detail::is_assignable_help<tp_type, tp_arg>(detail::is_assignable_noexcept);
+    detail::is_assignable_help<tp_type, tp_arg>(detail::noexcept_test_val);
 }
 
 /*** is_copy_assignable is_trivial_copy_assignable is_noexcept_copy_assignable ***/
