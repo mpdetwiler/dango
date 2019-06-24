@@ -1157,7 +1157,31 @@ dango
     dango::is_uint<tp_type> || dango::is_sint<tp_type>;
 }
 
-/*** is_integral ***/
+/*** is_nonbool_integral ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_nonbool_integral_help =
+    dango::is_same<tp_type, char> ||
+    dango::is_same<tp_type, dango::wchar> ||
+    dango::is_same<tp_type, dango::dchar> ||
+    dango::is_same<tp_type, wchar_t> ||
+    dango::is_int<tp_type>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_nonbool_integral =
+    detail::is_nonbool_integral_help<dango::remove_cv<tp_type>>;
+}
+
+/* is_integral */
 
 namespace
 dango::detail
@@ -1166,11 +1190,7 @@ dango::detail
   <typename tp_type>
   constexpr bool const is_integral_help =
     dango::is_same<tp_type, bool> ||
-    dango::is_same<tp_type, char> ||
-    dango::is_same<tp_type, dango::wchar> ||
-    dango::is_same<tp_type, dango::dchar> ||
-    dango::is_same<tp_type, wchar_t> ||
-    dango::is_int<tp_type>;
+    dango::detail::is_nonbool_integral_help<tp_type>;
 }
 
 namespace
@@ -1501,6 +1521,17 @@ dango
   <typename tp_type>
   constexpr bool const is_member_object_ptr =
     dango::is_member_ptr<tp_type> && !dango::is_member_func_ptr<tp_type>;
+}
+
+/*** is_nonbool_arithmetic ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr bool const is_nonbool_arithmetic =
+    dango::is_nonbool_integral<tp_type> || dango::is_float<tp_type>;
 }
 
 /*** is_arithmetic ***/

@@ -6,6 +6,7 @@
 #include "dango-assert.hpp"
 #include "dango-traits.hpp"
 #include "dango-atomic.hpp"
+#include "dango-cstring.hpp"
 #include "dango-int.hpp"
 #include "dango-intrusive-list.hpp"
 #include "dango-operator.hpp"
