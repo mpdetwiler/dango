@@ -1,7 +1,7 @@
 
 AddOption(
   '--target',
-  dest = 'target',
+  dest = 'target_opt',
   type = 'string',
   nargs = 1,
   action = 'store',
@@ -10,26 +10,28 @@ AddOption(
   default = 'linux'
 );
 
-target = GetOption('target');
+AddOption(
+  '--test',
+  dest = 'test_opt',
+  action = 'store_true',
+  metavar = 'DIR',
+  help = 'compile test program',
+  default = False
+);
 
-if(target == 'linux'):
-  print('building for \"' + target + '\"');
-elif(target == 'win32'):
-  print('building for \"' + target + '\"');
-elif(target == 'win64'):
-  print('building for \"' + target + '\"');
+compilation_target = GetOption('target_opt');
+compile_test = GetOption('test_opt');
+
+if(compilation_target == 'linux'):
+  print('building for \"' + compilation_target + '\"');
+elif(compilation_target == 'win32'):
+  print('building for \"' + compilation_target + '\"');
+elif(compilation_target == 'win64'):
+  print('building for \"' + compilation_target + '\"');
 else:
-  print('invalid target \"' + target + '\"');
+  print('invalid target \"' + compilation_target + '\"');
   Exit(1);
 
-import os;
-
-env = Environment();
-
-env.Append(ENV = {'PATH':os.environ['PATH']});
-
-lib_name = 'libdango';
-header_paths = ['include/'];
 flags = [
 #	'-S',
 #	'-Ofast',
@@ -46,28 +48,65 @@ flags = [
 	'-Wfatal-errors'
 ];
 
-#env.Append(CPPDEFINES = ('DANGO_CACHE_LINE_SIZE', '64'));
-#env.Append(CPPDEFINES = 'DANGO_NO_DEBUG');
-#env.Append(CPPDEFINES = 'DANGO_NO_MULTICORE');
-#env.Append(CPPDEFINES = 'DANGO_NEW_NOEXCEPT');
+import os;
 
-env.Replace(AR = 'gcc-ar');
-env.Replace(ARFLAGS = 'rcs');
-env.Replace(RANLIBCOM = '');
+static_env = None;
+shared_env = None;
+test_env = None;
 
-if(target == 'linux'):
-  env.Append(LIBS = ['pthread']);
-elif(target == 'win32' or target == 'win64'):
-  env.Replace(CXX = 'g++');
-  env.Append(LIBS = ['winmm']);
-  flags += ['-static-libgcc', '-static-libstdc++'];
-  env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
+if(compilation_target == 'linux'):
+  static_env = DefaultEnvironment();
+elif(compilation_target == 'win32' or compilation_target == 'win64'):
+  static_env = DefaultEnvironment();
 
-env.Append(CPPPATH = header_paths);
-env.Append(CXXFLAGS = flags);
-env.Append(LINKFLAGS = flags);
+static_env.Append(ENV = {'PATH':os.environ['PATH']});
+static_env.Append(CPPPATH = ['include/']);
+static_env.Append(CXXFLAGS = flags);
+static_env.Append(LINKFLAGS = flags);
 
-sources = [Glob('src/*.cpp')];
+if(compile_test):
+  static_env.Append(CPPDEFINES = 'DANGO_TESTING_DANGO');
 
-env.StaticLibrary(lib_name, sources);
+#static_env.Append(CPPDEFINES = ('DANGO_CACHE_LINE_SIZE', '64'));
+#static_env.Append(CPPDEFINES = 'DANGO_NO_DEBUG');
+#static_env.Append(CPPDEFINES = 'DANGO_NO_MULTICORE');
+#static_env.Append(CPPDEFINES = 'DANGO_NEW_NOEXCEPT');
+
+shared_env = static_env.Clone();
+
+if(compile_test):
+  test_env = static_env.Clone();
+
+static_env.Replace(AR = 'gcc-ar');
+static_env.Replace(ARFLAGS = 'rcs');
+static_env.Replace(RANLIBCOM = '');
+
+static_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
+shared_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
+
+shared_flags = ['-fPIC'];
+
+if(compilation_target == 'linux'):
+  shared_env.Append(LIBS = ['pthread']);
+elif(compilation_target == 'win32' or compilation_target == 'win64'):
+  shared_env.Append(LIBS = ['winmm']);
+  shared_env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
+  shared_flags += ['-static-libgcc', '-static-libstdc++'];
+
+shared_env.Append(CXXFLAGS = shared_flags);
+shared_env.Append(LINKFLAGS = shared_flags);
+
+shared_env.Append(CPPPATH = ['shared/include/']);
+
+if(compile_test):
+  test_env.Append(CPPPATH = ['test/include/']);
+  test_env.Append(LIBPATH = ['./']);
+  test_env.Append(LIBS = ['dangoshared', 'dango']);
+  test_env.Append(RPATH = ['./']);
+
+shared_env.SharedLibrary('dangoshared', Glob('shared/src/*.cpp'));
+static_env.StaticLibrary('dango', Glob('src/*.cpp'));
+
+if(compile_test):
+  test_env.Program('run', Glob('test/src/*.cpp'));
 
