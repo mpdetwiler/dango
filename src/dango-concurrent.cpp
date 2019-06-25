@@ -1,10 +1,5 @@
 #include "dango.hpp"
 
-#include <new>
-#include <exception>
-#include <cstdio>
-#include <cerrno>
-
 /*** thread_yield ***/
 
 void
@@ -735,6 +730,9 @@ cond_var_registry_thread::
 
   m_thread.join();
 }
+
+#include <cstdio>
+#include <cerrno>
 
 #ifdef __linux__
 
