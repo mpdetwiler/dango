@@ -1,4 +1,6 @@
-#ifdef DANGO_SOURCE_FILE
+#include "dango.hpp"
+
+#include <new>
 
 auto
 dango::
@@ -59,6 +61,4 @@ noexcept
 
   ::operator delete(a_ptr, a_size, a_align);
 }
-
-#endif
 

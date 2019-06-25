@@ -1,4 +1,7 @@
-#ifdef DANGO_SOURCE_FILE
+#include "dango.hpp"
+
+#include <cstdio>
+#include <exception>
 
 namespace
 dango::assert_cpp
@@ -126,6 +129,4 @@ terminate
 {
   std::terminate();
 }
-
-#endif
 

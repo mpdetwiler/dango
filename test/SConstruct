@@ -52,21 +52,16 @@ flags = [
 #env.Append(CPPDEFINES = 'DANGO_NO_MULTICORE');
 #env.Append(CPPDEFINES = 'DANGO_NEW_NOEXCEPT');
 
-if(target == 'win32'):
-  env.Replace(CXX = 'g++');
-elif(target == 'win64'):
-  env.Replace(CXX = 'g++');
-
 if(target == 'linux'):
   env.Append(LIBS = ['pthread']);
 elif(target == 'win32' or target == 'win64'):
+  env.Replace(CXX = 'g++');
   env.Append(LIBS = ['winmm']);
   prog_name += '.exe';
   flags += ['-static-libgcc', '-static-libstdc++'];
   env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
 
 env.Append(LIBS = ['dango']);
-env.Append(RPATH = ['../']);
 
 env.Append(CPPPATH = header_paths);
 env.Append(LIBPATH = lib_paths);
