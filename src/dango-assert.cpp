@@ -4,7 +4,6 @@
 #include <exception>
 
 namespace
-dango::assert_cpp
 {
   dango::atomic<dango::assert_log_handler> s_assert_log_handler{ nullptr };
 }
@@ -24,7 +23,7 @@ dango::
 set_assert_log_handler
 (dango::assert_log_handler const a_handler)noexcept->dango::assert_log_handler
 {
-  return assert_cpp::s_assert_log_handler.exchange(a_handler);
+  return s_assert_log_handler.exchange(a_handler);
 }
 
 auto
@@ -32,7 +31,7 @@ dango::
 get_assert_log_handler
 ()noexcept->dango::assert_log_handler
 {
-  return assert_cpp::s_assert_log_handler.load();
+  return s_assert_log_handler.load();
 }
 
 void
@@ -109,7 +108,7 @@ set_terminate
 {
   auto const a_result = std::set_terminate(a_handler);
 
-  return reinterpret_cast<dango::terminate_handler>(a_result);
+  return a_result;
 }
 
 auto
@@ -119,7 +118,7 @@ get_terminate
 {
   auto const a_result = std::get_terminate();
 
-  return reinterpret_cast<dango::terminate_handler>(a_result);
+  return a_result;
 }
 
 void

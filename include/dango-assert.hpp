@@ -339,7 +339,7 @@ dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
 namespace
 dango
 {
-  using terminate_handler = void(*)()noexcept;
+  using terminate_handler = void(*)()noexcept(false);
 
   auto set_terminate(terminate_handler)noexcept->dango::terminate_handler;
   auto get_terminate()noexcept->dango::terminate_handler;

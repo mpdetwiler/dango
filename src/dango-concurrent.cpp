@@ -747,10 +747,9 @@ cond_var_registry_thread::
 /*** tick_count ***/
 
 namespace
-dango::concurrent_cpp
 {
-  static auto tick_count_help(clockid_t)noexcept->dango::uint64;
-  static auto suspend_bias_help()noexcept->dango::uint64;
+  auto tick_count_help(clockid_t)noexcept->dango::uint64;
+  auto suspend_bias_help()noexcept->dango::uint64;
 }
 
 auto
@@ -759,7 +758,7 @@ detail::
 tick_count
 ()noexcept->dango::uint64
 {
-  return concurrent_cpp::tick_count_help(CLOCK_MONOTONIC);
+  return tick_count_help(CLOCK_MONOTONIC);
 }
 
 auto
@@ -768,7 +767,7 @@ detail::
 tick_count_sa
 ()noexcept->dango::uint64
 {
-  return concurrent_cpp::tick_count_help(CLOCK_BOOTTIME);
+  return tick_count_help(CLOCK_BOOTTIME);
 }
 
 auto
@@ -784,7 +783,7 @@ suspend_bias
 
   dango_crit(s_lock)
   {
-    a_result = concurrent_cpp::suspend_bias_help();
+    a_result = suspend_bias_help();
 
     a_result = dango::max(a_result, s_prev);
 
@@ -1088,11 +1087,10 @@ notify_all
 /*** thread ***/
 
 namespace
-dango::concurrent_cpp
 {
   template
   <typename tp_func>
-  static auto thread_start_address(void*)noexcept->void*;
+  auto thread_start_address_internal(void*)noexcept->void*;
 }
 
 void
@@ -1133,7 +1131,7 @@ noexcept(false)
     (
       &a_thread_ID,
       nullptr,
-      concurrent_cpp::thread_start_address<decltype(a_func)>,
+      thread_start_address_internal<decltype(a_func)>,
       &a_func
     );
 
@@ -1165,9 +1163,8 @@ yield
 /*** mutex_impl ***/
 
 namespace
-dango::concurrent_cpp
 {
-  static auto
+  auto
   sys_futex
   (
     dango::s_int*,
@@ -1179,9 +1176,9 @@ dango::concurrent_cpp
   )
   noexcept->dango::s_int;
 
-  static auto spin_relax(dango::uint32&)noexcept->bool;
+  auto spin_relax(dango::uint32&)noexcept->bool;
 
-  static constexpr auto const c_spin_count_init = dango::uint32(128);
+  constexpr auto const c_spin_count_init = dango::uint32(128);
 }
 
 void
@@ -1196,7 +1193,7 @@ lock
 
   state_type a_last;
 
-  auto a_count = concurrent_cpp::c_spin_count_init;
+  auto a_count = c_spin_count_init;
 
   do
   {
@@ -1210,7 +1207,7 @@ lock
       }
     }
   }
-  while(concurrent_cpp::spin_relax(a_count));
+  while(spin_relax(a_count));
 
   dango_assert(a_last != UNLOCKED);
 
@@ -1221,7 +1218,7 @@ lock
 
   while(a_last != UNLOCKED)
   {
-    concurrent_cpp::sys_futex
+    sys_futex
     (
       &m_state,
       FUTEX_WAIT_PRIVATE,
@@ -1267,7 +1264,7 @@ relock
 
   state_type a_last;
 
-  auto a_count = concurrent_cpp::c_spin_count_init;
+  auto a_count = c_spin_count_init;
 
   do
   {
@@ -1283,7 +1280,7 @@ relock
       }
     }
   }
-  while(concurrent_cpp::spin_relax(a_count));
+  while(spin_relax(a_count));
 
   dango_assert(a_last != UNLOCKED);
 
@@ -1294,7 +1291,7 @@ relock
 
   while(a_last != UNLOCKED)
   {
-    concurrent_cpp::sys_futex
+    sys_futex
     (
       &m_state,
       FUTEX_WAIT_PRIVATE,
@@ -1327,7 +1324,7 @@ unlock
     return;
   }
 
-  concurrent_cpp::sys_futex
+  sys_futex
   (
     &m_state,
     FUTEX_WAKE_PRIVATE,
@@ -1371,7 +1368,7 @@ notify
 
   dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
 
-  concurrent_cpp::sys_futex
+  sys_futex
   (
     &m_seq,
     FUTEX_WAKE_PRIVATE,
@@ -1410,7 +1407,7 @@ notify_all
 
   constexpr auto const c_all = dango::uintptr(dango::integer::MAX_VAL<dango::s_int>);
 
-  concurrent_cpp::sys_futex
+  sys_futex
   (
     &m_seq,
     FUTEX_REQUEUE_PRIVATE,
@@ -1439,7 +1436,7 @@ wait
 
   a_mutex->unlock();
 
-  concurrent_cpp::sys_futex
+  sys_futex
   (
     &m_seq,
     FUTEX_WAIT_PRIVATE,
@@ -1485,7 +1482,7 @@ wait
     a_spec.tv_nsec = a_nsec;
   }
 
-  concurrent_cpp::sys_futex
+  sys_futex
   (
     &m_seq,
     FUTEX_WAIT_PRIVATE,
@@ -1542,152 +1539,143 @@ decrement
 
 /*** static ***/
 
-static auto
-dango::
-concurrent_cpp::
-tick_count_help
-(clockid_t const a_clock)noexcept->dango::uint64
+namespace
 {
-  using u64 = dango::uint64;
-
-  constexpr auto const c_mul = u64(1'000);
-  constexpr auto const c_div = u64(1'000'000);
-
-  timespec a_spec;
-
-  auto const a_result =
-    clock_gettime(a_clock, &a_spec);
-
-  dango_assert(a_result == 0);
-
-  auto const a_sec = u64(a_spec.tv_sec);
-  auto const a_nsec = u64(a_spec.tv_nsec);
-
-  return (a_sec * c_mul) + (a_nsec / c_div);
-}
-
-static auto
-dango::
-concurrent_cpp::
-suspend_bias_help
-()noexcept->dango::uint64
-{
-  using u64 = dango::uint64;
-
-  u64 x0;
-  u64 y0;
-
+  auto
+  tick_count_help
+  (clockid_t const a_clock)noexcept->dango::uint64
   {
-    u64 x1;
-    u64 y1;
+    using u64 = dango::uint64;
 
-    do
+    constexpr auto const c_mul = u64(1'000);
+    constexpr auto const c_div = u64(1'000'000);
+
+    timespec a_spec;
+
+    auto const a_result =
+      clock_gettime(a_clock, &a_spec);
+
+    dango_assert(a_result == 0);
+
+    auto const a_sec = u64(a_spec.tv_sec);
+    auto const a_nsec = u64(a_spec.tv_nsec);
+
+    return (a_sec * c_mul) + (a_nsec / c_div);
+  }
+
+  auto
+  suspend_bias_help
+  ()noexcept->dango::uint64
+  {
+    using u64 = dango::uint64;
+
+    u64 x0;
+    u64 y0;
+
     {
-      x0 = dango::detail::tick_count();
-      y0 = dango::detail::tick_count_sa();
+      u64 x1;
+      u64 y1;
 
-      x1 = dango::detail::tick_count();
-      y1 = dango::detail::tick_count_sa();
+      do
+      {
+        x0 = dango::detail::tick_count();
+        y0 = dango::detail::tick_count_sa();
+
+        x1 = dango::detail::tick_count();
+        y1 = dango::detail::tick_count_sa();
+      }
+      while((x0 != x1) || (y0 != y1));
     }
-    while((x0 != x1) || (y0 != y1));
+
+    dango_assert(y0 >= x0);
+
+    return y0 - x0;
   }
 
-  dango_assert(y0 >= x0);
-
-  return y0 - x0;
-}
-
-template
-<typename tp_func>
-static auto
-dango::
-concurrent_cpp::
-thread_start_address
-(void* const a_data)noexcept->void*
-{
-  static_assert(!dango::is_ref<tp_func>);
-  static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
-  static_assert(dango::is_noexcept_move_constructible<tp_func>);
-  static_assert(dango::is_callable_ret<void, tp_func const&>);
-  static_assert(dango::is_noexcept_destructible<tp_func>);
-
-  auto const a_func_ptr = static_cast<tp_func*>(a_data);
-
-  tp_func const a_func = dango::move(*a_func_ptr);
-
-  try
+  template
+  <typename tp_func>
+  auto
+  thread_start_address_internal
+  (void* const a_data)noexcept->void*
   {
-    a_func();
-  }
-  catch(...)
-  {
-#ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg("uncaught exception in thread");
-#else
-    dango::terminate();
-#endif
+    static_assert(!dango::is_ref<tp_func>);
+    static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
+    static_assert(dango::is_noexcept_move_constructible<tp_func>);
+    static_assert(dango::is_callable_ret<void, tp_func const&>);
+    static_assert(dango::is_noexcept_destructible<tp_func>);
+
+    auto const a_func_ptr = static_cast<tp_func*>(a_data);
+
+    tp_func const a_func = dango::move(*a_func_ptr);
+
+    try
+    {
+      a_func();
+    }
+    catch(...)
+    {
+  #ifndef DANGO_NO_DEBUG
+      dango_unreachable_msg("uncaught exception in thread");
+  #else
+      dango::terminate();
+  #endif
+    }
+
+    return nullptr;
   }
 
-  return nullptr;
-}
-
-static auto
-dango::
-concurrent_cpp::
-sys_futex
-(
-  dango::s_int* const a_addr1,
-  dango::s_int const a_futex_op,
-  dango::s_int const a_val1,
-  timespec const* const a_timeout,
-  dango::s_int* const a_addr2,
-  dango::s_int const a_val3
-)
-noexcept->dango::s_int
-{
-  auto const a_result =
-  syscall
+  auto
+  sys_futex
   (
-    SYS_futex,
-    a_addr1,
-    a_futex_op,
-    a_val1,
-    a_timeout,
-    a_addr2,
-    a_val3
-  );
+    dango::s_int* const a_addr1,
+    dango::s_int const a_futex_op,
+    dango::s_int const a_val1,
+    timespec const* const a_timeout,
+    dango::s_int* const a_addr2,
+    dango::s_int const a_val3
+  )
+  noexcept->dango::s_int
+  {
+    auto const a_result =
+    syscall
+    (
+      SYS_futex,
+      a_addr1,
+      a_futex_op,
+      a_val1,
+      a_timeout,
+      a_addr2,
+      a_val3
+    );
 
-  return a_result;
-}
+    return a_result;
+  }
 
-#ifndef DANGO_NO_MULTICORE
-static auto
-dango::
-concurrent_cpp::
-spin_relax
-(dango::uint32& a_count)noexcept->bool
-{
-  if(a_count == dango::uint32(0))
+  #ifndef DANGO_NO_MULTICORE
+  auto
+  spin_relax
+  (dango::uint32& a_count)noexcept->bool
+  {
+    if(a_count == dango::uint32(0))
+    {
+      return false;
+    }
+
+    --a_count;
+
+    __builtin_ia32_pause();
+
+    return true;
+  }
+  #else
+  auto
+  spin_relax
+  (dango::uint32&)noexcept->bool
   {
     return false;
   }
-
-  --a_count;
-
-  __builtin_ia32_pause();
-
-  return true;
+  #endif
 }
-#else
-static auto
-dango::
-concurrent_cpp::
-spin_relax
-(dango::uint32&)noexcept->bool
-{
-  return false;
-}
-#endif
 
 #endif /* __linux__ */
 
@@ -1718,16 +1706,15 @@ spin_relax
 /*** tick_count ***/
 
 namespace
-dango::concurrent_cpp
 {
   using time_spec = dango::pair<dango::uint64, dango::uint64>;
 
-  static auto perf_freq()noexcept->dango::uint64;
-  static auto perf_count()noexcept->dango::uint64;
-  static auto perf_count_suspend_bias(dango::uint64&)noexcept->dango::uint64;
-  static auto time_spec_from_perf(dango::uint64, dango::uint64)noexcept->concurrent_cpp::time_spec;
-  static void time_spec_add(concurrent_cpp::time_spec&, concurrent_cpp::time_spec const&)noexcept;
-  static auto tick_count_help(dango::uint64*)noexcept->dango::uint64;
+  auto perf_freq()noexcept->dango::uint64;
+  auto perf_count()noexcept->dango::uint64;
+  auto perf_count_suspend_bias(dango::uint64&)noexcept->dango::uint64;
+  auto time_spec_from_perf(dango::uint64, dango::uint64)noexcept->time_spec;
+  void time_spec_add(time_spec&, time_spec const&)noexcept;
+  auto tick_count_help(dango::uint64*)noexcept->dango::uint64;
 }
 
 auto
@@ -1738,7 +1725,7 @@ tick_count
 {
   dango::uint64 a_bias;
 
-  auto const a_count = concurrent_cpp::tick_count_help(&a_bias);
+  auto const a_count = tick_count_help(&a_bias);
 
   return a_count - a_bias;
 }
@@ -1750,7 +1737,7 @@ detail::
 tick_count_sa
 ()noexcept->dango::uint64
 {
-  return concurrent_cpp::tick_count_help(nullptr);
+  return tick_count_help(nullptr);
 }
 
 auto
@@ -1761,7 +1748,7 @@ suspend_bias
 {
   dango::uint64 a_bias;
 
-  concurrent_cpp::tick_count_help(&a_bias);
+  tick_count_help(&a_bias);
 
   return a_bias;
 }
@@ -2018,11 +2005,10 @@ notify_all
 /*** thread ***/
 
 namespace
-dango::concurrent_cpp
 {
   template
   <typename tp_func>
-  static auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
+  auto WINAPI thread_start_address_internal(LPVOID)noexcept->DWORD;
 }
 
 void
@@ -2059,7 +2045,7 @@ noexcept(false)
     (
       nullptr,
       SIZE_T(0),
-      concurrent_cpp::thread_start_address<decltype(a_func)>,
+      thread_start_address_internal<decltype(a_func)>,
       &a_func,
       DWORD(0),
       nullptr
@@ -2594,186 +2580,175 @@ wait
 
 /*** static ***/
 
-static auto
-dango::
-concurrent_cpp::
-perf_freq
-()noexcept->dango::uint64
+namespace
 {
-  static constexpr auto const c_impl =
-  []()noexcept->dango::uint64
+  auto
+  perf_freq
+  ()noexcept->dango::uint64
+  {
+    static constexpr auto const c_impl =
+    []()noexcept->dango::uint64
+    {
+      LARGE_INTEGER a_result;
+
+      QueryPerformanceFrequency(&a_result);
+
+      return dango::uint64(a_result.QuadPart);
+    };
+
+    static auto const s_result = c_impl();
+
+    return s_result;
+  }
+
+  auto
+  perf_count
+  ()noexcept->dango::uint64
   {
     LARGE_INTEGER a_result;
 
-    QueryPerformanceFrequency(&a_result);
+    QueryPerformanceCounter(&a_result);
 
     return dango::uint64(a_result.QuadPart);
-  };
-
-  static auto const s_result = c_impl();
-
-  return s_result;
-}
-
-static auto
-dango::
-concurrent_cpp::
-perf_count
-()noexcept->dango::uint64
-{
-  LARGE_INTEGER a_result;
-
-  QueryPerformanceCounter(&a_result);
-
-  return dango::uint64(a_result.QuadPart);
-}
-
-static auto
-dango::
-concurrent_cpp::
-perf_count_suspend_bias
-(dango::uint64& a_suspend_bias)noexcept->dango::uint64
-{
-  using u64 = dango::uint64;
-
-  static auto& s_bias_ref =
-    *reinterpret_cast<ULONGLONG const volatile*>(dango::uintptr(0x7FFE0000 + 0x3B0));
-
-  u64 a_bias;
-  u64 a_count;
-
-  do
-  {
-    a_bias = u64(s_bias_ref);
-    a_count = concurrent_cpp::perf_count();
-  }
-  while(a_bias != u64(s_bias_ref));
-
-  a_suspend_bias = a_bias;
-
-  return a_count;
-}
-
-static auto
-dango::
-concurrent_cpp::
-time_spec_from_perf
-(dango::uint64 const a_count, dango::uint64 const a_freq)noexcept->concurrent_cpp::time_spec
-{
-  using u64 = dango::uint64;
-
-  constexpr auto const c_billion = u64(1'000'000'000);
-
-  auto const a_div = a_count / a_freq;
-  auto const a_mod = a_count % a_freq;
-
-  return concurrent_cpp::time_spec{ a_div, (a_mod * c_billion) / a_freq };
-}
-
-static void
-dango::
-concurrent_cpp::
-time_spec_add
-(concurrent_cpp::time_spec& a_spec, concurrent_cpp::time_spec const& a_add)noexcept
-{
-  using u64 = dango::uint64;
-
-  constexpr auto const c_billion = u64(1'000'000'000);
-
-  auto& [a_s1, a_n1] = a_spec;
-
-  auto const& [a_s2, a_n2] = a_add;
-
-  dango_assert(a_n1 < c_billion);
-  dango_assert(a_n2 < c_billion);
-
-  a_s1 += a_s2;
-  a_n1 += a_n2;
-
-  auto const a_overflow = u64(a_n1 >= c_billion);
-
-  a_s1 += a_overflow;
-  a_n1 -= a_overflow * c_billion;
-
-  dango_assert(a_n1 < c_billion);
-}
-
-static auto
-dango::
-concurrent_cpp::
-tick_count_help
-(dango::uint64* const a_suspend_bias)noexcept->dango::uint64
-{
-  using u64 = dango::uint64;
-
-  static dango::spin_mutex s_lock{ };
-  static concurrent_cpp::time_spec s_current{ u64(0), u64(0) };
-  static auto s_init_bias = u64(0);
-  static auto s_prev_count = concurrent_cpp::perf_count_suspend_bias(s_init_bias);
-
-  auto const a_freq = concurrent_cpp::perf_freq();
-
-  u64 a_sec;
-  u64 a_nsec;
-  u64 a_bias;
-
-  dango_crit(s_lock)
-  {
-    auto const a_count = concurrent_cpp::perf_count_suspend_bias(a_bias);
-    auto const a_count_delta = a_count - s_prev_count;
-
-    s_prev_count = a_count;
-
-    auto const a_delta = concurrent_cpp::time_spec_from_perf(a_count_delta, a_freq);
-
-    concurrent_cpp::time_spec_add(s_current, a_delta);
-
-    a_sec = s_current.first();
-    a_nsec = s_current.second();
   }
 
-  dango_assert(a_bias >= s_init_bias);
-
-  if(a_suspend_bias)
+  auto
+  perf_count_suspend_bias
+  (dango::uint64& a_suspend_bias)noexcept->dango::uint64
   {
-    (*a_suspend_bias) = (a_bias - s_init_bias) / u64(10'000);
+    using u64 = dango::uint64;
+
+    static auto& s_bias_ref =
+      *reinterpret_cast<ULONGLONG const volatile*>(dango::uintptr(0x7FFE0000 + 0x3B0));
+
+    u64 a_bias;
+    u64 a_count;
+
+    do
+    {
+      a_bias = u64(s_bias_ref);
+      a_count = perf_count();
+    }
+    while(a_bias != u64(s_bias_ref));
+
+    a_suspend_bias = a_bias;
+
+    return a_count;
   }
 
-  return (a_sec * u64(1'000)) + (a_nsec / u64(1'000'000));
-}
-
-template
-<typename tp_func>
-static auto WINAPI
-dango::
-concurrent_cpp::
-thread_start_address
-(LPVOID const a_data)noexcept->DWORD
-{
-  static_assert(!dango::is_ref<tp_func>);
-  static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
-  static_assert(dango::is_noexcept_move_constructible<tp_func>);
-  static_assert(dango::is_callable_ret<void, tp_func const&>);
-  static_assert(dango::is_noexcept_destructible<tp_func>);
-
-  auto const a_func_ptr = static_cast<tp_func*>(a_data);
-
-  tp_func const a_func = dango::move(*a_func_ptr);
-
-  try
+  auto
+  time_spec_from_perf
+  (dango::uint64 const a_count, dango::uint64 const a_freq)noexcept->time_spec
   {
-    a_func();
-  }
-  catch(...)
-  {
-#ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg("uncaught exception in thread");
-#else
-    dango::terminate();
-#endif
+    using u64 = dango::uint64;
+
+    constexpr auto const c_billion = u64(1'000'000'000);
+
+    auto const a_div = a_count / a_freq;
+    auto const a_mod = a_count % a_freq;
+
+    return time_spec{ a_div, (a_mod * c_billion) / a_freq };
   }
 
-  return DWORD(0);
+  void
+  time_spec_add
+  (time_spec& a_spec, time_spec const& a_add)noexcept
+  {
+    using u64 = dango::uint64;
+
+    constexpr auto const c_billion = u64(1'000'000'000);
+
+    auto& [a_s1, a_n1] = a_spec;
+
+    auto const& [a_s2, a_n2] = a_add;
+
+    dango_assert(a_n1 < c_billion);
+    dango_assert(a_n2 < c_billion);
+
+    a_s1 += a_s2;
+    a_n1 += a_n2;
+
+    auto const a_overflow = u64(a_n1 >= c_billion);
+
+    a_s1 += a_overflow;
+    a_n1 -= a_overflow * c_billion;
+
+    dango_assert(a_n1 < c_billion);
+  }
+
+  auto
+  tick_count_help
+  (dango::uint64* const a_suspend_bias)noexcept->dango::uint64
+  {
+    using u64 = dango::uint64;
+
+    static dango::spin_mutex s_lock{ };
+    static time_spec s_current{ u64(0), u64(0) };
+    static auto s_init_bias = u64(0);
+    static auto s_prev_count = perf_count_suspend_bias(s_init_bias);
+
+    auto const a_freq = perf_freq();
+
+    u64 a_sec;
+    u64 a_nsec;
+    u64 a_bias;
+
+    dango_crit(s_lock)
+    {
+      auto const a_count = perf_count_suspend_bias(a_bias);
+      auto const a_count_delta = a_count - s_prev_count;
+
+      s_prev_count = a_count;
+
+      auto const a_delta = time_spec_from_perf(a_count_delta, a_freq);
+
+      time_spec_add(s_current, a_delta);
+
+      a_sec = s_current.first();
+      a_nsec = s_current.second();
+    }
+
+    dango_assert(a_bias >= s_init_bias);
+
+    if(a_suspend_bias)
+    {
+      (*a_suspend_bias) = (a_bias - s_init_bias) / u64(10'000);
+    }
+
+    return (a_sec * u64(1'000)) + (a_nsec / u64(1'000'000));
+  }
+
+  template
+  <typename tp_func>
+  auto WINAPI
+  thread_start_address_internal
+  (LPVOID const a_data)noexcept->DWORD
+  {
+    static_assert(!dango::is_ref<tp_func>);
+    static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
+    static_assert(dango::is_noexcept_move_constructible<tp_func>);
+    static_assert(dango::is_callable_ret<void, tp_func const&>);
+    static_assert(dango::is_noexcept_destructible<tp_func>);
+
+    auto const a_func_ptr = static_cast<tp_func*>(a_data);
+
+    tp_func const a_func = dango::move(*a_func_ptr);
+
+    try
+    {
+      a_func();
+    }
+    catch(...)
+    {
+  #ifndef DANGO_NO_DEBUG
+      dango_unreachable_msg("uncaught exception in thread");
+  #else
+      dango::terminate();
+  #endif
+    }
+
+    return DWORD(0);
+  }
 }
 
 #endif /* _WIN32 */
