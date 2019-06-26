@@ -88,7 +88,7 @@ static_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
 shared_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
 
 static_flags = ['-fPIC'];
-shared_flags = ['-fvisibility=hidden'];
+shared_flags = ['-fPIC', '-fvisibility=hidden'];
 
 
 if(compilation_target == 'linux'):
