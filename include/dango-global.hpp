@@ -380,6 +380,12 @@ decrement
 
 #undef DANGO_GLOBAL_STORAGE_ENABLE_SPEC
 
+#ifndef DANGO_COMPILING_DANGO
+#define DANGO_STATIC_STRONG_DEF(type_name, val_name) static type_name const val_name{ };
+#else
+#define DANGO_STATIC_STRONG_DEF(type_name, val_name)
+#endif
+
 #define DANGO_DEFINE_GLOBAL_IMPL(linkage, name, cv, ...) \
 namespace \
 name##_namespace \
@@ -398,7 +404,7 @@ name##_namespace \
   linkage storage_type s_storage{ }; \
   using strong_type = storage_type::strong_incrementer<s_storage>; \
   using weak_type = storage_type::weak_incrementer<s_storage>; \
-  static strong_type const s_strong{ }; \
+  DANGO_STATIC_STRONG_DEF(strong_type, s_strong) \
 } \
 [[nodiscard]] linkage auto \
 name \
@@ -415,12 +421,6 @@ DANGO_DEFINE_GLOBAL_IMPL(inline, name, cv, __VA_ARGS__)
 
 #define DANGO_DEFINE_GLOBAL_INLINE(name, ...) \
 DANGO_DEFINE_GLOBAL_INLINE_CV(name, , __VA_ARGS__)
-
-#define DANGO_DEFINE_GLOBAL_STATIC_CV(name, cv, ...) \
-DANGO_DEFINE_GLOBAL_IMPL(static, name, cv, __VA_ARGS__)
-
-#define DANGO_DEFINE_GLOBAL_STATIC(name, ...) \
-DANGO_DEFINE_GLOBAL_STATIC_CV(name, , __VA_ARGS__)
 
 #define dango_access_global(global_name, local_name) \
 if constexpr(auto const local_name = global_name(); true)

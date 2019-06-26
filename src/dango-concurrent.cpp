@@ -731,22 +731,43 @@ cond_var_registry_thread::
   m_thread.join();
 }
 
-#include <cstdio>
-#include <cerrno>
+#include <dango-shared-concurrent.hpp>
+
+/*** thread ***/
+
+void
+dango::
+thread::
+start_thread
+(
+  thread_start_func const a_thread_func,
+  void* const a_thread_data
+)
+noexcept(false)
+{
+  if(dango::shared::create_thread(a_thread_func, a_thread_data))
+  {
+    return;
+  }
+
+  throw "thread creation failed"; // TODO
+}
+
+void
+dango::
+thread::
+yield
+()noexcept
+{
+  dango::shared::yield_thread();
+}
 
 #ifdef __linux__
-
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/time.h>
-#include <sys/syscall.h>
-#include <linux/futex.h>
 
 /*** tick_count ***/
 
 namespace
 {
-  auto tick_count_help(clockid_t)noexcept->dango::uint64;
   auto suspend_bias_help()noexcept->dango::uint64;
 }
 
@@ -756,7 +777,7 @@ detail::
 tick_count
 ()noexcept->dango::uint64
 {
-  return tick_count_help(CLOCK_MONOTONIC);
+  return dango::shared::tick_count_monotonic();
 }
 
 auto
@@ -765,7 +786,7 @@ detail::
 tick_count_sa
 ()noexcept->dango::uint64
 {
-  return tick_count_help(CLOCK_BOOTTIME);
+  return dango::shared::tick_count_boottime();
 }
 
 auto
@@ -801,11 +822,15 @@ mutex_impl
 final
 {
 private:
-  using state_type = dango::s_int;
-private:
-  static state_type const UNLOCKED;
-  static state_type const LOCKED;
-  static state_type const CONTENDED;
+  using state_type = dango::shared::futex_type;
+
+  enum
+  state:state_type
+  {
+    UNLOCKED,
+    LOCKED,
+    CONTENDED
+  };
 public:
   constexpr mutex_impl()noexcept;
   ~mutex_impl()noexcept = default;
@@ -820,34 +845,13 @@ public:
   DANGO_IMMOBILE(mutex_impl)
 };
 
-constexpr dango::detail::mutex_base::mutex_impl::state_type const
-dango::
-detail::
-mutex_base::
-mutex_impl::
-UNLOCKED = state_type(0);
-
-constexpr dango::detail::mutex_base::mutex_impl::state_type const
-dango::
-detail::
-mutex_base::
-mutex_impl::
-LOCKED = state_type(1);
-
-constexpr dango::detail::mutex_base::mutex_impl::state_type const
-dango::
-detail::
-mutex_base::
-mutex_impl::
-CONTENDED = state_type(2);
-
 constexpr
 dango::
 detail::
 mutex_base::
 mutex_impl::
 mutex_impl()noexcept:
-m_state{ UNLOCKED }
+m_state{ state::UNLOCKED }
 {
 
 }
@@ -950,7 +954,7 @@ final
 {
 private:
   using mutex_ptr = dango::detail::mutex_base::mutex_impl*;
-  using seq_type = dango::s_int;
+  using seq_type = dango::shared::futex_type;
 public:
   constexpr cond_var_impl()noexcept:
   m_seq{ seq_type(0) },
@@ -1082,98 +1086,10 @@ notify_all
   get()->notify_all();
 }
 
-/*** thread ***/
-
-namespace
-{
-  template
-  <typename tp_func>
-  auto thread_start_address_internal(void*)noexcept->void*;
-}
-
-void
-dango::
-thread::
-start_thread
-(
-  thread_start_func const a_thread_func,
-  void* const a_thread_data
-)
-noexcept(false)
-{
-  constexpr auto const acquire = dango::mem_order::acquire;
-  constexpr auto const release = dango::mem_order::release;
-
-  dango::atomic<bool> a_starting{ true };
-
-  auto a_func =
-  [
-    a_thread_func,
-    a_thread_data,
-    &a_starting
-  ]
-  ()noexcept(false)->void
-  {
-    pthread_detach(pthread_self());
-
-    a_starting.store<release>(false);
-
-    a_thread_func(a_thread_data);
-  };
-
-  {
-    pthread_t a_thread_ID;
-
-    auto const a_result =
-    pthread_create
-    (
-      &a_thread_ID,
-      nullptr,
-      thread_start_address_internal<decltype(a_func)>,
-      &a_func
-    );
-
-    if(a_result == EAGAIN)
-    {
-      throw "thread creation failed"; // TODO
-    }
-
-    dango_assert(a_result == 0);
-  }
-
-  auto a_count = detail::c_spin_count_init;
-
-  while(a_starting.load<acquire>())
-  {
-    detail::spin_yield(a_count);
-  }
-}
-
-void
-dango::
-thread::
-yield
-()noexcept
-{
-  sched_yield();
-}
-
 /*** mutex_impl ***/
 
 namespace
 {
-  auto
-  sys_futex
-  (
-    dango::s_int*,
-    dango::s_int,
-    dango::s_int,
-    timespec const*,
-    dango::s_int*,
-    dango::s_int
-  )
-  noexcept->dango::s_int;
-
   auto spin_relax(dango::uint32&)noexcept->bool;
 
   constexpr auto const c_spin_count_init = dango::uint32(128);
@@ -1197,9 +1113,9 @@ lock
   {
     a_last = dango::atomic_load<acquire>(&m_state);
 
-    if(a_last == UNLOCKED)
+    if(a_last == state::UNLOCKED)
     {
-      if(dango::atomic_compare_exchange<acquire, acquire>(&m_state, &a_last, LOCKED))
+      if(dango::atomic_compare_exchange<acquire, acquire>(&m_state, &a_last, state::LOCKED))
       {
         return;
       }
@@ -1207,26 +1123,18 @@ lock
   }
   while(spin_relax(a_count));
 
-  dango_assert(a_last != UNLOCKED);
+  dango_assert(a_last != state::UNLOCKED);
 
-  if(a_last == LOCKED)
+  if(a_last == state::LOCKED)
   {
-    a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
+    a_last = dango::atomic_exchange<acquire>(&m_state, state::CONTENDED);
   }
 
-  while(a_last != UNLOCKED)
+  while(a_last != state::UNLOCKED)
   {
-    sys_futex
-    (
-      &m_state,
-      FUTEX_WAIT_PRIVATE,
-      CONTENDED,
-      nullptr,
-      nullptr,
-      dango::s_int(0)
-    );
+    dango::shared::futex_wait(&m_state, state::CONTENDED);
 
-    a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
+    a_last = dango::atomic_exchange<acquire>(&m_state, state::CONTENDED);
   }
 }
 
@@ -1240,14 +1148,14 @@ try_lock
 {
   constexpr auto const acquire = dango::mem_order::acquire;
 
-  state_type a_last = dango::atomic_load<acquire>(&m_state);
+  auto a_last = dango::atomic_load<acquire>(&m_state);
 
-  if(a_last != UNLOCKED)
+  if(a_last != state::UNLOCKED)
   {
     return false;
   }
 
-  return dango::atomic_compare_exchange<acquire, acquire>(&m_state, &a_last, LOCKED);
+  return dango::atomic_compare_exchange<acquire, acquire>(&m_state, &a_last, state::LOCKED);
 }
 
 void
@@ -1268,11 +1176,11 @@ relock
   {
     a_last = dango::atomic_load<acquire>(&m_state);
 
-    if(a_last == UNLOCKED)
+    if(a_last == state::UNLOCKED)
     {
-      a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
+      a_last = dango::atomic_exchange<acquire>(&m_state, state::CONTENDED);
 
-      if(a_last == UNLOCKED)
+      if(a_last == state::UNLOCKED)
       {
         return;
       }
@@ -1280,26 +1188,18 @@ relock
   }
   while(spin_relax(a_count));
 
-  dango_assert(a_last != UNLOCKED);
+  dango_assert(a_last != state::UNLOCKED);
 
-  if(a_last == LOCKED)
+  if(a_last == state::LOCKED)
   {
-    a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
+    a_last = dango::atomic_exchange<acquire>(&m_state, state::CONTENDED);
   }
 
-  while(a_last != UNLOCKED)
+  while(a_last != state::UNLOCKED)
   {
-    sys_futex
-    (
-      &m_state,
-      FUTEX_WAIT_PRIVATE,
-      CONTENDED,
-      nullptr,
-      nullptr,
-      dango::s_int(0)
-    );
+    dango::shared::futex_wait(&m_state, state::CONTENDED);
 
-    a_last = dango::atomic_exchange<acquire>(&m_state, CONTENDED);
+    a_last = dango::atomic_exchange<acquire>(&m_state, state::CONTENDED);
   }
 }
 
@@ -1313,24 +1213,16 @@ unlock
 {
   constexpr auto const release = dango::mem_order::release;
 
-  auto const a_last = dango::atomic_exchange<release>(&m_state, UNLOCKED);
+  auto const a_last = dango::atomic_exchange<release>(&m_state, state::UNLOCKED);
 
-  dango_assert(a_last != UNLOCKED);
+  dango_assert(a_last != state::UNLOCKED);
 
-  if(a_last == LOCKED)
+  if(a_last == state::LOCKED)
   {
     return;
   }
 
-  sys_futex
-  (
-    &m_state,
-    FUTEX_WAKE_PRIVATE,
-    dango::s_int(1),
-    nullptr,
-    nullptr,
-    dango::s_int(0)
-  );
+  dango::shared::futex_wake(&m_state);
 }
 
 auto
@@ -1366,15 +1258,7 @@ notify
 
   dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
 
-  sys_futex
-  (
-    &m_seq,
-    FUTEX_WAKE_PRIVATE,
-    dango::s_int(1),
-    nullptr,
-    nullptr,
-    dango::s_int(0)
-  );
+  dango::shared::futex_wake(&m_seq);
 }
 
 void
@@ -1403,17 +1287,7 @@ notify_all
 
   dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
 
-  constexpr auto const c_all = dango::uintptr(dango::integer::MAX_VAL<dango::s_int>);
-
-  sys_futex
-  (
-    &m_seq,
-    FUTEX_REQUEUE_PRIVATE,
-    dango::s_int(1),
-    reinterpret_cast<timespec const*>(c_all),
-    a_mutex->futex_address(),
-    dango::s_int(0)
-  );
+  dango::shared::futex_wake_requeue(&m_seq, a_mutex->futex_address());
 }
 
 void
@@ -1434,15 +1308,7 @@ wait
 
   a_mutex->unlock();
 
-  sys_futex
-  (
-    &m_seq,
-    FUTEX_WAIT_PRIVATE,
-    a_seq,
-    nullptr,
-    nullptr,
-    dango::s_int(0)
-  );
+  dango::shared::futex_wait(&m_seq, a_seq);
 
   a_mutex->relock();
 
@@ -1467,28 +1333,7 @@ wait
 
   a_mutex->unlock();
 
-  using u64 = dango::uint64;
-
-  timespec a_spec;
-
-  {
-    auto const a_sec = a_interval / u64(1'000);
-    auto const a_mod = a_interval % u64(1'000);
-    auto const a_nsec = a_mod * u64(1'000'000);
-
-    a_spec.tv_sec = a_sec;
-    a_spec.tv_nsec = a_nsec;
-  }
-
-  sys_futex
-  (
-    &m_seq,
-    FUTEX_WAIT_PRIVATE,
-    a_seq,
-    &a_spec,
-    nullptr,
-    dango::s_int(0)
-  );
+  dango::shared::futex_wait(&m_seq, a_seq, a_interval);
 
   a_mutex->relock();
 
@@ -1540,28 +1385,6 @@ decrement
 namespace
 {
   auto
-  tick_count_help
-  (clockid_t const a_clock)noexcept->dango::uint64
-  {
-    using u64 = dango::uint64;
-
-    constexpr auto const c_mul = u64(1'000);
-    constexpr auto const c_div = u64(1'000'000);
-
-    timespec a_spec;
-
-    auto const a_result =
-      clock_gettime(a_clock, &a_spec);
-
-    dango_assert(a_result == 0);
-
-    auto const a_sec = u64(a_spec.tv_sec);
-    auto const a_nsec = u64(a_spec.tv_nsec);
-
-    return (a_sec * c_mul) + (a_nsec / c_div);
-  }
-
-  auto
   suspend_bias_help
   ()noexcept->dango::uint64
   {
@@ -1590,66 +1413,7 @@ namespace
     return y0 - x0;
   }
 
-  template
-  <typename tp_func>
-  auto
-  thread_start_address_internal
-  (void* const a_data)noexcept->void*
-  {
-    static_assert(!dango::is_ref<tp_func>);
-    static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
-    static_assert(dango::is_noexcept_move_constructible<tp_func>);
-    static_assert(dango::is_callable_ret<void, tp_func const&>);
-    static_assert(dango::is_noexcept_destructible<tp_func>);
-
-    auto const a_func_ptr = static_cast<tp_func*>(a_data);
-
-    tp_func const a_func = dango::move(*a_func_ptr);
-
-    try
-    {
-      a_func();
-    }
-    catch(...)
-    {
-  #ifndef DANGO_NO_DEBUG
-      dango_unreachable_msg("uncaught exception in thread");
-  #else
-      dango::terminate();
-  #endif
-    }
-
-    return nullptr;
-  }
-
-  auto
-  sys_futex
-  (
-    dango::s_int* const a_addr1,
-    dango::s_int const a_futex_op,
-    dango::s_int const a_val1,
-    timespec const* const a_timeout,
-    dango::s_int* const a_addr2,
-    dango::s_int const a_val3
-  )
-  noexcept->dango::s_int
-  {
-    auto const a_result =
-    syscall
-    (
-      SYS_futex,
-      a_addr1,
-      a_futex_op,
-      a_val1,
-      a_timeout,
-      a_addr2,
-      a_val3
-    );
-
-    return a_result;
-  }
-
-  #ifndef DANGO_NO_MULTICORE
+#ifndef DANGO_NO_MULTICORE
   auto
   spin_relax
   (dango::uint32& a_count)noexcept->bool
@@ -1665,39 +1429,19 @@ namespace
 
     return true;
   }
-  #else
+#else
   auto
   spin_relax
   (dango::uint32&)noexcept->bool
   {
     return false;
   }
-  #endif
+#endif
 }
 
 #endif /* __linux__ */
 
 #ifdef _WIN32
-
-#define DANGO_WINDOWS_VER 0x0601
-
-#ifdef WINVER
-#if WINVER < DANGO_WINDOWS_VER
-#undef WINVER
-#define WINVER DANGO_WINDOWS_VER
-#endif
-#else
-#define WINVER DANGO_WINDOWS_VER
-#endif
-
-#ifdef _WIN32_WINNT
-#if _WIN32_WINNT < DANGO_WINDOWS_VER
-#undef _WIN32_WINNT
-#define _WIN32_WINNT DANGO_WINDOWS_VER
-#endif
-#else
-#define _WIN32_WINNT DANGO_WINDOWS_VER
-#endif
 
 #include <windows.h>
 
@@ -1707,9 +1451,6 @@ namespace
 {
   using time_spec = dango::pair<dango::uint64, dango::uint64>;
 
-  auto perf_freq()noexcept->dango::uint64;
-  auto perf_count()noexcept->dango::uint64;
-  auto perf_count_suspend_bias(dango::uint64&)noexcept->dango::uint64;
   auto time_spec_from_perf(dango::uint64, dango::uint64)noexcept->time_spec;
   void time_spec_add(time_spec&, time_spec const&)noexcept;
   auto tick_count_help(dango::uint64*)noexcept->dango::uint64;
@@ -1998,82 +1739,6 @@ notify_all
   init();
 
   get()->notify_all();
-}
-
-/*** thread ***/
-
-namespace
-{
-  template
-  <typename tp_func>
-  auto WINAPI thread_start_address_internal(LPVOID)noexcept->DWORD;
-}
-
-void
-dango::
-thread::
-start_thread
-(
-  thread_start_func const a_thread_func,
-  void* const a_thread_data
-)
-noexcept(false)
-{
-  constexpr auto const acquire = dango::mem_order::acquire;
-  constexpr auto const release = dango::mem_order::release;
-
-  dango::atomic<bool> a_starting{ true };
-
-  auto a_func =
-  [
-    a_thread_func,
-    a_thread_data,
-    &a_starting
-  ]
-  ()noexcept(false)->void
-  {
-    a_starting.store<release>(false);
-
-    a_thread_func(a_thread_data);
-  };
-
-  {
-    auto const a_handle =
-    CreateThread
-    (
-      nullptr,
-      SIZE_T(0),
-      thread_start_address_internal<decltype(a_func)>,
-      &a_func,
-      DWORD(0),
-      nullptr
-    );
-
-    if(a_handle == NULL)
-    {
-      throw "thread creation failed"; // TODO
-    }
-
-    auto const a_result = CloseHandle(a_handle);
-
-    dango_assert(a_result != 0);
-  }
-
-  auto a_count = detail::c_spin_count_init;
-
-  while(a_starting.load<acquire>())
-  {
-    detail::spin_yield(a_count);
-  }
-}
-
-void
-dango::
-thread::
-yield
-()noexcept
-{
-  Sleep(DWORD(0));
 }
 
 /*** windows_timer_res_access ***/
@@ -2581,60 +2246,6 @@ wait
 namespace
 {
   auto
-  perf_freq
-  ()noexcept->dango::uint64
-  {
-    static constexpr auto const c_impl =
-    []()noexcept->dango::uint64
-    {
-      LARGE_INTEGER a_result;
-
-      QueryPerformanceFrequency(&a_result);
-
-      return dango::uint64(a_result.QuadPart);
-    };
-
-    static auto const s_result = c_impl();
-
-    return s_result;
-  }
-
-  auto
-  perf_count
-  ()noexcept->dango::uint64
-  {
-    LARGE_INTEGER a_result;
-
-    QueryPerformanceCounter(&a_result);
-
-    return dango::uint64(a_result.QuadPart);
-  }
-
-  auto
-  perf_count_suspend_bias
-  (dango::uint64& a_suspend_bias)noexcept->dango::uint64
-  {
-    using u64 = dango::uint64;
-
-    static auto& s_bias_ref =
-      *reinterpret_cast<ULONGLONG const volatile*>(dango::uintptr(0x7FFE0000 + 0x3B0));
-
-    u64 a_bias;
-    u64 a_count;
-
-    do
-    {
-      a_bias = u64(s_bias_ref);
-      a_count = perf_count();
-    }
-    while(a_bias != u64(s_bias_ref));
-
-    a_suspend_bias = a_bias;
-
-    return a_count;
-  }
-
-  auto
   time_spec_from_perf
   (dango::uint64 const a_count, dango::uint64 const a_freq)noexcept->time_spec
   {
@@ -2683,9 +2294,9 @@ namespace
     static dango::spin_mutex s_lock{ };
     static time_spec s_current{ u64(0), u64(0) };
     static auto s_init_bias = u64(0);
-    static auto s_prev_count = perf_count_suspend_bias(s_init_bias);
+    static auto s_prev_count = dango::shared::perf_count_suspend_bias(s_init_bias);
 
-    auto const a_freq = perf_freq();
+    auto const a_freq = dango::shared::perf_freq();
 
     u64 a_sec;
     u64 a_nsec;
@@ -2693,7 +2304,7 @@ namespace
 
     dango_crit(s_lock)
     {
-      auto const a_count = perf_count_suspend_bias(a_bias);
+      auto const a_count = dango::shared::perf_count_suspend_bias(a_bias);
       auto const a_count_delta = a_count - s_prev_count;
 
       s_prev_count = a_count;
@@ -2714,38 +2325,6 @@ namespace
     }
 
     return (a_sec * u64(1'000)) + (a_nsec / u64(1'000'000));
-  }
-
-  template
-  <typename tp_func>
-  auto WINAPI
-  thread_start_address_internal
-  (LPVOID const a_data)noexcept->DWORD
-  {
-    static_assert(!dango::is_ref<tp_func>);
-    static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
-    static_assert(dango::is_noexcept_move_constructible<tp_func>);
-    static_assert(dango::is_callable_ret<void, tp_func const&>);
-    static_assert(dango::is_noexcept_destructible<tp_func>);
-
-    auto const a_func_ptr = static_cast<tp_func*>(a_data);
-
-    tp_func const a_func = dango::move(*a_func_ptr);
-
-    try
-    {
-      a_func();
-    }
-    catch(...)
-    {
-  #ifndef DANGO_NO_DEBUG
-      dango_unreachable_msg("uncaught exception in thread");
-  #else
-      dango::terminate();
-  #endif
-    }
-
-    return DWORD(0);
   }
 }
 

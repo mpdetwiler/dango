@@ -115,10 +115,16 @@ dango
   }
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_type>
+  <dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_type, typename tp_value_type>
   auto
-  atomic_store(tp_type volatile* a_addr, tp_type const a_value)
-  noexcept->dango::enable_if<!dango::is_const<tp_type> && dango::is_atomic<tp_type>, void>
+  atomic_store(tp_type volatile* a_addr, tp_value_type&& a_value)noexcept->
+  dango::enable_if
+  <
+    !dango::is_const<tp_type> &&
+    dango::is_atomic<tp_type> &&
+    dango::is_constructible<tp_type, tp_value_type>,
+    void
+  >
   {
     static_assert(detail::is_valid_mem_order(tp_order));
 
@@ -129,31 +135,44 @@ dango
       tp_order == dango::mem_order::seq_cst
     );
 
-    __atomic_store_n(a_addr, a_value, dango::s_int(tp_order));
+    __atomic_store_n(a_addr, tp_type(dango::forward<tp_value_type>(a_value)), dango::s_int(tp_order));
   }
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_type>
+  <dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_type, typename tp_value_type>
   auto
   atomic_exchange
-  (tp_type volatile* const a_addr, tp_type const a_value)
-  noexcept->dango::enable_if<!dango::is_const<tp_type> && dango::is_atomic<tp_type>, tp_type>
+  (tp_type volatile* const a_addr, tp_value_type&& a_value)noexcept->
+  dango::enable_if
+  <
+    !dango::is_const<tp_type> &&
+    dango::is_atomic<tp_type> &&
+    dango::is_constructible<tp_type, tp_value_type>,
+    tp_type
+  >
   {
     static_assert(detail::is_valid_mem_order(tp_order));
 
-    return __atomic_exchange_n(a_addr, a_value, dango::s_int(tp_order));
+    return __atomic_exchange_n(a_addr, tp_type(dango::forward<tp_value_type>(a_value)), dango::s_int(tp_order));
   }
 
   template
   <
     dango::mem_order tp_success = dango::mem_order::seq_cst,
     dango::mem_order tp_failure = dango::mem_order::seq_cst,
-    typename tp_type
+    typename tp_type,
+    typename tp_value_type
   >
   auto
   atomic_compare_exchange
-  (tp_type volatile* const a_addr, tp_type* const a_expected, tp_type const a_value)
-  noexcept->dango::enable_if<!dango::is_const<tp_type> && dango::is_atomic<tp_type>, bool>
+  (tp_type volatile* const a_addr, tp_type* const a_expected, tp_value_type&& a_value)noexcept->
+  dango::enable_if
+  <
+    !dango::is_const<tp_type> &&
+    dango::is_atomic<tp_type> &&
+    dango::is_constructible<tp_type, tp_value_type>,
+    bool
+  >
   {
     static_assert(detail::is_valid_mem_order(tp_success));
     static_assert(detail::is_valid_mem_order(tp_failure));
@@ -170,7 +189,7 @@ dango
     (
       a_addr,
       a_expected,
-      a_value,
+      tp_type(dango::forward<tp_value_type>(a_value)),
       false,
       dango::s_int(tp_success),
       dango::s_int(tp_failure)
@@ -182,16 +201,22 @@ dango
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_type> \
+<dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_type, typename tp_value_type> \
 auto \
 atomic_##name \
-(tp_type volatile* const a_addr, tp_type const a_value) \
+(tp_type volatile* const a_addr, tp_value_type&& a_value) \
 noexcept-> \
 dango::enable_if \
-<!dango::is_const<tp_type> && dango::is_int<tp_type> && dango::is_atomic<tp_type>, tp_type> \
+< \
+  !dango::is_const<tp_type> && \
+  dango::is_int<tp_type> && \
+  dango::is_atomic<tp_type> && \
+  dango::is_constructible<tp_type, tp_value_type>, \
+  tp_type \
+> \
 { \
   static_assert(detail::is_valid_mem_order(tp_order)); \
-  return __atomic_##name(a_addr, a_value, dango::s_int(tp_order)); \
+  return __atomic_##name(a_addr, tp_type(dango::forward<tp_value_type>(a_value)), dango::s_int(tp_order)); \
 }
 
 namespace

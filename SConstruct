@@ -77,6 +77,9 @@ shared_env = static_env.Clone();
 if(compile_test):
   test_env = static_env.Clone();
 
+static_env.Append(CPPPATH = ['shared/include/']);
+shared_env.Append(CPPPATH = ['shared/include/']);
+
 static_env.Replace(AR = 'gcc-ar');
 static_env.Replace(ARFLAGS = 'rcs');
 static_env.Replace(RANLIBCOM = '');
@@ -84,29 +87,24 @@ static_env.Replace(RANLIBCOM = '');
 static_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
 shared_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
 
-shared_flags = ['-fPIC'];
+shared_flags = ['-fPIC', '-fvisibility=hidden'];
 
 if(compilation_target == 'linux'):
   shared_env.Append(LIBS = ['pthread']);
 elif(compilation_target == 'win32' or compilation_target == 'win64'):
   shared_env.Append(LIBS = ['winmm']);
   shared_env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
-  shared_flags += ['-static-libgcc', '-static-libstdc++'];
 
 shared_env.Append(CXXFLAGS = shared_flags);
 shared_env.Append(LINKFLAGS = shared_flags);
 
-shared_env.Append(CPPPATH = ['shared/include/']);
+shared_env.SharedLibrary('dangoshared', Glob('shared/src/*.cpp'));
+static_env.StaticLibrary('dango', Glob('src/*.cpp'));
 
 if(compile_test):
   test_env.Append(CPPPATH = ['test/include/']);
   test_env.Append(LIBPATH = ['./']);
   test_env.Append(LIBS = ['dangoshared', 'dango']);
   test_env.Append(RPATH = ['./']);
-
-shared_env.SharedLibrary('dangoshared', Glob('shared/src/*.cpp'));
-static_env.StaticLibrary('dango', Glob('src/*.cpp'));
-
-if(compile_test):
   test_env.Program('run', Glob('test/src/*.cpp'));
 
