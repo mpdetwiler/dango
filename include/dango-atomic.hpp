@@ -122,7 +122,7 @@ dango
   <
     !dango::is_const<tp_type> &&
     dango::is_atomic<tp_type> &&
-    dango::is_constructible<tp_type, tp_value_type>,
+    dango::is_convertible<tp_value_type, tp_type>,
     void
   >
   {
@@ -147,7 +147,7 @@ dango
   <
     !dango::is_const<tp_type> &&
     dango::is_atomic<tp_type> &&
-    dango::is_constructible<tp_type, tp_value_type>,
+    dango::is_convertible<tp_value_type, tp_type>,
     tp_type
   >
   {
@@ -170,7 +170,7 @@ dango
   <
     !dango::is_const<tp_type> &&
     dango::is_atomic<tp_type> &&
-    dango::is_constructible<tp_type, tp_value_type>,
+    dango::is_convertible<tp_value_type, tp_type>,
     bool
   >
   {
@@ -211,7 +211,7 @@ dango::enable_if \
   !dango::is_const<tp_type> && \
   dango::is_int<tp_type> && \
   dango::is_atomic<tp_type> && \
-  dango::is_constructible<tp_type, tp_value_type>, \
+  dango::is_convertible<tp_value_type, tp_type>, \
   tp_type \
 > \
 { \

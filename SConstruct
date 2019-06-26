@@ -84,8 +84,8 @@ static_env.Replace(AR = 'gcc-ar');
 static_env.Replace(ARFLAGS = 'rcs');
 static_env.Replace(RANLIBCOM = '');
 
-static_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
-shared_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
+static_env.Append(CPPDEFINES = ['DANGO_COMPILING_DANGO']);
+shared_env.Append(CPPDEFINES = ['DANGO_COMPILING_DANGO', 'DANGO_COMPILING_DANGO_SHARED']);
 
 static_flags = [];
 shared_flags = [];
