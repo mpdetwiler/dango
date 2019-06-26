@@ -1976,9 +1976,9 @@ private:
     ACTIVATED, DEACTIVATING, DEACTIVATED
   };
 private:
-  static auto min_period()noexcept->dango::uint32;
-  static void begin_period()noexcept;
-  static void end_period()noexcept;
+  //static auto min_period()noexcept->dango::uint32;
+  //static void begin_period()noexcept;
+  //static void end_period()noexcept;
 public:
   void activate(dango::timeout const&)noexcept;
   void deactivate(dango::timeout const&)noexcept;

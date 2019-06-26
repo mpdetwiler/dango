@@ -88,7 +88,7 @@ static_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
 shared_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
 
 static_flags = ['-fPIC'];
-shared_flags = ['-fPIC', '-fvisibility=hidden'];
+shared_flags = ['-fvisibility=hidden'];
 
 
 if(compilation_target == 'linux'):
@@ -111,6 +111,8 @@ shared_lib = shared_env.SharedLibrary('dangoshared', [Glob('shared/src/*.cpp')])
 
 if(compile_test):
   test_env.Append(CPPPATH = ['test/include/']);
+  test_env.Append(LIBS = ['dangoshared', 'dango']);
+  test_env.Append(LIBPATH = ['./']);
   test_env.Append(RPATH = ['./']);
-  test_env.Program('run', [Glob('test/src/*.cpp'), shared_lib, static_lib]);
+  test_env.Program('run', [Glob('test/src/*.cpp')]);
 

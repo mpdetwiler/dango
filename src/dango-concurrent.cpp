@@ -1443,8 +1443,6 @@ namespace
 
 #ifdef _WIN32
 
-#include <windows.h>
-
 /*** tick_count ***/
 
 namespace
@@ -1502,7 +1500,7 @@ mutex_impl
 final
 {
 private:
-  using lock_type = SRWLOCK;
+  using lock_type = dango::shared::srw_lock_storage;
 public:
   mutex_impl()noexcept;
   ~mutex_impl()noexcept = default;
@@ -1613,7 +1611,7 @@ cond_var_impl
 final
 {
 private:
-  using cond_type = CONDITION_VARIABLE;
+  using cond_type = dango::shared::condition_variable_storage;
   using mutex_ptr = dango::detail::mutex_base::mutex_impl*;
 public:
   cond_var_impl()noexcept;
@@ -1767,7 +1765,7 @@ s_manager{ };
 
 /*** windows_timer_res_manager ***/
 
-auto
+/*auto
 dango::
 detail::
 windows_timer_res_manager::
@@ -1842,7 +1840,7 @@ end_period
 #else
   dango::terminate();
 #endif
-}
+}*/
 
 void
 dango::
@@ -1869,7 +1867,7 @@ activate
 
     if(m_timer_state == timer_state::DEACTIVATED)
     {
-      begin_period();
+      dango::shared::time_begin_period();
 
       m_timer_state = timer_state::ACTIVATED;
 
@@ -1910,7 +1908,7 @@ deactivate
 
     if(!m_alive)
     {
-      end_period();
+      dango::shared::time_end_period();
 
       m_timer_state = timer_state::DEACTIVATED;
 
@@ -1941,7 +1939,7 @@ notify_exit
 
     if(m_timer_state == timer_state::DEACTIVATING)
     {
-      end_period();
+      dango::shared::time_end_period();
 
       m_timer_state = timer_state::DEACTIVATED;
     }
@@ -2047,7 +2045,7 @@ timed_wait
 
     dango_assert(m_timer_state == timer_state::DEACTIVATING);
 
-    end_period();
+    dango::shared::time_end_period();
 
     m_timer_state = timer_state::DEACTIVATED;
   }
@@ -2110,9 +2108,12 @@ detail::
 mutex_base::
 mutex_impl::
 mutex_impl
-()noexcept
+()noexcept:
+m_lock{ }
 {
-  InitializeSRWLock(&m_lock);
+  dango::shared::srw_lock_init(&m_lock);
+
+  //InitializeSRWLock(&m_lock);
 }
 
 void
@@ -2123,7 +2124,9 @@ mutex_impl::
 lock
 ()noexcept
 {
-  AcquireSRWLockExclusive(&m_lock);
+  dango::shared::srw_lock_acquire(&m_lock);
+
+  //AcquireSRWLockExclusive(&m_lock);
 }
 
 auto
@@ -2134,9 +2137,11 @@ mutex_impl::
 try_lock
 ()noexcept->bool
 {
-  auto const a_result = TryAcquireSRWLockExclusive(&m_lock);
+  return dango::shared::srw_lock_try_acquire(&m_lock);
 
-  return bool(a_result);
+  /*auto const a_result = TryAcquireSRWLockExclusive(&m_lock);
+
+  return bool(a_result);*/
 }
 
 void
@@ -2147,7 +2152,9 @@ mutex_impl::
 unlock
 ()noexcept
 {
-  ReleaseSRWLockExclusive(&m_lock);
+  dango::shared::srw_lock_release(&m_lock);
+
+  //ReleaseSRWLockExclusive(&m_lock);
 }
 
 auto
@@ -2168,9 +2175,12 @@ detail::
 cond_var_base::
 cond_var_impl::
 cond_var_impl
-()noexcept
+()noexcept:
+m_cond{ }
 {
-  InitializeConditionVariable(&m_cond);
+  dango::shared::condition_variable_init(&m_cond);
+
+  //InitializeConditionVariable(&m_cond);
 }
 
 void
@@ -2181,7 +2191,9 @@ cond_var_impl::
 notify
 ()noexcept
 {
-  WakeConditionVariable(&m_cond);
+  dango::shared::condition_variable_wake(&m_cond);
+
+  //WakeConditionVariable(&m_cond);
 }
 
 void
@@ -2192,7 +2204,9 @@ cond_var_impl::
 notify_all
 ()noexcept
 {
-  WakeAllConditionVariable(&m_cond);
+  dango::shared::condition_variable_wake_all(&m_cond);
+
+  //WakeAllConditionVariable(&m_cond);
 }
 
 void
@@ -2205,13 +2219,15 @@ wait
 {
   dango_assert(a_mutex != nullptr);
 
-  SleepConditionVariableSRW
+  dango::shared::condition_variable_wait(&m_cond, a_mutex->lock_ptr());
+
+  /*SleepConditionVariableSRW
   (
     &m_cond,
     a_mutex->lock_ptr(),
     DWORD(INFINITE),
     ULONG(0)
-  );
+  );*/
 }
 
 void
@@ -2224,7 +2240,9 @@ wait
 {
   dango_assert(a_mutex != nullptr);
 
-  using u64 = dango::uint64;
+  dango::shared::condition_variable_wait(&m_cond, a_mutex->lock_ptr(), a_interval);
+
+  /*using u64 = dango::uint64;
 
   constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
 
@@ -2238,7 +2256,7 @@ wait
     a_mutex->lock_ptr(),
     DWORD(a_spec),
     ULONG(0)
-  );
+  );*/
 }
 
 /*** static ***/

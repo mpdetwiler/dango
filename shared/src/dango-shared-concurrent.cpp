@@ -295,6 +295,11 @@ namespace
 
 #include <windows.h>
 
+static_assert(sizeof(dango::shared::srw_lock_storage) == sizeof(::SRWLOCK));
+static_assert(alignof(dango::shared::srw_lock_storage) == alignof(::SRWLOCK));
+static_assert(sizeof(dango::shared::condition_variable_storage) == sizeof(::CONDITION_VARIABLE));
+static_assert(alignof(dango::shared::condition_variable_storage) == alignof(::CONDITION_VARIABLE));
+
 namespace
 {
   template
