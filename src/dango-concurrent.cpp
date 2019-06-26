@@ -1765,83 +1765,6 @@ s_manager{ };
 
 /*** windows_timer_res_manager ***/
 
-/*auto
-dango::
-detail::
-windows_timer_res_manager::
-min_period
-()noexcept->dango::uint32
-{
-  constexpr auto c_impl =
-  []()noexcept->dango::uint32
-  {
-      TIMECAPS a_caps;
-
-      auto const a_error = timeGetDevCaps(&a_caps, sizeof(a_caps));
-
-      if(a_error == MMSYSERR_NOERROR)
-      {
-        return dango::uint32(a_caps.wPeriodMin);
-      }
-
-#ifndef DANGO_NO_DEBUG
-      dango_unreachable_msg("timeGetDevCaps failed");
-#else
-      dango::terminate();
-#endif
-  };
-
-  static auto const s_period = c_impl();
-
-  return s_period;
-}
-
-void
-dango::
-detail::
-windows_timer_res_manager::
-begin_period
-()noexcept
-{
-  auto const a_period = min_period();
-
-  auto const a_error = timeBeginPeriod(UINT(a_period));
-
-  if(a_error == TIMERR_NOERROR)
-  {
-    return;
-  }
-
-#ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg("timeBeginPeriod failed");
-#else
-  dango::terminate();
-#endif
-}
-
-void
-dango::
-detail::
-windows_timer_res_manager::
-end_period
-()noexcept
-{
-  auto const a_period = min_period();
-
-  auto const a_error = timeEndPeriod(UINT(a_period));
-
-  if(a_error == TIMERR_NOERROR)
-  {
-    return;
-  }
-
-#ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg("timeEndPeriod failed");
-#else
-  dango::terminate();
-#endif
-}*/
-
 void
 dango::
 detail::
@@ -2112,8 +2035,6 @@ mutex_impl
 m_lock{ }
 {
   dango::shared::srw_lock_init(&m_lock);
-
-  //InitializeSRWLock(&m_lock);
 }
 
 void
@@ -2125,8 +2046,6 @@ lock
 ()noexcept
 {
   dango::shared::srw_lock_acquire(&m_lock);
-
-  //AcquireSRWLockExclusive(&m_lock);
 }
 
 auto
@@ -2138,10 +2057,6 @@ try_lock
 ()noexcept->bool
 {
   return dango::shared::srw_lock_try_acquire(&m_lock);
-
-  /*auto const a_result = TryAcquireSRWLockExclusive(&m_lock);
-
-  return bool(a_result);*/
 }
 
 void
@@ -2153,8 +2068,6 @@ unlock
 ()noexcept
 {
   dango::shared::srw_lock_release(&m_lock);
-
-  //ReleaseSRWLockExclusive(&m_lock);
 }
 
 auto
@@ -2179,8 +2092,6 @@ cond_var_impl
 m_cond{ }
 {
   dango::shared::condition_variable_init(&m_cond);
-
-  //InitializeConditionVariable(&m_cond);
 }
 
 void
@@ -2192,8 +2103,6 @@ notify
 ()noexcept
 {
   dango::shared::condition_variable_wake(&m_cond);
-
-  //WakeConditionVariable(&m_cond);
 }
 
 void
@@ -2205,8 +2114,6 @@ notify_all
 ()noexcept
 {
   dango::shared::condition_variable_wake_all(&m_cond);
-
-  //WakeAllConditionVariable(&m_cond);
 }
 
 void
@@ -2220,14 +2127,6 @@ wait
   dango_assert(a_mutex != nullptr);
 
   dango::shared::condition_variable_wait(&m_cond, a_mutex->lock_ptr());
-
-  /*SleepConditionVariableSRW
-  (
-    &m_cond,
-    a_mutex->lock_ptr(),
-    DWORD(INFINITE),
-    ULONG(0)
-  );*/
 }
 
 void
@@ -2241,22 +2140,6 @@ wait
   dango_assert(a_mutex != nullptr);
 
   dango::shared::condition_variable_wait(&m_cond, a_mutex->lock_ptr(), a_interval);
-
-  /*using u64 = dango::uint64;
-
-  constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
-
-  auto const a_spec = dango::min(a_interval, c_max_interval);
-
-  dango_assert(DWORD(a_spec) != DWORD(INFINITE));
-
-  SleepConditionVariableSRW
-  (
-    &m_cond,
-    a_mutex->lock_ptr(),
-    DWORD(a_spec),
-    ULONG(0)
-  );*/
 }
 
 /*** static ***/

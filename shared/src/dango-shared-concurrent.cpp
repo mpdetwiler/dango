@@ -307,6 +307,8 @@ namespace
   auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
 
   auto perf_count()noexcept->dango::uint64;
+
+  auto time_min_period()noexcept->dango::uint32;
 }
 
 auto
@@ -425,6 +427,157 @@ perf_count_suspend_bias
   return a_count;
 }
 
+void
+dango::
+shared::
+srw_lock_init
+(void* const a_storage)noexcept
+{
+  auto const a_lock = ::new (dango::placement, a_storage) ::SRWLOCK;
+
+  ::InitializeSRWLock(a_lock);
+}
+
+void
+dango::
+shared::
+srw_lock_acquire
+(void* const a_storage)noexcept
+{
+  ::AcquireSRWLockExclusive(static_cast<SRWLOCK*>(a_storage));
+}
+
+auto
+dango::
+shared::
+srw_lock_try_acquire
+(void* const a_storage)noexcept->bool
+{
+  auto const a_result = ::TryAcquireSRWLockExclusive(static_cast<SRWLOCK*>(a_storage));
+
+  return bool(a_result);
+}
+
+void
+dango::
+shared::
+srw_lock_release
+(void* const a_storage)noexcept
+{
+  ::ReleaseSRWLockExclusive(static_cast<SRWLOCK*>(a_storage));
+}
+
+void
+dango::
+shared::
+condition_variable_init
+(void* const a_storage)noexcept
+{
+  auto const a_cond = ::new (dango::placement, a_storage) ::CONDITION_VARIABLE;
+
+  ::InitializeConditionVariable(a_cond);
+}
+
+void
+dango::
+shared::
+condition_variable_wake
+(void* const a_storage)noexcept
+{
+  ::WakeConditionVariable(static_cast<CONDITION_VARIABLE*>(a_storage));
+}
+
+void
+dango::
+shared::
+condition_variable_wake_all
+(void* const a_storage)noexcept
+{
+  ::WakeAllConditionVariable(static_cast<CONDITION_VARIABLE*>(a_storage));
+}
+
+void
+dango::
+shared::
+condition_variable_wait
+(void* const a_storage, void* const a_lock_storage)noexcept
+{
+  ::SleepConditionVariableSRW
+  (
+    static_cast<CONDITION_VARIABLE*>(a_storage),
+    static_cast<SRWLOCK*>(a_lock_storage),
+    DWORD(INFINITE),
+    ULONG(0)
+  );
+}
+
+void
+dango::
+shared::
+condition_variable_wait
+(void* const a_storage, void* const a_lock_storage, dango::uint64 const a_interval)noexcept
+{
+  using u64 = dango::uint64;
+
+  constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
+
+  auto const a_spec = dango::min(a_interval, c_max_interval);
+
+  dango_assert(DWORD(a_spec) != DWORD(INFINITE));
+
+  ::SleepConditionVariableSRW
+  (
+    static_cast<CONDITION_VARIABLE*>(a_storage),
+    static_cast<SRWLOCK*>(a_lock_storage),
+    DWORD(a_spec),
+    ULONG(0)
+  );
+}
+
+void
+dango::
+shared::
+time_begin_period
+()noexcept
+{
+  auto const a_period = time_min_period();
+
+  auto const a_error = ::timeBeginPeriod(UINT(a_period));
+
+  if(a_error == TIMERR_NOERROR)
+  {
+    return;
+  }
+
+#ifndef DANGO_NO_DEBUG
+  dango_unreachable_msg("timeBeginPeriod failed");
+#else
+  dango::terminate();
+#endif
+}
+
+void
+dango::
+shared::
+time_end_period
+()noexcept
+{
+  auto const a_period = time_min_period();
+
+  auto const a_error = ::timeEndPeriod(UINT(a_period));
+
+  if(a_error == TIMERR_NOERROR)
+  {
+    return;
+  }
+
+#ifndef DANGO_NO_DEBUG
+  dango_unreachable_msg("timeEndPeriod failed");
+#else
+  dango::terminate();
+#endif
+}
+
 namespace
 {
   template
@@ -468,6 +621,34 @@ namespace
     ::QueryPerformanceCounter(&a_result);
 
     return dango::uint64(a_result.QuadPart);
+  }
+
+  auto
+  time_min_period
+  ()noexcept->dango::uint32
+  {
+    constexpr auto c_impl =
+    []()noexcept->dango::uint32
+    {
+        ::TIMECAPS a_caps;
+
+        auto const a_error = ::timeGetDevCaps(&a_caps, sizeof(a_caps));
+
+        if(a_error == MMSYSERR_NOERROR)
+        {
+          return dango::uint32(a_caps.wPeriodMin);
+        }
+
+#ifndef DANGO_NO_DEBUG
+        dango_unreachable_msg("timeGetDevCaps failed");
+#else
+        dango::terminate();
+#endif
+    };
+
+    static auto const s_period = c_impl();
+
+    return s_period;
   }
 }
 
