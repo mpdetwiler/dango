@@ -93,18 +93,17 @@ if(compilation_target == 'linux'):
   shared_env.Append(LIBS = ['pthread']);
 elif(compilation_target == 'win32' or compilation_target == 'win64'):
   shared_env.Append(LIBS = ['winmm']);
+  static_env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
   shared_env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
 
 shared_env.Append(CXXFLAGS = shared_flags);
 shared_env.Append(LINKFLAGS = shared_flags);
 
-shared_env.SharedLibrary('dangoshared', Glob('shared/src/*.cpp'));
-static_env.StaticLibrary('dango', Glob('src/*.cpp'));
+static_lib = static_env.StaticLibrary('dango', Glob('src/*.cpp'));
+shared_lib = shared_env.SharedLibrary('dangoshared', [Glob('shared/src/*.cpp'), static_lib]);
 
 if(compile_test):
   test_env.Append(CPPPATH = ['test/include/']);
-  test_env.Append(LIBPATH = ['./']);
-  test_env.Append(LIBS = ['dangoshared', 'dango']);
   test_env.Append(RPATH = ['./']);
-  test_env.Program('run', Glob('test/src/*.cpp'));
+  test_env.Program('run', [Glob('test/src/*.cpp'), shared_lib, static_lib]);
 

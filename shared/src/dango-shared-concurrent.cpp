@@ -301,7 +301,7 @@ namespace
   <typename tp_func>
   auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
 
-  auto perf_count()noexcept->dango::uint64
+  auto perf_count()noexcept->dango::uint64;
 }
 
 auto
