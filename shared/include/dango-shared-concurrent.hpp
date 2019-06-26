@@ -45,7 +45,7 @@ dango::shared
   auto DANGO_SHARED_API srw_lock_try_acquire(void*)noexcept->bool;
   void DANGO_SHARED_API srw_lock_release(void*)noexcept;
 
-  using condition_variable_storage = dango::aligned_storage<dango::usize(2) * sizeof(void*), alignof(void*)>;
+  using condition_variable_storage = dango::aligned_storage<sizeof(void*), alignof(void*)>;
 
   void DANGO_SHARED_API condition_variable_init(void*)noexcept;
   void DANGO_SHARED_API condition_variable_wake(void*)noexcept;
