@@ -87,12 +87,14 @@ static_env.Replace(RANLIBCOM = '');
 static_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
 shared_env.Append(CPPDEFINES = 'DANGO_COMPILING_DANGO');
 
-static_flags = ['-fPIC'];
-shared_flags = ['-fPIC', '-fvisibility=hidden'];
+static_flags = [];
+shared_flags = [];
 
 
 if(compilation_target == 'linux'):
   shared_env.Append(LIBS = ['pthread']);
+  static_flags += ['-fPIC'];
+  shared_flags += ['-fvisibility=hidden'];
 elif(compilation_target == 'win32' or compilation_target == 'win64'):
   shared_env.Append(LIBS = ['winmm']);
   shared_env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
