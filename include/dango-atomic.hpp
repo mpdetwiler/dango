@@ -274,29 +274,35 @@ dango
   class atomic;
 }
 
-#define DANGO_ATOMIC_ENABLE_SPEC(param) \
-dango::enable_if \
-< \
-  !dango::is_ptr<param> && \
-  !dango::is_member_ptr<param> && \
-  !dango::is_const<param> && \
-  !dango::is_volatile<param> && \
-  dango::is_atomic<param> \
->
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  using atomic_enable_spec =
+  dango::enable_if
+  <
+    !dango::is_ptr<tp_type> &&
+    !dango::is_member_ptr<tp_type> &&
+    !dango::is_const<tp_type> &&
+    !dango::is_volatile<tp_type> &&
+    dango::is_atomic<tp_type>
+  >;
+}
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  class atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>;
+  class atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>;
 }
 
 template
 <typename tp_type>
 class
 dango::
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>
 final
 {
 public:
@@ -369,7 +375,7 @@ template
 <typename tp_type>
 constexpr
 dango::
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
 atomic
 (value_type const a_data)noexcept:
 m_data{ a_data }
@@ -381,7 +387,7 @@ template
 <typename tp_type>
 constexpr auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
 address
 ()noexcept->value_type*
 {
@@ -392,7 +398,7 @@ template
 <typename tp_type>
 constexpr auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
 address
 ()const noexcept->value_type const*
 {
@@ -405,7 +411,7 @@ template
 <dango::mem_order tp_order>
 auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
 load
 ()const noexcept->value_type
 {
@@ -418,7 +424,7 @@ template
 <dango::mem_order tp_order>
 void
 dango::
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
 store
 (value_type const a_data)noexcept
 {
@@ -431,7 +437,7 @@ template
 <dango::mem_order tp_order>
 auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
 exchange
 (value_type const a_data)noexcept->value_type
 {
@@ -444,7 +450,7 @@ template
 <dango::mem_order tp_success, dango::mem_order tp_failure>
 auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
 compare_exchange
 (value_type& a_expected, value_type const a_data)noexcept->bool
 {
@@ -458,7 +464,7 @@ template \
 <dango::mem_order tp_order, typename tp_value_type> \
 auto \
 dango:: \
-atomic<tp_type, DANGO_ATOMIC_ENABLE_SPEC(tp_type)>:: \
+atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>:: \
 name \
 (value_type const a_data) \
 noexcept-> \
@@ -481,32 +487,36 @@ DANGO_ATOMIC_DEFINE_FETCH(xor_fetch)
 
 #undef DANGO_ATOMIC_DEFINE_FETCH
 
-#undef DANGO_ATOMIC_ENABLE_SPEC
-
 /*************************************************************/
 
-#define DANGO_ATOMIC_PTR_ENABLE_SPEC(param) \
-dango::enable_if \
-< \
-  (dango::is_ptr<param> || dango::is_member_ptr<param>) && \
-  !dango::is_const<param> && \
-  !dango::is_volatile<param> && \
-  dango::is_atomic<param> \
->
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  using atomic_ptr_enable_spec =
+  dango::enable_if
+  <
+    (dango::is_ptr<tp_type> || dango::is_member_ptr<tp_type>) &&
+    !dango::is_const<tp_type> &&
+    !dango::is_volatile<tp_type> &&
+    dango::is_atomic<tp_type>
+  >;
+}
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  class atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>;
+  class atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>;
 }
 
 template
 <typename tp_type>
 class
 dango::
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>
 final
 {
 public:
@@ -555,7 +565,7 @@ template
 <typename tp_type>
 constexpr
 dango::
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
 atomic
 (value_type const a_data)noexcept:
 m_data{ a_data }
@@ -567,7 +577,7 @@ template
 <typename tp_type>
 constexpr auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
 address
 ()noexcept->value_type*
 {
@@ -578,7 +588,7 @@ template
 <typename tp_type>
 constexpr auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
 address
 ()const noexcept->value_type const*
 {
@@ -591,7 +601,7 @@ template
 <dango::mem_order tp_order>
 auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
 load
 ()const noexcept->value_type
 {
@@ -604,7 +614,7 @@ template
 <dango::mem_order tp_order>
 void
 dango::
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
 store
 (value_type const a_data)noexcept
 {
@@ -617,7 +627,7 @@ template
 <dango::mem_order tp_order>
 auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
 exchange
 (value_type const a_data)noexcept->value_type
 {
@@ -630,7 +640,7 @@ template
 <dango::mem_order tp_success, dango::mem_order tp_failure>
 auto
 dango::
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>::
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
 compare_exchange
 (value_type& a_expected, value_type const a_data)noexcept->bool
 {
@@ -644,7 +654,7 @@ template \
 <dango::mem_order tp_order, typename tp_value_type> \
 auto \
 dango:: \
-atomic<tp_type, DANGO_ATOMIC_PTR_ENABLE_SPEC(tp_type)>:: \
+atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>:: \
 name \
 (dango::ssize const a_data)noexcept-> \
 dango::enable_if<dango::is_object_ptr<tp_value_type>, value_type> \
@@ -659,8 +669,6 @@ DANGO_ATOMIC_DEFINE_FETCH(add_fetch)
 DANGO_ATOMIC_DEFINE_FETCH(sub_fetch)
 
 #undef DANGO_ATOMIC_DEFINE_FETCH
-
-#undef DANGO_ATOMIC_PTR_ENABLE_SPEC
 
 #endif
 

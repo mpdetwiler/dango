@@ -1,17 +1,6 @@
 #ifndef __DANGO_GLOBAL_HPP__
 #define __DANGO_GLOBAL_HPP__
 
-#define DANGO_GLOBAL_STORAGE_ENABLE_SPEC(type, ret, construct) \
-type, \
-ret, \
-construct, \
-dango::enable_if \
-< \
-  !dango::is_array<type> && \
-  dango::is_object<type> && \
-  dango::is_same<dango::remove_cv<type>, ret> \
->
-
 namespace
 dango::detail
 {
@@ -25,12 +14,23 @@ dango::detail
   class global_storage;
 
   template
+  <typename tp_type, typename tp_ret>
+  using global_storage_enable_spec =
+  dango::enable_if
+  <
+    !dango::is_array<tp_type> &&
+    dango::is_object<tp_type> &&
+    dango::is_same<dango::remove_cv<tp_type>, tp_ret>
+  >;
+
+  template
   <
     typename tp_type,
     typename tp_ret,
     tp_ret(& tp_construct)()noexcept
   >
-  class global_storage<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>;
+  class global_storage
+  <tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>;
 }
 
 template
@@ -43,7 +43,7 @@ class alignas(dango::cache_align_type)
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>
 final
 {
 public:
@@ -90,7 +90,7 @@ class
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 strong_incrementer
 final
 {
@@ -117,7 +117,7 @@ template
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 strong_incrementer<tp_storage>::
 strong_incrementer
 ()noexcept
@@ -141,7 +141,7 @@ template
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 strong_incrementer<tp_storage>::
 ~strong_incrementer
 ()noexcept
@@ -168,7 +168,7 @@ class
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 weak_incrementer
 final
 {
@@ -199,7 +199,7 @@ template
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 weak_incrementer<tp_storage>::
 weak_incrementer
 (DANGO_SRC_LOC_ARG(a_loc))noexcept
@@ -232,7 +232,7 @@ template
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 weak_incrementer<tp_storage>::
 ~weak_incrementer
 ()noexcept
@@ -252,7 +252,7 @@ constexpr
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 global_storage
 ()noexcept:
 m_storage{ },
@@ -273,7 +273,7 @@ constexpr auto
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 get
 ()const noexcept->tp_type*
 {
@@ -290,7 +290,7 @@ void
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 increment
 ()noexcept
 {
@@ -336,7 +336,7 @@ auto
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 try_increment
 ()noexcept->bool
 {
@@ -363,7 +363,7 @@ void
 dango::
 detail::
 global_storage
-<DANGO_GLOBAL_STORAGE_ENABLE_SPEC(tp_type, tp_ret, tp_construct)>::
+<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 decrement
 ()noexcept
 {
@@ -377,8 +377,6 @@ decrement
 
   dango::destructor(get());
 }
-
-#undef DANGO_GLOBAL_STORAGE_ENABLE_SPEC
 
 #ifndef DANGO_COMPILING_DANGO
 #define DANGO_STATIC_STRONG_DEF(type_name, val_name) static type_name const val_name{ };

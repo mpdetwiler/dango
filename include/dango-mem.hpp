@@ -345,403 +345,37 @@ dismiss
   return a_ptr;
 }
 
-/*** param_ptr ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type, typename tp_enabled = dango::enable_tag>
-  constexpr dango::usize const param_ptr_align_help;
-
-  template
-  <typename tp_type>
-  constexpr dango::usize const
-  param_ptr_align_help<tp_type, dango::enable_if<dango::is_object<tp_type>>> =
-    alignof(tp_type);
-
-  template
-  <typename tp_type>
-  constexpr dango::usize const
-  param_ptr_align_help<tp_type, dango::enable_if<dango::is_void<tp_type>>> =
-    dango::usize(1);
-
-  template
-  <typename tp_type>
-  constexpr dango::usize const
-  param_ptr_align_help<tp_type, dango::enable_if<dango::is_func<tp_type>>> =
-    dango::usize(1);
-}
-
-namespace
-dango
-{
-  template
-  <
-    typename tp_type,
-    bool tp_nullable = true,
-    dango::usize tp_align = detail::param_ptr_align_help<tp_type>,
-    typename tp_enabled = dango::enable_tag
-  >
-  class param_ptr;
-}
-
-#define DANGO_PARAM_PTR_ENABLE_SPEC(type, nullable, align) \
-type, \
-nullable, \
-align, \
-dango::enable_if \
-< \
-  ( \
-    dango::is_object<type> || \
-    dango::is_func<type> || \
-    dango::is_void<type> \
-  ) && \
-  dango::is_pow_two(align) \
->
-
-namespace
-dango
-{
-  template
-  <typename tp_type, bool tp_nullable, dango::usize tp_align>
-  class
-  param_ptr
-  <DANGO_PARAM_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>;
-}
-
-template
-<typename tp_type, bool tp_nullable, dango::usize tp_align>
-class
-dango::
-param_ptr
-<DANGO_PARAM_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>
-final
-{
-public:
-  using value_type = tp_type*;
-
-  static dango::usize const c_align;
-private:
-
-public:
-  template
-  <
-    bool tp_tp_nullable = tp_nullable,
-    dango::enable_if<tp_tp_nullable> tp_enabled = dango::enable_val
-  >
-  constexpr
-  param_ptr
-  (dango::nullptr_tag const)noexcept:
-  m_ptr{ nullptr }
-  {
-
-  }
-
-  template
-  <
-    bool tp_tp_nullable = tp_nullable,
-    dango::enable_if<!tp_tp_nullable> tp_enabled = dango::enable_val
-  >
-  constexpr
-  param_ptr
-  (dango::nullptr_tag)noexcept = delete;
-
-  constexpr param_ptr(param_ptr const&)noexcept = default;
-
-  template
-  <
-    typename tp_tp_type,
-    typename tp_this = param_ptr,
-    dango::enable_if
-    <
-      dango::is_noexcept_constructible
-      <
-        typename tp_this::value_type,
-        tp_tp_type
-      > &&
-      dango::is_noexcept_convertible
-      <
-        tp_tp_type,
-        typename tp_this::value_type
-      >
-    > tp_enabled = dango::enable_val
-  >
-  constexpr param_ptr(tp_tp_type&& a_arg, DANGO_SRC_LOC_ARG_DEFAULT())noexcept;
-
-  template
-  <
-    typename tp_tp_type,
-    typename tp_this = param_ptr,
-    dango::enable_if
-    <
-      dango::is_noexcept_constructible
-      <
-        typename tp_this::value_type,
-        tp_tp_type
-      > &&
-      !dango::is_noexcept_convertible
-      <
-        tp_tp_type,
-        typename tp_this::value_type
-      >
-    > tp_enabled = dango::enable_val
-  >
-  explicit constexpr param_ptr(tp_tp_type&& a_arg, DANGO_SRC_LOC_ARG_DEFAULT())noexcept;
-
-  template
-  <
-    typename tp_tp_type,
-    bool tp_tp_nullable,
-    dango::usize tp_tp_align,
-    typename tp_other = dango::param_ptr<tp_tp_type, tp_tp_nullable, tp_tp_align>,
-    dango::enable_if
-    <
-      dango::is_noexcept_constructible
-      <
-        value_type,
-        typename tp_other::value_type
-      > &&
-      (tp_nullable || !tp_tp_nullable) &&
-      (dango::is_func<tp_type> || dango::is_gequal(tp_other::c_align, c_align))
-    > tp_enabled = dango::enable_val
-  >
-  constexpr
-  param_ptr
-  (param_ptr<tp_tp_type, tp_tp_nullable, tp_tp_align> const& a_ptr)noexcept:
-  m_ptr{ a_ptr.get() }
-  {
-
-  }
-
-  ~param_ptr()noexcept = default;
-
-  constexpr auto get()const noexcept->value_type;
-
-  constexpr operator value_type()const noexcept;
-
-  explicit constexpr operator bool()const noexcept;
-private:
-  value_type const m_ptr;
-public:
-  DANGO_DELETE_DEFAULT(param_ptr)
-  DANGO_UNASSIGNABLE(param_ptr)
-};
-
-template
-<typename tp_type, bool tp_nullable, dango::usize tp_align>
-constexpr dango::usize const
-dango::
-param_ptr
-<DANGO_PARAM_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
-c_align = dango::max(tp_align, detail::param_ptr_align_help<tp_type>);
-
-template
-<typename tp_type, bool tp_nullable, dango::usize tp_align>
-template
-<
-  typename tp_tp_type,
-  typename tp_this,
-  dango::enable_if
-  <
-    dango::is_noexcept_constructible
-    <
-      typename tp_this::value_type,
-      tp_tp_type
-    > &&
-    dango::is_noexcept_convertible
-    <
-      tp_tp_type,
-      typename tp_this::value_type
-    >
-  > tp_enabled
->
-constexpr
-dango::
-param_ptr
-<DANGO_PARAM_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
-param_ptr
-(tp_tp_type&& a_arg, DANGO_SRC_LOC_ARG(a_loc))noexcept:
-m_ptr{ dango::forward<tp_tp_type>(a_arg) }
-{
-  if constexpr(!tp_nullable)
-  {
-    dango_assert_loc(m_ptr != nullptr, a_loc);
-  }
-
-  if constexpr(!dango::is_func<tp_type>)
-  {
-    dango_assert_loc(dango::is_aligned(m_ptr, c_align), a_loc);
-  }
-}
-
-template
-<typename tp_type, bool tp_nullable, dango::usize tp_align>
-template
-<
-  typename tp_tp_type,
-  typename tp_this,
-  dango::enable_if
-  <
-    dango::is_noexcept_constructible
-    <
-      typename tp_this::value_type,
-      tp_tp_type
-    > &&
-    !dango::is_noexcept_convertible
-    <
-      tp_tp_type,
-      typename tp_this::value_type
-    >
-  > tp_enabled
->
-constexpr
-dango::
-param_ptr
-<DANGO_PARAM_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
-param_ptr
-(tp_tp_type&& a_arg, DANGO_SRC_LOC_ARG(a_loc))noexcept:
-m_ptr{ dango::forward<tp_tp_type>(a_arg) }
-{
-  if constexpr(!tp_nullable)
-  {
-    dango_assert_loc(m_ptr != nullptr, a_loc);
-  }
-
-  if constexpr(!dango::is_func<tp_type>)
-  {
-    dango_assert_loc(dango::is_aligned(m_ptr, c_align), a_loc);
-  }
-}
-
-template
-<typename tp_type, bool tp_nullable, dango::usize tp_align>
-constexpr auto
-dango::
-param_ptr
-<DANGO_PARAM_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
-get
-()const noexcept->value_type
-{
-  if constexpr(!tp_nullable)
-  {
-    dango::assume(m_ptr != nullptr);
-  }
-
-  if constexpr(!dango::is_func<tp_type>)
-  {
-    void const volatile* const a_ptr = m_ptr;
-
-    void* const a_result =
-      __builtin_assume_aligned(const_cast<void const*>(a_ptr), c_align);
-
-    return static_cast<value_type>(a_result);
-  }
-  else
-  {
-    return m_ptr;
-  }
-}
-
-template
-<typename tp_type, bool tp_nullable, dango::usize tp_align>
-constexpr
-dango::
-param_ptr
-<DANGO_PARAM_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
-operator value_type
-()const noexcept
-{
-  return get();
-}
-
-template
-<typename tp_type, bool tp_nullable, dango::usize tp_align>
-constexpr
-dango::
-param_ptr
-<DANGO_PARAM_PTR_ENABLE_SPEC(tp_type, tp_nullable, tp_align)>::
-operator bool
-()const noexcept
-{
-  if constexpr(!tp_nullable)
-  {
-    return true;
-  }
-  else
-  {
-    return m_ptr != nullptr;
-  }
-}
-
-#undef DANGO_PARAM_PTR_ENABLE_SPEC
-
 /*** mem_copy ***/
 
 namespace
 dango
 {
-  template
-  <dango::usize tp_align>
-  constexpr auto
-  mem_copy
-  (
-    dango::param_ptr<void, false, tp_align> const&,
-    dango::param_ptr<void const, false, tp_align> const&,
-    dango::usize
-  )
-  noexcept->dango::param_ptr<void, false, tp_align>;
-
-  constexpr auto
-  mem_copy
-  (
-    dango::param_ptr<void, false> const&,
-    dango::param_ptr<void const, false> const&,
-    dango::usize
-  )
-  noexcept->dango::param_ptr<void, false>;
-}
-
-template
-<dango::usize tp_align>
-constexpr auto
-dango::
-mem_copy
-(
-  dango::param_ptr<void, false, tp_align> const& a_dest,
-  dango::param_ptr<void const, false, tp_align> const& a_source,
-  dango::usize const a_count
-)
-noexcept->dango::param_ptr<void, false, tp_align>
-{
-  __builtin_memcpy(a_dest, a_source, a_count);
-
-  return a_dest;
+  constexpr auto mem_copy(void*, void const*, dango::usize)noexcept->void*;
 }
 
 constexpr auto
 dango::
 mem_copy
 (
-  dango::param_ptr<void, false> const& a_dest,
-  dango::param_ptr<void const, false> const& a_source,
+  void* const a_dest,
+  void const* const a_source,
   dango::usize const a_count
 )
-noexcept->dango::param_ptr<void, false>
+noexcept->void*
 {
-  return dango::mem_copy<dango::usize(1)>(a_dest, a_source, a_count);
+  return __builtin_memcpy(a_dest, a_source, a_count);
 }
 
 /*** aligned_storage ***/
 
-#define DANGO_ALIGNED_STORAGE_ENABLE_SPEC(size, align) \
-size, \
-align, \
-dango::enable_if \
-< \
-  (size != dango::usize(0)) && \
-  dango::is_pow_two(align) \
->
+namespace
+dango::detail
+{
+  template
+  <dango::usize tp_size, dango::usize tp_align>
+  using aligned_storage_enable_spec =
+    dango::enable_if<!dango::is_equal(tp_size, dango::usize(0)) && dango::is_pow_two(tp_align)>;
+}
 
 namespace
 dango
@@ -756,14 +390,17 @@ dango
 
   template
   <dango::usize tp_size, dango::usize tp_align>
-  class aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>;
+  class
+  aligned_storage
+  <tp_size, tp_align, dango::detail::aligned_storage_enable_spec<tp_size, tp_align>>;
 }
 
 template
 <dango::usize tp_size, dango::usize tp_align>
 class
 dango::
-aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>
+aligned_storage
+<tp_size, tp_align, dango::detail::aligned_storage_enable_spec<tp_size, tp_align>>
 {
 public:
   static constexpr dango::usize const c_size = dango::next_multiple(tp_size, tp_align);
@@ -785,7 +422,8 @@ template
 <dango::usize tp_size, dango::usize tp_align>
 constexpr auto
 dango::
-aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>::
+aligned_storage
+<tp_size, tp_align, dango::detail::aligned_storage_enable_spec<tp_size, tp_align>>::
 get
 ()noexcept->void*
 {
@@ -796,14 +434,13 @@ template
 <dango::usize tp_size, dango::usize tp_align>
 constexpr auto
 dango::
-aligned_storage<DANGO_ALIGNED_STORAGE_ENABLE_SPEC(tp_size, tp_align)>::
+aligned_storage
+<tp_size, tp_align, dango::detail::aligned_storage_enable_spec<tp_size, tp_align>>::
 get
 ()const noexcept->void const*
 {
   return m_storage;
 }
-
-#undef DANGO_ALIGNED_STORAGE_ENABLE_SPEC
 
 #endif
 
