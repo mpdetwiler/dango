@@ -13,6 +13,7 @@
 #include "dango-atomic.hpp"
 #include "dango-concurrent-base.hpp"
 #include "dango-mem.hpp"
+#include "dango-net.hpp"
 #include "dango-global.hpp"
 #include "dango-tuple.hpp"
 #include "dango-concurrent.hpp"
