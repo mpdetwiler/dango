@@ -11,6 +11,21 @@ auto
 main
 ()noexcept(false)->dango::s_int
 {
+  {
+    int a_x = 5;
+    int a_y = 2;
+
+    auto const a_ptr = dango::assume_aligned<alignof(int)>(&a_x);
+
+    *a_ptr = 6;
+
+    dango::array_destroy(&a_x, 1);
+    dango::array_copy(&a_y, &a_x, 1);
+    dango::array_move(&a_y, &a_x, 1);
+    dango::array_relocate(&a_y, &a_x, 1);
+    dango::array_shift(0, &a_x, 1);
+  }
+
   auto const a_guard = dango::thread::main_join_finally();
 
   {

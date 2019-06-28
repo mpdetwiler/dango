@@ -229,6 +229,34 @@ is_aligned
   return (a_int % dango::uintptr(a_align)) == dango::uintptr(0);
 }
 
+/*** assume_aligned ***/
+
+namespace
+dango
+{
+  template
+  <dango::usize tp_align, typename tp_type>
+  [[nodiscard]] constexpr auto
+  assume_aligned
+  (tp_type*)noexcept->
+  dango::enable_if<dango::is_pow_two(tp_align) && !dango::is_func<tp_type>, tp_type*>;
+}
+
+template
+<dango::usize tp_align, typename tp_type>
+[[nodiscard]] constexpr auto
+dango::
+assume_aligned
+(tp_type* const a_ptr)noexcept->
+dango::enable_if<dango::is_pow_two(tp_align) && !dango::is_func<tp_type>, tp_type*>
+{
+  dango_assert(dango::is_aligned(a_ptr, tp_align));
+
+  auto const a_result = __builtin_assume_aligned(a_ptr, tp_align);
+
+  return static_cast<tp_type*>(a_result);
+}
+
 /*** operator_new operator_delete ***/
 
 namespace
@@ -363,6 +391,9 @@ mem_copy
 )
 noexcept->void*
 {
+  dango_assert(a_dest != nullptr);
+  dango_assert(a_source != nullptr);
+
   return __builtin_memcpy(a_dest, a_source, a_count);
 }
 
@@ -440,6 +471,301 @@ get
 ()const noexcept->void const*
 {
   return m_storage;
+}
+
+/*** array_destroy array_copy array_move array_relocate array_shift ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto
+  array_destroy
+  (tp_type const volatile*, dango::usize)noexcept->
+  dango::enable_if<dango::is_noexcept_destructible<tp_type>, void>;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  array_copy
+  (void* dango_restrict, tp_type const*, dango::usize)
+  noexcept(dango::is_noexcept_copy_constructible<tp_type>)->
+  dango::enable_if
+  <
+    !dango::is_volatile<tp_type> &&
+    dango::is_copy_constructible<tp_type> &&
+    dango::is_noexcept_destructible<tp_type>,
+    tp_type*
+  >;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  array_move
+  (void* dango_restrict, tp_type*, dango::usize)
+  noexcept->
+  dango::enable_if
+  <
+    !dango::is_const<tp_type> &&
+    !dango::is_volatile<tp_type> &&
+    dango::is_noexcept_move_constructible<tp_type>,
+    tp_type*
+  >;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  array_relocate
+  (void* dango_restrict, tp_type*, dango::usize)
+  noexcept->
+  dango::enable_if
+  <
+    !dango::is_const<tp_type> &&
+    !dango::is_volatile<tp_type> &&
+    dango::is_noexcept_move_constructible<tp_type> &&
+    dango::is_noexcept_destructible<tp_type>,
+    tp_type*
+  >;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  array_shift
+  (dango::ssize, tp_type*, dango::usize)
+  noexcept->
+  dango::enable_if
+  <
+    !dango::is_const<tp_type> &&
+    !dango::is_volatile<tp_type> &&
+    dango::is_noexcept_move_constructible<tp_type> &&
+    dango::is_noexcept_destructible<tp_type>,
+    tp_type*
+  >;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+array_destroy
+(tp_type const volatile* const a_array, dango::usize const a_count)noexcept->
+dango::enable_if<dango::is_noexcept_destructible<tp_type>, void>
+{
+  dango_assert(a_array != nullptr);
+
+  if(a_count == dango::usize(0))
+  {
+    return;
+  }
+
+  auto const a_end = a_array + a_count;
+  auto a_cur = a_array;
+
+  while(a_cur != a_end)
+  {
+    dango::destructor(a_cur++);
+  }
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+array_copy
+(void* const dango_restrict a_dest, tp_type const* const a_array, dango::usize const a_count)
+noexcept(dango::is_noexcept_copy_constructible<tp_type>)->
+dango::enable_if
+<
+  !dango::is_volatile<tp_type> &&
+  dango::is_copy_constructible<tp_type> &&
+  dango::is_noexcept_destructible<tp_type>,
+  tp_type*
+>
+{
+  dango_assert(a_dest != nullptr);
+  dango_assert(a_array != nullptr);
+
+  if(a_count == dango::usize(0))
+  {
+    return nullptr;
+  }
+
+  auto const a_end = a_array + a_count;
+  auto a_src = a_array;
+  auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
+  auto a_dst = a_result;
+
+  auto a_guard =
+  dango::make_guard
+  (
+    [a_result, &a_dst]()noexcept->void
+    {
+      dango::array_destroy(a_result, dango::usize(a_dst - a_result));
+    }
+  );
+
+  do
+  {
+    ::new (dango::placement, a_dst) tp_type{ *a_src };
+
+    dango::destructor(a_src);
+
+    ++a_src;
+    ++a_dst;
+  }
+  while(a_src != a_end);
+
+  a_guard.dismiss();
+
+  return a_result;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+array_move
+(void* const dango_restrict a_dest, tp_type* const a_array, dango::usize const a_count)
+noexcept->
+dango::enable_if
+<
+  !dango::is_const<tp_type> &&
+  !dango::is_volatile<tp_type> &&
+  dango::is_noexcept_move_constructible<tp_type>,
+  tp_type*
+>
+{
+  dango_assert(a_dest != nullptr);
+  dango_assert(a_array != nullptr);
+
+  if(a_count == dango::usize(0))
+  {
+    return nullptr;
+  }
+
+  tp_type const* const a_end = a_array + a_count;
+  auto a_src = a_array;
+  auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
+  auto a_dst = a_result;
+
+  do
+  {
+    ::new (dango::placement, a_dst) tp_type{ dango::move(*a_src) };
+
+    ++a_src;
+    ++a_dst;
+  }
+  while(a_src != a_end);
+
+  return a_result;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+array_relocate
+(void* const dango_restrict a_dest, tp_type* const a_array, dango::usize const a_count)
+noexcept->
+dango::enable_if
+<
+  !dango::is_const<tp_type> &&
+  !dango::is_volatile<tp_type> &&
+  dango::is_noexcept_move_constructible<tp_type> &&
+  dango::is_noexcept_destructible<tp_type>,
+  tp_type*
+>
+{
+  dango_assert(a_dest != nullptr);
+  dango_assert(a_array != nullptr);
+
+  if(a_count == dango::usize(0))
+  {
+    return nullptr;
+  }
+
+  tp_type const* const a_end = a_array + a_count;
+  auto a_src = a_array;
+  auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
+  auto a_dst = a_result;
+
+  do
+  {
+    ::new (dango::placement, a_dst) tp_type{ dango::move(*a_src) };
+
+    dango::destructor(a_src);
+
+    ++a_src;
+    ++a_dst;
+  }
+  while(a_src != a_end);
+
+  return a_result;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+array_shift
+(dango::ssize const a_shift, tp_type* const a_array, dango::usize const a_count)
+noexcept->
+dango::enable_if
+<
+  !dango::is_const<tp_type> &&
+  !dango::is_volatile<tp_type> &&
+  dango::is_noexcept_move_constructible<tp_type> &&
+  dango::is_noexcept_destructible<tp_type>,
+  tp_type*
+>
+{
+  dango_assert(a_array != nullptr);
+
+  if(a_count == dango::usize(0))
+  {
+    return nullptr;
+  }
+
+  auto const a_result = a_array + a_shift;
+
+  if(a_shift < dango::ssize(0))
+  {
+    tp_type const* const a_end = a_array + a_count;
+    auto a_src = a_array;
+    auto a_dst = a_result;
+
+    do
+    {
+      ::new (dango::placement, a_dst) tp_type{ dango::move(*a_src) };
+
+      dango::destructor(a_src);
+
+      ++a_src;
+      ++a_dst;
+    }
+    while(a_src != a_end);
+  }
+
+  if(a_shift > dango::ssize(0))
+  {
+    tp_type const* const a_end = a_array;
+    auto a_src = a_array + a_count;
+    auto a_dst = a_result + a_count;
+
+    do
+    {
+      --a_src;
+      --a_dst;
+
+      ::new (dango::placement, a_dst) tp_type{ dango::move(*a_src) };
+
+      dango::destructor(a_src);
+    }
+    while(a_src != a_end);
+  }
+
+  return a_result;
 }
 
 #endif
