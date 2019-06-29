@@ -154,8 +154,8 @@ dango::enable_if<dango::is_constructible<bool, tp_type>, bool>
   return bool(dango::forward<tp_type>(a_arg));
 }
 
-#define dango_new_noexcept(cond) \
-noexcept(dango::c_operator_new_noexcept && dango::detail::true_bool(cond))
+#define dango_new_noexcept(...) \
+noexcept(dango::c_operator_new_noexcept && dango::detail::true_bool(__VA_ARGS__))
 
 /*** launder ***/
 
@@ -767,6 +767,83 @@ dango::enable_if
 
   return a_result;
 }
+
+/*** allocator ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_alloc, typename tp_enabled = dango::enable_tag>
+  class allocator;
+
+  class allocator_base;
+  class allocator_ref;
+  class allocator_tree;
+}
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_alloc>
+  using allocator_enable_spec =
+  dango::enable_if
+  <
+    !dango::is_const<tp_alloc> &&
+    !dango::is_volatile<tp_alloc> &&
+    dango::is_base_of<dango::allocator_base, tp_alloc>
+  >;
+
+  class allocator_control_block;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_alloc>
+  class
+  allocator<tp_alloc, dango::detail::allocator_enable_spec<tp_alloc>>;
+}
+
+template
+<typename tp_alloc>
+class
+dango::
+allocator<tp_alloc, dango::detail::allocator_enable_spec<tp_alloc>>
+final
+{
+  friend dango::allocator_ref;
+private:
+  using control_ptr = dango::detail::allocator_control_block*;
+  class control_block;
+public:
+  template
+  <typename... tp_args, dango::enable_if<dango::is_constructible<tp_alloc, tp_args...> = dango::enable_val>>
+  explicit
+  allocator
+  (tp_args&&...)dango_new_noexcept(dango::is_noexcept_constructible<tp_alloc, tp_args...>);
+public:
+  allocator(allocator&&)noexcept;
+  ~allocator()noexcept;
+  auto operator = (allocator&&)& noexcept;
+public:
+  auto ref()const noexcept->dango::allocator_ref;
+private:
+  control_ptr m_control;
+public:
+  DANGO_UNCOPYABLE(allocator)
+};
+
+class
+dango::
+detail::
+allocator_control_block
+{
+public:
+  allocator_control_block()noexcept;
+};
 
 #endif
 
