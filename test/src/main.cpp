@@ -12,147 +12,19 @@ main
 ()noexcept(false)->dango::s_int
 {
   {
-    int a_x = 5;
-    int a_y = 2;
+    auto a_alloc = dango::allocator::make<dango::allocator_base>();
 
-    auto const a_ptr = dango::assume_aligned<alignof(int)>(&a_x);
+    auto const a_tree = a_alloc.as_tree();
 
-    *a_ptr = 6;
+    auto const a_tree2 = dango::allocator_tree(a_alloc, dango::allocator_tree{ a_alloc, a_tree, a_tree }, a_tree, a_tree);
 
-    dango::array_destroy(&a_x, 1);
-    dango::array_copy(&a_y, &a_x, 1);
-    dango::array_move(&a_y, &a_x, 1);
-    dango::array_relocate(&a_y, &a_x, 1);
-    dango::array_shift(0, &a_x, 1);
+    a_alloc.free(a_tree2.get_allocator().alloc(128, 16), 128, 16);
+
+    a_tree2.get_child(0).get_allocator();
+
   }
 
-  auto const a_guard = dango::thread::main_join_finally();
 
-  {
-    auto const a_tup = dango::tuple<int, int, char const[6]>{ 1, 2, "hello" };
-
-    auto& [a, b, c] = a_tup;
-
-    static_assert(dango::is_same<decltype(a), int const>);
-    static_assert(dango::is_same<decltype(b), int const>);
-    static_assert(dango::is_same<decltype(c), char const(&)[6]>);
-
-    dango_assert(a == 1);
-    dango_assert(b == 2);
-
-    //a = 4;
-
-    //dango_assert(a_tup.first() == 4);
-
-    int array[5];
-
-    int const* x = &array[0];
-
-    dango::atomic_fetch_add(&x, 4);
-
-    dango_assert(x == &array[4]);
-  }
-
-  {
-    int a_arr[] = { 1, 2, 3 };
-
-    dango::tuple<int&&, int&, int, std::unique_ptr<double>> a_tup{ dango::move(a_arr[0]), a_arr[1], a_arr[2], nullptr };
-
-    dango::tuple<int&&, int, int&&, std::unique_ptr<double>> a_tup2{ dango::move(a_tup) };
-
-    a_tup2->*[](int const a, int const b, int const c, auto const&)noexcept->void{ printf("{ %i, %i, %i }\n", a, b, c); };
-  }
-
-  dango_assert(dango::thread::self().is_daemon());
-
-  dango::thread a_threads[10];
-
-  dango::mutex a_mutex{ };
-
-  auto a_count = dango::uint32(0);
-
-  for(auto& a_thread:a_threads)
-  {
-    a_thread =
-    dango::thread::create
-    (
-      [&a_mutex](dango::uint32 const a_id)noexcept->void
-      {
-        dango_assert(!dango::thread::self().is_daemon());
-
-        auto a_tick = dango::get_tick_count();
-        auto a_tick_sa = dango::get_tick_count_sa();
-
-        fprintf
-        (
-          stderr,
-          "thread[%u] sleep_rel_hr... (%llu) (%llu)\n",
-          dango::u_int(a_id),
-          dango::u_cent(a_tick),
-          dango::u_cent(a_tick_sa)
-        );
-
-        dango::thread::sleep_rel_hr(30'000);
-
-        a_tick = dango::get_tick_count();
-        a_tick_sa = dango::get_tick_count_sa();
-
-        fprintf
-        (
-          stderr,
-          "thread[%u] sleep_rel_hr_sa... (%llu) (%llu)\n",
-          dango::u_int(a_id),
-          dango::u_cent(a_tick),
-          dango::u_cent(a_tick_sa)
-        );
-
-        dango::thread::sleep_rel_hr_sa(30'000);
-
-        a_tick = dango::get_tick_count();
-        a_tick_sa = dango::get_tick_count_sa();
-
-        fprintf
-        (
-          stderr,
-          "thread[%u] serial sleep_rel... (%llu) (%llu)\n",
-          dango::u_int(a_id),
-          dango::u_cent(a_tick),
-          dango::u_cent(a_tick_sa)
-        );
-
-        dango_crit(a_mutex)
-        {
-          dango::thread::sleep_rel(5'000);
-        }
-
-        a_tick = dango::get_tick_count();
-        a_tick_sa = dango::get_tick_count_sa();
-
-        fprintf
-        (
-          stderr,
-          "thread[%u] done (%llu) (%llu)\n",
-          dango::u_int(a_id),
-          dango::u_cent(a_tick),
-          dango::u_cent(a_tick_sa)
-        );
-      },
-      a_count
-    );
-
-    dango_assert(!a_thread.is_daemon());
-
-    ++a_count;
-  }
-
-  /*for(auto const& a_thread:a_threads)
-  {
-    a_thread.join();
-
-    dango::invoker<decltype(&dango::thread::is_alive)> a_inv{ &dango::thread::is_alive };
-
-    dango_assert(!a_inv(&a_thread));
-  }*/
 
   return 0;
 }

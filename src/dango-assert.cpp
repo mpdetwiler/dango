@@ -16,7 +16,7 @@ unreachable_expr = "unreachable";
 constexpr char const* const
 dango::
 detail::
-unreachable_msg = "unreachable statement reached";
+unreachable_message = "unreachable statement reached";
 
 auto
 dango::

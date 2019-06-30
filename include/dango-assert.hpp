@@ -272,7 +272,7 @@ dango::detail
   noexcept;
 
   extern char const* const unreachable_expr;
-  extern char const* const unreachable_msg;
+  extern char const* const unreachable_message;
 }
 
 inline void

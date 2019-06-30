@@ -46,7 +46,7 @@ void
 dango::
 operator_delete
 (
-  void* const a_ptr,
+  void const volatile* const a_ptr,
   dango::usize const a_size_arg,
   dango::usize const a_align_arg
 )
@@ -59,6 +59,6 @@ noexcept
   auto const a_size = dango::next_multiple(a_size_arg, a_align_arg);
   auto const a_align = std::align_val_t{ a_align_arg };
 
-  ::operator delete(a_ptr, a_size, a_align);
+  ::operator delete(const_cast<void*>(a_ptr), a_size, a_align);
 }
 

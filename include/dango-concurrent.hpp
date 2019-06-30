@@ -1361,7 +1361,7 @@ control_block::
 increment
 ()noexcept
 {
-  auto const a_prev = m_ref_count.fetch_add(dango::usize(1));
+  auto const a_prev = m_ref_count.fetch_add<dango::mem_order::acquire>(dango::usize(1));
 
   dango_assert(a_prev != dango::usize(0));
 }
@@ -1373,7 +1373,7 @@ control_block::
 decrement
 ()noexcept->bool
 {
-  return m_ref_count.sub_fetch(dango::usize(1)) == dango::usize(0);
+  return m_ref_count.sub_fetch<dango::mem_order::release>(dango::usize(1)) == dango::usize(0);
 }
 
 constexpr auto
