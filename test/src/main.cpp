@@ -11,8 +11,14 @@ auto
 main
 ()noexcept(false)->dango::s_int
 {
+  dango::allocator_tree a_tree0 = dango::null;
+
   {
     auto a_alloc = dango::allocator::make<dango::allocator_base>();
+
+    a_tree0 = a_alloc.as_tree();
+
+    a_tree0 = dango::null;
 
     auto const a_tree = a_alloc.as_tree();
 
