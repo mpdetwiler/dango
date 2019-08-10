@@ -84,43 +84,37 @@ namespace
 dango
 {
   template
-  <typename tp_type>
+  <typename tp_type1, typename tp_type2>
   constexpr auto
   swap
-  (tp_type&, tp_type&)
-  noexcept
-  (
-    dango::is_noexcept_move_constructible<tp_type> &&
-    dango::is_noexcept_move_assignable<tp_type>
-  )->
+  (tp_type1&, tp_type2&)noexcept->
   dango::enable_if
   <
-    dango::is_move_constructible<tp_type> &&
-    dango::is_move_assignable<tp_type>,
+    !dango::is_const<tp_type1> &&
+    !dango::is_const<tp_type2> &&
+    dango::is_same<dango::remove_volatile<tp_type1>, dango::remove_volatile<tp_type2>> &&
+    dango::is_scalar<tp_type1>,
     void
   >;
 }
 
 
 template
-<typename tp_type>
+<typename tp_type1, typename tp_type2>
 constexpr auto
 dango::
 swap
-(tp_type& a_arg1, tp_type& a_arg2)
-noexcept
-(
-  dango::is_noexcept_move_constructible<tp_type> &&
-  dango::is_noexcept_move_assignable<tp_type>
-)->
+(tp_type1& a_arg1, tp_type2& a_arg2)noexcept->
 dango::enable_if
 <
-  dango::is_move_constructible<tp_type> &&
-  dango::is_move_assignable<tp_type>,
+  !dango::is_const<tp_type1> &&
+  !dango::is_const<tp_type2> &&
+  dango::is_same<dango::remove_volatile<tp_type1>, dango::remove_volatile<tp_type2>> &&
+  dango::is_scalar<tp_type1>,
   void
 >
 {
-  tp_type a_temp{ dango::move(a_arg1) };
+  dango::remove_volatile<tp_type1> a_temp{ dango::move(a_arg1) };
 
   a_arg1 = dango::move(a_arg2);
 
@@ -166,7 +160,7 @@ dango
   constexpr auto
   is_equal
   (tp_type, tp_type)noexcept->
-  enable_if<dango::is_nonbool_arithmetic<tp_type>, bool>;
+  enable_if<dango::is_arithmetic<tp_type>, bool>;
 
   template
   <typename tp_type>
@@ -197,6 +191,17 @@ dango
   enable_if<dango::is_nonbool_arithmetic<tp_type>, bool>;
 }
 
+template
+<typename tp_type>
+constexpr auto
+dango::
+is_equal
+(tp_type const a_lhs, tp_type const a_rhs)noexcept->
+enable_if<dango::is_arithmetic<tp_type>, bool>
+{
+  return a_lhs == a_rhs;
+}
+
 #define DANGO_DEFINE_COMPARISON_FUNC(name, oper) \
 template \
 <typename tp_type> \
@@ -209,7 +214,6 @@ enable_if<dango::is_nonbool_arithmetic<tp_type>, bool> \
   return a_lhs oper a_rhs; \
 }
 
-DANGO_DEFINE_COMPARISON_FUNC(equal, == )
 DANGO_DEFINE_COMPARISON_FUNC(lesser, < )
 DANGO_DEFINE_COMPARISON_FUNC(greater, > )
 DANGO_DEFINE_COMPARISON_FUNC(lequal, <= )
