@@ -16,13 +16,13 @@ main
   {
     auto a_alloc = dango::allocator::make<dango::allocator_base>();
 
-    a_tree0 = a_alloc.as_tree();
+    a_tree0 = dango::allocator_tree{ a_alloc };
 
     a_tree0 = dango::null;
 
-    auto const a_tree = a_alloc.as_tree();
+    auto const a_tree = dango::allocator_tree{ a_alloc };
 
-    auto const a_tree2 = dango::allocator_tree(a_alloc, dango::allocator_tree{ a_alloc, a_tree, a_tree }, a_tree, a_tree);
+    auto const a_tree2 = dango::allocator_tree(a_alloc, dango::allocator_tree{ a_alloc, dango::null, a_tree }, a_tree, a_tree);
 
     a_alloc.free(a_tree2.get_allocator().alloc(128, 16), 128, 16);
 
