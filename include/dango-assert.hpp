@@ -149,6 +149,31 @@ assume
   }
 }
 
+/*** infinite_loop ***/
+
+namespace
+dango
+{
+  [[noreturn]] void infinite_loop()noexcept;
+}
+
+/*** trap_instruction ***/
+
+namespace
+dango
+{
+  [[noreturn]] void trap_instruction()noexcept;
+}
+
+inline void
+dango::
+trap_instruction()noexcept
+{
+  __builtin_trap();
+
+  dango::infinite_loop();
+}
+
 /*** dango_assert ***/
 
 namespace
@@ -240,9 +265,7 @@ noexcept
   {
     detail::assert_fail_log(a_expr, a_msg, a_loc);
 
-    __builtin_trap();
-
-    while(true);
+    dango::trap_instruction();
   }
 }
 
@@ -287,7 +310,7 @@ noexcept
 {
   detail::assert_fail_log(detail::unreachable_expr, a_msg, a_loc);
 
-  __builtin_trap();
+  dango::trap_instruction();
 }
 
 #ifndef DANGO_NO_DEBUG

@@ -46,20 +46,16 @@ assert_fail_once
   {
     fprintf(stderr, "assertion failure entered recursively\n");
 
-    __builtin_trap();
-
-    while(true);
+    dango::trap_instruction();
   }
 
   t_recursion = true;
 
   static dango::atomic<bool> s_assert_fail_once{ false };
 
-  auto const a_spin = s_assert_fail_once.exchange<dango::mem_order::acquire>(true);
-
-  while(a_spin)
+  if(s_assert_fail_once.exchange<dango::mem_order::acquire>(true))
   {
-    detail::thread_yield();
+    dango::infinite_loop();
   }
 }
 
@@ -127,5 +123,24 @@ terminate
 ()noexcept
 {
   std::terminate();
+}
+
+void
+dango::
+infinite_loop
+()noexcept
+{
+  auto a_temp = true;
+
+  auto const volatile& a_read = a_temp;
+
+  do
+  {
+    if(a_read)
+    {
+      detail::thread_yield();
+    }
+  }
+  while(true);
 }
 
