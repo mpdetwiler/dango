@@ -14,7 +14,7 @@ main
   dango::allocator_tree a_tree0 = dango::null;
 
   {
-    auto a_alloc = dango::allocator::make<dango::allocator_base>();
+    auto a_alloc = dango::allocator::make_local<dango::local_allocator>();
 
     a_tree0 = dango::allocator_tree{ a_alloc };
 
@@ -22,7 +22,7 @@ main
 
     auto const a_tree = dango::allocator_tree{ a_alloc };
 
-    auto const a_tree2 = dango::allocator_tree(a_alloc, dango::allocator_tree{ a_alloc, dango::null, a_tree }, a_tree, a_tree);
+    auto const a_tree2 = dango::allocator_tree(a_alloc, dango::allocator_tree{ dango::get_default_allocator(), dango::null, a_tree }, a_tree, a_tree);
 
     a_alloc.free(a_tree2.get_allocator().alloc(128, 16), 128, 16);
 
@@ -30,7 +30,7 @@ main
 
   }
 
-
+  dango::get_default_allocator().free(dango::get_default_allocator().alloc(100, 16), 100, 16);
 
   return 0;
 }

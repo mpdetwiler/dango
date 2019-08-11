@@ -6,21 +6,31 @@
 namespace
 dango
 {
-  class allocator_base;
   class allocator;
+  class static_allocator;
+  class local_allocator;
+}
+
+namespace
+dango::detail
+{
+  class allocator_base;
 }
 
 class
 dango::
+detail::
 allocator_base
 {
   friend dango::allocator;
-public:
+protected:
   constexpr allocator_base()noexcept;
-  virtual ~allocator_base()noexcept;
+  ~allocator_base()noexcept = default;
 protected:
   virtual auto alloc(dango::usize, dango::usize)dango_new_noexcept(true)->void*;
   virtual void free(void const volatile*, dango::usize, dango::usize)noexcept;
+protected:
+  void destructor_check()noexcept;
 private:
   auto checked_alloc(dango::usize, dango::usize)dango_new_noexcept(true)->void*;
   void checked_free(void const volatile*, dango::usize, dango::usize)noexcept;
@@ -32,6 +42,7 @@ public:
 
 constexpr
 dango::
+detail::
 allocator_base::
 allocator_base
 ()noexcept:
@@ -40,25 +51,9 @@ m_alloc_count{ dango::usize(0) }
 
 }
 
-inline
-dango::
-allocator_base::
-~allocator_base
-()noexcept
-{
-  if(m_alloc_count.load<dango::mem_order::acquire>() == dango::usize(0))
-  {
-    return;
-  }
-#ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg("allocator: attempt to destroy with unfreed allocations");
-#else
-  dango::terminate();
-#endif
-}
-
 inline auto
 dango::
+detail::
 allocator_base::
 alloc
 (dango::usize const a_size, dango::usize const a_align)dango_new_noexcept(true)->void*
@@ -68,6 +63,7 @@ alloc
 
 inline void
 dango::
+detail::
 allocator_base::
 free
 (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
@@ -77,6 +73,7 @@ free
 
 inline auto
 dango::
+detail::
 allocator_base::
 checked_alloc
 (dango::usize const a_size, dango::usize const a_align)dango_new_noexcept(true)->void*
@@ -90,6 +87,7 @@ checked_alloc
 
 inline void
 dango::
+detail::
 allocator_base::
 checked_free
 (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
@@ -107,6 +105,85 @@ checked_free
 #endif
 }
 
+inline void
+dango::
+detail::
+allocator_base::
+destructor_check
+()noexcept
+{
+  if(m_alloc_count.load<dango::mem_order::acquire>() == dango::usize(0))
+  {
+    return;
+  }
+#ifndef DANGO_NO_DEBUG
+  dango_unreachable_msg("allocator: attempt to destroy with unfreed allocations");
+#else
+  dango::terminate();
+#endif
+}
+
+/*****************************/
+
+class
+dango::
+static_allocator:
+public dango::detail::allocator_base
+{
+private:
+  using super_type = dango::detail::allocator_base;
+public:
+  constexpr static_allocator()noexcept;
+  ~static_allocator()noexcept = default;
+public:
+  DANGO_IMMOBILE(static_allocator)
+};
+
+constexpr
+dango::
+static_allocator::
+static_allocator
+()noexcept:
+super_type{ }
+{
+
+}
+
+/*****************************/
+
+class
+dango::
+local_allocator:
+public dango::detail::allocator_base
+{
+private:
+  using super_type = dango::detail::allocator_base;
+public:
+  constexpr local_allocator()noexcept;
+  virtual ~local_allocator()noexcept;
+public:
+  DANGO_IMMOBILE(local_allocator)
+};
+
+constexpr
+dango::
+local_allocator::
+local_allocator
+()noexcept:
+super_type{ }
+{
+
+}
+
+inline
+dango::
+local_allocator::
+~local_allocator
+()noexcept
+{
+  super_type::destructor_check();
+}
+
 /*************************************************************/
 
 class
@@ -118,25 +195,63 @@ private:
   class control_base;
   template
   <typename tp_alloc>
-  class control_block;
+  class static_control_block;
+  template
+  <typename tp_alloc>
+  class local_control_block;
+public:
+  template
+  <typename tp_alloc>
+  class static_allocator_storage;
 public:
   template
   <typename tp_alloc, typename... tp_args>
-  static auto
-  make
-  (tp_args&&...)dango_new_noexcept(dango::is_noexcept_constructible<tp_alloc, tp_args...>)->
+  static constexpr auto
+  make_static_storage
+  (tp_args&&... a_args)noexcept->
   dango::enable_if
   <
     !dango::is_const<tp_alloc> &&
     !dango::is_volatile<tp_alloc> &&
     dango::is_class<tp_alloc> &&
-    dango::is_base_of<dango::allocator_base, tp_alloc> &&
+    dango::is_base_of<dango::static_allocator, tp_alloc> &&
+    dango::is_trivial_destructible<tp_alloc> &&
+    dango::is_noexcept_constructible<tp_alloc, tp_args...>,
+    static_allocator_storage<tp_alloc>
+  >
+  {
+    return static_allocator_storage<tp_alloc>{ dango::forward<tp_args>(a_args)... };
+  }
+
+  template
+  <typename tp_alloc>
+  static auto
+  make_static
+  (static_allocator_storage<tp_alloc>& a_storage)noexcept->allocator
+  {
+    return allocator{ a_storage.get_control_block() };
+  }
+
+  template
+  <typename tp_alloc, typename... tp_args>
+  static auto
+  make_local
+  (tp_args&&... a_args)dango_new_noexcept(dango::is_noexcept_constructible<tp_alloc, tp_args...>)->
+  dango::enable_if
+  <
+    !dango::is_const<tp_alloc> &&
+    !dango::is_volatile<tp_alloc> &&
+    dango::is_class<tp_alloc> &&
+    dango::is_base_of<dango::local_allocator, tp_alloc> &&
     dango::is_noexcept_destructible<tp_alloc> &&
     dango::is_constructible<tp_alloc, tp_args...>,
-    dango::allocator
-  >;
+    allocator
+  >
+  {
+    return allocator{ new local_control_block<tp_alloc>{ dango::forward<tp_args>(a_args)... } };
+  }
 private:
-  explicit allocator(control_base*)noexcept;
+  constexpr explicit allocator(control_base*)noexcept;
 public:
   constexpr allocator(dango::null_tag const)noexcept:m_control{ nullptr }{ };
   allocator(allocator const&)noexcept;
@@ -165,50 +280,25 @@ public:
   static auto operator new(dango::usize)noexcept->void* = delete;
   static void operator delete(void* const, dango::usize const)noexcept{ dango_unreachable; }
 protected:
-  constexpr
+  constexpr explicit
   control_base
-  (dango::allocator_base* const a_alloc_ptr)noexcept:
-  m_ref_count{ dango::usize(1) },
+  (dango::detail::allocator_base* const a_alloc_ptr)noexcept:
   m_alloc_ptr{ a_alloc_ptr }
   { }
 public:
   virtual ~control_base()noexcept = default;
 public:
-  void increment()noexcept;
-  auto decrement()noexcept->bool;
+  virtual void increment()noexcept = 0;
+  virtual auto decrement()noexcept->bool = 0;
+public:
   auto alloc(dango::usize, dango::usize)dango_new_noexcept(true)->void*;
   void free(void const volatile*, dango::usize, dango::usize)noexcept;
 private:
-  dango::atomic<dango::usize> m_ref_count;
-  dango::allocator_base* const m_alloc_ptr;
+  dango::detail::allocator_base* const m_alloc_ptr;
 public:
   DANGO_DELETE_DEFAULT(control_base)
   DANGO_IMMOBILE(control_base)
 };
-
-inline void
-dango::
-allocator::
-control_base::
-increment
-()noexcept
-{
-  m_ref_count.add_fetch<dango::mem_order::acquire>(dango::usize(1));
-}
-
-inline auto
-dango::
-allocator::
-control_base::
-decrement
-()noexcept->bool
-{
-  auto const a_prev = m_ref_count.fetch_sub<dango::mem_order::release>(dango::usize(1));
-
-  dango_assert(a_prev != dango::usize(0));
-
-  return a_prev == dango::usize(1);
-}
 
 inline auto
 dango::
@@ -230,39 +320,168 @@ free
   m_alloc_ptr->checked_free(a_ptr, a_size, a_align);
 }
 
-/******************************/
+/*****************************/
 
 template
 <typename tp_alloc>
 class
 dango::
 allocator::
-control_block
+static_control_block
 final:
 public dango::allocator::control_base
 {
 private:
   using super_type = dango::allocator::control_base;
 public:
-  static auto operator new(dango::usize const a_size)dango_new_noexcept(true)->void*{ return dango::operator_new(a_size, alignof(control_block)).dismiss(); }
-  static void operator delete(void* const a_ptr, dango::usize const a_size)noexcept{ dango::operator_delete(a_ptr, a_size, alignof(control_block)); }
-public:
   template
   <typename... tp_args>
-  explicit
-  control_block
+  constexpr explicit
+  static_control_block
   (tp_args&&... a_args)noexcept:
   super_type{ &m_alloc },
   m_alloc{ dango::forward<tp_args>(a_args)... }
   { }
-  virtual ~control_block()noexcept override final = default;
+  virtual ~static_control_block()noexcept override final = default;
+public:
+  virtual void increment()noexcept override final;
+  virtual auto decrement()noexcept->bool override final;
 private:
   tp_alloc m_alloc;
 public:
-  DANGO_IMMOBILE(control_block)
+  DANGO_IMMOBILE(static_control_block)
 };
 
-inline
+template
+<typename tp_alloc>
+void
+dango::
+allocator::
+static_control_block<tp_alloc>::
+increment
+()noexcept
+{
+
+}
+
+template
+<typename tp_alloc>
+auto
+dango::
+allocator::
+static_control_block<tp_alloc>::
+decrement
+()noexcept->bool
+{
+  return false;
+}
+
+/*****************************/
+
+template
+<typename tp_alloc>
+class
+dango::
+allocator::
+local_control_block
+final:
+public dango::allocator::control_base
+{
+private:
+  using super_type = dango::allocator::control_base;
+public:
+  static auto operator new(dango::usize const a_size)dango_new_noexcept(true)->void*{ return dango::operator_new(a_size, alignof(local_control_block)).dismiss(); }
+  static void operator delete(void* const a_ptr, dango::usize const a_size)noexcept{ dango::operator_delete(a_ptr, a_size, alignof(local_control_block)); }
+public:
+  template
+  <typename... tp_args>
+  explicit
+  local_control_block
+  (tp_args&&... a_args)noexcept:
+  super_type{ &m_alloc },
+  m_ref_count{ dango::usize(1) },
+  m_alloc{ dango::forward<tp_args>(a_args)... }
+  { }
+  virtual ~local_control_block()noexcept override final = default;
+public:
+  virtual void increment()noexcept override final;
+  virtual auto decrement()noexcept->bool override final;
+private:
+  dango::atomic<dango::usize> m_ref_count;
+  tp_alloc m_alloc;
+public:
+  DANGO_IMMOBILE(local_control_block)
+};
+
+template
+<typename tp_alloc>
+void
+dango::
+allocator::
+local_control_block<tp_alloc>::
+increment
+()noexcept
+{
+  m_ref_count.add_fetch<dango::mem_order::acquire>(dango::usize(1));
+}
+
+template
+<typename tp_alloc>
+auto
+dango::
+allocator::
+local_control_block<tp_alloc>::
+decrement
+()noexcept->bool
+{
+  auto const a_prev = m_ref_count.fetch_sub<dango::mem_order::release>(dango::usize(1));
+
+  dango_assert(a_prev != dango::usize(0));
+
+  return a_prev == dango::usize(1);
+}
+
+/*****************************/
+
+template
+<typename tp_alloc>
+class
+dango::
+allocator::
+static_allocator_storage
+final
+{
+  static_assert(!dango::is_const<tp_alloc>);
+  static_assert(!dango::is_volatile<tp_alloc>);
+  static_assert(dango::is_class<tp_alloc>);
+  static_assert(dango::is_base_of<dango::static_allocator, tp_alloc>);
+  static_assert(dango::is_trivial_destructible<tp_alloc>);
+
+  friend dango::allocator;
+private:
+  using control_base = dango::allocator::control_base;
+  using control_block = dango::allocator::static_control_block<tp_alloc>;
+private:
+  template
+  <typename... tp_args>
+  constexpr explicit
+  static_allocator_storage
+  (tp_args&&... a_args)noexcept:
+  m_control_block{ dango::forward<tp_args>(a_args)... }
+  { }
+public:
+  ~static_allocator_storage()noexcept = default;
+private:
+  constexpr auto get_control_block()noexcept->control_base*{ return &m_control_block; }
+private:
+  control_block m_control_block;
+public:
+  DANGO_IMMOBILE(static_allocator_storage)
+};
+
+/*****************************/
+
+constexpr
 dango::
 allocator::
 allocator
@@ -368,27 +587,6 @@ free
   m_control->free(a_ptr, a_size, a_align);
 }
 
-template
-<typename tp_alloc, typename... tp_args>
-auto
-dango::
-allocator::
-make
-(tp_args&&... a_args)dango_new_noexcept(dango::is_noexcept_constructible<tp_alloc, tp_args...>)->
-dango::enable_if
-<
-  !dango::is_const<tp_alloc> &&
-  !dango::is_volatile<tp_alloc> &&
-  dango::is_class<tp_alloc> &&
-  dango::is_base_of<dango::allocator_base, tp_alloc> &&
-  dango::is_noexcept_destructible<tp_alloc> &&
-  dango::is_constructible<tp_alloc, tp_args...>,
-  dango::allocator
->
-{
-  return dango::allocator{ new control_block<tp_alloc>{ dango::forward<tp_args>(a_args)... } };
-}
-
 /*** allocator_tree ***/
 
 namespace
@@ -416,7 +614,7 @@ private:
 private:
   template
   <typename tp_alloc, typename... tp_children>
-  static auto make_node(tp_alloc&&, tp_children&&...)dango_new_noexcept(true)->node<sizeof...(tp_children)>*;
+  static auto make_node(tp_alloc&&, tp_children&&...)dango_new_noexcept(true)->node_base*;
 public:
   template
   <
@@ -437,10 +635,11 @@ public:
   auto operator = (dango::null_tag)& noexcept->allocator_tree&;
   auto operator = (allocator_tree const&)& noexcept->allocator_tree&;
   auto operator = (allocator_tree&&)& noexcept->allocator_tree&;
-  constexpr auto dango_operator_is_null()const noexcept->bool{ return m_node == nullptr; }
 public:
   auto get_allocator()const noexcept->dango::allocator const&;
   auto get_child(dango::usize)const noexcept->allocator_tree const&;
+public:
+  constexpr auto dango_operator_is_null()const noexcept->bool{ return m_node == nullptr; }
 private:
   node_base* m_node;
 public:
@@ -462,7 +661,7 @@ public:
 protected:
   template
   <typename tp_alloc>
-  constexpr
+  explicit
   node_base
   (destructor_func const a_destructor, tp_alloc&& a_alloc)noexcept:
   m_ref_count{ dango::usize(1) },
@@ -657,13 +856,17 @@ auto
 dango::
 allocator_tree::
 make_node
-(tp_alloc&& a_alloc, tp_children&&... a_children)dango_new_noexcept(true)->node<sizeof...(tp_children)>*
+(tp_alloc&& a_alloc, tp_children&&... a_children)dango_new_noexcept(true)->node_base*
 {
   using node_type = node<sizeof...(tp_children)>;
 
-  auto const a_ptr = a_alloc.alloc(sizeof(node_type), alignof(node_type));
+  dango::allocator a_allocator{ dango::forward<tp_alloc>(a_alloc) };
 
-  return ::new (dango::placement, a_ptr) node_type{ dango::forward<tp_alloc>(a_alloc), dango::forward<tp_children>(a_children)... };
+  dango_assert(a_allocator != dango::null);
+
+  auto const a_ptr = a_allocator.alloc(sizeof(node_type), alignof(node_type));
+
+  return ::new (dango::placement, a_ptr) node_type{ dango::move(a_allocator), dango::forward<tp_children>(a_children)... };
 }
 
 template
@@ -782,6 +985,24 @@ get_child
   }
 
   return *this;
+}
+
+/*************************************************************/
+
+namespace
+dango
+{
+  inline auto default_static_allocator_storage = dango::allocator::make_static_storage<dango::static_allocator>();
+
+  auto get_default_allocator()noexcept->dango::allocator;
+}
+
+inline auto
+dango::
+get_default_allocator
+()noexcept->dango::allocator
+{
+  return dango::allocator::make_static(dango::default_static_allocator_storage);
 }
 
 #endif
