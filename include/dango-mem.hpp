@@ -257,120 +257,365 @@ dango::enable_if<dango::is_pow_two(tp_align) && !dango::is_func<tp_type>, tp_typ
   return static_cast<tp_type*>(a_result);
 }
 
+/*** auto_ptr ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_config, typename tp_type, typename tp_enabled = void>
+  constexpr bool const is_valid_auto_ptr_config = false;
+
+  template
+  <typename tp_config, typename tp_type>
+  constexpr bool const
+  is_valid_auto_ptr_config
+  <
+    tp_config,
+    tp_type,
+    dango::void_type
+    <
+      dango::enable_if<dango::is_class<tp_config> && !dango::is_const<tp_config> && !dango::is_volatile<tp_config>>,
+      dango::enable_if<dango::is_void<tp_type>>,
+      dango::enable_if<dango::is_same<decltype(tp_config::deep_const), bool const>>,
+      dango::enable_if<dango::is_same<decltype(tp_config::destroy(dango::declval<tp_type*>(), dango::declval<dango::usize>(), dango::declval<dango::usize>())), void>>,
+      dango::enable_if<noexcept(tp_config::destroy(dango::declval<tp_type*>(), dango::declval<dango::usize>(), dango::declval<dango::usize>()))>
+    >
+  > = true;
+
+  template
+  <typename tp_config, typename tp_type>
+  constexpr bool const
+  is_valid_auto_ptr_config
+  <
+    tp_config,
+    tp_type,
+    dango::void_type
+    <
+      dango::enable_if<dango::is_class<tp_config> && !dango::is_const<tp_config> && !dango::is_volatile<tp_config>>,
+      dango::enable_if<dango::is_scalar<tp_type> || dango::is_class<tp_type>>,
+      dango::enable_if<dango::is_same<decltype(tp_config::deep_const), bool const>>,
+      dango::enable_if<dango::is_same<decltype(tp_config::destroy(dango::declval<tp_type*>())), void>>,
+      dango::enable_if<noexcept(tp_config::destroy(dango::declval<tp_type*>()))>
+    >
+  > = true;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type, typename tp_enabled = dango::enable_tag>
+  struct auto_ptr_default_config;
+
+  template
+  <typename tp_type>
+  struct
+  auto_ptr_default_config
+  <tp_type, dango::enable_if<dango::is_void<tp_type>>>;
+
+  template
+  <typename tp_type>
+  struct
+  auto_ptr_default_config
+  <tp_type, dango::enable_if<dango::is_scalar<tp_type> || dango::is_class<tp_type>>>;
+
+  void operator_delete(void const volatile*, dango::usize, dango::usize)noexcept;
+}
+
+template
+<typename tp_type>
+struct
+dango::
+auto_ptr_default_config
+<tp_type, dango::enable_if<dango::is_void<tp_type>>>
+{
+  static bool const deep_const;
+
+  static void destroy(tp_type*, dango::usize, dango::usize)noexcept;
+
+  DANGO_UNINSTANTIABLE(auto_ptr_default_config)
+};
+
+template
+<typename tp_type>
+constexpr bool const
+dango::
+auto_ptr_default_config
+<tp_type, dango::enable_if<dango::is_void<tp_type>>>::
+deep_const = false;
+
+template
+<typename tp_type>
+void
+dango::
+auto_ptr_default_config
+<tp_type, dango::enable_if<dango::is_void<tp_type>>>::
+destroy
+(tp_type* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
+{
+  dango::operator_delete(a_ptr, a_size, a_align);
+}
+
+template
+<typename tp_type>
+struct
+dango::
+auto_ptr_default_config
+<tp_type, dango::enable_if<dango::is_scalar<tp_type> || dango::is_class<tp_type>>>
+{
+  static bool const deep_const;
+
+  static void destroy(tp_type*)noexcept;
+
+  DANGO_UNINSTANTIABLE(auto_ptr_default_config)
+};
+
+template
+<typename tp_type>
+constexpr bool const
+dango::
+auto_ptr_default_config
+<tp_type, dango::enable_if<dango::is_scalar<tp_type> || dango::is_class<tp_type>>>::
+deep_const = false;
+
+template
+<typename tp_type>
+void
+dango::
+auto_ptr_default_config
+<tp_type, dango::enable_if<dango::is_scalar<tp_type> || dango::is_class<tp_type>>>::
+destroy
+(tp_type* const a_ptr)noexcept
+{
+  delete a_ptr;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type, typename tp_config = dango::auto_ptr_default_config<tp_type>, typename tp_enabled = dango::enable_tag>
+  class auto_ptr;
+
+  template
+  <typename tp_type, typename tp_config>
+  class
+  auto_ptr
+  <
+    tp_type,
+    tp_config,
+    dango::enable_if
+    <dango::is_void<tp_type> && dango::detail::is_valid_auto_ptr_config<tp_config, tp_type>>
+  >;
+
+  template
+  <typename tp_type, typename tp_config>
+  class
+  auto_ptr
+  <
+    tp_type,
+    tp_config,
+    dango::enable_if
+    <(dango::is_scalar<tp_type> || dango::is_class<tp_type>) && dango::detail::is_valid_auto_ptr_config<tp_config, tp_type>>
+  >;
+}
+
+template
+<typename tp_type, typename tp_config>
+class
+dango::
+auto_ptr
+<
+  tp_type,
+  tp_config,
+  dango::enable_if
+  <dango::is_void<tp_type> && dango::detail::is_valid_auto_ptr_config<tp_config, tp_type>>
+>
+{
+  template
+  <typename, typename, typename>
+  friend class dango::auto_ptr;
+private:
+  using value_type = tp_type*;
+  using const_type = dango::remove_const<tp_type> const*;
+  using config = tp_config;
+public:
+  constexpr
+  auto_ptr
+  (dango::null_tag const)noexcept:
+  m_ptr{ nullptr },
+  m_size{ dango::usize(0) },
+  m_align{ dango::usize(0) }
+  { }
+
+  constexpr explicit auto_ptr(dango::nullptr_tag, dango::usize, dango::usize)noexcept = delete;
+
+  template
+  <typename tp_arg, dango::enable_if<dango::is_void<tp_arg> && dango::is_constructible<value_type, tp_arg*>> = dango::enable_val>
+  constexpr explicit
+  auto_ptr
+  (tp_arg* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept:
+  m_ptr{ a_ptr },
+  m_size{ a_size },
+  m_align{ a_align }
+  { }
+
+  constexpr
+  auto_ptr
+  (auto_ptr&& a_ptr)noexcept:
+  m_ptr{ a_ptr.m_ptr },
+  m_size{ a_ptr.m_size },
+  m_align{ a_ptr.m_align }
+  {
+    a_ptr.m_ptr = nullptr;
+    a_ptr.m_size = dango::usize(0);
+    a_ptr.m_align = dango::usize(0);
+  }
+
+  template
+  <typename tp_arg, dango::enable_if<!dango::is_same<tp_type, tp_arg> && dango::is_void<tp_arg> && dango::is_constructible<value_type, tp_arg*>> = dango::enable_val>
+  constexpr auto_ptr(auto_ptr<tp_arg> const&)noexcept = delete;
+
+  template
+  <typename tp_arg, dango::enable_if<!dango::is_same<tp_type, tp_arg> && dango::is_void<tp_arg> && dango::is_constructible<value_type, tp_arg*>> = dango::enable_val>
+  constexpr
+  auto_ptr
+  (auto_ptr<tp_arg>&& a_ptr)noexcept:
+  m_ptr{ a_ptr.m_ptr },
+  m_size{ a_ptr.m_size },
+  m_align{ a_ptr.m_align }
+  {
+    a_ptr.m_ptr = nullptr;
+    a_ptr.m_size = dango::usize(0);
+    a_ptr.m_align = dango::usize(0);
+  }
+
+  ~auto_ptr
+  ()noexcept
+  {
+    if(m_ptr)
+    {
+      config::destroy(m_ptr, m_size, m_align);
+    }
+  }
+
+  auto
+  operator =
+  (dango::null_tag const)& noexcept->auto_ptr&
+  {
+    auto_ptr a_temp{ dango::null };
+
+    dango::swap(m_ptr, a_temp.m_ptr);
+    dango::swap(m_size, a_temp.m_size);
+    dango::swap(m_align, a_temp.m_align);
+
+    return *this;
+  }
+
+  auto
+  operator =
+  (auto_ptr&& a_ptr)& noexcept->auto_ptr&
+  {
+    auto_ptr a_temp{ dango::move(a_ptr) };
+
+    dango::swap(m_ptr, a_temp.m_ptr);
+    dango::swap(m_size, a_temp.m_size);
+    dango::swap(m_align, a_temp.m_align);
+
+    return *this;
+  }
+
+  template
+  <typename tp_arg, dango::enable_if<!dango::is_same<tp_type, tp_arg> && dango::is_void<tp_arg> && dango::is_constructible<value_type, tp_arg*>> = dango::enable_val>
+  auto operator = (auto_ptr<tp_arg> const& a_ptr)& noexcept->auto_ptr& = delete;
+
+  template
+  <typename tp_arg, dango::enable_if<!dango::is_same<tp_type, tp_arg> && dango::is_void<tp_arg> && dango::is_constructible<value_type, tp_arg*>> = dango::enable_val>
+  auto
+  operator =
+  (auto_ptr<tp_arg>&& a_ptr)& noexcept->auto_ptr&
+  {
+    auto_ptr a_temp{ dango::move(a_ptr) };
+
+    dango::swap(m_ptr, a_temp.m_ptr);
+    dango::swap(m_size, a_temp.m_size);
+    dango::swap(m_align, a_temp.m_align);
+
+    return *this;
+  }
+
+  constexpr auto dango_operator_is_null()const noexcept->bool{ return m_ptr == nullptr; }
+
+  template
+  <typename tp_tp_config = config>
+  constexpr auto get()const noexcept->dango::enable_if<!tp_tp_config::deep_const, value_type>{ return m_ptr; }
+  template
+  <typename tp_tp_config = config>
+  constexpr auto get()noexcept->dango::enable_if<tp_tp_config::deep_const, value_type>{ return m_ptr; }
+  template
+  <typename tp_tp_config = config>
+  constexpr auto get()const noexcept->dango::enable_if<tp_tp_config::deep_const, const_type>{ return m_ptr; }
+
+  template
+  <typename tp_tp_config = config, dango::enable_if<!tp_tp_config::deep_const> = dango::enable_val>
+  constexpr operator value_type()const noexcept{ return m_ptr; }
+  template
+  <typename tp_tp_config = config, dango::enable_if<tp_tp_config::deep_const> = dango::enable_val>
+  constexpr operator value_type()noexcept{ return m_ptr; }
+  template
+  <typename tp_tp_config = config, dango::enable_if<tp_tp_config::deep_const> = dango::enable_val>
+  constexpr operator const_type()const noexcept{ return m_ptr; }
+
+  constexpr auto size()const noexcept->dango::usize{ return m_size; }
+  constexpr auto align()const noexcept->dango::usize{ return m_align; }
+
+  constexpr auto
+  dismiss
+  ()noexcept->value_type
+  {
+    auto const a_ptr = m_ptr;
+
+    m_ptr = nullptr;
+    m_size = dango::usize(0);
+    m_align = dango::usize(0);
+
+    return a_ptr;
+  }
+
+  constexpr explicit operator bool()const noexcept{ return m_ptr != nullptr; }
+private:
+  value_type m_ptr;
+  dango::usize m_size;
+  dango::usize m_align;
+public:
+  DANGO_DELETE_DEFAULT(auto_ptr)
+  DANGO_UNCOPYABLE(auto_ptr)
+};
+
+template
+<typename tp_type, typename tp_config>
+class
+dango::
+auto_ptr
+<
+  tp_type,
+  tp_config,
+  dango::enable_if
+  <(dango::is_scalar<tp_type> || dango::is_class<tp_type>) && dango::detail::is_valid_auto_ptr_config<tp_config, tp_type>>
+>
+{
+
+};
+
 /*** operator_new operator_delete ***/
 
 namespace
 dango
 {
-  class heap_ptr;
-
   [[nodiscard]] auto
   operator_new
-  (dango::usize, dango::usize)dango_new_noexcept(true)->dango::heap_ptr;
-
-  void operator_delete(void const volatile*, dango::usize, dango::usize)noexcept;
-}
-
-/*** heap_ptr ***/
-
-namespace
-dango
-{
-  class heap_ptr;
-}
-
-class
-dango::
-heap_ptr
-final
-{
-  friend auto dango::operator_new(dango::usize, dango::usize)dango_new_noexcept()->dango::heap_ptr;
-private:
-  using value_type = void*;
-private:
-  constexpr heap_ptr(value_type, dango::usize, dango::usize)noexcept;
-public:
-  ~heap_ptr()noexcept;
-  auto get()const noexcept->value_type;
-  auto size()const noexcept->dango::usize;
-  auto align()const noexcept->dango::usize;
-  auto dismiss()noexcept->value_type;
-private:
-  value_type m_ptr;
-  dango::usize const m_size;
-  dango::usize const m_align;
-public:
-  DANGO_DELETE_DEFAULT(heap_ptr)
-  DANGO_IMMOBILE(heap_ptr)
-};
-
-constexpr
-dango::
-heap_ptr::
-heap_ptr
-(
-  value_type const a_ptr,
-  dango::usize const a_size,
-  dango::usize const a_align
-)
-noexcept:
-m_ptr{ a_ptr },
-m_size{ a_size },
-m_align{ a_align }
-{
-
-}
-
-inline
-dango::
-heap_ptr::
-~heap_ptr
-()noexcept
-{
-  if(m_ptr)
-  {
-    dango::operator_delete(m_ptr, m_size, m_align);
-  }
-}
-
-inline auto
-dango::
-heap_ptr::
-get
-()const noexcept->value_type
-{
-  return m_ptr;
-}
-
-inline auto
-dango::
-heap_ptr::
-size
-()const noexcept->dango::usize
-{
-  return m_size;
-}
-
-inline auto
-dango::
-heap_ptr::
-align
-()const noexcept->dango::usize
-{
-  return m_align;
-}
-
-inline auto
-dango::
-heap_ptr::
-dismiss
-()noexcept->value_type
-{
-  auto const a_ptr = m_ptr;
-
-  m_ptr = nullptr;
-
-  return a_ptr;
+  (dango::usize, dango::usize)dango_new_noexcept(true)->dango::auto_ptr<void>;
 }
 
 /*** mem_copy ***/
@@ -767,6 +1012,8 @@ dango::enable_if
 
   return a_result;
 }
+
+
 
 #endif
 

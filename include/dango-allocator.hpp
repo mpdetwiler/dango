@@ -255,11 +255,12 @@ private:
 public:
   constexpr allocator(dango::null_tag const)noexcept:m_control{ nullptr }{ };
   allocator(allocator const&)noexcept;
-  allocator(allocator&&)noexcept;
+  constexpr allocator(allocator&&)noexcept;
   ~allocator()noexcept;
   auto operator = (dango::null_tag)& noexcept->allocator&;
   auto operator = (allocator const&)& noexcept->allocator&;
   auto operator = (allocator&&)& noexcept->allocator&;
+  constexpr explicit operator bool()const noexcept{ return m_control != nullptr; }
 public:
   auto alloc(dango::usize, dango::usize)const dango_new_noexcept(true)->void*;
   void free(void const volatile*, dango::usize, dango::usize)const noexcept;
@@ -504,7 +505,7 @@ m_control{ a_alloc.m_control }
   }
 }
 
-inline
+constexpr
 dango::
 allocator::
 allocator
@@ -630,11 +631,12 @@ public:
 public:
   constexpr allocator_tree(dango::null_tag const)noexcept:m_node{ nullptr }{ }
   allocator_tree(allocator_tree const&)noexcept;
-  allocator_tree(allocator_tree&&)noexcept;
+  constexpr allocator_tree(allocator_tree&&)noexcept;
   ~allocator_tree()noexcept;
   auto operator = (dango::null_tag)& noexcept->allocator_tree&;
   auto operator = (allocator_tree const&)& noexcept->allocator_tree&;
   auto operator = (allocator_tree&&)& noexcept->allocator_tree&;
+  constexpr explicit operator bool()const noexcept{ return m_node != nullptr; }
 public:
   auto get_allocator()const noexcept->dango::allocator const&;
   auto get_child(dango::usize)const noexcept->allocator_tree const&;
@@ -898,7 +900,7 @@ m_node{ a_tree.m_node }
   }
 }
 
-inline
+constexpr
 dango::
 allocator_tree::
 allocator_tree(allocator_tree&& a_tree)noexcept:

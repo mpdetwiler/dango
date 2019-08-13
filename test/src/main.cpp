@@ -32,6 +32,12 @@ main
 
   dango::get_default_allocator().free(dango::get_default_allocator().alloc(100, 16), 100, 16);
 
+  dango::auto_ptr<void const> a_ptr = dango::operator_new(100, 16);
+
+  a_ptr = dango::move(a_ptr);
+
+  a_ptr = dango::operator_new(200, 16);
+
   return 0;
 }
 
