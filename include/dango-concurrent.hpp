@@ -1436,7 +1436,7 @@ public:
   operator new
   (dango::usize const a_size)dango_new_noexcept(true)->void*
   {
-    return dango::operator_new(a_size, alignof(runnable)).dismiss();
+    return dango::operator_new(a_size, alignof(runnable));
   }
 
   static void
@@ -1485,7 +1485,7 @@ public:
   operator new
   (dango::usize const a_size)dango_new_noexcept(true)->void*
   {
-    return dango::operator_new(a_size, alignof(runnable)).dismiss();
+    return dango::operator_new(a_size, alignof(runnable));
   }
 
   static void

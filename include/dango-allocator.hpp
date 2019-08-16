@@ -58,7 +58,7 @@ allocator_base::
 alloc
 (dango::usize const a_size, dango::usize const a_align)dango_new_noexcept(true)->void*
 {
-  return dango::operator_new(a_size, a_align).dismiss();
+  return dango::operator_new(a_size, a_align);
 }
 
 inline void
@@ -391,7 +391,7 @@ public dango::allocator::control_base
 private:
   using super_type = dango::allocator::control_base;
 public:
-  static auto operator new(dango::usize const a_size)dango_new_noexcept(true)->void*{ return dango::operator_new(a_size, alignof(local_control_block)).dismiss(); }
+  static auto operator new(dango::usize const a_size)dango_new_noexcept(true)->void*{ return dango::operator_new(a_size, alignof(local_control_block)); }
   static void operator delete(void* const a_ptr, dango::usize const a_size)noexcept{ dango::operator_delete(a_ptr, a_size, alignof(local_control_block)); }
 public:
   template

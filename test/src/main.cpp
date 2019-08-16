@@ -7,6 +7,33 @@
 static_assert(dango::is_nullable<dango::null_tag>);
 static_assert(dango::is_nullable<dango::thread>);
 
+template
+<typename tp_void, typename tp_enabled = dango::enable_tag>
+struct test_config;
+
+template
+<typename tp_void>
+struct
+test_config<tp_void, dango::enable_if<dango::is_void<tp_void>>>
+final:
+public dango::auto_ptr_default_config<tp_void>
+{
+  static constexpr bool const store_size = false;
+  static constexpr bool const store_align = false;
+  static constexpr bool const destroy_size = false;
+  static constexpr bool const destroy_align = false;
+  static constexpr dango::usize const alignment = dango::usize(16);
+
+  struct destroyer
+  {
+    static void
+    destroy(tp_void* const)noexcept
+    {
+
+    }
+  };
+};
+
 auto
 main
 ()noexcept(false)->dango::s_int
@@ -30,13 +57,21 @@ main
 
   }
 
-  dango::get_default_allocator().free(dango::get_default_allocator().alloc(100, 16), 100, 16);
+  static_assert(sizeof(dango::auto_ptr<void const>) == 24);
 
-  dango::auto_ptr<void const> a_ptr = dango::operator_new(100, 16);
+  dango::auto_ptr<double> a_double{ new double{ 1.0 } };
 
-  a_ptr = dango::move(a_ptr);
+  auto a_d2 = dango::auto_ptr<double const>{ dango::move(a_double) };
 
-  a_ptr = dango::operator_new(200, 16);
+  double const& a_d = *a_d2;
+
+  dango_assert(a_d == 1.0);
+
+  auto a_void = dango::auto_new(128, 64);
+
+  dango_assert(a_void.align() == 64);
+
+  auto a_void2 = dango::auto_new(128);
 
   return 0;
 }

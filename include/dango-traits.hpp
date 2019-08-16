@@ -2392,5 +2392,25 @@ dango
   };
 }
 
+/*** sizeof_with_void alignof_with_void ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type, dango::usize tp_default = dango::usize(1), typename tp_enabled = dango::enable_tag>
+  constexpr dango::usize const sizeof_with_void = sizeof(tp_type);
+  template
+  <typename tp_type, dango::usize tp_default>
+  constexpr dango::usize const sizeof_with_void<tp_type, tp_default, dango::enable_if<dango::is_void<tp_type>>> = tp_default;
+
+  template
+  <typename tp_type, dango::usize tp_default = dango::usize(1), typename tp_enabled = dango::enable_tag>
+  constexpr dango::usize const alignof_with_void = alignof(tp_type);
+  template
+  <typename tp_type, dango::usize tp_default>
+  constexpr dango::usize const alignof_with_void<tp_type, tp_default, dango::enable_if<dango::is_void<tp_type>>> = tp_default;
+}
+
 #endif
 

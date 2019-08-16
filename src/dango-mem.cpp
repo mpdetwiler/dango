@@ -9,7 +9,7 @@ operator_new
   dango::usize const a_size_arg,
   dango::usize const a_align_arg
 )
-dango_new_noexcept(true)->dango::auto_ptr<void>
+dango_new_noexcept(true)->void*
 {
   dango_assert(a_size_arg != dango::usize(0));
   dango_assert(dango::is_pow_two(a_align_arg));
@@ -21,9 +21,7 @@ dango_new_noexcept(true)->dango::auto_ptr<void>
   {
     try
     {
-      auto const a_ptr = ::operator new(a_size, a_align);
-
-      return dango::auto_ptr<void>{ a_ptr, a_size_arg, a_align_arg };
+      return ::operator new(a_size, a_align);
     }
     catch(...)
     {
@@ -36,9 +34,7 @@ dango_new_noexcept(true)->dango::auto_ptr<void>
   }
   else
   {
-    auto const a_ptr = ::operator new(a_size, a_align);
-
-    return dango::auto_ptr<void>{ a_ptr, a_size_arg, a_align_arg };
+    return ::operator new(a_size, a_align);
   }
 }
 
