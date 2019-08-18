@@ -762,14 +762,36 @@ final
 /*** tuple ***/
 
 namespace
-dango
+dango::detail
 {
   template
   <typename... tp_types>
-  class tuple;
+  using tuple_enable_spec =
+    dango::enable_if
+    <
+      !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
+      (... && dango::is_noexcept_destructible<dango::tuple_value_type<tp_types>>),
+      dango::enable_tag
+    >;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_enabled, typename... tp_types>
+  class tuple_impl;
+
+  template
+  <typename... tp_types>
+  class tuple_impl<dango::detail::tuple_enable_spec<tp_types...>, tp_types...>;
 
   template<>
-  class tuple<>;
+  class tuple_impl<dango::enable_tag>;
+
+  template
+  <typename... tp_types>
+  using tuple = dango::tuple_impl<dango::enable_tag, tp_types...>;
 
   template
   <typename tp_first, typename tp_second>
@@ -780,17 +802,13 @@ template
 <typename... tp_types>
 class
 dango::
-tuple
-final
+tuple_impl
+<dango::detail::tuple_enable_spec<tp_types...>, tp_types...>
 {
-  static_assert
-  (
-    (... && dango::is_noexcept_destructible<dango::tuple_value_type<tp_types>>),
-    "dango::tuple only supports noexcept-destructible types"
-  );
 private:
   using storage_type =
     detail::tuple_storage<detail::tuple_pack_reverse<dango::tuple_value_type<tp_types>...>>;
+
   static_assert(dango::is_noexcept_destructible<storage_type>);
 public:
   static constexpr auto
@@ -806,7 +824,7 @@ public:
     dango::enable_if<tp_enabled> = dango::enable_val
   >
   constexpr
-  tuple()
+  tuple_impl()
   noexcept((... && dango::is_noexcept_default_constructible<dango::tuple_value_type<tp_types>>)):
   m_storage{ }
   {
@@ -825,7 +843,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple(tp_args&&... a_args)
+  tuple_impl(tp_args&&... a_args)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, tp_args>)):
   m_storage(detail::make_tuple_storage<storage_type>(dango::forward<tp_args>(a_args)...))
   {
@@ -844,7 +862,7 @@ public:
     > = dango::enable_val
   >
   explicit constexpr
-  tuple(tp_args&&... a_args)
+  tuple_impl(tp_args&&... a_args)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, tp_args>)):
   m_storage(detail::make_tuple_storage<storage_type>(dango::forward<tp_args>(a_args)...))
   {
@@ -862,7 +880,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple(tp_args&&... a_args)
+  tuple_impl(tp_args&&... a_args)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, tp_args>)):
   m_storage(detail::make_tuple_storage<storage_type>(dango::forward<tp_args>(a_args)...))
   {
@@ -870,24 +888,24 @@ public:
   }
 
   constexpr
-  tuple(tuple const& a_tup)
+  tuple_impl(tuple_impl const& a_tup)
   noexcept((... && dango::is_noexcept_copy_constructible<dango::tuple_value_type<tp_types>>)) = default;
 
   constexpr
-  tuple(tuple&& a_tup)
+  tuple_impl(tuple_impl&& a_tup)
   noexcept((... && dango::is_noexcept_move_constructible<dango::tuple_value_type<tp_types>>)) = default;
 
-  ~tuple()noexcept = default;
+  ~tuple_impl()noexcept = default;
 
   constexpr auto
   operator =
-  (tuple const& a_tup)&
-  noexcept((... && dango::is_noexcept_copy_assignable<dango::tuple_value_type<tp_types>>))->tuple& = default;
+  (tuple_impl const& a_tup)&
+  noexcept((... && dango::is_noexcept_copy_assignable<dango::tuple_value_type<tp_types>>))->tuple_impl& = default;
 
   constexpr auto
   operator =
-  (tuple&& a_tup)&
-  noexcept((... && dango::is_noexcept_move_assignable<dango::tuple_value_type<tp_types>>))->tuple& = default;
+  (tuple_impl&& a_tup)&
+  noexcept((... && dango::is_noexcept_move_assignable<dango::tuple_value_type<tp_types>>))->tuple_impl& = default;
 
   template
   <
@@ -981,7 +999,7 @@ private:
   <dango::usize... tp_indices, typename... tp_args>
   static constexpr auto
   construct
-  (dango::index_seq<tp_indices...> const, tuple<tp_args...> const& a_tup)
+  (dango::index_seq<tp_indices...> const, tuple_impl<tp_args...> const& a_tup)
   noexcept(false)->storage_type
   {
     return detail::make_tuple_storage<storage_type>(a_tup.template get<tp_indices>()...);
@@ -991,7 +1009,7 @@ private:
   <dango::usize... tp_indices, typename... tp_args>
   static constexpr auto
   construct
-  (dango::index_seq<tp_indices...> const, tuple<tp_args...>&& a_tup)
+  (dango::index_seq<tp_indices...> const, tuple_impl<tp_args...>&& a_tup)
   noexcept(false)->storage_type
   {
     return detail::make_tuple_storage<storage_type>(dango::forward<dango::tuple_value_type<tp_args>>(a_tup.template get<tp_indices>())...);
@@ -1015,7 +1033,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...> const& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_get_type<tp_args, true>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup))
@@ -1039,7 +1057,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...> const& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_get_type<tp_args, true>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup))
@@ -1060,7 +1078,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...> const& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_get_type<tp_args, true>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup))
@@ -1083,7 +1101,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...> const& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_get_type<tp_args, true>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup))
@@ -1105,7 +1123,7 @@ public:
     > = dango::enable_val
   >
   explicit constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...> const& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_get_type<tp_args, true>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup))
@@ -1129,7 +1147,7 @@ public:
     > = dango::enable_val
   >
   explicit constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...> const& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_get_type<tp_args, true>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup))
@@ -1153,7 +1171,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...>&& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_value_type<tp_args>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tuple<tp_args...>&&>(a_tup)))
@@ -1177,7 +1195,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...>&& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_value_type<tp_args>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tuple<tp_args...>&&>(a_tup)))
@@ -1198,7 +1216,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...>&& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_value_type<tp_args>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tuple<tp_args...>&&>(a_tup)))
@@ -1221,7 +1239,7 @@ public:
     > = dango::enable_val
   >
   constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...>&& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_value_type<tp_args>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tuple<tp_args...>&&>(a_tup)))
@@ -1243,7 +1261,7 @@ public:
     > = dango::enable_val
   >
   explicit constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...>&& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_value_type<tp_args>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tuple<tp_args...>&&>(a_tup)))
@@ -1267,7 +1285,7 @@ public:
     > = dango::enable_val
   >
   explicit constexpr
-  tuple
+  tuple_impl
   (tuple<tp_args...>&& a_tup)
   noexcept((... && detail::tuple_is_noexcept_constructible<tp_types, dango::tuple_value_type<tp_args>>)):
   m_storage(construct(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tuple<tp_args...>&&>(a_tup)))
@@ -1284,7 +1302,7 @@ private:
   constexpr auto
   assign
   (dango::index_seq<tp_indices...> const, tuple<tp_args...> const& a_tup)
-  noexcept(false)->tuple&
+  noexcept(false)->tuple_impl&
   {
     [[maybe_unused]] dango::s_int const a_temp[] = { (static_cast<void>(get<tp_indices>() = a_tup.template get<tp_indices>()), 0)... };
 
@@ -1296,7 +1314,7 @@ private:
   constexpr auto
   assign
   (dango::index_seq<tp_indices...> const, tuple<tp_args...>&& a_tup)
-  noexcept(false)->tuple&
+  noexcept(false)->tuple_impl&
   {
     [[maybe_unused]] dango::s_int const a_temp[] = { (static_cast<void>(get<tp_indices>() = dango::move(a_tup.template get<tp_indices>())), 0)... };
 
@@ -1322,7 +1340,7 @@ public:
   operator =
   (tuple<tp_args...> const& a_tup)&
   noexcept
-  ((... && dango::is_noexcept_assignable<dango::tuple_get_type<tp_types, false>, dango::tuple_get_type<tp_args, true>>))->tuple&
+  ((... && dango::is_noexcept_assignable<dango::tuple_get_type<tp_types, false>, dango::tuple_get_type<tp_args, true>>))->tuple_impl&
   {
     return assign(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
   }
@@ -1342,7 +1360,7 @@ public:
   operator =
   (tuple<tp_args...>&& a_tup)&
   noexcept
-  ((... && dango::is_noexcept_assignable<dango::tuple_get_type<tp_types, false>, dango::remove_ref<dango::tuple_get_type<tp_args, false>>&&>))->tuple&
+  ((... && dango::is_noexcept_assignable<dango::tuple_get_type<tp_types, false>, dango::remove_ref<dango::tuple_get_type<tp_args, false>>&&>))->tuple_impl&
   {
     return assign(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::forward<tuple<tp_args...>&&>(a_tup));
   }
@@ -1416,8 +1434,7 @@ private:
 template<>
 class
 dango::
-tuple<>
-final
+tuple_impl<dango::enable_tag>
 {
 public:
   static constexpr auto
@@ -1427,7 +1444,7 @@ public:
     return dango::usize(0);
   }
 public:
-  DANGO_TAG_TYPE(tuple)
+  DANGO_TAG_TYPE(tuple_impl)
 public:
   template
   <
