@@ -61,6 +61,8 @@ main
 
   dango::auto_ptr<double> a_double{ new double{ 1.0 } };
 
+  static_assert(sizeof(a_double) == 8);
+
   auto a_d2 = dango::auto_ptr<double const>{ dango::move(a_double) };
 
   double const& a_d = *a_d2;
@@ -69,9 +71,26 @@ main
 
   auto a_void = dango::auto_new(128, 64);
 
+  static_assert(sizeof(a_void) == 24);
+
   dango_assert(a_void.align() == 64);
 
   auto a_void2 = dango::auto_new(128);
+
+  static_assert(sizeof(a_void2) == 16);
+
+  {
+    dango::tuple<dango::empty_elem, dango::uint32, dango::empty_elem const, float> a_empty{ 5, 5, 5, 5 };
+
+    static_assert(sizeof(a_empty) == 8);
+
+    printf("%p\n", static_cast<void const*>(&a_empty.get<0>()));
+    printf("%p\n", static_cast<void const*>(&a_empty.get<1>()));
+    printf("%p\n", static_cast<void const*>(&a_empty.get<2>()));
+    printf("%p\n", static_cast<void const*>(&a_empty.get<3>()));
+
+    a_empty = a_empty;
+  }
 
   return 0;
 }

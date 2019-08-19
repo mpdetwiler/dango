@@ -17,6 +17,7 @@
 #include "dango-net.hpp"
 #include "dango-global.hpp"
 #include "dango-tuple.hpp"
+#include "dango-auto-ptr.hpp"
 #include "dango-concurrent.hpp"
 
 #endif
