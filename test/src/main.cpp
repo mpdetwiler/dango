@@ -38,6 +38,11 @@ auto
 main
 ()noexcept(false)->dango::s_int
 {
+  dango::thread a_thread = null;
+
+  dango_assert(a_thread == a_thread);
+  dango_assert(!(a_thread != a_thread));
+
   dango::allocator_tree a_tree0 = dango::null;
 
   {
@@ -62,6 +67,8 @@ main
   dango::auto_ptr<double> a_double{ new double{ 1.0 } };
 
   static_assert(sizeof(a_double) == 8);
+
+  dango_assert(a_double != null);
 
   auto a_d2 = dango::auto_ptr<double const>{ dango::move(a_double) };
 

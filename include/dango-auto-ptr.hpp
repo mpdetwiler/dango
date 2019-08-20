@@ -333,7 +333,10 @@ public:
   auto_ptr
   (tp_arg* const a_ptr)noexcept:
   m_data{ a_ptr, dango::skip_init, dango::skip_init }
-  { }
+  {
+    dango_assert(a_ptr != nullptr);
+    dango_assert(dango::is_aligned(a_ptr, config::alignment));
+  }
 
   template
   <
@@ -349,7 +352,11 @@ public:
   auto_ptr
   (tp_arg* const a_ptr, size_type const a_size)noexcept:
   m_data{ a_ptr, a_size, dango::skip_init }
-  { }
+  {
+    dango_assert(a_ptr != nullptr);
+    dango_assert(a_size != size_type(0));
+    dango_assert(dango::is_aligned(a_ptr, config::alignment));
+  }
 
   template
   <
@@ -366,8 +373,10 @@ public:
   (tp_arg* const a_ptr, size_type const a_align)noexcept:
   m_data{ a_ptr, dango::skip_init, a_align }
   {
+    dango_assert(a_ptr != nullptr);
     dango_assert(dango::is_pow_two(a_align));
     dango_assert(a_align >= config::alignment);
+    dango_assert(dango::is_aligned(a_ptr, a_align));
   }
 
   template
@@ -385,8 +394,11 @@ public:
   (tp_arg* const a_ptr, size_type const a_size, size_type const a_align)noexcept:
   m_data{ a_ptr, a_size, a_align }
   {
+    dango_assert(a_ptr != nullptr);
+    dango_assert(a_size != size_type(0));
     dango_assert(dango::is_pow_two(a_align));
     dango_assert(a_align >= config::alignment);
+    dango_assert(dango::is_aligned(a_ptr, a_align));
   }
 
   template
