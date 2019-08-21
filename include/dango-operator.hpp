@@ -84,9 +84,6 @@ dango
 namespace
 dango
 {
-  constexpr auto operator == (dango::null_tag, dango::null_tag)noexcept->bool;
-  constexpr auto operator != (dango::null_tag, dango::null_tag)noexcept->bool;
-
   template
   <typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>> = dango::enable_val>
   constexpr auto
@@ -110,22 +107,6 @@ dango
   constexpr auto
   operator !=
   (dango::null_tag, tp_type const&)noexcept(dango::has_noexcept_dango_operator_is_null<tp_type>)->decltype(auto);
-}
-
-constexpr auto
-dango::
-operator ==
-(dango::null_tag const, dango::null_tag const)noexcept->bool
-{
-  return true;
-}
-
-constexpr auto
-dango::
-operator !=
-(dango::null_tag const, dango::null_tag const)noexcept->bool
-{
-  return false;
 }
 
 template

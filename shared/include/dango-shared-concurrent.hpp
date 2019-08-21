@@ -17,13 +17,13 @@ dango::shared
 namespace
 dango::shared
 {
-  auto DANGO_SHARED_API tick_count_monotonic()noexcept->dango::uint64;
-  auto DANGO_SHARED_API tick_count_boottime()noexcept->dango::uint64;
+  auto DANGO_SHARED_API tick_count_monotonic()noexcept->dango::ulong;
+  auto DANGO_SHARED_API tick_count_boottime()noexcept->dango::ulong;
 
-  using futex_type = dango::s_int;
+  using futex_type = dango::builtin::sint;
 
   void DANGO_SHARED_API futex_wait(shared::futex_type*, shared::futex_type)noexcept;
-  void DANGO_SHARED_API futex_wait(shared::futex_type*, shared::futex_type, dango::uint64)noexcept;
+  void DANGO_SHARED_API futex_wait(shared::futex_type*, shared::futex_type, dango::ulong)noexcept;
   void DANGO_SHARED_API futex_wake(shared::futex_type*)noexcept;
   void DANGO_SHARED_API futex_wake_requeue(shared::futex_type*, shared::futex_type*)noexcept;
 }
@@ -35,8 +35,8 @@ dango::shared
 namespace
 dango::shared
 {
-  auto DANGO_SHARED_API perf_freq()noexcept->dango::uint64;
-  auto DANGO_SHARED_API perf_count_suspend_bias(dango::uint64&)noexcept->dango::uint64;
+  auto DANGO_SHARED_API perf_freq()noexcept->dango::ulong;
+  auto DANGO_SHARED_API perf_count_suspend_bias(dango::ulong&)noexcept->dango::ulong;
 
   using srw_lock_storage = dango::aligned_storage<sizeof(void*), alignof(void*)>;
 
@@ -51,7 +51,7 @@ dango::shared
   void DANGO_SHARED_API condition_variable_wake(void*)noexcept;
   void DANGO_SHARED_API condition_variable_wake_all(void*)noexcept;
   void DANGO_SHARED_API condition_variable_wait(void*, void*)noexcept;
-  void DANGO_SHARED_API condition_variable_wait(void*, void*, dango::uint64)noexcept;
+  void DANGO_SHARED_API condition_variable_wait(void*, void*, dango::ulong)noexcept;
 
   void DANGO_SHARED_API time_begin_period()noexcept;
   void DANGO_SHARED_API time_end_period()noexcept;

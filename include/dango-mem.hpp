@@ -103,7 +103,7 @@ destructor
 noexcept(dango::is_noexcept_destructible<tp_type>)->
 dango::enable_if<dango::is_destructible<tp_type>, void>
 {
-  dango_assert(a_ptr != nullptr);
+  dango_assert(a_ptr != dango::null);
 
   a_ptr->~tp_type();
 }
@@ -224,9 +224,9 @@ is_aligned
 {
   dango_assert(dango::is_pow_two(a_align));
 
-  auto const a_int = reinterpret_cast<dango::uintptr>(a_ptr);
+  auto const a_int = reinterpret_cast<dango::uptr>(a_ptr);
 
-  return (a_int % dango::uintptr(a_align)) == dango::uintptr(0);
+  return (a_int % dango::uptr(a_align)) == dango::uptr(0);
 }
 
 /*** assume_aligned ***/
@@ -287,8 +287,8 @@ mem_copy
 )
 noexcept->void*
 {
-  dango_assert(a_dest != nullptr);
-  dango_assert(a_source != nullptr);
+  dango_assert(a_dest != dango::null);
+  dango_assert(a_source != dango::null);
 
   return __builtin_memcpy(a_dest, a_source, a_count);
 }
@@ -448,7 +448,7 @@ array_destroy
 (tp_type const volatile* const a_array, dango::usize const a_count)noexcept->
 dango::enable_if<dango::is_noexcept_destructible<tp_type>, void>
 {
-  dango_assert(a_array != nullptr);
+  dango_assert(a_array != dango::null);
 
   if(a_count == dango::usize(0))
   {
@@ -479,12 +479,12 @@ dango::enable_if
   tp_type*
 >
 {
-  dango_assert(a_dest != nullptr);
-  dango_assert(a_array != nullptr);
+  dango_assert(a_dest != dango::null);
+  dango_assert(a_array != dango::null);
 
   if(a_count == dango::usize(0))
   {
-    return nullptr;
+    return dango::null;
   }
 
   auto const a_end = a_array + a_count;
@@ -532,12 +532,12 @@ dango::enable_if
   tp_type*
 >
 {
-  dango_assert(a_dest != nullptr);
-  dango_assert(a_array != nullptr);
+  dango_assert(a_dest != dango::null);
+  dango_assert(a_array != dango::null);
 
   if(a_count == dango::usize(0))
   {
-    return nullptr;
+    return dango::null;
   }
 
   tp_type const* const a_end = a_array + a_count;
@@ -573,12 +573,12 @@ dango::enable_if
   tp_type*
 >
 {
-  dango_assert(a_dest != nullptr);
-  dango_assert(a_array != nullptr);
+  dango_assert(a_dest != dango::null);
+  dango_assert(a_array != dango::null);
 
   if(a_count == dango::usize(0))
   {
-    return nullptr;
+    return dango::null;
   }
 
   tp_type const* const a_end = a_array + a_count;
@@ -616,11 +616,11 @@ dango::enable_if
   tp_type*
 >
 {
-  dango_assert(a_array != nullptr);
+  dango_assert(a_array != dango::null);
 
   if(a_count == dango::usize(0))
   {
-    return nullptr;
+    return dango::null;
   }
 
   auto const a_result = a_array + a_shift;

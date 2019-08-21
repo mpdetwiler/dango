@@ -77,8 +77,8 @@ private:
 protected:
   constexpr
   intrusive_list_elem()noexcept:
-  m_prev{ nullptr },
-  m_next{ nullptr }
+  m_prev{ dango::null },
+  m_next{ dango::null }
   {
 
   }
@@ -170,20 +170,20 @@ remove(elem_ptr const a_element)noexcept
 {
   elem_type* const a_elem = a_element;
 
-  dango_assert(a_elem != nullptr);
+  dango_assert(a_elem != dango::null);
 
   elem_type* const a_prev = a_elem->m_prev;
   elem_type* const a_next = a_elem->m_next;
 
-  dango_assert(a_prev != nullptr);
-  dango_assert(a_next != nullptr);
+  dango_assert(a_prev != dango::null);
+  dango_assert(a_next != dango::null);
   dango_assert(a_prev->m_next == a_elem);
   dango_assert(a_next->m_prev == a_elem);
 
   a_next->m_prev = a_prev;
   a_prev->m_next = a_next;
-  a_elem->m_prev = nullptr;
-  a_elem->m_next = nullptr;
+  a_elem->m_prev = dango::null;
+  a_elem->m_next = dango::null;
 }
 
 template
@@ -228,7 +228,7 @@ first()noexcept->elem_ptr
 {
   if(is_empty())
   {
-    return nullptr;
+    return dango::null;
   }
 
   return static_cast<elem_ptr>(m_head.m_next);
@@ -243,7 +243,7 @@ last()noexcept->elem_ptr
 {
   if(is_empty())
   {
-    return nullptr;
+    return dango::null;
   }
 
   return static_cast<elem_ptr>(m_tail.m_prev);
@@ -258,7 +258,7 @@ first()const noexcept->elem_const_ptr
 {
   if(is_empty())
   {
-    return nullptr;
+    return dango::null;
   }
 
   return static_cast<elem_const_ptr>(m_head.m_next);
@@ -273,7 +273,7 @@ last()const noexcept->elem_const_ptr
 {
   if(is_empty())
   {
-    return nullptr;
+    return dango::null;
   }
 
   return static_cast<elem_const_ptr>(m_tail.m_prev);
@@ -288,9 +288,9 @@ add_first(elem_ptr const a_element)noexcept
 {
   elem_type* const a_elem = a_element;
 
-  dango_assert(a_elem != nullptr);
-  dango_assert(a_elem->m_prev == nullptr);
-  dango_assert(a_elem->m_next == nullptr);
+  dango_assert(a_elem != dango::null);
+  dango_assert(a_elem->m_prev == dango::null);
+  dango_assert(a_elem->m_next == dango::null);
 
   elem_type* const a_prev = &m_head;
   elem_type* const a_next = m_head.m_next;
@@ -313,9 +313,9 @@ add_last(elem_ptr const a_element)noexcept
 {
   elem_type* const a_elem = a_element;
 
-  dango_assert(a_elem != nullptr);
-  dango_assert(a_elem->m_prev == nullptr);
-  dango_assert(a_elem->m_next == nullptr);
+  dango_assert(a_elem != dango::null);
+  dango_assert(a_elem->m_prev == dango::null);
+  dango_assert(a_elem->m_next == dango::null);
 
   elem_type* const a_prev = m_tail.m_prev;
   elem_type* const a_next = &m_tail;
@@ -338,7 +338,7 @@ remove_first()noexcept->elem_ptr
 {
   if(is_empty())
   {
-    return nullptr;
+    return dango::null;
   }
 
   auto const a_result = first();
@@ -357,7 +357,7 @@ remove_last()noexcept->elem_ptr
 {
   if(is_empty())
   {
-    return nullptr;
+    return dango::null;
   }
 
   auto const a_result = last();

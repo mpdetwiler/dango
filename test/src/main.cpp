@@ -36,7 +36,7 @@ public dango::auto_ptr_default_config<tp_void>
 
 auto
 main
-()noexcept(false)->dango::s_int
+()noexcept(false)->dango::builtin::sint
 {
   dango::thread a_thread = null;
 
@@ -87,7 +87,7 @@ main
   static_assert(sizeof(a_void2) == 16);
 
   {
-    dango::tuple<dango::empty_elem, dango::uint32, dango::empty_elem const, float> a_empty{ 5, 5, 5, 5 };
+    dango::tuple<dango::empty_elem, dango::uint, dango::empty_elem const, float> a_empty{ 5, 5, 5, 5 };
 
     static_assert(sizeof(a_empty) == 8);
 

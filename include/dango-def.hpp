@@ -12,71 +12,65 @@
 #endif
 
 namespace
-dango
+dango::builtin
 {
-  using u_byte = unsigned char;
-  using u_short = unsigned short int;
-  using u_int = unsigned int;
-  using u_long = unsigned long int;
-  using u_cent = unsigned long long int;
+  using uchar = unsigned char;
+  using ushort = unsigned short int;
+  using uint = unsigned int;
+  using ulong = unsigned long int;
+  using ulonglong = unsigned long long int;
 
-  using s_byte = signed char;
-  using s_short = signed short int;
-  using s_int = signed int;
-  using s_long = signed long int;
-  using s_cent = signed long long int;
+  using schar = signed char;
+  using sshort = signed short int;
+  using sint = signed int;
+  using slong = signed long int;
+  using slonglong = signed long long int;
+
+  using wchar = wchar_t;
 }
 
 namespace
 dango
 {
-  using nullptr_tag = decltype(nullptr);
+  using null_tag = decltype(nullptr);
+
+  inline constexpr dango::null_tag const null{ };
 
   using usize = decltype(sizeof(char));
-  using ssize = decltype(static_cast<char*>(nullptr) - static_cast<char*>(nullptr));
+  using ssize = decltype(static_cast<char*>(dango::null) - static_cast<char*>(dango::null));
 
-  using uint8 = __UINT8_TYPE__;
-  using uint16 = __UINT16_TYPE__;
-  using uint32 = __UINT32_TYPE__;
-  using uint64 = __UINT64_TYPE__;
-  using uintptr = __UINTPTR_TYPE__;
+  using ubyte = __UINT8_TYPE__;
+  using ushort = __UINT16_TYPE__;
+  using uint = __UINT32_TYPE__;
+  using ulong = __UINT64_TYPE__;
+  using uptr = __UINTPTR_TYPE__;
 
-  using sint8 = __INT8_TYPE__;
-  using sint16 = __INT16_TYPE__;
-  using sint32 = __INT32_TYPE__;
-  using sint64 = __INT64_TYPE__;
-  using sintptr = __INTPTR_TYPE__;
+  using sbyte = __INT8_TYPE__;
+  using sshort = __INT16_TYPE__;
+  using sint = __INT32_TYPE__;
+  using slong = __INT64_TYPE__;
+  using sptr = __INTPTR_TYPE__;
 
   using wchar = char16_t;
   using dchar = char32_t;
 
   using real = long double;
-
-  struct
-  null_tag
-  final
-  {
-    DANGO_TAG_TYPE(null_tag)
-  };
-
-  inline constexpr dango::null_tag const null{ };
 }
 
 #ifndef DANGO_NO_BASIC_TYPES
 
-using dango::nullptr_tag;
 using dango::usize;
 using dango::ssize;
-using dango::uint8;
-using dango::uint16;
-using dango::uint32;
-using dango::uint64;
-using dango::uintptr;
-using dango::sint8;
-using dango::sint16;
-using dango::sint32;
-using dango::sint64;
-using dango::sintptr;
+using dango::ubyte;
+using dango::ushort;
+using dango::uint;
+using dango::ulong;
+using dango::uptr;
+using dango::sbyte;
+using dango::sshort;
+using dango::sint;
+using dango::slong;
+using dango::sptr;
 using dango::wchar;
 using dango::dchar;
 using dango::real;
@@ -105,27 +99,27 @@ fundamental_union
 private:
   bool                          m_00;
   void*                         m_01;
-  dango::nullptr_tag            m_02;
+  dango::null_tag               m_02;
   char                          m_03;
-  wchar_t                       m_04;
-  dango::wchar                  m_06;
-  dango::dchar                  m_07;
-  dango::u_byte                 m_08;
-  dango::u_short                m_09;
-  dango::u_int                  m_10;
-  dango::u_long                 m_11;
-  dango::u_cent                 m_12;
-  dango::s_byte                 m_13;
-  dango::s_short                m_14;
-  dango::s_int                  m_15;
-  dango::s_long                 m_16;
-  dango::s_cent                 m_17;
-  float                         m_18;
-  double                        m_19;
-  dango::real                   m_20;
-  void(* m_21)()noexcept;
-  void(fundamental_union::* m_22)()noexcept;
-  char fundamental_union::* m_23;
+  dango::builtin::wchar         m_04;
+  dango::wchar                  m_05;
+  dango::dchar                  m_06;
+  dango::builtin::uchar         m_07;
+  dango::builtin::ushort        m_08;
+  dango::builtin::uint          m_09;
+  dango::builtin::ulong         m_10;
+  dango::builtin::ulonglong     m_11;
+  dango::builtin::schar         m_12;
+  dango::builtin::sshort        m_13;
+  dango::builtin::sint          m_14;
+  dango::builtin::slong         m_15;
+  dango::builtin::slonglong     m_16;
+  float                         m_17;
+  double                        m_18;
+  dango::real                   m_19;
+  void(* m_20)()noexcept;
+  void(fundamental_union::* m_21)()noexcept;
+  char fundamental_union::* m_22;
 };
 
 namespace
@@ -145,7 +139,7 @@ dango
 
   enum class
   byte:
-  dango::u_byte
+  dango::ubyte
   {
 
   };

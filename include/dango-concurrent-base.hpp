@@ -26,9 +26,9 @@ if(auto const local_name = (cond).try_lock(mutex))
 namespace
 dango::detail
 {
-  void spin_yield(dango::uint32&)noexcept;
+  void spin_yield(dango::uint&)noexcept;
 
-  inline constexpr auto const c_spin_count_init = dango::uint32(128);
+  inline constexpr auto const c_spin_count_init = dango::uint(128);
 }
 
 namespace
@@ -45,7 +45,7 @@ final
 private:
   enum class
   state:
-  dango::uint8
+  dango::ubyte
   {
     EXECUTED, EXECUTING, INITIAL
   };
@@ -330,7 +330,7 @@ final
 public:
   try_locker(spin_mutex* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
-  explicit operator bool()const{ return m_lock != nullptr; }
+  explicit operator bool()const{ return m_lock != dango::null; }
 private:
   spin_mutex* const m_lock;
 public:
@@ -379,12 +379,12 @@ try_acquire
 
   if(m_locked.load<acquire>())
   {
-    return nullptr;
+    return dango::null;
   }
 
   if(m_locked.exchange<acquire>(true))
   {
-    return nullptr;
+    return dango::null;
   }
 
   return this;
@@ -429,9 +429,9 @@ inline void
 dango::
 detail::
 spin_yield
-(dango::uint32& a_count)noexcept
+(dango::uint& a_count)noexcept
 {
-  if(a_count != dango::uint32(0))
+  if(a_count != dango::uint(0))
   {
     --a_count;
 
@@ -447,7 +447,7 @@ inline void
 dango::
 detail::
 spin_yield
-(dango::uint32&)noexcept
+(dango::uint&)noexcept
 {
   detail::thread_yield();
 }

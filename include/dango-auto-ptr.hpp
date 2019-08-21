@@ -303,21 +303,18 @@ public:
   constexpr
   auto_ptr
   (dango::null_tag const)noexcept:
-  m_data{ nullptr, size_type(0), size_type(0) }
+  m_data{ dango::null, size_type(0), size_type(0) }
   { }
 
   template
-  <typename tp_tp_config = config, dango::enable_if<!tp_tp_config::store_size && !tp_tp_config::store_align> = dango::enable_val>
-  constexpr explicit auto_ptr(dango::nullptr_tag)noexcept = delete;
-  template
   <typename tp_tp_config = config, dango::enable_if<tp_tp_config::store_size && !tp_tp_config::store_align> = dango::enable_val>
-  constexpr explicit auto_ptr(dango::nullptr_tag, size_type)noexcept = delete;
+  constexpr explicit auto_ptr(dango::null_tag, size_type)noexcept = delete;
   template
   <typename tp_tp_config = config, dango::enable_if<!tp_tp_config::store_size && tp_tp_config::store_align> = dango::enable_val>
-  constexpr explicit auto_ptr(dango::nullptr_tag, size_type)noexcept = delete;
+  constexpr explicit auto_ptr(dango::null_tag, size_type)noexcept = delete;
   template
   <typename tp_tp_config = config, dango::enable_if<tp_tp_config::store_size && tp_tp_config::store_align> = dango::enable_val>
-  constexpr explicit auto_ptr(dango::nullptr_tag, size_type, size_type)noexcept = delete;
+  constexpr explicit auto_ptr(dango::null_tag, size_type, size_type)noexcept = delete;
 
   template
   <
@@ -334,7 +331,7 @@ public:
   (tp_arg* const a_ptr)noexcept:
   m_data{ a_ptr, dango::skip_init, dango::skip_init }
   {
-    dango_assert(a_ptr != nullptr);
+    dango_assert(a_ptr != dango::null);
     dango_assert(dango::is_aligned(a_ptr, config::alignment));
   }
 
@@ -353,7 +350,7 @@ public:
   (tp_arg* const a_ptr, size_type const a_size)noexcept:
   m_data{ a_ptr, a_size, dango::skip_init }
   {
-    dango_assert(a_ptr != nullptr);
+    dango_assert(a_ptr != dango::null);
     dango_assert(a_size != size_type(0));
     dango_assert(dango::is_aligned(a_ptr, config::alignment));
   }
@@ -373,7 +370,7 @@ public:
   (tp_arg* const a_ptr, size_type const a_align)noexcept:
   m_data{ a_ptr, dango::skip_init, a_align }
   {
-    dango_assert(a_ptr != nullptr);
+    dango_assert(a_ptr != dango::null);
     dango_assert(dango::is_pow_two(a_align));
     dango_assert(a_align >= config::alignment);
     dango_assert(dango::is_aligned(a_ptr, a_align));
@@ -394,7 +391,7 @@ public:
   (tp_arg* const a_ptr, size_type const a_size, size_type const a_align)noexcept:
   m_data{ a_ptr, a_size, a_align }
   {
-    dango_assert(a_ptr != nullptr);
+    dango_assert(a_ptr != dango::null);
     dango_assert(a_size != size_type(0));
     dango_assert(dango::is_pow_two(a_align));
     dango_assert(a_align >= config::alignment);
@@ -408,7 +405,7 @@ public:
   (auto_ptr&& a_ptr)noexcept:
   m_data{ a_ptr.m_data }
   {
-    a_ptr.get_ptr() = nullptr;
+    a_ptr.get_ptr() = dango::null;
 
     if constexpr(config::store_size)
     {
@@ -464,7 +461,7 @@ public:
   (auto_ptr<tp_arg, tp_arg_config>&& a_ptr)noexcept:
   m_data{ a_ptr.m_data }
   {
-    a_ptr.get_ptr() = nullptr;
+    a_ptr.get_ptr() = dango::null;
 
     if constexpr(config::store_size)
     {
@@ -624,7 +621,7 @@ public:
     return *this;
   }
 
-  constexpr auto dango_operator_is_null()const noexcept->bool{ return get_ptr() == nullptr; }
+  constexpr auto dango_operator_is_null()const noexcept->bool{ return get_ptr() == dango::null; }
 
   template
   <typename tp_tp_config = config>
@@ -673,7 +670,7 @@ public:
   {
     auto const a_ptr = get();
 
-    get_ptr() = nullptr;
+    get_ptr() = dango::null;
 
     if constexpr(config::store_size)
     {
@@ -688,7 +685,7 @@ public:
     return a_ptr;
   }
 
-  constexpr explicit operator bool()const noexcept{ return get_ptr() != nullptr; }
+  constexpr explicit operator bool()const noexcept{ return get_ptr() != dango::null; }
 
   template
   <typename tp_tp_config = config>

@@ -6,20 +6,20 @@
 namespace
 dango
 {
-  auto get_tick_count()noexcept->dango::uint64;
-  auto get_tick_count_sa()noexcept->dango::uint64;
-  auto get_suspend_bias()noexcept->dango::uint64;
+  auto get_tick_count()noexcept->dango::ulong;
+  auto get_tick_count_sa()noexcept->dango::ulong;
+  auto get_suspend_bias()noexcept->dango::ulong;
 }
 
 namespace
 dango::detail
 {
-  auto tick_count()noexcept->dango::uint64;
-  auto tick_count_sa()noexcept->dango::uint64;
-  auto suspend_bias()noexcept->dango::uint64;
+  auto tick_count()noexcept->dango::ulong;
+  auto tick_count_sa()noexcept->dango::ulong;
+  auto suspend_bias()noexcept->dango::ulong;
 
   using tick_count_tuple =
-    dango::tuple<dango::uint64, dango::uint64, dango::uint64>;
+    dango::tuple<dango::ulong, dango::ulong, dango::ulong>;
 
   auto init_tick_count()noexcept->detail::tick_count_tuple const&;
 }
@@ -27,7 +27,7 @@ dango::detail
 inline auto
 dango::
 get_tick_count
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   auto const a_init = detail::init_tick_count().first();
 
@@ -39,7 +39,7 @@ get_tick_count
 inline auto
 dango::
 get_tick_count_sa
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   auto const a_init = detail::init_tick_count().second();
 
@@ -51,7 +51,7 @@ get_tick_count_sa
 inline auto
 dango::
 get_suspend_bias
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   auto const a_init = detail::init_tick_count().third();
 
@@ -73,7 +73,7 @@ dango::
 timeout
 {
 protected:
-  using value_type = dango::uint64;
+  using value_type = dango::ulong;
 protected:
   static constexpr auto safe_add(value_type, value_type)noexcept->value_type;
 protected:
@@ -534,21 +534,21 @@ requires_high_resolution
 namespace
 dango
 {
-  auto make_timeout(dango::uint64)noexcept->detail::timeout_impl;
-  auto make_timeout_hr(dango::uint64)noexcept->detail::timeout_impl_hr;
-  auto make_timeout_sa(dango::uint64)noexcept->detail::timeout_impl_sa;
-  auto make_timeout_hr_sa(dango::uint64)noexcept->detail::timeout_impl_hr_sa;
+  auto make_timeout(dango::ulong)noexcept->detail::timeout_impl;
+  auto make_timeout_hr(dango::ulong)noexcept->detail::timeout_impl_hr;
+  auto make_timeout_sa(dango::ulong)noexcept->detail::timeout_impl_sa;
+  auto make_timeout_hr_sa(dango::ulong)noexcept->detail::timeout_impl_hr_sa;
 
-  auto make_timeout_rel(dango::uint64)noexcept->detail::timeout_impl;
-  auto make_timeout_rel_hr(dango::uint64)noexcept->detail::timeout_impl_hr;
-  auto make_timeout_rel_sa(dango::uint64)noexcept->detail::timeout_impl_sa;
-  auto make_timeout_rel_hr_sa(dango::uint64)noexcept->detail::timeout_impl_hr_sa;
+  auto make_timeout_rel(dango::ulong)noexcept->detail::timeout_impl;
+  auto make_timeout_rel_hr(dango::ulong)noexcept->detail::timeout_impl_hr;
+  auto make_timeout_rel_sa(dango::ulong)noexcept->detail::timeout_impl_sa;
+  auto make_timeout_rel_hr_sa(dango::ulong)noexcept->detail::timeout_impl_hr_sa;
 }
 
 inline auto
 dango::
 make_timeout
-(dango::uint64 const a_timeout)noexcept->detail::timeout_impl
+(dango::ulong const a_timeout)noexcept->detail::timeout_impl
 {
   return detail::timeout_impl::make(a_timeout);
 }
@@ -556,7 +556,7 @@ make_timeout
 inline auto
 dango::
 make_timeout_hr
-(dango::uint64 const a_timeout)noexcept->detail::timeout_impl_hr
+(dango::ulong const a_timeout)noexcept->detail::timeout_impl_hr
 {
   return detail::timeout_impl_hr::make(a_timeout);
 }
@@ -564,7 +564,7 @@ make_timeout_hr
 inline auto
 dango::
 make_timeout_sa
-(dango::uint64 const a_timeout)noexcept->detail::timeout_impl_sa
+(dango::ulong const a_timeout)noexcept->detail::timeout_impl_sa
 {
   return detail::timeout_impl_sa::make(a_timeout);
 }
@@ -572,7 +572,7 @@ make_timeout_sa
 inline auto
 dango::
 make_timeout_hr_sa
-(dango::uint64 const a_timeout)noexcept->detail::timeout_impl_hr_sa
+(dango::ulong const a_timeout)noexcept->detail::timeout_impl_hr_sa
 {
   return detail::timeout_impl_hr_sa::make(a_timeout);
 }
@@ -580,7 +580,7 @@ make_timeout_hr_sa
 inline auto
 dango::
 make_timeout_rel
-(dango::uint64 const a_interval)noexcept->detail::timeout_impl
+(dango::ulong const a_interval)noexcept->detail::timeout_impl
 {
   return detail::timeout_impl::make_rel(a_interval);
 }
@@ -588,7 +588,7 @@ make_timeout_rel
 inline auto
 dango::
 make_timeout_rel_hr
-(dango::uint64 const a_interval)noexcept->detail::timeout_impl_hr
+(dango::ulong const a_interval)noexcept->detail::timeout_impl_hr
 {
   return detail::timeout_impl_hr::make_rel(a_interval);
 }
@@ -596,7 +596,7 @@ make_timeout_rel_hr
 inline auto
 dango::
 make_timeout_rel_sa
-(dango::uint64 const a_interval)noexcept->detail::timeout_impl_sa
+(dango::ulong const a_interval)noexcept->detail::timeout_impl_sa
 {
   return detail::timeout_impl_sa::make_rel(a_interval);
 }
@@ -604,7 +604,7 @@ make_timeout_rel_sa
 inline auto
 dango::
 make_timeout_rel_hr_sa
-(dango::uint64 const a_interval)noexcept->detail::timeout_impl_hr_sa
+(dango::ulong const a_interval)noexcept->detail::timeout_impl_hr_sa
 {
   return detail::timeout_impl_hr_sa::make_rel(a_interval);
 }
@@ -679,7 +679,7 @@ final
 public:
   try_locker(mutex_base* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
-  explicit operator bool()const{ return m_lock != nullptr; }
+  explicit operator bool()const{ return m_lock != dango::null; }
 private:
   mutex_base* const m_lock;
 public:
@@ -890,7 +890,7 @@ public:
   m_cond{ a_cond }
   { }
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
-  explicit operator bool()const{ return m_lock != nullptr; }
+  explicit operator bool()const{ return m_lock != dango::null; }
   void wait()const noexcept{ m_cond->wait(m_lock); }
   void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(m_lock, a_timeout); }
 private:
@@ -1230,7 +1230,7 @@ private:
 
   static registry s_registry;
   static thread const& s_main_init;
-  static dango::uint64 const s_tick_count_init;
+  static dango::ulong const s_tick_count_init;
 public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
@@ -1274,10 +1274,10 @@ public:
   >;
 
   static void sleep(dango::timeout const&)noexcept;
-  static void sleep_rel(dango::uint64)noexcept;
-  static void sleep_rel_hr(dango::uint64)noexcept;
-  static void sleep_rel_sa(dango::uint64)noexcept;
-  static void sleep_rel_hr_sa(dango::uint64)noexcept;
+  static void sleep_rel(dango::ulong)noexcept;
+  static void sleep_rel_hr(dango::ulong)noexcept;
+  static void sleep_rel_sa(dango::ulong)noexcept;
+  static void sleep_rel_hr_sa(dango::ulong)noexcept;
 private:
   explicit thread(construct_tag, bool)noexcept;
   explicit thread(control_block*)noexcept;
@@ -1531,7 +1531,7 @@ dango::
 thread::
 s_main_init = dango::thread::self();
 
-inline dango::uint64 const
+inline dango::ulong const
 dango::
 thread::
 s_tick_count_init = dango::get_tick_count();
@@ -1578,7 +1578,7 @@ dango::
 thread::
 thread
 (dango::null_tag const)noexcept:
-m_control{ nullptr }
+m_control{ dango::null }
 {
 
 }
@@ -1603,7 +1603,7 @@ thread
 (thread&& a_thread)noexcept:
 m_control{ a_thread.m_control }
 {
-  a_thread.m_control = nullptr;
+  a_thread.m_control = dango::null;
 }
 
 inline
@@ -1663,7 +1663,7 @@ thread::
 operator bool
 ()const noexcept
 {
-  return m_control != nullptr;
+  return m_control != dango::null;
 }
 
 constexpr auto
@@ -1672,7 +1672,7 @@ thread::
 is_daemon
 ()const noexcept->bool
 {
-  dango_assert(m_control != nullptr);
+  dango_assert(m_control != dango::null);
 
   return m_control->is_daemon();
 }
@@ -1683,7 +1683,7 @@ thread::
 dango_operator_is_null
 ()const noexcept->bool
 {
-  return m_control == nullptr;
+  return m_control == dango::null;
 }
 
 constexpr auto
@@ -1850,7 +1850,7 @@ private:
   using list_type = dango::intrusive_list<cond_type>;
 private:
   static void remove(cond_type*)noexcept;
-  static auto bias_okay(dango::uint64&)noexcept->bool;
+  static auto bias_okay(dango::ulong&)noexcept->bool;
 public:
   void regist(cond_type*, dango::timeout const&)noexcept;
   void unregist(cond_type*, dango::timeout const&)noexcept;
@@ -1861,7 +1861,7 @@ private:
   ~cond_var_registry()noexcept = default;
   void add(cond_type*)noexcept;
   auto wait_empty()noexcept->bool;
-  auto poll_bias(dango::uint64&, dango::timeout&)noexcept->bool;
+  auto poll_bias(dango::ulong&, dango::timeout&)noexcept->bool;
   auto pop_internal()noexcept->bool;
 private:
   dango::static_mutex m_mutex;
@@ -1971,7 +1971,7 @@ final
 private:
   enum class
   timer_state:
-  dango::uint8
+  dango::ubyte
   {
     ACTIVATED, DEACTIVATING, DEACTIVATED
   };

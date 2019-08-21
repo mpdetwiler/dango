@@ -19,7 +19,7 @@ dango
   str_size
   (tp_char const* a_str)noexcept->dango::usize
   {
-    dango_assert(a_str != nullptr);
+    dango_assert(a_str != dango::null);
 
     auto a_size = dango::usize(0);
 
@@ -42,8 +42,8 @@ dango
   )
   noexcept->dango::usize
   {
-    dango_assert(a_dst != nullptr || a_cap == dango::usize(0));
-    dango_assert(a_src != nullptr);
+    dango_assert(a_dst != dango::null || a_cap == dango::usize(0));
+    dango_assert(a_src != dango::null);
 
     auto a_size = dango::usize(0);
 
@@ -84,8 +84,8 @@ dango
   )
   noexcept->dango::usize
   {
-    dango_assert(a_dst != nullptr);
-    dango_assert(a_src != nullptr);
+    dango_assert(a_dst != dango::null);
+    dango_assert(a_src != dango::null);
     dango_assert(a_cap != dango::usize(0));
 
     auto a_size = dango::usize(0);

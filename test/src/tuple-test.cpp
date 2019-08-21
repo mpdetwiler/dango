@@ -7,12 +7,12 @@ namespace
   final
   {
     float m_0;
-    dango::uint32 m_1;
-    dango::uint64 m_2;
+    dango::uint m_1;
+    dango::ulong m_2;
     double m_3;
   };
 
-  using size_test_tuple = dango::tuple<float, dango::uint32, dango::uint64, double>;
+  using size_test_tuple = dango::tuple<float, dango::uint, dango::ulong, double>;
 }
 
 static_assert(sizeof(size_test_struct) == sizeof(size_test_tuple));

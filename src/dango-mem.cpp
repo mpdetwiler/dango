@@ -48,7 +48,7 @@ operator_delete
 )
 noexcept
 {
-  dango_assert(a_ptr != nullptr);
+  dango_assert(a_ptr != dango::null);
   dango_assert(a_size_arg != dango::usize(0));
   dango_assert(dango::is_pow_two(a_align_arg));
 

@@ -5,7 +5,7 @@
 
 namespace
 {
-  dango::atomic<dango::assert_log_handler> s_assert_log_handler{ nullptr };
+  dango::atomic<dango::assert_log_handler> s_assert_log_handler{ dango::null };
 }
 
 constexpr char const* const
@@ -77,7 +77,7 @@ noexcept
       stderr,
       "%s[%u]: %s: assertion \"%s\" failed:\n%s\n",
       a_loc.file(),
-      dango::u_int(a_loc.line()),
+      dango::builtin::uint(a_loc.line()),
       a_loc.function(),
       a_expr,
       a_msg
@@ -91,7 +91,7 @@ noexcept
     stderr,
     "%s[%u]: %s: assertion \"%s\" failed\n",
     a_loc.file(),
-    dango::u_int(a_loc.line()),
+    dango::builtin::uint(a_loc.line()),
     a_loc.function(),
     a_expr
   );

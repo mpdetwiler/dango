@@ -643,15 +643,15 @@ dango::detail
   struct make_uint_help;
 
   template<>
-  struct make_uint_help<dango::s_byte>;
+  struct make_uint_help<dango::builtin::schar>;
   template<>
-  struct make_uint_help<dango::s_short>;
+  struct make_uint_help<dango::builtin::sshort>;
   template<>
-  struct make_uint_help<dango::s_int>;
+  struct make_uint_help<dango::builtin::sint>;
   template<>
-  struct make_uint_help<dango::s_long>;
+  struct make_uint_help<dango::builtin::slong>;
   template<>
-  struct make_uint_help<dango::s_cent>;
+  struct make_uint_help<dango::builtin::slonglong>;
 }
 
 namespace
@@ -680,10 +680,10 @@ template<>
 struct
 dango::
 detail::
-make_uint_help<dango::s_byte>
+make_uint_help<dango::builtin::schar>
 final
 {
-  using type = dango::u_byte;
+  using type = dango::builtin::uchar;
 
   DANGO_UNINSTANTIABLE(make_uint_help)
 };
@@ -692,10 +692,10 @@ template<>
 struct
 dango::
 detail::
-make_uint_help<dango::s_short>
+make_uint_help<dango::builtin::sshort>
 final
 {
-  using type = dango::u_short;
+  using type = dango::builtin::ushort;
 
   DANGO_UNINSTANTIABLE(make_uint_help)
 };
@@ -704,10 +704,10 @@ template<>
 struct
 dango::
 detail::
-make_uint_help<dango::s_int>
+make_uint_help<dango::builtin::sint>
 final
 {
-  using type = dango::u_int;
+  using type = dango::builtin::uint;
 
   DANGO_UNINSTANTIABLE(make_uint_help)
 };
@@ -716,10 +716,10 @@ template<>
 struct
 dango::
 detail::
-make_uint_help<dango::s_long>
+make_uint_help<dango::builtin::slong>
 final
 {
-  using type = dango::u_long;
+  using type = dango::builtin::ulong;
 
   DANGO_UNINSTANTIABLE(make_uint_help)
 };
@@ -728,10 +728,10 @@ template<>
 struct
 dango::
 detail::
-make_uint_help<dango::s_cent>
+make_uint_help<dango::builtin::slonglong>
 final
 {
-  using type = dango::u_cent;
+  using type = dango::builtin::ulonglong;
 
   DANGO_UNINSTANTIABLE(make_uint_help)
 };
@@ -746,15 +746,15 @@ dango::detail
   struct make_sint_help;
 
   template<>
-  struct make_sint_help<dango::u_byte>;
+  struct make_sint_help<dango::builtin::uchar>;
   template<>
-  struct make_sint_help<dango::u_short>;
+  struct make_sint_help<dango::builtin::ushort>;
   template<>
-  struct make_sint_help<dango::u_int>;
+  struct make_sint_help<dango::builtin::uint>;
   template<>
-  struct make_sint_help<dango::u_long>;
+  struct make_sint_help<dango::builtin::ulong>;
   template<>
-  struct make_sint_help<dango::u_cent>;
+  struct make_sint_help<dango::builtin::ulonglong>;
 }
 
 namespace
@@ -783,10 +783,10 @@ template<>
 struct
 dango::
 detail::
-make_sint_help<dango::u_byte>
+make_sint_help<dango::builtin::uchar>
 final
 {
-  using type = dango::s_byte;
+  using type = dango::builtin::schar;
 
   DANGO_UNINSTANTIABLE(make_sint_help)
 };
@@ -795,10 +795,10 @@ template<>
 struct
 dango::
 detail::
-make_sint_help<dango::u_short>
+make_sint_help<dango::builtin::ushort>
 final
 {
-  using type = dango::s_short;
+  using type = dango::builtin::sshort;
 
   DANGO_UNINSTANTIABLE(make_sint_help)
 };
@@ -807,10 +807,10 @@ template<>
 struct
 dango::
 detail::
-make_sint_help<dango::u_int>
+make_sint_help<dango::builtin::uint>
 final
 {
-  using type = dango::s_int;
+  using type = dango::builtin::sint;
 
   DANGO_UNINSTANTIABLE(make_sint_help)
 };
@@ -819,10 +819,10 @@ template<>
 struct
 dango::
 detail::
-make_sint_help<dango::u_long>
+make_sint_help<dango::builtin::ulong>
 final
 {
-  using type = dango::s_long;
+  using type = dango::builtin::slong;
 
   DANGO_UNINSTANTIABLE(make_sint_help)
 };
@@ -831,10 +831,10 @@ template<>
 struct
 dango::
 detail::
-make_sint_help<dango::u_cent>
+make_sint_help<dango::builtin::ulonglong>
 final
 {
-  using type = dango::s_cent;
+  using type = dango::builtin::slonglong;
 
   DANGO_UNINSTANTIABLE(make_sint_help)
 };
@@ -951,7 +951,7 @@ dango
 {
   enum class
   enable_tag:
-  dango::uint32
+  dango::uint
   {
 
   };
@@ -1087,15 +1087,15 @@ dango
     dango::is_same<dango::remove_cv<tp_type>, void>;
 }
 
-/*** is_null_ptr ***/
+/*** is_null ***/
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_null_ptr =
-    dango::is_same<dango::remove_cv<tp_type>, dango::nullptr_tag>;
+  constexpr bool const is_null =
+    dango::is_same<dango::remove_cv<tp_type>, dango::null_tag>;
 }
 
 /*** is_uint ***/
@@ -1106,11 +1106,11 @@ dango::detail
   template
   <typename tp_type>
   constexpr bool const is_uint_help =
-    dango::is_same<tp_type, dango::u_byte> ||
-    dango::is_same<tp_type, dango::u_short> ||
-    dango::is_same<tp_type, dango::u_int> ||
-    dango::is_same<tp_type, dango::u_long> ||
-    dango::is_same<tp_type, dango::u_cent>;
+    dango::is_same<tp_type, dango::builtin::uchar> ||
+    dango::is_same<tp_type, dango::builtin::ushort> ||
+    dango::is_same<tp_type, dango::builtin::uint> ||
+    dango::is_same<tp_type, dango::builtin::ulong> ||
+    dango::is_same<tp_type, dango::builtin::ulonglong>;
 }
 
 namespace
@@ -1130,11 +1130,11 @@ dango::detail
   template
   <typename tp_type>
   constexpr bool const is_sint_help =
-    dango::is_same<tp_type, dango::s_byte> ||
-    dango::is_same<tp_type, dango::s_short> ||
-    dango::is_same<tp_type, dango::s_int> ||
-    dango::is_same<tp_type, dango::s_long> ||
-    dango::is_same<tp_type, dango::s_cent>;
+    dango::is_same<tp_type, dango::builtin::schar> ||
+    dango::is_same<tp_type, dango::builtin::sshort> ||
+    dango::is_same<tp_type, dango::builtin::sint> ||
+    dango::is_same<tp_type, dango::builtin::slong> ||
+    dango::is_same<tp_type, dango::builtin::slonglong>;
 }
 
 namespace
@@ -1168,7 +1168,7 @@ dango::detail
     dango::is_same<tp_type, char> ||
     dango::is_same<tp_type, dango::wchar> ||
     dango::is_same<tp_type, dango::dchar> ||
-    dango::is_same<tp_type, wchar_t> ||
+    dango::is_same<tp_type, dango::builtin::wchar> ||
     dango::is_int<tp_type>;
 }
 
@@ -1554,7 +1554,7 @@ dango
   <typename tp_type>
   constexpr bool const is_fundamental =
     dango::is_void<tp_type> ||
-    dango::is_null_ptr<tp_type> ||
+    dango::is_null<tp_type> ||
     dango::is_arithmetic<tp_type>;
 }
 
@@ -1570,7 +1570,7 @@ dango
     dango::is_enum<tp_type> ||
     dango::is_ptr<tp_type> ||
     dango::is_member_ptr<tp_type> ||
-    dango::is_null_ptr<tp_type>;
+    dango::is_null<tp_type>;
 }
 
 /*** is_object ***/
@@ -2384,11 +2384,11 @@ dango
 {
   enum class
   endian:
-  dango::uint32
+  dango::uint
   {
-      little = dango::uint32(__ORDER_LITTLE_ENDIAN__),
-      big = dango::uint32(__ORDER_BIG_ENDIAN__),
-      native = dango::uint32(__BYTE_ORDER__)
+      little = dango::uint(__ORDER_LITTLE_ENDIAN__),
+      big = dango::uint(__ORDER_BIG_ENDIAN__),
+      native = dango::uint(__BYTE_ORDER__)
   };
 }
 

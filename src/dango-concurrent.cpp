@@ -19,7 +19,7 @@ detail::
 init_tick_count
 ()noexcept->detail::tick_count_tuple const&
 {
-  using u64 = dango::uint64;
+  using u64 = dango::ulong;
   using tuple_type = detail::tick_count_tuple;
 
   constexpr auto const c_impl =
@@ -290,7 +290,7 @@ thread
 (control_block* const a_control)noexcept:
 m_control{ a_control }
 {
-  dango_assert(m_control != nullptr);
+  dango_assert(m_control != dango::null);
 
   m_control->increment();
 }
@@ -301,7 +301,7 @@ thread::
 is_alive
 ()const noexcept->bool
 {
-  dango_assert(m_control != nullptr);
+  dango_assert(m_control != dango::null);
 
   return m_control->is_alive();
 }
@@ -312,7 +312,7 @@ thread::
 join
 ()const noexcept
 {
-  dango_assert(m_control != nullptr);
+  dango_assert(m_control != dango::null);
 
   m_control->wait();
 }
@@ -323,7 +323,7 @@ thread::
 join
 (dango::timeout const& a_timeout)const noexcept
 {
-  dango_assert(m_control != nullptr);
+  dango_assert(m_control != dango::null);
 
   m_control->wait(a_timeout);
 }
@@ -388,7 +388,7 @@ void
 dango::
 thread::
 sleep_rel
-(dango::uint64 const a_interval)noexcept
+(dango::ulong const a_interval)noexcept
 {
   auto const a_timeout = dango::make_timeout_rel(a_interval);
 
@@ -399,7 +399,7 @@ void
 dango::
 thread::
 sleep_rel_hr
-(dango::uint64 const a_interval)noexcept
+(dango::ulong const a_interval)noexcept
 {
   auto const a_timeout = dango::make_timeout_rel_hr(a_interval);
 
@@ -410,7 +410,7 @@ void
 dango::
 thread::
 sleep_rel_sa
-(dango::uint64 const a_interval)noexcept
+(dango::ulong const a_interval)noexcept
 {
   auto const a_timeout = dango::make_timeout_rel_sa(a_interval);
 
@@ -421,7 +421,7 @@ void
 dango::
 thread::
 sleep_rel_hr_sa
-(dango::uint64 const a_interval)noexcept
+(dango::ulong const a_interval)noexcept
 {
   auto const a_timeout = dango::make_timeout_rel_hr_sa(a_interval);
 
@@ -437,7 +437,7 @@ cond_var_registry::
 regist
 (cond_type* const a_cond, dango::timeout const& a_timeout)noexcept
 {
-  dango_assert(a_cond != nullptr);
+  dango_assert(a_cond != dango::null);
 
   if(!a_timeout.is_suspend_aware())
   {
@@ -467,7 +467,7 @@ cond_var_registry::
 unregist
 (cond_type* const a_cond, dango::timeout const& a_timeout)noexcept
 {
-  dango_assert(a_cond != nullptr);
+  dango_assert(a_cond != dango::null);
 
   if(!a_timeout.is_suspend_aware())
   {
@@ -524,7 +524,7 @@ thread_func
 
     auto a_bias = dango::get_suspend_bias();
 
-    auto a_timeout = dango::make_timeout_rel(dango::uint64(0));
+    auto a_timeout = dango::make_timeout_rel(dango::ulong(0));
 
     while(poll_bias(a_bias, a_timeout));
   }
@@ -589,7 +589,7 @@ dango::
 detail::
 cond_var_registry::
 poll_bias
-(dango::uint64& a_prev_bias, dango::timeout& a_timeout)noexcept->bool
+(dango::ulong& a_prev_bias, dango::timeout& a_timeout)noexcept->bool
 {
   bool a_alive;
 
@@ -606,7 +606,7 @@ poll_bias
 
       if(a_timeout.has_expired())
       {
-        a_timeout.add(dango::uint64(1'000));
+        a_timeout.add(dango::ulong(1'000));
 
         break;
       }
@@ -644,7 +644,7 @@ dango::
 detail::
 cond_var_registry::
 bias_okay
-(dango::uint64& a_prev_bias)noexcept->bool
+(dango::ulong& a_prev_bias)noexcept->bool
 {
   auto const a_bias = dango::get_suspend_bias();
 
@@ -652,7 +652,7 @@ bias_okay
 
   a_prev_bias = a_bias;
 
-  return a_delta < dango::uint64(5);
+  return a_delta < dango::ulong(5);
 }
 
 auto
@@ -768,14 +768,14 @@ yield
 
 namespace
 {
-  auto suspend_bias_help()noexcept->dango::uint64;
+  auto suspend_bias_help()noexcept->dango::ulong;
 }
 
 auto
 dango::
 detail::
 tick_count
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   return dango::shared::tick_count_monotonic();
 }
@@ -784,7 +784,7 @@ auto
 dango::
 detail::
 tick_count_sa
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   return dango::shared::tick_count_boottime();
 }
@@ -793,12 +793,12 @@ auto
 dango::
 detail::
 suspend_bias
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   static dango::spin_mutex s_lock{ };
-  static auto s_prev = dango::uint64(0);
+  static auto s_prev = dango::ulong(0);
 
-  dango::uint64 a_result;
+  dango::ulong a_result;
 
   dango_crit(s_lock)
   {
@@ -926,7 +926,7 @@ try_acquire
     return this;
   }
 
-  return nullptr;
+  return dango::null;
 }
 
 void
@@ -959,14 +959,14 @@ public:
   constexpr cond_var_impl()noexcept:
   m_seq{ seq_type(0) },
   m_lock{ },
-  m_mutex{ nullptr },
+  m_mutex{ dango::null },
   m_wait_count{ dango::usize(0) }
   { }
   ~cond_var_impl()noexcept = default;
   void notify()noexcept;
   void notify_all()noexcept;
   void wait(mutex_ptr)noexcept;
-  void wait(mutex_ptr, dango::uint64)noexcept;
+  void wait(mutex_ptr, dango::ulong)noexcept;
 private:
   void increment(mutex_ptr)noexcept;
   void decrement(mutex_ptr)noexcept;
@@ -1024,7 +1024,7 @@ cond_var_base::
 wait
 (mutex_type* const a_lock)noexcept
 {
-  dango_assert(a_lock != nullptr);
+  dango_assert(a_lock != dango::null);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
@@ -1040,7 +1040,7 @@ cond_var_base::
 wait
 (mutex_type* const a_lock, dango::timeout const& a_timeout)noexcept
 {
-  dango_assert(a_lock != nullptr);
+  dango_assert(a_lock != dango::null);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
@@ -1048,7 +1048,7 @@ wait
 
   auto const a_rem = a_timeout.remaining();
 
-  if(a_rem == dango::uint64(0))
+  if(a_rem == dango::ulong(0))
   {
     return;
   }
@@ -1090,9 +1090,9 @@ notify_all
 
 namespace
 {
-  auto spin_relax(dango::uint32&)noexcept->bool;
+  auto spin_relax(dango::uint&)noexcept->bool;
 
-  constexpr auto const c_spin_count_init = dango::uint32(128);
+  constexpr auto const c_spin_count_init = dango::uint(128);
 }
 
 void
@@ -1283,7 +1283,7 @@ notify_all
     a_mutex = m_mutex;
   }
 
-  dango_assert(a_mutex != nullptr);
+  dango_assert(a_mutex != dango::null);
 
   dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
 
@@ -1300,7 +1300,7 @@ wait
 {
   constexpr auto const relaxed = dango::mem_order::relaxed;
 
-  dango_assert(a_mutex != nullptr);
+  dango_assert(a_mutex != dango::null);
 
   auto const a_seq = dango::atomic_load<relaxed>(&m_seq);
 
@@ -1321,11 +1321,11 @@ detail::
 cond_var_base::
 cond_var_impl::
 wait
-(mutex_ptr const a_mutex, dango::uint64 const a_interval)noexcept
+(mutex_ptr const a_mutex, dango::ulong const a_interval)noexcept
 {
   constexpr auto const relaxed = dango::mem_order::relaxed;
 
-  dango_assert(a_mutex != nullptr);
+  dango_assert(a_mutex != dango::null);
 
   auto const a_seq = dango::atomic_load<relaxed>(&m_seq);
 
@@ -1352,7 +1352,7 @@ increment
   {
     if(m_wait_count++ == dango::usize(0))
     {
-      dango_assert(m_mutex == nullptr);
+      dango_assert(m_mutex == dango::null);
 
       m_mutex = a_mutex;
     }
@@ -1375,7 +1375,7 @@ decrement
 
     if(--m_wait_count == dango::usize(0))
     {
-      m_mutex = nullptr;
+      m_mutex = dango::null;
     }
   }
 }
@@ -1386,9 +1386,9 @@ namespace
 {
   auto
   suspend_bias_help
-  ()noexcept->dango::uint64
+  ()noexcept->dango::ulong
   {
-    using u64 = dango::uint64;
+    using u64 = dango::ulong;
 
     u64 x0;
     u64 y0;
@@ -1416,9 +1416,9 @@ namespace
 #ifndef DANGO_NO_MULTICORE
   auto
   spin_relax
-  (dango::uint32& a_count)noexcept->bool
+  (dango::uint& a_count)noexcept->bool
   {
-    if(a_count == dango::uint32(0))
+    if(a_count == dango::uint(0))
     {
       return false;
     }
@@ -1432,7 +1432,7 @@ namespace
 #else
   auto
   spin_relax
-  (dango::uint32&)noexcept->bool
+  (dango::uint&)noexcept->bool
   {
     return false;
   }
@@ -1447,20 +1447,20 @@ namespace
 
 namespace
 {
-  using time_spec = dango::pair<dango::uint64, dango::uint64>;
+  using time_spec = dango::pair<dango::ulong, dango::ulong>;
 
-  auto time_spec_from_perf(dango::uint64, dango::uint64)noexcept->time_spec;
+  auto time_spec_from_perf(dango::ulong, dango::ulong)noexcept->time_spec;
   void time_spec_add(time_spec&, time_spec const&)noexcept;
-  auto tick_count_help(dango::uint64*)noexcept->dango::uint64;
+  auto tick_count_help(dango::ulong*)noexcept->dango::ulong;
 }
 
 auto
 dango::
 detail::
 tick_count
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
-  dango::uint64 a_bias;
+  dango::ulong a_bias;
 
   auto const a_count = tick_count_help(&a_bias);
 
@@ -1472,18 +1472,18 @@ auto
 dango::
 detail::
 tick_count_sa
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
-  return tick_count_help(nullptr);
+  return tick_count_help(dango::null);
 }
 
 auto
 dango::
 detail::
 suspend_bias
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
-  dango::uint64 a_bias;
+  dango::ulong a_bias;
 
   tick_count_help(&a_bias);
 
@@ -1584,7 +1584,7 @@ try_acquire
     return this;
   }
 
-  return nullptr;
+  return dango::null;
 }
 
 void
@@ -1619,7 +1619,7 @@ public:
   void notify()noexcept;
   void notify_all()noexcept;
   void wait(mutex_ptr)noexcept;
-  void wait(mutex_ptr, dango::uint64)noexcept;
+  void wait(mutex_ptr, dango::ulong)noexcept;
 private:
   cond_type m_cond;
 public:
@@ -1671,7 +1671,7 @@ cond_var_base::
 wait
 (mutex_type* const a_lock)noexcept
 {
-  dango_assert(a_lock != nullptr);
+  dango_assert(a_lock != dango::null);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
@@ -1687,7 +1687,7 @@ cond_var_base::
 wait
 (mutex_type* const a_lock, dango::timeout const& a_timeout)noexcept
 {
-  dango_assert(a_lock != nullptr);
+  dango_assert(a_lock != dango::null);
 
 #ifndef DANGO_NO_DEBUG
   dango_assert(m_init.has_executed());
@@ -1695,7 +1695,7 @@ wait
 
   auto const a_rem = a_timeout.remaining();
 
-  if(a_rem == dango::uint64(0))
+  if(a_rem == dango::ulong(0))
   {
     return;
   }
@@ -1889,7 +1889,7 @@ thread_func
     }
 
     auto const a_timeout =
-      dango::make_timeout_rel(dango::uint64(60'000));
+      dango::make_timeout_rel(dango::ulong(60'000));
 
     if(timed_wait(a_timeout))
     {
@@ -2124,7 +2124,7 @@ cond_var_impl::
 wait
 (mutex_ptr const a_mutex)noexcept
 {
-  dango_assert(a_mutex != nullptr);
+  dango_assert(a_mutex != dango::null);
 
   dango::shared::condition_variable_wait(&m_cond, a_mutex->lock_ptr());
 }
@@ -2135,9 +2135,9 @@ detail::
 cond_var_base::
 cond_var_impl::
 wait
-(mutex_ptr const a_mutex, dango::uint64 const a_interval)noexcept
+(mutex_ptr const a_mutex, dango::ulong const a_interval)noexcept
 {
-  dango_assert(a_mutex != nullptr);
+  dango_assert(a_mutex != dango::null);
 
   dango::shared::condition_variable_wait(&m_cond, a_mutex->lock_ptr(), a_interval);
 }
@@ -2148,9 +2148,9 @@ namespace
 {
   auto
   time_spec_from_perf
-  (dango::uint64 const a_count, dango::uint64 const a_freq)noexcept->time_spec
+  (dango::ulong const a_count, dango::ulong const a_freq)noexcept->time_spec
   {
-    using u64 = dango::uint64;
+    using u64 = dango::ulong;
 
     constexpr auto const c_billion = u64(1'000'000'000);
 
@@ -2164,7 +2164,7 @@ namespace
   time_spec_add
   (time_spec& a_spec, time_spec const& a_add)noexcept
   {
-    using u64 = dango::uint64;
+    using u64 = dango::ulong;
 
     constexpr auto const c_billion = u64(1'000'000'000);
 
@@ -2188,9 +2188,9 @@ namespace
 
   auto
   tick_count_help
-  (dango::uint64* const a_suspend_bias)noexcept->dango::uint64
+  (dango::ulong* const a_suspend_bias)noexcept->dango::ulong
   {
-    using u64 = dango::uint64;
+    using u64 = dango::ulong;
 
     static dango::spin_mutex s_lock{ };
     static time_spec s_current{ u64(0), u64(0) };

@@ -15,19 +15,21 @@ namespace
   <typename tp_func>
   auto thread_start_address(void*)noexcept->void*;
 
-  auto tick_count_help(clockid_t)noexcept->dango::uint64;
+  auto tick_count_help(clockid_t)noexcept->dango::ulong;
+
+  using linux_int = dango::shared::futex_type;
 
   auto
   sys_futex
   (
-    dango::s_int*,
-    dango::s_int,
-    dango::s_int,
+    linux_int*,
+    linux_int,
+    linux_int,
     timespec const*,
-    dango::s_int*,
-    dango::s_int
+    linux_int*,
+    linux_int
   )
-  noexcept->dango::s_int;
+  noexcept->linux_int;
 }
 
 auto
@@ -67,7 +69,7 @@ noexcept->bool
     ::pthread_create
     (
       &a_thread_ID,
-      nullptr,
+      dango::null,
       thread_start_address<decltype(a_func)>,
       &a_func
     );
@@ -103,7 +105,7 @@ auto
 dango::
 shared::
 tick_count_monotonic
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   return tick_count_help(CLOCK_MONOTONIC);
 }
@@ -112,7 +114,7 @@ auto
 dango::
 shared::
 tick_count_boottime
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   return tick_count_help(CLOCK_BOOTTIME);
 }
@@ -128,9 +130,9 @@ futex_wait
     a_futex,
     FUTEX_WAIT_PRIVATE,
     a_expected,
-    nullptr,
-    nullptr,
-    dango::s_int(0)
+    dango::null,
+    dango::null,
+    linux_int(0)
   );
 }
 
@@ -141,11 +143,11 @@ futex_wait
 (
   shared::futex_type* const a_futex,
   shared::futex_type const a_expected,
-  dango::uint64 const a_interval
+  dango::ulong const a_interval
 )
 noexcept
 {
-  using u64 = dango::uint64;
+  using u64 = dango::ulong;
 
   ::timespec a_spec;
 
@@ -164,8 +166,8 @@ noexcept
     FUTEX_WAIT_PRIVATE,
     a_expected,
     &a_spec,
-    nullptr,
-    dango::s_int(0)
+    dango::null,
+    linux_int(0)
   );
 }
 
@@ -179,10 +181,10 @@ futex_wake
   (
     a_futex,
     FUTEX_WAKE_PRIVATE,
-    dango::s_int(1),
-    nullptr,
-    nullptr,
-    dango::s_int(0)
+    linux_int(1),
+    dango::null,
+    dango::null,
+    linux_int(0)
   );
 }
 
@@ -192,16 +194,16 @@ shared::
 futex_wake_requeue
 (shared::futex_type* const a_futex, shared::futex_type* const a_dest)noexcept
 {
-  constexpr auto const c_all = dango::uintptr(dango::integer::MAX_VAL<dango::s_int>);
+  constexpr auto const c_all = dango::uptr(dango::integer::MAX_VAL<linux_int>);
 
   sys_futex
   (
     a_futex,
     FUTEX_REQUEUE_PRIVATE,
-    dango::s_int(1),
+    linux_int(1),
     reinterpret_cast<timespec const*>(c_all),
     a_dest,
-    dango::s_int(0)
+    linux_int(0)
   );
 }
 
@@ -236,14 +238,14 @@ namespace
 #endif
     }
 
-    return nullptr;
+    return dango::null;
   }
 
   auto
   tick_count_help
-  (clockid_t const a_clock)noexcept->dango::uint64
+  (clockid_t const a_clock)noexcept->dango::ulong
   {
-    using u64 = dango::uint64;
+    using u64 = dango::ulong;
 
     constexpr auto const c_mul = u64(1'000);
     constexpr auto const c_div = u64(1'000'000);
@@ -264,14 +266,14 @@ namespace
   auto
   sys_futex
   (
-    dango::s_int* const a_addr1,
-    dango::s_int const a_futex_op,
-    dango::s_int const a_val1,
+    linux_int* const a_addr1,
+    linux_int const a_futex_op,
+    linux_int const a_val1,
     timespec const* const a_timeout,
-    dango::s_int* const a_addr2,
-    dango::s_int const a_val3
+    linux_int* const a_addr2,
+    linux_int const a_val3
   )
-  noexcept->dango::s_int
+  noexcept->linux_int
   {
     auto const a_result =
     ::syscall
@@ -306,9 +308,9 @@ namespace
   <typename tp_func>
   auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
 
-  auto perf_count()noexcept->dango::uint64;
+  auto perf_count()noexcept->dango::ulong;
 
-  auto time_min_period()noexcept->dango::uint32;
+  auto time_min_period()noexcept->dango::uint;
 }
 
 auto
@@ -343,12 +345,12 @@ noexcept->bool
     auto const a_handle =
     ::CreateThread
     (
-      nullptr,
+      dango::null,
       SIZE_T(0),
       thread_start_address<decltype(a_func)>,
       &a_func,
       DWORD(0),
-      nullptr
+      dango::null
     );
 
     if(a_handle == NULL)
@@ -384,16 +386,16 @@ auto
 dango::
 shared::
 perf_freq
-()noexcept->dango::uint64
+()noexcept->dango::ulong
 {
   static constexpr auto const c_impl =
-  []()noexcept->dango::uint64
+  []()noexcept->dango::ulong
   {
     LARGE_INTEGER a_result;
 
     ::QueryPerformanceFrequency(&a_result);
 
-    return dango::uint64(a_result.QuadPart);
+    return dango::ulong(a_result.QuadPart);
   };
 
   static auto const s_result = c_impl();
@@ -405,12 +407,12 @@ auto
 dango::
 shared::
 perf_count_suspend_bias
-(dango::uint64& a_suspend_bias)noexcept->dango::uint64
+(dango::ulong& a_suspend_bias)noexcept->dango::ulong
 {
-  using u64 = dango::uint64;
+  using u64 = dango::ulong;
 
   static auto& s_bias_ref =
-    *reinterpret_cast<ULONGLONG const volatile*>(dango::uintptr(0x7FFE0000 + 0x3B0));
+    *reinterpret_cast<ULONGLONG const volatile*>(dango::uptr(0x7FFE0000 + 0x3B0));
 
   u64 a_bias;
   u64 a_count;
@@ -515,9 +517,9 @@ void
 dango::
 shared::
 condition_variable_wait
-(void* const a_storage, void* const a_lock_storage, dango::uint64 const a_interval)noexcept
+(void* const a_storage, void* const a_lock_storage, dango::ulong const a_interval)noexcept
 {
-  using u64 = dango::uint64;
+  using u64 = dango::ulong;
 
   constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
 
@@ -614,21 +616,21 @@ namespace
 
   auto
   perf_count
-  ()noexcept->dango::uint64
+  ()noexcept->dango::ulong
   {
     LARGE_INTEGER a_result;
 
     ::QueryPerformanceCounter(&a_result);
 
-    return dango::uint64(a_result.QuadPart);
+    return dango::ulong(a_result.QuadPart);
   }
 
   auto
   time_min_period
-  ()noexcept->dango::uint32
+  ()noexcept->dango::uint
   {
     constexpr auto c_impl =
-    []()noexcept->dango::uint32
+    []()noexcept->dango::uint
     {
         ::TIMECAPS a_caps;
 
@@ -636,7 +638,7 @@ namespace
 
         if(a_error == MMSYSERR_NOERROR)
         {
-          return dango::uint32(a_caps.wPeriodMin);
+          return dango::uint(a_caps.wPeriodMin);
         }
 
 #ifndef DANGO_NO_DEBUG

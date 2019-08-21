@@ -253,19 +253,19 @@ public:
 private:
   constexpr explicit allocator(control_base*)noexcept;
 public:
-  constexpr allocator(dango::null_tag const)noexcept:m_control{ nullptr }{ };
+  constexpr allocator(dango::null_tag const)noexcept:m_control{ dango::null }{ };
   allocator(allocator const&)noexcept;
   constexpr allocator(allocator&&)noexcept;
   ~allocator()noexcept;
   auto operator = (dango::null_tag)& noexcept->allocator&;
   auto operator = (allocator const&)& noexcept->allocator&;
   auto operator = (allocator&&)& noexcept->allocator&;
-  constexpr explicit operator bool()const noexcept{ return m_control != nullptr; }
+  constexpr explicit operator bool()const noexcept{ return m_control != dango::null; }
 public:
   auto alloc(dango::usize, dango::usize)const dango_new_noexcept(true)->void*;
   void free(void const volatile*, dango::usize, dango::usize)const noexcept;
 public:
-  constexpr auto dango_operator_is_null()const noexcept->bool{ return m_control == nullptr; }
+  constexpr auto dango_operator_is_null()const noexcept->bool{ return m_control == dango::null; }
 private:
   control_base* m_control;
 };
@@ -489,7 +489,7 @@ allocator
 (control_base* const a_control)noexcept:
 m_control{ a_control }
 {
-  dango_assert(m_control != nullptr);
+  dango_assert(m_control != dango::null);
 }
 
 inline
@@ -512,7 +512,7 @@ allocator
 (allocator&& a_alloc)noexcept:
 m_control{ a_alloc.m_control }
 {
-  a_alloc.m_control = nullptr;
+  a_alloc.m_control = dango::null;
 }
 
 inline
@@ -572,7 +572,7 @@ allocator::
 alloc
 (dango::usize const a_size, dango::usize const a_align)const dango_new_noexcept(true)->void*
 {
-  dango_assert(m_control != nullptr);
+  dango_assert(m_control != dango::null);
 
   return m_control->alloc(a_size, a_align);
 }
@@ -583,7 +583,7 @@ allocator::
 free
 (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)const noexcept
 {
-  dango_assert(m_control != nullptr);
+  dango_assert(m_control != dango::null);
 
   m_control->free(a_ptr, a_size, a_align);
 }
@@ -629,19 +629,19 @@ public:
   allocator_tree
   (tp_alloc&&, tp_children&&...)dango_new_noexcept(true);
 public:
-  constexpr allocator_tree(dango::null_tag const)noexcept:m_node{ nullptr }{ }
+  constexpr allocator_tree(dango::null_tag const)noexcept:m_node{ dango::null }{ }
   allocator_tree(allocator_tree const&)noexcept;
   constexpr allocator_tree(allocator_tree&&)noexcept;
   ~allocator_tree()noexcept;
   auto operator = (dango::null_tag)& noexcept->allocator_tree&;
   auto operator = (allocator_tree const&)& noexcept->allocator_tree&;
   auto operator = (allocator_tree&&)& noexcept->allocator_tree&;
-  constexpr explicit operator bool()const noexcept{ return m_node != nullptr; }
+  constexpr explicit operator bool()const noexcept{ return m_node != dango::null; }
 public:
   auto get_allocator()const noexcept->dango::allocator const&;
   auto get_child(dango::usize)const noexcept->allocator_tree const&;
 public:
-  constexpr auto dango_operator_is_null()const noexcept->bool{ return m_node == nullptr; }
+  constexpr auto dango_operator_is_null()const noexcept->bool{ return m_node == dango::null; }
 private:
   node_base* m_node;
 public:
@@ -693,7 +693,7 @@ node_base::
 increment
 (node_base* const a_node)noexcept
 {
-  dango_assert(a_node != nullptr);
+  dango_assert(a_node != dango::null);
 
   auto const a_prev = a_node->m_ref_count.fetch_add<dango::mem_order::acquire>(dango::usize(1));
 
@@ -707,7 +707,7 @@ node_base::
 decrement
 (node_base* const a_node)noexcept
 {
-  dango_assert(a_node != nullptr);
+  dango_assert(a_node != dango::null);
 
   auto const a_prev = a_node->m_ref_count.fetch_sub<dango::mem_order::release>(dango::usize(1));
 
@@ -749,7 +749,7 @@ public:
   { }
   ~node()noexcept = default;
 public:
-  virtual auto get_child(dango::usize const)const noexcept->dango::allocator_tree const* override final{ return nullptr; }
+  virtual auto get_child(dango::usize const)const noexcept->dango::allocator_tree const* override final{ return dango::null; }
 public:
   DANGO_DELETE_DEFAULT(node)
   DANGO_IMMOBILE(node)
@@ -837,14 +837,14 @@ get_child
 {
   if(a_index >= tp_size)
   {
-    return nullptr;
+    return dango::null;
   }
 
   auto const& a_child = m_child[a_index];
 
   if(a_child == dango::null)
   {
-    return nullptr;
+    return dango::null;
   }
 
   return &a_child;
@@ -906,7 +906,7 @@ allocator_tree::
 allocator_tree(allocator_tree&& a_tree)noexcept:
 m_node{ a_tree.m_node }
 {
-  a_tree.m_node = nullptr;
+  a_tree.m_node = dango::null;
 }
 
 inline
@@ -966,7 +966,7 @@ allocator_tree::
 get_allocator
 ()const noexcept->dango::allocator const&
 {
-  dango_assert(m_node != nullptr);
+  dango_assert(m_node != dango::null);
 
   return m_node->get_allocator();
 }
@@ -977,7 +977,7 @@ allocator_tree::
 get_child
 (dango::usize const a_index)const noexcept->dango::allocator_tree const&
 {
-  dango_assert(m_node != nullptr);
+  dango_assert(m_node != dango::null);
 
   auto const a_child = m_node->get_child(a_index);
 

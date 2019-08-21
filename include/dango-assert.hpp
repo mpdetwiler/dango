@@ -20,7 +20,7 @@ public:
   (
     char const* = __builtin_FILE(),
     char const* = __builtin_FUNCTION(),
-    dango::s_int = __builtin_LINE()
+    dango::builtin::sint = __builtin_LINE()
   )
   noexcept->source_location;
 private:
@@ -29,7 +29,7 @@ private:
   (
     char const*,
     char const*,
-    dango::uint32
+    dango::uint
   )
   noexcept;
 public:
@@ -37,11 +37,11 @@ public:
 
   constexpr auto file()const noexcept->char const*;
   constexpr auto function()const noexcept->char const*;
-  constexpr auto line()const noexcept->dango::uint32;
+  constexpr auto line()const noexcept->dango::uint;
 private:
   char const* const m_file;
   char const* const m_func;
-  dango::uint32 const m_line;
+  dango::uint const m_line;
 public:
   DANGO_DELETE_DEFAULT(source_location)
   DANGO_IMMOBILE(source_location)
@@ -54,7 +54,7 @@ source_location
 (
   char const* const a_file,
   char const* const a_func,
-  dango::uint32 const a_line
+  dango::uint const a_line
 )
 noexcept:
 m_file{ a_file },
@@ -86,7 +86,7 @@ constexpr auto
 dango::
 source_location::
 line
-()const noexcept->dango::uint32
+()const noexcept->dango::uint
 {
   return m_line;
 }
@@ -98,11 +98,11 @@ current
 (
   char const* const a_file,
   char const* const a_func,
-  dango::s_int const a_line
+  dango::builtin::sint const a_line
 )
 noexcept->source_location
 {
-  return source_location{ a_file, a_func, dango::uint32(a_line) };
+  return source_location{ a_file, a_func, dango::uint(a_line) };
 }
 
 /*** likely unlikely ***/
@@ -270,8 +270,8 @@ noexcept
 }
 
 #ifndef DANGO_NO_DEBUG
-#define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond, nullptr)
-#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), #cond, nullptr, loc)
+#define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond, dango::null)
+#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), #cond, dango::null, loc)
 #define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), #cond, msg)
 #define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), #cond, msg, loc)
 #else

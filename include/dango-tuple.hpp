@@ -1609,7 +1609,7 @@ private:
   (dango::index_seq<tp_indices...> const, tuple<tp_args...> const& a_tup)
   noexcept(false)->tuple_impl&
   {
-    [[maybe_unused]] dango::s_int const a_temp[] = { (static_cast<void>(get<tp_indices>() = a_tup.template get<tp_indices>()), 0)... };
+    [[maybe_unused]] dango::uint const a_temp[] = { (static_cast<void>(get<tp_indices>() = a_tup.template get<tp_indices>()), dango::uint(0))... };
 
     return *this;
   }
@@ -1621,7 +1621,7 @@ private:
   (dango::index_seq<tp_indices...> const, tuple<tp_args...>&& a_tup)
   noexcept(false)->tuple_impl&
   {
-    [[maybe_unused]] dango::s_int const a_temp[] = { (static_cast<void>(get<tp_indices>() = dango::move(a_tup.template get<tp_indices>())), 0)... };
+    [[maybe_unused]] dango::uint const a_temp[] = { (static_cast<void>(get<tp_indices>() = dango::move(a_tup.template get<tp_indices>())), dango::uint(0))... };
 
     return *this;
   }

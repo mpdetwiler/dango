@@ -13,57 +13,57 @@ dango::detail
   constexpr dango::incomplete_type const min_val_help;
 
   template<>
-  constexpr auto const max_val_help<dango::u_byte> = dango::u_byte(-1);
+  constexpr auto const max_val_help<dango::builtin::uchar> = dango::builtin::uchar(-1);
   template<>
-  constexpr auto const max_val_help<dango::u_short> = dango::u_short(-1);
+  constexpr auto const max_val_help<dango::builtin::ushort> = dango::builtin::ushort(-1);
   template<>
-  constexpr auto const max_val_help<dango::u_int> = dango::u_int(-1);
+  constexpr auto const max_val_help<dango::builtin::uint> = dango::builtin::uint(-1);
   template<>
-  constexpr auto const max_val_help<dango::u_long> = dango::u_long(-1);
+  constexpr auto const max_val_help<dango::builtin::ulong> = dango::builtin::ulong(-1);
   template<>
-  constexpr auto const max_val_help<dango::u_cent> = dango::u_cent(-1);
+  constexpr auto const max_val_help<dango::builtin::ulonglong> = dango::builtin::ulonglong(-1);
 
   template<>
-  constexpr auto const min_val_help<dango::u_byte> = dango::u_byte(0);
+  constexpr auto const min_val_help<dango::builtin::uchar> = dango::builtin::uchar(0);
   template<>
-  constexpr auto const min_val_help<dango::u_short> = dango::u_short(0);
+  constexpr auto const min_val_help<dango::builtin::ushort> = dango::builtin::ushort(0);
   template<>
-  constexpr auto const min_val_help<dango::u_int> = dango::u_int(0);
+  constexpr auto const min_val_help<dango::builtin::uint> = dango::builtin::uint(0);
   template<>
-  constexpr auto const min_val_help<dango::u_long> = dango::u_long(0);
+  constexpr auto const min_val_help<dango::builtin::ulong> = dango::builtin::ulong(0);
   template<>
-  constexpr auto const min_val_help<dango::u_cent> = dango::u_cent(0);
+  constexpr auto const min_val_help<dango::builtin::ulonglong> = dango::builtin::ulonglong(0);
 
   template<>
-  constexpr auto const max_val_help<dango::s_byte> = dango::s_byte{ __SCHAR_MAX__ };
+  constexpr auto const max_val_help<dango::builtin::schar> = dango::builtin::schar{ __SCHAR_MAX__ };
   template<>
-  constexpr auto const max_val_help<dango::s_short> = dango::s_short{ __SHRT_MAX__ };
+  constexpr auto const max_val_help<dango::builtin::sshort> = dango::builtin::sshort{ __SHRT_MAX__ };
   template<>
-  constexpr auto const max_val_help<dango::s_int> = dango::s_int{ __INT_MAX__ };
+  constexpr auto const max_val_help<dango::builtin::sint> = dango::builtin::sint{ __INT_MAX__ };
   template<>
-  constexpr auto const max_val_help<dango::s_long> = dango::s_long{ __LONG_MAX__ };
+  constexpr auto const max_val_help<dango::builtin::slong> = dango::builtin::slong{ __LONG_MAX__ };
   template<>
-  constexpr auto const max_val_help<dango::s_cent> = dango::s_cent{ __LONG_LONG_MAX__ };
+  constexpr auto const max_val_help<dango::builtin::slonglong> = dango::builtin::slonglong{ __LONG_LONG_MAX__ };
 
   template<>
-  constexpr auto const min_val_help<dango::s_byte> =
-    dango::s_byte(-detail::max_val_help<dango::s_byte> - 1);
+  constexpr auto const min_val_help<dango::builtin::schar> =
+    dango::builtin::schar(-detail::max_val_help<dango::builtin::schar> - 1);
 
   template<>
-  constexpr auto const min_val_help<dango::s_short> =
-    dango::s_short(-detail::max_val_help<dango::s_short> - 1);
+  constexpr auto const min_val_help<dango::builtin::sshort> =
+    dango::builtin::sshort(-detail::max_val_help<dango::builtin::sshort> - 1);
 
   template<>
-  constexpr auto const min_val_help<dango::s_int> =
-    dango::s_int(-detail::max_val_help<dango::s_int> - 1);
+  constexpr auto const min_val_help<dango::builtin::sint> =
+    dango::builtin::sint(-detail::max_val_help<dango::builtin::sint> - 1);
 
   template<>
-  constexpr auto const min_val_help<dango::s_long> =
-    dango::s_long(-detail::max_val_help<dango::s_long> - 1);
+  constexpr auto const min_val_help<dango::builtin::slong> =
+    dango::builtin::slong(-detail::max_val_help<dango::builtin::slong> - 1);
 
   template<>
-  constexpr auto const min_val_help<dango::s_cent> =
-    dango::s_cent(-detail::max_val_help<dango::s_cent> - 1);
+  constexpr auto const min_val_help<dango::builtin::slonglong> =
+    dango::builtin::slonglong(-detail::max_val_help<dango::builtin::slonglong> - 1);
 }
 
 namespace
