@@ -34,6 +34,10 @@ public dango::auto_ptr_default_config<tp_void>
   };
 };
 
+struct test_base{ virtual ~test_base()noexcept = default; };
+
+struct test_derived:test_base{ virtual ~test_derived()noexcept override = default; };
+
 auto
 main
 ()noexcept(false)->dango::builtin::sint
@@ -97,6 +101,12 @@ main
     printf("%p\n", static_cast<void const*>(&a_empty.get<3>()));
 
     a_empty = a_empty;
+  }
+
+  {
+    dango::auto_ptr<test_derived> a_td{ new test_derived{ } };
+
+    dango::auto_ptr<test_base> a_tb{ dango::move(a_td) };
   }
 
   return 0;

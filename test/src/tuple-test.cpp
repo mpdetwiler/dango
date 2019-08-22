@@ -18,15 +18,3 @@ namespace
 static_assert(sizeof(size_test_struct) == sizeof(size_test_tuple));
 static_assert(alignof(size_test_struct) == alignof(size_test_tuple));
 
-namespace
-{
-  struct
-  immobile
-  final
-  {
-    constexpr immobile()noexcept = default;
-    ~immobile()noexcept = default;
-    DANGO_IMMOBILE(immobile)
-  };
-}
-

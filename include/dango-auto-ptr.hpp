@@ -100,6 +100,7 @@ dango::detail
       dango::enable_if<dango::is_same<decltype(tp_config::move_constructor), bool const>>,
       dango::enable_if<dango::is_same<decltype(tp_config::move_assignment), bool const>>,
       dango::enable_if<dango::is_same<decltype(tp_config::explicit_conversion), bool const>>,
+      dango::enable_if<dango::is_same<decltype(tp_config::require_same_destroyer), bool const>>,
       dango::enable_if<dango::is_same<decltype(tp_config::store_size), bool const>>,
       dango::enable_if<dango::is_same<decltype(tp_config::store_align), bool const>>,
       dango::enable_if<dango::is_same<decltype(tp_config::destroy_size), bool const>>,
@@ -193,6 +194,7 @@ auto_ptr_default_config
   static constexpr bool const move_constructor = true;
   static constexpr bool const move_assignment = true;
   static constexpr bool const explicit_conversion = false;
+  static constexpr bool const require_same_destroyer = true;
   static constexpr bool const store_size = true;
   static constexpr bool const store_align = true;
   static constexpr bool const destroy_size = true;
@@ -217,6 +219,7 @@ auto_ptr_default_config
   static constexpr bool const move_constructor = true;
   static constexpr bool const move_assignment = true;
   static constexpr bool const explicit_conversion = false;
+  static constexpr bool const require_same_destroyer = false;
   static constexpr bool const store_size = false;
   static constexpr bool const store_align = false;
   static constexpr bool const destroy_size = false;
@@ -323,7 +326,7 @@ public:
     <
       (!config::store_size && !config::store_align) &&
       dango::logical_equivalence(dango::is_void<tp_arg>, dango::is_void<tp_type>) &&
-      dango::is_constructible<value_type, tp_arg*>
+      dango::is_constructible<value_type, tp_arg* const&>
     > = dango::enable_val
   >
   constexpr explicit
@@ -342,7 +345,7 @@ public:
     <
       (config::store_size && !config::store_align) &&
       dango::logical_equivalence(dango::is_void<tp_arg>, dango::is_void<tp_type>) &&
-      dango::is_constructible<value_type, tp_arg*>
+      dango::is_constructible<value_type, tp_arg* const&>
     > = dango::enable_val
   >
   constexpr explicit
@@ -362,7 +365,7 @@ public:
     <
       (!config::store_size && config::store_align) &&
       dango::logical_equivalence(dango::is_void<tp_arg>, dango::is_void<tp_type>) &&
-      dango::is_constructible<value_type, tp_arg*>
+      dango::is_constructible<value_type, tp_arg* const&>
     > = dango::enable_val
   >
   constexpr explicit
@@ -383,7 +386,7 @@ public:
     <
       (config::store_size && config::store_align) &&
       dango::logical_equivalence(dango::is_void<tp_arg>, dango::is_void<tp_type>) &&
-      dango::is_constructible<value_type, tp_arg*>
+      dango::is_constructible<value_type, tp_arg* const&>
     > = dango::enable_val
   >
   constexpr explicit
@@ -430,12 +433,13 @@ public:
     <
       (!dango::is_same<tp_arg, tp_type> || !dango::is_same<tp_arg_config, config>) &&
       config::move_constructor &&
-      dango::is_same<typename tp_arg_config::destroyer, typename config::destroyer> &&
+      dango::logical_equivalence(tp_arg_config::require_same_destroyer, config::require_same_destroyer) &&
+      dango::logical_implication(config::require_same_destroyer, dango::is_same<typename tp_arg_config::destroyer, typename config::destroyer>) &&
       dango::is_gequal(tp_arg_config::alignment, config::alignment) &&
       dango::logical_equivalence(tp_arg_config::store_size, config::store_size) &&
       dango::logical_equivalence(tp_arg_config::store_align, config::store_align) &&
       dango::logical_equivalence(dango::is_void<tp_arg>, dango::is_void<tp_type>) &&
-      dango::is_constructible<value_type, tp_arg*>
+      dango::is_constructible<value_type, tp_arg* const&>
     > = dango::enable_val
   >
   constexpr auto_ptr(auto_ptr<tp_arg, tp_arg_config> const&)noexcept = delete;
@@ -448,12 +452,13 @@ public:
     <
       (!dango::is_same<tp_arg, tp_type> || !dango::is_same<tp_arg_config, config>) &&
       config::move_constructor &&
-      dango::is_same<typename tp_arg_config::destroyer, typename config::destroyer> &&
+      dango::logical_equivalence(tp_arg_config::require_same_destroyer, config::require_same_destroyer) &&
+      dango::logical_implication(config::require_same_destroyer, dango::is_same<typename tp_arg_config::destroyer, typename config::destroyer>) &&
       dango::is_gequal(tp_arg_config::alignment, config::alignment) &&
       dango::logical_equivalence(tp_arg_config::store_size, config::store_size) &&
       dango::logical_equivalence(tp_arg_config::store_align, config::store_align) &&
       dango::logical_equivalence(dango::is_void<tp_arg>, dango::is_void<tp_type>) &&
-      dango::is_constructible<value_type, tp_arg*>
+      dango::is_constructible<value_type, tp_arg* const&>
       > = dango::enable_val
   >
   constexpr
@@ -574,12 +579,13 @@ public:
     <
       (!dango::is_same<tp_arg, tp_type> || !dango::is_same<tp_arg_config, config>) &&
       config::move_assignment &&
-      dango::is_same<typename tp_arg_config::destroyer, typename config::destroyer> &&
+      dango::logical_equivalence(tp_arg_config::require_same_destroyer, config::require_same_destroyer) &&
+      dango::logical_implication(config::require_same_destroyer, dango::is_same<typename tp_arg_config::destroyer, typename config::destroyer>) &&
       dango::is_gequal(tp_arg_config::alignment, config::alignment) &&
       dango::logical_equivalence(tp_arg_config::store_size, config::store_size) &&
       dango::logical_equivalence(tp_arg_config::store_align, config::store_align) &&
       dango::logical_equivalence(dango::is_void<tp_arg>, dango::is_void<tp_type>) &&
-      dango::is_constructible<value_type, tp_arg*>
+      dango::is_constructible<value_type, tp_arg* const&>
     > = dango::enable_val
   >
   auto operator = (auto_ptr<tp_arg, tp_arg_config> const& a_ptr)& noexcept->auto_ptr& = delete;
@@ -592,12 +598,13 @@ public:
     <
       (!dango::is_same<tp_arg, tp_type> || !dango::is_same<tp_arg_config, config>) &&
       config::move_assignment &&
-      dango::is_same<typename tp_arg_config::destroyer, typename config::destroyer> &&
+      dango::logical_equivalence(tp_arg_config::require_same_destroyer, config::require_same_destroyer) &&
+      dango::logical_implication(config::require_same_destroyer, dango::is_same<typename tp_arg_config::destroyer, typename config::destroyer>) &&
       dango::is_gequal(tp_arg_config::alignment, config::alignment) &&
       dango::logical_equivalence(tp_arg_config::store_size, config::store_size) &&
       dango::logical_equivalence(tp_arg_config::store_align, config::store_align) &&
       dango::logical_equivalence(dango::is_void<tp_arg>, dango::is_void<tp_type>) &&
-      dango::is_constructible<value_type, tp_arg*>
+      dango::is_constructible<value_type, tp_arg* const&>
     > = dango::enable_val
   >
   auto
