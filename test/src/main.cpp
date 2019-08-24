@@ -38,6 +38,11 @@ struct test_base{ virtual ~test_base()noexcept = default; };
 
 struct test_derived:test_base{ virtual ~test_derived()noexcept override = default; };
 
+static_assert(!dango::is_convertible<dango::mutex, dango::mutex const>);
+static_assert(dango::is_convertible_ret<dango::mutex, dango::mutex const>);
+static_assert(!dango::is_noexcept_convertible<dango::mutex, dango::mutex const>);
+static_assert(dango::is_noexcept_convertible_ret<dango::mutex, dango::mutex const>);
+
 auto
 main
 ()noexcept(false)->dango::builtin::sint

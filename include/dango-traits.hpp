@@ -1824,24 +1824,147 @@ dango::detail
   <typename tp_arg>
   constexpr void is_convertible_test(tp_arg)noexcept;
 
+/**/
+
   template
   <typename tp_from, typename tp_to, typename tp_enabled = dango::enable_tag>
   constexpr bool const is_convertible_help = false;
+
   template
   <typename tp_from, typename tp_to>
   constexpr bool const
   is_convertible_help
-  <tp_from, tp_to, dango::expr_check<decltype(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()))>> = true;
+  <tp_from, tp_to, dango::enable_if<dango::is_void<tp_from> && dango::is_void<tp_to>>> = true;
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const
+  is_convertible_help
+  <
+    tp_from,
+    tp_to,
+    dango::expr_check
+    <
+      dango::enable_if<!dango::is_void<tp_from> && !dango::is_void<tp_to>>,
+      dango::enable_if<!dango::is_array<tp_to> && !dango::is_func<tp_to>>,
+      decltype(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()))
+    >
+  > = true;
+
+/**/
 
   template
   <typename tp_from, typename tp_to, typename tp_enabled = dango::enable_tag>
   constexpr bool const is_convertible_noexcept_help = false;
+
   template
   <typename tp_from, typename tp_to>
   constexpr bool const
   is_convertible_noexcept_help
-  <tp_from, tp_to, dango::enable_if<detail::is_convertible_help<tp_from, tp_to>>> =
-    noexcept(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()));
+  <tp_from, tp_to, dango::enable_if<dango::is_void<tp_from> && dango::is_void<tp_to>>> = true;
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const
+  is_convertible_noexcept_help
+  <
+    tp_from,
+    tp_to,
+    dango::expr_check
+    <
+      dango::enable_if<!dango::is_void<tp_from> && !dango::is_void<tp_to>>,
+      dango::enable_if<!dango::is_array<tp_to> && !dango::is_func<tp_to>>,
+      decltype(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()))
+    >
+  > = noexcept(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()));
+
+/**/
+
+  template
+  <typename tp_from, typename tp_to, typename tp_enabled = dango::enable_tag>
+  constexpr bool const is_convertible_ret_help = false;
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const
+  is_convertible_ret_help
+  <tp_from, tp_to, dango::enable_if<dango::is_void<tp_from> && dango::is_void<tp_to>>> = true;
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const
+  is_convertible_ret_help
+  <
+    tp_from,
+    tp_to,
+    dango::expr_check
+    <
+      dango::enable_if<dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>>>,
+      dango::enable_if<!dango::is_void<tp_from> && !dango::is_void<tp_to>>,
+      dango::enable_if<!dango::is_array<tp_to> && !dango::is_func<tp_to>>,
+      dango::enable_if<dango::is_destructible<tp_to>>
+    >
+  > = true;
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const
+  is_convertible_ret_help
+  <
+    tp_from,
+    tp_to,
+    dango::expr_check
+    <
+      dango::enable_if<!dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>>>,
+      dango::enable_if<!dango::is_void<tp_from> && !dango::is_void<tp_to>>,
+      dango::enable_if<!dango::is_array<tp_to> && !dango::is_func<tp_to>>,
+      decltype(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()))
+    >
+  > = true;
+
+/**/
+
+  template
+  <typename tp_from, typename tp_to, typename tp_enabled = dango::enable_tag>
+  constexpr bool const is_convertible_ret_noexcept_help = false;
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const
+  is_convertible_ret_noexcept_help
+  <tp_from, tp_to, dango::enable_if<dango::is_void<tp_from> && dango::is_void<tp_to>>> = true;
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const
+  is_convertible_ret_noexcept_help
+  <
+    tp_from,
+    tp_to,
+    dango::expr_check
+    <
+      dango::enable_if<dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>>>,
+      dango::enable_if<!dango::is_void<tp_from> && !dango::is_void<tp_to>>,
+      dango::enable_if<!dango::is_array<tp_to> && !dango::is_func<tp_to>>,
+      dango::enable_if<dango::is_noexcept_destructible<tp_to>>
+    >
+  > = true;
+
+  template
+  <typename tp_from, typename tp_to>
+  constexpr bool const
+  is_convertible_ret_noexcept_help
+  <
+    tp_from,
+    tp_to,
+    dango::expr_check
+    <
+      dango::enable_if<!dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>>>,
+      dango::enable_if<!dango::is_void<tp_from> && !dango::is_void<tp_to>>,
+      dango::enable_if<!dango::is_array<tp_to> && !dango::is_func<tp_to>>,
+      decltype(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()))
+    >
+  > = noexcept(detail::is_convertible_test<tp_to>(dango::declval<tp_from>()));
 }
 
 namespace
@@ -1850,34 +1973,22 @@ dango
   template
   <typename tp_from, typename tp_to>
   constexpr bool const is_convertible =
-    !dango::is_array<tp_to> && !dango::is_func<tp_to> &&
-    ((dango::is_void<tp_from> && dango::is_void<tp_to>) || detail::is_convertible_help<tp_from, tp_to>);
+    detail::is_convertible_help<tp_from, tp_to>;
 
   template
   <typename tp_from, typename tp_to>
   constexpr bool const is_noexcept_convertible =
-    !dango::is_array<tp_to> && !dango::is_func<tp_to> &&
-    ((dango::is_void<tp_from> && dango::is_void<tp_to>) || detail::is_convertible_noexcept_help<tp_from, tp_to>);
+    detail::is_convertible_noexcept_help<tp_from, tp_to>;
 
   template
   <typename tp_from, typename tp_to>
   constexpr bool const is_convertible_ret =
-    !dango::is_array<tp_to> && !dango::is_func<tp_to> &&
-    (
-      (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
-      (dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>> && dango::is_destructible<tp_to>) ||
-      detail::is_convertible_help<tp_from, tp_to>
-    );
+    detail::is_convertible_ret_help<tp_from, tp_to>;
 
   template
   <typename tp_from, typename tp_to>
   constexpr bool const is_noexcept_convertible_ret =
-    !dango::is_array<tp_to> && !dango::is_func<tp_to> &&
-    (
-      (dango::is_void<tp_from> && dango::is_void<tp_to>) ||
-      (dango::is_same<dango::remove_cv<tp_from>, dango::remove_cv<tp_to>> && dango::is_noexcept_destructible<tp_to>) ||
-      detail::is_convertible_noexcept_help<tp_from, tp_to>
-    );
+    detail::is_convertible_ret_noexcept_help<tp_from, tp_to>;
 }
 
 /*** is_callable is_noexcept_callable is_callable_ret is_noexcept_callable_ret ***/
