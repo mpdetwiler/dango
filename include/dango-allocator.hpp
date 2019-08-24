@@ -877,7 +877,6 @@ template
   typename... tp_children,
   dango::enable_if
   <(dango::is_constructible<dango::allocator, tp_alloc> && ... && dango::is_constructible<dango::allocator_tree, tp_children>)>
-    = dango::enable_val
 >
 dango::
 allocator_tree::

@@ -110,7 +110,7 @@ dango
 }
 
 template
-<typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>> = dango::enable_val>
+<typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>>>
 constexpr auto
 dango::
 operator ==
@@ -120,7 +120,7 @@ operator ==
 }
 
 template
-<typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>> = dango::enable_val>
+<typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>>>
 constexpr auto
 dango::
 operator ==
@@ -130,7 +130,7 @@ operator ==
 }
 
 template
-<typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>> = dango::enable_val>
+<typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>>>
 constexpr auto
 dango::
 operator !=
@@ -140,7 +140,7 @@ operator !=
 }
 
 template
-<typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>> = dango::enable_val>
+<typename tp_type, dango::enable_if<dango::has_dango_operator_is_null<tp_type>>>
 constexpr auto
 dango::
 operator !=
@@ -239,7 +239,7 @@ dango
 }
 
 template
-<typename tp_lhs, typename tp_rhs, dango::enable_if<dango::has_dango_operator_equals<tp_lhs, tp_rhs>> = dango::enable_val>
+<typename tp_lhs, typename tp_rhs, dango::enable_if<dango::has_dango_operator_equals<tp_lhs, tp_rhs>>>
 constexpr auto
 dango::
 operator ==
@@ -249,7 +249,7 @@ operator ==
 }
 
 template
-<typename tp_lhs, typename tp_rhs, dango::enable_if<dango::has_dango_operator_equals<tp_lhs, tp_rhs>> = dango::enable_val>
+<typename tp_lhs, typename tp_rhs, dango::enable_if<dango::has_dango_operator_equals<tp_lhs, tp_rhs>>>
 constexpr auto
 dango::
 operator !=

@@ -80,12 +80,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<
-  dango::
-  detail::
-  global_storage
-  <tp_type, tp_ret, tp_construct>& tp_storage
->
+<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
 class
 dango::
 detail::
@@ -108,12 +103,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<
-  dango::
-  detail::
-  global_storage
-  <tp_type, tp_ret, tp_construct>& tp_storage
->
+<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
 dango::
 detail::
 global_storage
@@ -132,12 +122,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<
-  dango::
-  detail::
-  global_storage
-  <tp_type, tp_ret, tp_construct>& tp_storage
->
+<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
 dango::
 detail::
 global_storage
@@ -158,12 +143,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<
-  dango::
-  detail::
-  global_storage
-  <tp_type, tp_ret, tp_construct>& tp_storage
->
+<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
 class
 dango::
 detail::
@@ -190,12 +170,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<
-  dango::
-  detail::
-  global_storage
-  <tp_type, tp_ret, tp_construct>& tp_storage
->
+<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
 dango::
 detail::
 global_storage
@@ -223,12 +198,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<
-  dango::
-  detail::
-  global_storage
-  <tp_type, tp_ret, tp_construct>& tp_storage
->
+<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
 dango::
 detail::
 global_storage

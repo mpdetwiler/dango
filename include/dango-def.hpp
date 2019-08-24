@@ -1,10 +1,6 @@
 #ifndef __DANGO_DEF_HPP__
 #define __DANGO_DEF_HPP__ 1
 
-#ifndef __GNUG__
-#error unsupported compiler
-#endif
-
 #define dango_restrict __restrict__
 
 #ifndef DANGO_NO_KEYWORDS
