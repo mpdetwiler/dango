@@ -325,8 +325,6 @@ public:
 public:
   explicit constexpr atomic(value_type)noexcept;
   ~atomic()noexcept = default;
-  constexpr auto address()noexcept->value_type*;
-  constexpr auto address()const noexcept->value_type const*;
   template
   <dango::mem_order tp_order = dango::mem_order::seq_cst>
   auto load()const noexcept->value_type;
@@ -396,28 +394,6 @@ atomic
 m_data{ a_data }
 {
 
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
-address
-()noexcept->value_type*
-{
-  return &m_data;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>::
-address
-()const noexcept->value_type const*
-{
-  return &m_data;
 }
 
 template
@@ -539,8 +515,6 @@ public:
 public:
   explicit constexpr atomic(value_type)noexcept;
   ~atomic()noexcept = default;
-  constexpr auto address()noexcept->value_type*;
-  constexpr auto address()const noexcept->value_type const*;
   template
   <dango::mem_order tp_order = dango::mem_order::seq_cst>
   auto load()const noexcept->value_type;
@@ -586,28 +560,6 @@ atomic
 m_data{ a_data }
 {
 
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
-address
-()noexcept->value_type*
-{
-  return &m_data;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>::
-address
-()const noexcept->value_type const*
-{
-  return &m_data;
 }
 
 template
