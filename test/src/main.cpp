@@ -106,7 +106,7 @@ main
   {
     dango::auto_ptr<test_derived> a_td{ new test_derived{ } };
 
-    dango::auto_ptr<test_base> a_tb{ dango::move(a_td) };
+    dango::auto_ptr<test_base const> a_tb{ dango::move(a_td) };
   }
 
   return 0;

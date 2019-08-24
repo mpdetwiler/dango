@@ -12,7 +12,7 @@ dango::detail
     typename tp_type,
     bool tp_size,
     bool tp_align,
-    typename tp_enabled = void
+    typename tp_enabled = dango::enable_tag
   >
   constexpr bool const is_valid_auto_ptr_destroyer = false;
 
@@ -25,7 +25,7 @@ dango::detail
     tp_type,
     false,
     false,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_same<decltype(tp_destroyer::destroy(dango::declval<tp_type* const&>())), void>>,
       dango::enable_if<noexcept(tp_destroyer::destroy(dango::declval<tp_type* const&>()))>
@@ -41,7 +41,7 @@ dango::detail
     tp_type,
     false,
     true,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_same<decltype(tp_destroyer::destroy(dango::declval<tp_type* const&>(), dango::declval<dango::usize const&>())), void>>,
       dango::enable_if<noexcept(tp_destroyer::destroy(dango::declval<tp_type* const&>(), dango::declval<dango::usize const&>()))>
@@ -57,7 +57,7 @@ dango::detail
     tp_type,
     true,
     false,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_same<decltype(tp_destroyer::destroy(dango::declval<tp_type* const&>(), dango::declval<dango::usize const&>())), void>>,
       dango::enable_if<noexcept(tp_destroyer::destroy(dango::declval<tp_type* const&>(), dango::declval<dango::usize const&>()))>
@@ -73,7 +73,7 @@ dango::detail
     tp_type,
     true,
     true,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_same<decltype(tp_destroyer::destroy(dango::declval<tp_type* const&>(), dango::declval<dango::usize const&>(), dango::declval<dango::usize const&>())), void>>,
       dango::enable_if<noexcept(tp_destroyer::destroy(dango::declval<tp_type* const&>(), dango::declval<dango::usize const&>(), dango::declval<dango::usize const&>()))>
@@ -81,7 +81,7 @@ dango::detail
   > = true;
 
   template
-  <typename tp_config, typename tp_type, typename tp_enabled = void>
+  <typename tp_config, typename tp_type, typename tp_enabled = dango::enable_tag>
   constexpr bool const is_valid_auto_ptr_config = false;
 
   template
@@ -91,7 +91,7 @@ dango::detail
   <
     tp_config,
     tp_type,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_class<tp_config> && !dango::is_const<tp_config> && !dango::is_volatile<tp_config>>,
       dango::enable_if<dango::is_void<tp_type> || dango::is_scalar<tp_type> || dango::is_class<tp_type>>,
@@ -219,7 +219,7 @@ auto_ptr_default_config
   static constexpr bool const move_constructor = true;
   static constexpr bool const move_assignment = true;
   static constexpr bool const explicit_conversion = false;
-  static constexpr bool const require_same_destroyer = false;
+  static constexpr bool const require_same_destroyer = !dango::is_polymorphic<tp_type>;
   static constexpr bool const store_size = false;
   static constexpr bool const store_align = false;
   static constexpr bool const destroy_size = false;

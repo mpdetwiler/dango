@@ -5,7 +5,7 @@ namespace
 dango
 {
   template
-  <typename tp_type, typename tp_enabled = void>
+  <typename tp_type, typename tp_enabled = dango::enable_tag>
   constexpr bool const has_dango_operator_is_null = false;
 
   template
@@ -14,7 +14,7 @@ dango
   has_dango_operator_is_null
   <
     tp_type,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_class<tp_type>>,
       dango::enable_if<dango::is_convertible_ret<decltype(dango::declval<dango::remove_const<tp_type> const&>().dango_operator_is_null()), bool>>
@@ -37,7 +37,7 @@ namespace
 dango
 {
   template
-  <typename tp_type, typename tp_enabled = void>
+  <typename tp_type, typename tp_enabled = dango::enable_tag>
   constexpr bool const is_null_equatable = false;
 
   template
@@ -46,7 +46,7 @@ dango
   is_null_equatable
   <
     tp_type,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_object<tp_type>>,
       dango::enable_if<dango::is_convertible_ret<decltype(dango::declval<dango::remove_const<tp_type> const&>() == dango::declval<dango::null_tag const&>()), bool>>,
@@ -155,7 +155,7 @@ namespace
 dango
 {
   template
-  <typename tp_lhs, typename tp_rhs, typename tp_enabled = void>
+  <typename tp_lhs, typename tp_rhs, typename tp_enabled = dango::enable_tag>
   constexpr bool const has_dango_operator_equals = false;
 
   template
@@ -165,7 +165,7 @@ dango
   <
     tp_lhs,
     tp_rhs,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_class<tp_lhs> && dango::is_object<tp_rhs>>,
       dango::enable_if
@@ -191,7 +191,7 @@ namespace
 dango
 {
   template
-  <typename tp_lhs, typename tp_rhs, typename tp_enabled = void>
+  <typename tp_lhs, typename tp_rhs, typename tp_enabled = dango::enable_tag>
   constexpr bool const is_equatable = false;
 
   template
@@ -201,7 +201,7 @@ dango
   <
     tp_lhs,
     tp_rhs,
-    dango::void_type
+    dango::expr_check
     <
       dango::enable_if<dango::is_object<tp_lhs> && dango::is_object<tp_rhs>>,
       dango::enable_if<dango::is_convertible_ret<decltype(dango::declval<dango::remove_const<tp_lhs> const&>() == dango::declval<dango::remove_const<tp_rhs> const&>()), bool>>,
