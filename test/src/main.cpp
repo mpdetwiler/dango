@@ -114,6 +114,10 @@ main
     dango::auto_ptr<test_base const> a_tb{ dango::move(a_td) };
   }
 
+  dango::atomic<double*> a_atomic{ null };
+
+  a_atomic.fetch_add(dango::ssize(5));
+
   return 0;
 }
 
