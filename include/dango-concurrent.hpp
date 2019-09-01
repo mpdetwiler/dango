@@ -6,20 +6,22 @@
 namespace
 dango
 {
-  auto get_tick_count()noexcept->dango::ulong;
-  auto get_tick_count_sa()noexcept->dango::ulong;
-  auto get_suspend_bias()noexcept->dango::ulong;
+  using tick_count_type = dango::slong;
+
+  auto get_tick_count()noexcept->dango::tick_count_type;
+  auto get_tick_count_sa()noexcept->dango::tick_count_type;
+  auto get_suspend_bias()noexcept->dango::tick_count_type;
 }
 
 namespace
 dango::detail
 {
-  auto tick_count()noexcept->dango::ulong;
-  auto tick_count_sa()noexcept->dango::ulong;
-  auto suspend_bias()noexcept->dango::ulong;
+  auto tick_count()noexcept->dango::tick_count_type;
+  auto tick_count_sa()noexcept->dango::tick_count_type;
+  auto suspend_bias()noexcept->dango::tick_count_type;
 
   using tick_count_tuple =
-    dango::tuple<dango::ulong, dango::ulong, dango::ulong>;
+    dango::tuple<dango::tick_count_type, dango::tick_count_type, dango::tick_count_type>;
 
   auto init_tick_count()noexcept->detail::tick_count_tuple const&;
 }
@@ -27,7 +29,7 @@ dango::detail
 inline auto
 dango::
 get_tick_count
-()noexcept->dango::ulong
+()noexcept->dango::tick_count_type
 {
   auto const a_init = detail::init_tick_count().first();
 
@@ -39,7 +41,7 @@ get_tick_count
 inline auto
 dango::
 get_tick_count_sa
-()noexcept->dango::ulong
+()noexcept->dango::tick_count_type
 {
   auto const a_init = detail::init_tick_count().second();
 
@@ -51,7 +53,7 @@ get_tick_count_sa
 inline auto
 dango::
 get_suspend_bias
-()noexcept->dango::ulong
+()noexcept->dango::tick_count_type
 {
   auto const a_init = detail::init_tick_count().third();
 
@@ -73,9 +75,7 @@ dango::
 timeout
 {
 protected:
-  using value_type = dango::ulong;
-protected:
-  static constexpr auto safe_add(value_type, value_type)noexcept->value_type;
+  using value_type = dango::tick_count_type;
 protected:
   explicit constexpr timeout(value_type)noexcept;
 public:
@@ -96,25 +96,6 @@ public:
   DANGO_DELETE_DEFAULT(timeout)
   DANGO_IMMOBILE(timeout)
 };
-
-constexpr auto
-dango::
-timeout::
-safe_add
-(value_type const a_lhs, value_type const a_rhs)noexcept->value_type
-{
-  value_type const a_max_add =
-    dango::integer::MAX_VAL<value_type> - a_lhs;
-
-#ifndef DANGO_NO_DEBUG
-  dango_assert(a_rhs <= a_max_add);
-#endif
-
-  auto const a_add =
-    dango::min(a_max_add, a_rhs);
-
-  return a_lhs + a_add;
-}
 
 constexpr
 dango::
@@ -177,7 +158,7 @@ set_rel
 {
   auto const a_now = tick_count();
 
-  m_timeout = safe_add(a_now, a_interval);
+  m_timeout = dango::integer::safe_add(a_now, a_interval);
 }
 
 inline void
@@ -186,7 +167,7 @@ timeout::
 add
 (value_type const a_val)noexcept
 {
-  m_timeout = safe_add(m_timeout, a_val);
+  m_timeout = dango::integer::safe_add(m_timeout, a_val);
 }
 
 /*** timeout_impl ***/
@@ -242,7 +223,7 @@ make_rel
 {
   auto const a_now = get_tc();
 
-  return timeout_impl{ safe_add(a_now, a_interval) };
+  return timeout_impl{ dango::integer::safe_add(a_now, a_interval) };
 }
 
 constexpr
@@ -335,7 +316,7 @@ make_rel
 {
   auto const a_now = get_tc();
 
-  return timeout_impl_hr{ safe_add(a_now, a_interval) };
+  return timeout_impl_hr{ dango::integer::safe_add(a_now, a_interval) };
 }
 
 constexpr
@@ -412,7 +393,7 @@ make_rel
 {
   auto const a_now = get_tc();
 
-  return timeout_impl_sa{ safe_add(a_now, a_interval) };
+  return timeout_impl_sa{ dango::integer::safe_add(a_now, a_interval) };
 }
 
 constexpr
@@ -505,7 +486,7 @@ make_rel
 {
   auto const a_now = get_tc();
 
-  return timeout_impl_hr_sa{ safe_add(a_now, a_interval) };
+  return timeout_impl_hr_sa{ dango::integer::safe_add(a_now, a_interval) };
 }
 
 constexpr
@@ -534,21 +515,21 @@ requires_high_resolution
 namespace
 dango
 {
-  auto make_timeout(dango::ulong)noexcept->detail::timeout_impl;
-  auto make_timeout_hr(dango::ulong)noexcept->detail::timeout_impl_hr;
-  auto make_timeout_sa(dango::ulong)noexcept->detail::timeout_impl_sa;
-  auto make_timeout_hr_sa(dango::ulong)noexcept->detail::timeout_impl_hr_sa;
+  auto make_timeout(dango::tick_count_type)noexcept->detail::timeout_impl;
+  auto make_timeout_hr(dango::tick_count_type)noexcept->detail::timeout_impl_hr;
+  auto make_timeout_sa(dango::tick_count_type)noexcept->detail::timeout_impl_sa;
+  auto make_timeout_hr_sa(dango::tick_count_type)noexcept->detail::timeout_impl_hr_sa;
 
-  auto make_timeout_rel(dango::ulong)noexcept->detail::timeout_impl;
-  auto make_timeout_rel_hr(dango::ulong)noexcept->detail::timeout_impl_hr;
-  auto make_timeout_rel_sa(dango::ulong)noexcept->detail::timeout_impl_sa;
-  auto make_timeout_rel_hr_sa(dango::ulong)noexcept->detail::timeout_impl_hr_sa;
+  auto make_timeout_rel(dango::tick_count_type)noexcept->detail::timeout_impl;
+  auto make_timeout_rel_hr(dango::tick_count_type)noexcept->detail::timeout_impl_hr;
+  auto make_timeout_rel_sa(dango::tick_count_type)noexcept->detail::timeout_impl_sa;
+  auto make_timeout_rel_hr_sa(dango::tick_count_type)noexcept->detail::timeout_impl_hr_sa;
 }
 
 inline auto
 dango::
 make_timeout
-(dango::ulong const a_timeout)noexcept->detail::timeout_impl
+(dango::tick_count_type const a_timeout)noexcept->detail::timeout_impl
 {
   return detail::timeout_impl::make(a_timeout);
 }
@@ -556,7 +537,7 @@ make_timeout
 inline auto
 dango::
 make_timeout_hr
-(dango::ulong const a_timeout)noexcept->detail::timeout_impl_hr
+(dango::tick_count_type const a_timeout)noexcept->detail::timeout_impl_hr
 {
   return detail::timeout_impl_hr::make(a_timeout);
 }
@@ -564,7 +545,7 @@ make_timeout_hr
 inline auto
 dango::
 make_timeout_sa
-(dango::ulong const a_timeout)noexcept->detail::timeout_impl_sa
+(dango::tick_count_type const a_timeout)noexcept->detail::timeout_impl_sa
 {
   return detail::timeout_impl_sa::make(a_timeout);
 }
@@ -572,7 +553,7 @@ make_timeout_sa
 inline auto
 dango::
 make_timeout_hr_sa
-(dango::ulong const a_timeout)noexcept->detail::timeout_impl_hr_sa
+(dango::tick_count_type const a_timeout)noexcept->detail::timeout_impl_hr_sa
 {
   return detail::timeout_impl_hr_sa::make(a_timeout);
 }
@@ -580,7 +561,7 @@ make_timeout_hr_sa
 inline auto
 dango::
 make_timeout_rel
-(dango::ulong const a_interval)noexcept->detail::timeout_impl
+(dango::tick_count_type const a_interval)noexcept->detail::timeout_impl
 {
   return detail::timeout_impl::make_rel(a_interval);
 }
@@ -588,7 +569,7 @@ make_timeout_rel
 inline auto
 dango::
 make_timeout_rel_hr
-(dango::ulong const a_interval)noexcept->detail::timeout_impl_hr
+(dango::tick_count_type const a_interval)noexcept->detail::timeout_impl_hr
 {
   return detail::timeout_impl_hr::make_rel(a_interval);
 }
@@ -596,7 +577,7 @@ make_timeout_rel_hr
 inline auto
 dango::
 make_timeout_rel_sa
-(dango::ulong const a_interval)noexcept->detail::timeout_impl_sa
+(dango::tick_count_type const a_interval)noexcept->detail::timeout_impl_sa
 {
   return detail::timeout_impl_sa::make_rel(a_interval);
 }
@@ -604,7 +585,7 @@ make_timeout_rel_sa
 inline auto
 dango::
 make_timeout_rel_hr_sa
-(dango::ulong const a_interval)noexcept->detail::timeout_impl_hr_sa
+(dango::tick_count_type const a_interval)noexcept->detail::timeout_impl_hr_sa
 {
   return detail::timeout_impl_hr_sa::make_rel(a_interval);
 }
@@ -1230,7 +1211,7 @@ private:
 
   static registry s_registry;
   static thread const& s_main_init;
-  static dango::ulong const s_tick_count_init;
+  static dango::tick_count_type const s_tick_count_init;
 public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
@@ -1274,10 +1255,10 @@ public:
   >;
 
   static void sleep(dango::timeout const&)noexcept;
-  static void sleep_rel(dango::ulong)noexcept;
-  static void sleep_rel_hr(dango::ulong)noexcept;
-  static void sleep_rel_sa(dango::ulong)noexcept;
-  static void sleep_rel_hr_sa(dango::ulong)noexcept;
+  static void sleep_rel(dango::tick_count_type)noexcept;
+  static void sleep_rel_hr(dango::tick_count_type)noexcept;
+  static void sleep_rel_sa(dango::tick_count_type)noexcept;
+  static void sleep_rel_hr_sa(dango::tick_count_type)noexcept;
 private:
   explicit thread(construct_tag, bool)noexcept;
   explicit thread(control_block*)noexcept;
@@ -1531,7 +1512,7 @@ dango::
 thread::
 s_main_init = dango::thread::self();
 
-inline dango::ulong const
+inline dango::tick_count_type const
 dango::
 thread::
 s_tick_count_init = dango::get_tick_count();
@@ -1850,7 +1831,7 @@ private:
   using list_type = dango::intrusive_list<cond_type>;
 private:
   static void remove(cond_type*)noexcept;
-  static auto bias_okay(dango::ulong&)noexcept->bool;
+  static auto bias_okay(dango::tick_count_type&)noexcept->bool;
 public:
   void regist(cond_type*, dango::timeout const&)noexcept;
   void unregist(cond_type*, dango::timeout const&)noexcept;
@@ -1861,7 +1842,7 @@ private:
   ~cond_var_registry()noexcept = default;
   void add(cond_type*)noexcept;
   auto wait_empty()noexcept->bool;
-  auto poll_bias(dango::ulong&, dango::timeout&)noexcept->bool;
+  auto poll_bias(dango::tick_count_type&, dango::timeout&)noexcept->bool;
   auto pop_internal()noexcept->bool;
 private:
   dango::static_mutex m_mutex;

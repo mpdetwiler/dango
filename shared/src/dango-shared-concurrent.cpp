@@ -15,7 +15,7 @@ namespace
   <typename tp_func>
   auto thread_start_address(void*)noexcept->void*;
 
-  auto tick_count_help(clockid_t)noexcept->dango::ulong;
+  auto tick_count_help(clockid_t)noexcept->dango::tick_count_type;
 
   using linux_int = dango::shared::futex_type;
 
@@ -105,7 +105,7 @@ auto
 dango::
 shared::
 tick_count_monotonic
-()noexcept->dango::ulong
+()noexcept->dango::tick_count_type
 {
   return tick_count_help(CLOCK_MONOTONIC);
 }
@@ -114,7 +114,7 @@ auto
 dango::
 shared::
 tick_count_boottime
-()noexcept->dango::ulong
+()noexcept->dango::tick_count_type
 {
   return tick_count_help(CLOCK_BOOTTIME);
 }
@@ -143,18 +143,20 @@ futex_wait
 (
   shared::futex_type* const a_futex,
   shared::futex_type const a_expected,
-  dango::ulong const a_interval
+  dango::tick_count_type const a_interval
 )
 noexcept
 {
-  using u64 = dango::ulong;
+  using tc64 = dango::tick_count_type;
+
+  dango_assert(a_interval >= tc64(0));
 
   ::timespec a_spec;
 
   {
-    auto const a_sec = a_interval / u64(1'000);
-    auto const a_mod = a_interval % u64(1'000);
-    auto const a_nsec = a_mod * u64(1'000'000);
+    auto const a_sec = a_interval / tc64(1'000);
+    auto const a_mod = a_interval % tc64(1'000);
+    auto const a_nsec = a_mod * tc64(1'000'000);
 
     a_spec.tv_sec = a_sec;
     a_spec.tv_nsec = a_nsec;
@@ -243,12 +245,12 @@ namespace
 
   auto
   tick_count_help
-  (clockid_t const a_clock)noexcept->dango::ulong
+  (clockid_t const a_clock)noexcept->dango::tick_count_type
   {
-    using u64 = dango::ulong;
+    using tc64 = dango::tick_count_type;
 
-    constexpr auto const c_mul = u64(1'000);
-    constexpr auto const c_div = u64(1'000'000);
+    constexpr auto const c_mul = tc64(1'000);
+    constexpr auto const c_div = tc64(1'000'000);
 
     ::timespec a_spec;
 
@@ -257,8 +259,8 @@ namespace
 
     dango_assert(a_result == 0);
 
-    auto const a_sec = u64(a_spec.tv_sec);
-    auto const a_nsec = u64(a_spec.tv_nsec);
+    auto const a_sec = tc64(a_spec.tv_sec);
+    auto const a_nsec = tc64(a_spec.tv_nsec);
 
     return (a_sec * c_mul) + (a_nsec / c_div);
   }
@@ -308,7 +310,7 @@ namespace
   <typename tp_func>
   auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
 
-  auto perf_count()noexcept->dango::ulong;
+  auto perf_count()noexcept->dango::tick_count_type;
 
   auto time_min_period()noexcept->dango::uint;
 }
@@ -386,16 +388,16 @@ auto
 dango::
 shared::
 perf_freq
-()noexcept->dango::ulong
+()noexcept->dango::tick_count_type
 {
   static constexpr auto const c_impl =
-  []()noexcept->dango::ulong
+  []()noexcept->dango::tick_count_type
   {
     LARGE_INTEGER a_result;
 
     ::QueryPerformanceFrequency(&a_result);
 
-    return dango::ulong(a_result.QuadPart);
+    return dango::tick_count_type(a_result.QuadPart);
   };
 
   static auto const s_result = c_impl();
@@ -407,22 +409,22 @@ auto
 dango::
 shared::
 perf_count_suspend_bias
-(dango::ulong& a_suspend_bias)noexcept->dango::ulong
+(dango::tick_count_type& a_suspend_bias)noexcept->dango::tick_count_type
 {
-  using u64 = dango::ulong;
+  using tc64 = dango::tick_count_type;
 
   static auto& s_bias_ref =
     *reinterpret_cast<ULONGLONG const volatile*>(dango::uptr(0x7FFE0000 + 0x3B0));
 
-  u64 a_bias;
-  u64 a_count;
+  tc64 a_bias;
+  tc64 a_count;
 
   do
   {
-    a_bias = u64(s_bias_ref);
+    a_bias = tc64(s_bias_ref);
     a_count = perf_count();
   }
-  while(a_bias != u64(s_bias_ref));
+  while(a_bias != tc64(s_bias_ref));
 
   a_suspend_bias = a_bias;
 
@@ -517,11 +519,13 @@ void
 dango::
 shared::
 condition_variable_wait
-(void* const a_storage, void* const a_lock_storage, dango::ulong const a_interval)noexcept
+(void* const a_storage, void* const a_lock_storage, dango::tick_count_type const a_interval)noexcept
 {
-  using u64 = dango::ulong;
+  using tc64 = dango::tick_count_type;
 
-  constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
+  dango_assert(a_interval >= tc64(0));
+
+  constexpr auto const c_max_interval = tc64(DWORD(INFINITE) - DWORD(1));
 
   auto const a_spec = dango::min(a_interval, c_max_interval);
 
@@ -616,13 +620,13 @@ namespace
 
   auto
   perf_count
-  ()noexcept->dango::ulong
+  ()noexcept->dango::tick_count_type
   {
     LARGE_INTEGER a_result;
 
     ::QueryPerformanceCounter(&a_result);
 
-    return dango::ulong(a_result.QuadPart);
+    return dango::tick_count_type(a_result.QuadPart);
   }
 
   auto

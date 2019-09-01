@@ -340,9 +340,9 @@ public:
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_value_type> \
-auto name(tp_value_type)noexcept-> \
-dango::enable_if<dango::is_scalar<tp_value_type> && dango::is_convertible<tp_value_type const&, value_type> && dango::is_int<value_type>, value_type>;
+<dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_value_type = value_type> \
+auto name(value_type)noexcept-> \
+dango::enable_if<dango::is_same<tp_value_type, value_type> && dango::is_int<value_type>, value_type>;
 
   DANGO_ATOMIC_DEFINE_FETCH(fetch_add)
   DANGO_ATOMIC_DEFINE_FETCH(fetch_sub)
@@ -438,9 +438,9 @@ auto \
 dango:: \
 atomic<tp_type, dango::detail::atomic_enable_spec<tp_type>>:: \
 name \
-(tp_value_type const a_data) \
+(value_type const a_data) \
 noexcept-> \
-dango::enable_if<dango::is_scalar<tp_value_type> && dango::is_convertible<tp_value_type const&, value_type> && dango::is_int<value_type>, value_type> \
+dango::enable_if<dango::is_same<tp_value_type, value_type> && dango::is_int<value_type>, value_type> \
 { \
   return dango::atomic_##name<tp_order>(&m_data, a_data); \
 }
@@ -511,9 +511,9 @@ public:
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_value_type> \
-auto name(tp_value_type)noexcept-> \
-dango::enable_if<dango::is_scalar<tp_value_type> && dango::is_convertible<tp_value_type const&, dango::ssize> && dango::is_object_ptr<value_type>, value_type>;
+<dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_value_type = value_type> \
+auto name(dango::ssize)noexcept-> \
+dango::enable_if<dango::is_same<tp_value_type, value_type> && dango::is_object_ptr<value_type>, value_type>;
 
 DANGO_ATOMIC_DEFINE_FETCH(fetch_add)
 DANGO_ATOMIC_DEFINE_FETCH(fetch_sub)
@@ -603,8 +603,8 @@ auto \
 dango:: \
 atomic<tp_type, dango::detail::atomic_ptr_enable_spec<tp_type>>:: \
 name \
-(tp_value_type const a_data)noexcept-> \
-dango::enable_if<dango::is_scalar<tp_value_type> && dango::is_convertible<tp_value_type const&, dango::ssize> && dango::is_object_ptr<value_type>, value_type> \
+(dango::ssize const a_data)noexcept-> \
+dango::enable_if<dango::is_same<tp_value_type, value_type> && dango::is_object_ptr<value_type>, value_type> \
 { \
   return dango::atomic_##name<tp_order>(&m_data, a_data); \
 }
