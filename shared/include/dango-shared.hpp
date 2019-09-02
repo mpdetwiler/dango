@@ -13,7 +13,7 @@
 #ifdef DANGO_COMPILING_DANGO_SHARED
 #define DANGO_SHARED_API __attribute__((visibility("default")))
 #else
-#define DANGO_SHARED_API
+#define DANGO_SHARED_API __attribute__((visibility("default")))
 #endif
 #endif
 
