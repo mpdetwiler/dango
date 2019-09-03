@@ -43,21 +43,21 @@ else:
   Exit(1);
 
 flags = [
-#	'-S',
-#	'-Ofast',
+# '-S',
+# '-Ofast',
 # '-v',
 # '-fsanitize=address',
 # '-fsanitize=leak',
-	'-flto',
-	'-O2',
-	'-std=c++17',
-	'-fsized-deallocation',
-	'-pedantic',
-	'-pedantic-errors',
-	'-Wall',
-	'-Wextra',
-	'-Wshadow',
-	'-Wfatal-errors'
+  '-flto',
+  '-O2',
+  '-std=c++17',
+  '-fsized-deallocation',
+  '-pedantic',
+  '-pedantic-errors',
+  '-Wall',
+  '-Wextra',
+  '-Wshadow',
+  '-Wfatal-errors'
 ];
 
 import os;
@@ -66,17 +66,20 @@ static_env = None;
 shared_env = None;
 test_env = None;
 
-if(compilation_target == 'linux'):
-  static_env = DefaultEnvironment();
-elif(compilation_target == 'win32' or compilation_target == 'win64'):
-  static_env = DefaultEnvironment();
+static_env = DefaultEnvironment();
+
+static_env.Append(ENV = {'PATH':os.environ['PATH']});
 
 if(use_clang):
   static_env.Replace(CXX = 'clang++');
   static_env.Replace(LINK = 'clang++');
   static_env.Append(LINKFLAGS = '-fuse-ld=lld');
+  if(compilation_target == 'win64'):
+    clang_target_flag = '-target x86_64-pc-windows-gnu';
+    static_env.Append(CXXFLAGS = clang_target_flag);
+    static_env.Append(LINKFLAGS = clang_target_flag);
+    static_env.Append(CXXFLAGS = ['-fuse-cxa-atexit']);
 
-static_env.Append(ENV = {'PATH':os.environ['PATH']});
 static_env.Append(CPPPATH = ['include/']);
 static_env.Append(CXXFLAGS = flags);
 static_env.Append(LINKFLAGS = flags);
@@ -97,7 +100,11 @@ if(compile_test):
 static_env.Append(CPPPATH = ['shared/include/']);
 shared_env.Append(CPPPATH = ['shared/include/']);
 
-static_env.Replace(AR = 'gcc-ar');
+if(use_clang):
+  static_env.Replace(AR = 'llvm-ar');
+else:
+  static_env.Replace(AR = 'gcc-ar');
+
 static_env.Replace(ARFLAGS = 'rcs');
 static_env.Replace(RANLIBCOM = '');
 
