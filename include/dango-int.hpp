@@ -6,11 +6,11 @@ dango::detail
 {
   template
   <typename tp_integer>
-  constexpr dango::incomplete_type const max_val_help;
+  constexpr dango::bad_variable_template<tp_integer> max_val_help;
 
   template
   <typename tp_integer>
-  constexpr dango::incomplete_type const min_val_help;
+  constexpr dango::bad_variable_template<tp_integer> min_val_help;
 
   template<>
   constexpr auto const max_val_help<dango::builtin::uchar> = dango::builtin::uchar(-1);
@@ -66,12 +66,14 @@ dango::detail
     dango::builtin::slonglong(-detail::max_val_help<dango::builtin::slonglong> - 1);
 }
 
+//constexpr auto const bad_inst = dango::detail::max_val_help<float>;
+
 namespace
 dango::integer
 {
   template
   <typename tp_integer, typename tp_enabled = dango::enable_tag>
-  constexpr dango::incomplete_type const MAX_VAL;
+  constexpr dango::bad_variable_template<tp_integer, tp_enabled> MAX_VAL;
 
   template
   <typename tp_integer>
@@ -81,7 +83,7 @@ dango::integer
 
   template
   <typename tp_integer, typename tp_enabled = dango::enable_tag>
-  constexpr dango::incomplete_type const MIN_VAL;
+  constexpr dango::bad_variable_template<tp_integer, tp_enabled> MIN_VAL;
 
   template
   <typename tp_integer>
@@ -233,7 +235,7 @@ dango::integer
   <typename tp_int, dango::enable_if<dango::is_uint<tp_int>> = dango::enable_val>
   constexpr auto
   safe_div_test
-  (tp_int const a_lhs, tp_int const a_rhs)noexcept->bool
+  (tp_int const, tp_int const a_rhs)noexcept->bool
   {
     return a_rhs != tp_int(0);
   }

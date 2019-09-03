@@ -15,9 +15,15 @@ dango
     DANGO_TAG_TYPE(integer_seq)
   };
 
+#ifdef __clang__
+  template
+  <typename tp_int, tp_int tp_len>
+  using make_integer_seq = __make_integer_seq<dango::integer_seq, tp_int, tp_len>;
+#else
   template
   <typename tp_int, tp_int tp_len>
   using make_integer_seq = dango::integer_seq<tp_int, __integer_pack(tp_len)...>;
+#endif
 
   template
   <dango::usize... tp_indices>

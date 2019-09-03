@@ -1092,7 +1092,7 @@ namespace
 {
   auto spin_relax(dango::uint&)noexcept->bool;
 
-  constexpr auto const c_spin_count_init = dango::uint(128);
+  //constexpr auto const c_spin_count_init = dango::uint(128);
 }
 
 void

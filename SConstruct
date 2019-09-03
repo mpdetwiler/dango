@@ -19,8 +19,18 @@ AddOption(
   default = False
 );
 
+AddOption(
+  '--clang',
+  dest = 'clang_opt',
+  action = 'store_true',
+  metavar = 'DIR',
+  help = 'use clang++ instead of g++',
+  default = False
+);
+
 compilation_target = GetOption('target_opt');
 compile_test = GetOption('test_opt');
+use_clang = GetOption('clang_opt');
 
 if(compilation_target == 'linux'):
   print('building for \"' + compilation_target + '\"');
@@ -41,6 +51,7 @@ flags = [
 	'-flto',
 	'-O2',
 	'-std=c++17',
+	'-fsized-deallocation',
 	'-pedantic',
 	'-pedantic-errors',
 	'-Wall',
@@ -59,6 +70,11 @@ if(compilation_target == 'linux'):
   static_env = DefaultEnvironment();
 elif(compilation_target == 'win32' or compilation_target == 'win64'):
   static_env = DefaultEnvironment();
+
+if(use_clang):
+  static_env.Replace(CXX = 'clang++');
+  static_env.Replace(LINK = 'clang++');
+  static_env.Append(LINKFLAGS = '-fuse-ld=lld');
 
 static_env.Append(ENV = {'PATH':os.environ['PATH']});
 static_env.Append(CPPPATH = ['include/']);

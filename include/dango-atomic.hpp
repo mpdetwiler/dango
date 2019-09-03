@@ -50,9 +50,9 @@ dango::detail
   is_atomic_help
   ()noexcept->bool
   {
-    using temp_type = dango::remove_cv<tp_type>;
+    static_assert(!dango::is_const<tp_type> && !dango::is_volatile<tp_type>);
 
-    temp_type a_temp{ };
+    tp_type a_temp{ };
 
     return __atomic_always_lock_free(sizeof(a_temp), &a_temp);
   }
@@ -70,7 +70,7 @@ dango
   constexpr bool const
   is_atomic
   <tp_type, dango::enable_if<dango::is_scalar<tp_type> && !dango::is_null<tp_type>>> =
-    detail::is_atomic_help<tp_type>();
+    detail::is_atomic_help<dango::remove_cv<tp_type>>();
 }
 
 static_assert(dango::is_atomic<bool>);
@@ -88,6 +88,7 @@ static_assert(dango::is_atomic<dango::usize>);
 static_assert(dango::is_atomic<dango::ssize>);
 static_assert(dango::is_atomic<dango::uptr>);
 static_assert(dango::is_atomic<dango::sptr>);
+static_assert(dango::is_atomic<float>);
 static_assert(dango::is_atomic<void*>);
 static_assert(dango::is_atomic<void(*)()noexcept>);
 
@@ -111,7 +112,11 @@ dango
       tp_order == dango::mem_order::seq_cst
     );
 
-    return __atomic_load_n(a_addr, dango::builtin::sint(tp_order));
+    dango::remove_volatile<tp_type> a_ret;
+
+    __atomic_load(a_addr, &a_ret, dango::builtin::sint(tp_order));
+
+    return a_ret;
   }
 
   template
@@ -135,9 +140,9 @@ dango
       tp_order == dango::mem_order::seq_cst
     );
 
-    using type = dango::remove_volatile<tp_type>;
+    dango::remove_volatile<tp_type> a_new_value{ dango::forward<tp_value_type>(a_value) };
 
-    __atomic_store_n(a_addr, type(dango::forward<tp_value_type>(a_value)), dango::builtin::sint(tp_order));
+    __atomic_store(a_addr, &a_new_value, dango::builtin::sint(tp_order));
   }
 
   template
@@ -157,13 +162,20 @@ dango
 
     using type = dango::remove_volatile<tp_type>;
 
-    return __atomic_exchange_n(a_addr, type(dango::forward<tp_value_type>(a_value)), dango::builtin::sint(tp_order));
+    type a_new_value{ dango::forward<tp_value_type>(a_value) };
+
+    type a_ret;
+
+    __atomic_exchange(a_addr, &a_new_value, &a_ret, dango::builtin::sint(tp_order));
+
+    return a_ret;
   }
 
   template
   <
     dango::mem_order tp_success = dango::mem_order::seq_cst,
     dango::mem_order tp_failure = dango::mem_order::seq_cst,
+    bool tp_weak = false,
     typename tp_type,
     typename tp_expected_type,
     typename tp_value_type
@@ -191,15 +203,15 @@ dango
       tp_failure == dango::mem_order::seq_cst
     );
 
-    using type = dango::remove_volatile<tp_type>;
+    dango::remove_volatile<tp_type> a_new_value{ dango::forward<tp_value_type>(a_value) };
 
     bool const a_result =
-    __atomic_compare_exchange_n
+    __atomic_compare_exchange
     (
       a_addr,
       a_expected,
-      type(dango::forward<tp_value_type>(a_value)),
-      false,
+      &a_new_value,
+      tp_weak,
       dango::builtin::sint(tp_success),
       dango::builtin::sint(tp_failure)
     );

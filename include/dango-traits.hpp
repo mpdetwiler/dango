@@ -1,14 +1,6 @@
 #ifndef __DANGO_TRAITS_HPP__
 #define __DANGO_TRAITS_HPP__
 
-/*** incomplete_type ***/
-
-namespace
-dango
-{
-  struct incomplete_type;
-}
-
 /*** declval ***/
 
 namespace
@@ -981,11 +973,42 @@ final
 /*** expr_check ***/
 
 namespace
+dango::detail
+{
+  template
+  <typename tp_type, typename... tp_exprs>
+  struct expr_check_help;
+}
+
+template
+<typename tp_type, typename... tp_exprs>
+struct
+dango::
+detail::
+expr_check_help
+final
+{
+  using type = tp_type;
+
+  DANGO_UNINSTANTIABLE(expr_check_help)
+};
+
+namespace
+dango
+{
+  template
+  <typename... tp_exprs>
+  using expr_check = typename detail::expr_check_help<dango::enable_tag, tp_exprs...>::type;
+}
+
+/*** bad_variable_template ***/
+
+namespace
 dango
 {
   template
   <typename... tp_types>
-  using expr_check = dango::enable_tag;
+  using bad_variable_template = typename detail::expr_check_help<void, tp_types...>::type;
 }
 
 /*** conditional ***/

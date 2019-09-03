@@ -209,6 +209,45 @@ dango::enable_if<dango::is_object<tp_type>, tp_type*>
   return reinterpret_cast<tp_type*>(&a_ref);
 }
 
+/*** ptr_as_uint ptr_as_sint ***/
+
+namespace
+dango
+{
+  constexpr auto ptr_as_uint(void const volatile*)noexcept->dango::uptr;
+  constexpr auto ptr_as_sint(void const volatile*)noexcept->dango::sptr;
+}
+
+constexpr auto
+dango::
+ptr_as_uint
+(void const volatile* const a_ptr)noexcept->dango::uptr
+{
+  using ret_type = dango::uptr;
+
+  auto const a_ret =
+    __builtin_constant_p(reinterpret_cast<ret_type>(a_ptr))?
+    reinterpret_cast<ret_type>(a_ptr):
+    reinterpret_cast<ret_type>(a_ptr);
+
+  return a_ret;
+}
+
+constexpr auto
+dango::
+ptr_as_sint
+(void const volatile* const a_ptr)noexcept->dango::sptr
+{
+  using ret_type = dango::sptr;
+
+  auto const a_ret =
+    __builtin_constant_p(reinterpret_cast<ret_type>(a_ptr))?
+    reinterpret_cast<ret_type>(a_ptr):
+    reinterpret_cast<ret_type>(a_ptr);
+
+  return a_ret;
+}
+
 /*** is_aligned ***/
 
 namespace
@@ -224,7 +263,7 @@ is_aligned
 {
   dango_assert(dango::is_pow_two(a_align));
 
-  auto const a_int = reinterpret_cast<dango::uptr>(a_ptr);
+  auto const a_int = dango::ptr_as_uint(a_ptr);
 
   return (a_int % dango::uptr(a_align)) == dango::uptr(0);
 }

@@ -15,6 +15,16 @@ source_location
 final
 {
 public:
+#ifdef __clang__
+  static constexpr auto
+  current
+  (
+    char const* = "TODO: clang++ FILE",
+    char const* = "TODO: clang++ FUNCTION",
+    dango::builtin::sint = dango::builtin::sint(0)
+  )
+  noexcept->source_location;
+#else
   static constexpr auto
   current
   (
@@ -23,6 +33,7 @@ public:
     dango::builtin::sint = __builtin_LINE()
   )
   noexcept->source_location;
+#endif
 private:
   constexpr
   source_location

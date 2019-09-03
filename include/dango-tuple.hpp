@@ -1849,7 +1849,7 @@ std
 {
   template
   <typename tp_type>
-  class tuple_size;
+  struct tuple_size;
 
   template
   <typename... tp_types>
@@ -1893,7 +1893,7 @@ std
 
   template
   <dango::usize tp_index, typename tp_type>
-  class tuple_element;
+  struct tuple_element;
 
   template
   <dango::usize tp_index, typename... tp_types>

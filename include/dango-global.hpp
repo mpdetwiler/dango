@@ -31,6 +31,11 @@ dango::detail
   >
   class global_storage
   <tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>;
+
+  template
+  <typename tp_type, typename tp_ret, tp_ret(& tp_construct)()noexcept>
+  using global_storage_ref =
+    dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::enable_tag>&;
 }
 
 template
@@ -48,11 +53,11 @@ final
 {
 public:
   template
-  <global_storage& tp_storage>
+  <dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
   class strong_incrementer;
 
   template
-  <global_storage& tp_storage>
+  <dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct>  tp_storage>
   class weak_incrementer;
 public:
   constexpr global_storage()noexcept;
@@ -80,7 +85,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
+<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
 class
 dango::
 detail::
@@ -103,7 +108,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
+<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
 dango::
 detail::
 global_storage
@@ -122,7 +127,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
+<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
 dango::
 detail::
 global_storage
@@ -143,7 +148,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
+<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
 class
 dango::
 detail::
@@ -170,7 +175,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
+<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
 dango::
 detail::
 global_storage
@@ -198,7 +203,7 @@ template
   tp_ret(& tp_construct)()noexcept
 >
 template
-<dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>& tp_storage>
+<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
 dango::
 detail::
 global_storage
@@ -381,8 +386,7 @@ noexcept->name##_namespace::weak_type \
 { \
   static name##_namespace::strong_type const s_strong{ }; \
   return name##_namespace::weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
-} \
-linkage constexpr auto& name##_fast = *name##_namespace::s_storage.get();
+}
 
 #define DANGO_DEFINE_GLOBAL_INLINE_CV(name, cv, ...) \
 DANGO_DEFINE_GLOBAL_IMPL(inline, name, cv, __VA_ARGS__)

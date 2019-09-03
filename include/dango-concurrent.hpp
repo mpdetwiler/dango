@@ -719,7 +719,7 @@ try_lock
 namespace
 dango
 {
-  class mutex;
+  struct mutex;
 }
 
 struct
@@ -761,7 +761,7 @@ mutex::
 namespace
 dango
 {
-  class static_mutex;
+  struct static_mutex;
 }
 
 struct
@@ -939,7 +939,7 @@ try_lock
 namespace
 dango
 {
-  class cond_var;
+  struct cond_var;
 }
 
 struct
@@ -1001,7 +1001,7 @@ try_lock
 namespace
 dango
 {
-  class static_cond_var;
+  struct static_cond_var;
 }
 
 struct
@@ -1054,7 +1054,7 @@ try_lock
 namespace
 dango
 {
-  class cond_var_mutex;
+  struct cond_var_mutex;
 }
 
 struct
@@ -1120,7 +1120,7 @@ try_lock
 namespace
 dango
 {
-  class static_cond_var_mutex;
+  struct static_cond_var_mutex;
 }
 
 struct
