@@ -44,8 +44,8 @@ dango::detail
   struct parenth_type_help;
 
   template
-  <typename tp_type, bool tp_noexcept>
-  struct parenth_type_help<void(tp_type)noexcept(tp_noexcept)>;
+  <typename tp_ret, typename tp_type, bool tp_noexcept>
+  struct parenth_type_help<tp_ret(tp_type)noexcept(tp_noexcept)>;
 }
 
 namespace
@@ -57,11 +57,11 @@ dango
 }
 
 template
-<typename tp_type, bool tp_noexcept>
+<typename tp_ret, typename tp_type, bool tp_noexcept>
 struct
 dango::
 detail::
-parenth_type_help<void(tp_type)noexcept(tp_noexcept)>
+parenth_type_help<tp_ret(tp_type)noexcept(tp_noexcept)>
 final
 {
   using type = tp_type;
