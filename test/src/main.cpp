@@ -100,10 +100,10 @@ main
 
     static_assert(sizeof(a_empty) == 8);
 
-    printf("%p\n", static_cast<void const*>(&a_empty.get<0>()));
-    printf("%p\n", static_cast<void const*>(&a_empty.get<1>()));
-    printf("%p\n", static_cast<void const*>(&a_empty.get<2>()));
-    printf("%p\n", static_cast<void const*>(&a_empty.get<3>()));
+    printf(u8"%p\n", static_cast<void const*>(&a_empty.get<0>()));
+    printf(u8"%p\n", static_cast<void const*>(&a_empty.get<1>()));
+    printf(u8"%p\n", static_cast<void const*>(&a_empty.get<2>()));
+    printf(u8"%p\n", static_cast<void const*>(&a_empty.get<3>()));
 
     a_empty = a_empty;
   }

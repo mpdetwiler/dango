@@ -19,8 +19,8 @@ public:
   static constexpr auto
   current
   (
-    char const* = "TODO: clang++ FILE",
-    char const* = "TODO: clang++ FUNCTION",
+    dango::bchar const* = u8"TODO: clang++ FILE",
+    dango::bchar const* = u8"TODO: clang++ FUNCTION",
     dango::builtin::sint = dango::builtin::sint(0)
   )
   noexcept->source_location;
@@ -28,8 +28,8 @@ public:
   static constexpr auto
   current
   (
-    char const* = __builtin_FILE(),
-    char const* = __builtin_FUNCTION(),
+    dango::bchar const* = __builtin_FILE(),
+    dango::bchar const* = __builtin_FUNCTION(),
     dango::builtin::sint = __builtin_LINE()
   )
   noexcept->source_location;
@@ -38,20 +38,20 @@ private:
   constexpr
   source_location
   (
-    char const*,
-    char const*,
+    dango::bchar const*,
+    dango::bchar const*,
     dango::uint
   )
   noexcept;
 public:
   ~source_location()noexcept = default;
 
-  constexpr auto file()const noexcept->char const*;
-  constexpr auto function()const noexcept->char const*;
+  constexpr auto file()const noexcept->dango::bchar const*;
+  constexpr auto function()const noexcept->dango::bchar const*;
   constexpr auto line()const noexcept->dango::uint;
 private:
-  char const* const m_file;
-  char const* const m_func;
+  dango::bchar const* const m_file;
+  dango::bchar const* const m_func;
   dango::uint const m_line;
 public:
   DANGO_DELETE_DEFAULT(source_location)
@@ -63,8 +63,8 @@ dango::
 source_location::
 source_location
 (
-  char const* const a_file,
-  char const* const a_func,
+  dango::bchar const* const a_file,
+  dango::bchar const* const a_func,
   dango::uint const a_line
 )
 noexcept:
@@ -79,7 +79,7 @@ constexpr auto
 dango::
 source_location::
 file
-()const noexcept->char const*
+()const noexcept->dango::bchar const*
 {
   return m_file;
 }
@@ -88,7 +88,7 @@ constexpr auto
 dango::
 source_location::
 function
-()const noexcept->char const*
+()const noexcept->dango::bchar const*
 {
   return m_func;
 }
@@ -107,8 +107,8 @@ dango::
 source_location::
 current
 (
-  char const* const a_file,
-  char const* const a_func,
+  dango::bchar const* const a_file,
+  dango::bchar const* const a_func,
   dango::builtin::sint const a_line
 )
 noexcept->source_location
@@ -191,7 +191,7 @@ namespace
 dango
 {
   using assert_log_handler =
-    void(*)(char const*, char const*, dango::source_location const&)noexcept;
+    void(*)(dango::bchar const*, dango::bchar const*, dango::source_location const&)noexcept;
 
   auto set_assert_log_handler(dango::assert_log_handler)noexcept->dango::assert_log_handler;
   auto get_assert_log_handler()noexcept->dango::assert_log_handler;
@@ -203,8 +203,8 @@ dango::detail
   void
   assert_fail_log
   (
-    char const*,
-    char const*,
+    dango::bchar const*,
+    dango::bchar const*,
     dango::source_location const&
   )
   noexcept;
@@ -214,8 +214,8 @@ dango::detail
   void
   default_assert_log_handler
   (
-    char const*,
-    char const*,
+    dango::bchar const*,
+    dango::bchar const*,
     dango::source_location const&
   )
   noexcept;
@@ -226,8 +226,8 @@ dango::
 detail::
 assert_fail_log
 (
-  char const* const a_expr,
-  char const* const a_msg,
+  dango::bchar const* const a_expr,
+  dango::bchar const* const a_msg,
   dango::source_location const& a_loc
 )
 noexcept
@@ -253,8 +253,8 @@ dango::detail
   assert_func
   (
     bool,
-    char const*,
-    char const*,
+    dango::bchar const*,
+    dango::bchar const*,
     dango::source_location const& = dango::source_location::current()
   )
   noexcept;
@@ -266,8 +266,8 @@ detail::
 assert_func
 (
   bool const a_cond,
-  char const* const a_expr,
-  char const* const a_msg,
+  dango::bchar const* const a_expr,
+  dango::bchar const* const a_msg,
   dango::source_location const& a_loc
 )
 noexcept
@@ -300,13 +300,13 @@ dango::detail
   [[noreturn]] void
   unreachable_func
   (
-    char const* const,
+    dango::bchar const* const,
     dango::source_location const& = dango::source_location::current()
   )
   noexcept;
 
-  extern char const* const unreachable_expr;
-  extern char const* const unreachable_message;
+  extern dango::bchar const* const unreachable_expr;
+  extern dango::bchar const* const unreachable_message;
 }
 
 inline void
@@ -314,7 +314,7 @@ dango::
 detail::
 unreachable_func
 (
-  char const* const a_msg,
+  dango::bchar const* const a_msg,
   dango::source_location const& a_loc
 )
 noexcept

@@ -1150,9 +1150,10 @@ dango::detail
   <typename tp_type>
   constexpr bool const is_nonbool_integral_help =
     dango::is_same<tp_type, char> ||
+    dango::is_same<tp_type, dango::builtin::wchar> ||
+    dango::is_same<tp_type, dango::bchar> ||
     dango::is_same<tp_type, dango::wchar> ||
     dango::is_same<tp_type, dango::dchar> ||
-    dango::is_same<tp_type, dango::builtin::wchar> ||
     dango::is_int<tp_type>;
 }
 

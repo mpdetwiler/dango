@@ -341,7 +341,7 @@ new_control_block
   catch(...)
   {
 #ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg("thread control block allocation failed");
+    dango_unreachable_msg(u8"thread control block allocation failed");
 #else
     dango::terminate();
 #endif
@@ -701,7 +701,7 @@ start_thread
   catch(...)
   {
 #ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg("cond_var watcher-thread creation failed");
+    dango_unreachable_msg(u8"cond_var watcher-thread creation failed");
 #else
     dango::terminate();
 #endif
@@ -750,7 +750,7 @@ noexcept(false)
     return;
   }
 
-  throw "thread creation failed"; // TODO
+  throw u8"thread creation failed"; // TODO
 }
 
 void
@@ -1994,7 +1994,7 @@ start_thread
   catch(...)
   {
 #ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg("windows timer-res manager thread creation failed");
+    dango_unreachable_msg(u8"windows timer-res manager thread creation failed");
 #else
     dango::terminate();
 #endif

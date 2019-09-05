@@ -234,7 +234,7 @@ namespace
     catch(...)
     {
 #ifndef DANGO_NO_DEBUG
-      dango_unreachable_msg("uncaught exception in thread");
+      dango_unreachable_msg(u8"uncaught exception in thread");
 #else
       dango::terminate();
 #endif
@@ -556,7 +556,7 @@ time_begin_period
   }
 
 #ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg("timeBeginPeriod failed");
+  dango_unreachable_msg(u8"timeBeginPeriod failed");
 #else
   dango::terminate();
 #endif
@@ -578,7 +578,7 @@ time_end_period
   }
 
 #ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg("timeEndPeriod failed");
+  dango_unreachable_msg(u8"timeEndPeriod failed");
 #else
   dango::terminate();
 #endif
@@ -609,7 +609,7 @@ namespace
     catch(...)
     {
 #ifndef DANGO_NO_DEBUG
-      dango_unreachable_msg("uncaught exception in thread");
+      dango_unreachable_msg(u8"uncaught exception in thread");
 #else
       dango::terminate();
 #endif
@@ -646,7 +646,7 @@ namespace
         }
 
 #ifndef DANGO_NO_DEBUG
-        dango_unreachable_msg("timeGetDevCaps failed");
+        dango_unreachable_msg(u8"timeGetDevCaps failed");
 #else
         dango::terminate();
 #endif

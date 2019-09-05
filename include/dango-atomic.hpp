@@ -75,6 +75,7 @@ dango
 
 static_assert(dango::is_atomic<bool>);
 static_assert(dango::is_atomic<char>);
+static_assert(dango::is_atomic<dango::bchar>);
 static_assert(dango::is_atomic<dango::wchar>);
 static_assert(dango::is_atomic<dango::dchar>);
 static_assert(dango::is_atomic<dango::builtin::wchar>);

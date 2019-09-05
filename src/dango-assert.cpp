@@ -8,15 +8,15 @@ namespace
   dango::atomic<dango::assert_log_handler> s_assert_log_handler{ dango::null };
 }
 
-constexpr char const* const
+constexpr dango::bchar const* const
 dango::
 detail::
-unreachable_expr = "unreachable";
+unreachable_expr = u8"unreachable";
 
-constexpr char const* const
+constexpr dango::bchar const* const
 dango::
 detail::
-unreachable_message = "unreachable statement reached";
+unreachable_message = u8"unreachable statement reached";
 
 auto
 dango::
@@ -44,7 +44,7 @@ assert_fail_once
 
   if(t_recursion)
   {
-    fprintf(stderr, "assertion failure entered recursively\n");
+    fprintf(stderr, u8"assertion failure entered recursively\n");
 
     dango::trap_instruction();
   }
@@ -64,8 +64,8 @@ dango::
 detail::
 default_assert_log_handler
 (
-  char const* const a_expr,
-  char const* const a_msg,
+  dango::bchar const* const a_expr,
+  dango::bchar const* const a_msg,
   dango::source_location const& a_loc
 )
 noexcept
@@ -75,7 +75,7 @@ noexcept
     fprintf
     (
       stderr,
-      "%s[%u]: %s: assertion \"%s\" failed:\n%s\n",
+      u8"%s[%u]: %s: assertion \"%s\" failed:\n%s\n",
       a_loc.file(),
       dango::builtin::uint(a_loc.line()),
       a_loc.function(),
@@ -89,7 +89,7 @@ noexcept
   fprintf
   (
     stderr,
-    "%s[%u]: %s: assertion \"%s\" failed\n",
+    u8"%s[%u]: %s: assertion \"%s\" failed\n",
     a_loc.file(),
     dango::builtin::uint(a_loc.line()),
     a_loc.function(),

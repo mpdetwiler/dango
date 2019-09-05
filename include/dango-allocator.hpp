@@ -99,7 +99,7 @@ checked_free
     return;
   }
 #ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg("allocator: double free detected");
+  dango_unreachable_msg(u8"allocator: double free detected");
 #else
   dango::terminate();
 #endif
@@ -117,7 +117,7 @@ destructor_check
     return;
   }
 #ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg("allocator: attempt to destroy with unfreed allocations");
+  dango_unreachable_msg(u8"allocator: attempt to destroy with unfreed allocations");
 #else
   dango::terminate();
 #endif
