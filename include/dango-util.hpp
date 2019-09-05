@@ -734,7 +734,8 @@ final
 private:
   using value_type = tp_func tp_class::*;
 public:
-  explicit constexpr member_function(value_type const a_method)noexcept:m_method{ a_method }{ }
+  constexpr member_function(dango::null_tag)noexcept = delete;
+  explicit constexpr member_function(value_type const a_method)noexcept:m_method{ a_method }{ dango_assert(m_method != dango::null); }
   constexpr member_function(member_function const&)noexcept = default;
   constexpr member_function(member_function&&)noexcept = default;
   ~member_function()noexcept = default;
