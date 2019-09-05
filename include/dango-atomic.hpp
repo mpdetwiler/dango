@@ -75,10 +75,10 @@ dango
 
 static_assert(dango::is_atomic<bool>);
 static_assert(dango::is_atomic<char>);
+static_assert(dango::is_atomic<dango::builtin::wchar>);
 static_assert(dango::is_atomic<dango::bchar>);
 static_assert(dango::is_atomic<dango::wchar>);
 static_assert(dango::is_atomic<dango::dchar>);
-static_assert(dango::is_atomic<dango::builtin::wchar>);
 static_assert(dango::is_atomic<dango::ubyte>);
 static_assert(dango::is_atomic<dango::sbyte>);
 static_assert(dango::is_atomic<dango::ushort>);
@@ -128,7 +128,7 @@ dango
   <
     !dango::is_const<tp_type> &&
     dango::is_atomic<tp_type> &&
-    dango::is_convertible<tp_value_type, tp_type>,
+    dango::is_convertible<tp_value_type, dango::remove_volatile<tp_type>>,
     void
   >
   {
@@ -155,7 +155,7 @@ dango
   <
     !dango::is_const<tp_type> &&
     dango::is_atomic<tp_type> &&
-    dango::is_convertible<tp_value_type, tp_type>,
+    dango::is_convertible<tp_value_type, dango::remove_volatile<tp_type>>,
     dango::remove_volatile<tp_type>
   >
   {
@@ -190,7 +190,7 @@ dango
     !dango::is_const<tp_expected_type> &&
     dango::is_same<dango::remove_volatile<tp_type>, dango::remove_volatile<tp_expected_type>> &&
     dango::is_atomic<tp_type> &&
-    dango::is_convertible<tp_value_type, tp_type>,
+    dango::is_convertible<tp_value_type, dango::remove_volatile<tp_type>>,
     bool
   >
   {
@@ -233,7 +233,7 @@ dango::enable_if \
   !dango::is_const<tp_type> && \
   dango::is_int<tp_type> && \
   dango::is_atomic<tp_type> && \
-  dango::is_convertible<tp_value_type, tp_type>, \
+  dango::is_convertible<tp_value_type, dango::remove_volatile<tp_type>>, \
   dango::remove_volatile<tp_type> \
 > \
 { \
