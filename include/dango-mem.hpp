@@ -291,7 +291,8 @@ dango::enable_if<dango::is_pow_two(tp_align) && !dango::is_func<tp_type>, tp_typ
 {
   dango_assert(dango::is_aligned(a_ptr, tp_align));
 
-  auto const a_result = __builtin_assume_aligned(a_ptr, tp_align);
+  auto const a_result =
+    __builtin_assume_aligned(const_cast<dango::remove_cv<tp_type> const*>(a_ptr), tp_align);
 
   return static_cast<tp_type*>(a_result);
 }

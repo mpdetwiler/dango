@@ -354,45 +354,47 @@ decrement
 }
 
 #ifndef DANGO_COMPILING_DANGO
-#define DANGO_STATIC_STRONG_DEF(type_name, val_name) static type_name const val_name{ };
+#define DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(type_name, name) static type_name const name{ };
 #else
-#define DANGO_STATIC_STRONG_DEF(type_name, val_name)
+#define DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(type_name, name)
 #endif
 
-#define DANGO_DEFINE_GLOBAL_IMPL(linkage, name, cv, ...) \
+#ifndef DANGO_NO_DEBUG
+#define DANGO_GLOBAL_UNREACHABLE_TERMINATE(msg) dango_unreachable_msg(msg)
+#else
+#define DANGO_GLOBAL_UNREACHABLE_TERMINATE(msg) dango::terminate()
+#endif
+
+#define DANGO_DEFINE_GLOBAL_IMPL(linkage, type_name, name, ...) \
 namespace \
 name##_namespace \
 { \
-  using value_type = decltype(__VA_ARGS__) cv; \
-  static_assert(!dango::is_array<value_type> && dango::is_object<value_type>); \
-  using return_type = dango::remove_cv<value_type>; \
-  linkage auto \
-  construct \
-  ()noexcept->return_type \
-  { \
-    return return_type{ __VA_ARGS__ }; \
-  } \
-  using storage_type = \
-    dango::detail::global_storage<value_type, return_type, construct>; \
-  linkage storage_type s_storage{ }; \
-  using strong_type = storage_type::strong_incrementer<s_storage>; \
-  using weak_type = storage_type::weak_incrementer<s_storage>; \
-  DANGO_STATIC_STRONG_DEF(strong_type, s_strong) \
+  using dango_global_value_type = type_name; \
+  static_assert(!dango::is_array<dango_global_value_type> && dango::is_object<dango_global_value_type>); \
+  using dango_global_return_type = dango::remove_cv<dango_global_value_type>; \
+  linkage auto dango_global_construct()noexcept->dango_global_return_type \
+  { try{ return dango_global_return_type{ __VA_ARGS__ }; }catch(...){ DANGO_GLOBAL_UNREACHABLE_TERMINATE("constructor of global \"name\" threw exception"); } } \
+  using dango_global_storage_type = \
+    dango::detail::global_storage<dango_global_value_type, dango_global_return_type, dango_global_construct>; \
+  linkage dango_global_storage_type s_dango_global_storage{ }; \
+  using dango_global_strong_type = dango_global_storage_type::strong_incrementer<s_dango_global_storage>; \
+  using dango_global_weak_type = dango_global_storage_type::weak_incrementer<s_dango_global_storage>; \
+  DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(dango_global_strong_type, s_dango_global_strong) \
 } \
 [[nodiscard]] linkage auto \
 name \
 (DANGO_SRC_LOC_ARG_DEFAULT(a_loc)) \
-noexcept->name##_namespace::weak_type \
+noexcept->name##_namespace::dango_global_weak_type \
 { \
-  static name##_namespace::strong_type const s_strong{ }; \
-  return name##_namespace::weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
+  static name##_namespace::dango_global_strong_type const s_strong{ }; \
+  return name##_namespace::dango_global_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
 }
 
-#define DANGO_DEFINE_GLOBAL_INLINE_CV(name, cv, ...) \
-DANGO_DEFINE_GLOBAL_IMPL(inline, name, cv, __VA_ARGS__)
+#define DANGO_DEFINE_GLOBAL(type_name, name, ...) \
+DANGO_DEFINE_GLOBAL_IMPL(inline, type_name, name, __VA_ARGS__)
 
-#define DANGO_DEFINE_GLOBAL_INLINE(name, ...) \
-DANGO_DEFINE_GLOBAL_INLINE_CV(name, , __VA_ARGS__)
+#define DANGO_DEFINE_GLOBAL_STATIC(type_name, name, ...) \
+DANGO_DEFINE_GLOBAL_IMPL(static, type_name, name, __VA_ARGS__)
 
 #define dango_access_global(global_name, local_name) \
 if constexpr(auto const local_name = global_name(); true)

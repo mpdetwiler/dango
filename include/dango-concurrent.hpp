@@ -1913,7 +1913,7 @@ public:
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL_INLINE_CV(s_cond_var_registry_thread, const, detail::cond_var_registry_thread{ })
+  DANGO_DEFINE_GLOBAL(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, )
 }
 
 #ifdef _WIN32
@@ -1997,7 +1997,7 @@ public:
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL_INLINE_CV(s_windows_timer_res_daemon, const, detail::windows_timer_res_daemon{ })
+  DANGO_DEFINE_GLOBAL(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, )
 }
 
 #endif
