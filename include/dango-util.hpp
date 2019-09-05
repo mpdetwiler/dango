@@ -703,78 +703,52 @@ dango::enable_if
   return tp_ret{ dango::forward<tp_func>(a_func) };
 }
 
-/*** invoker ***/
-
-namespace
-dango::detail
-{
-  template
-  <
-    typename tp_type,
-    typename tp_nocv = dango::remove_cv<tp_type>,
-    typename tp_enabled = dango::enable_tag
-  >
-  struct invoker_help;
-
-  template
-  <typename tp_type, typename tp_func, typename tp_class>
-  struct
-  invoker_help
-  <tp_type, tp_func tp_class::*, dango::enable_if<dango::is_func<tp_func>>>;
-}
+/*** member_func ***/
 
 namespace
 dango
 {
   template
+  <typename tp_type, typename tp_enabled>
+  class member_function;
+
+  template
+  <typename tp_func, typename tp_class>
+  class
+  member_function<tp_func tp_class::*, dango::enable_if<dango::is_func<tp_func>>>;
+
+  template
   <typename tp_type>
-  using invoker = typename detail::invoker_help<tp_type>::type;
+  using member_func =
+    dango::member_function<dango::remove_cv<tp_type>, dango::enable_tag>;
 }
 
 template
-<
-  typename tp_type,
-  typename tp_nocv,
-  typename tp_enabled
->
-struct
+<typename tp_func, typename tp_class>
+class
 dango::
-detail::
-invoker_help
+member_function
+<tp_func tp_class::*, dango::enable_if<dango::is_func<tp_func>>>
 final
 {
-  using type = tp_type;
-
-  DANGO_UNINSTANTIABLE(invoker_help)
-};
-
-template
-<typename tp_type, typename tp_func, typename tp_class>
-struct
-dango::
-detail::
-invoker_help
-<tp_type, tp_func tp_class::*, dango::enable_if<dango::is_func<tp_func>>>
-final
-{
-public:
-  using type = invoker_help;
 private:
   using value_type = tp_func tp_class::*;
 public:
-  explicit constexpr invoker_help(value_type const a_method)noexcept:m_method{ a_method }{ }
-  constexpr invoker_help(invoker_help const&)noexcept = default;
-  constexpr invoker_help(invoker_help&&)noexcept = default;
-  ~invoker_help()noexcept = default;
-  constexpr auto operator = (invoker_help const&)&noexcept->invoker_help& = default;
-  constexpr auto operator = (invoker_help&&)&noexcept->invoker_help& = default;
+  explicit constexpr member_function(value_type const a_method)noexcept:m_method{ a_method }{ }
+  constexpr member_function(member_function const&)noexcept = default;
+  constexpr member_function(member_function&&)noexcept = default;
+  ~member_function()noexcept = default;
+  constexpr auto operator = (member_function const&)&noexcept->member_function& = default;
+  constexpr auto operator = (member_function&&)&noexcept->member_function& = default;
 
   template
   <
     typename tp_first,
     typename... tp_args,
-    typename tp_enabled =
+    dango::expr_check
+    <
       decltype(((dango::declval<tp_first>()).*(dango::declval<value_type const&>()))(dango::declval<tp_args>()...))
+    > = dango::enable_val
   >
   constexpr auto
   operator ()
@@ -789,8 +763,10 @@ public:
   <
     typename tp_first,
     typename... tp_args,
-    typename tp_enabled =
+    dango::expr_check
+    <
       decltype(((dango::declval<tp_first* const&>())->*(dango::declval<value_type const&>()))(dango::declval<tp_args>()...))
+    > = dango::enable_val
   >
   constexpr auto
   operator ()
@@ -803,7 +779,59 @@ public:
 private:
   value_type m_method;
 public:
-  DANGO_DELETE_DEFAULT(invoker_help)
+  DANGO_DELETE_DEFAULT(member_function)
+};
+
+/*** member_func_type ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type, typename tp_enabled>
+  struct member_func_type_help;
+
+  template
+  <typename tp_type>
+  struct
+  member_func_type_help
+  <tp_type, dango::enable_if<dango::is_member_func_ptr<tp_type>>>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using member_func_type =
+    typename detail::member_func_type_help<tp_type, dango::enable_tag>::type;
+}
+
+template
+<typename tp_type, typename tp_enabled>
+struct
+dango::
+detail::
+member_func_type_help
+final
+{
+  using type = tp_type;
+
+  DANGO_UNINSTANTIABLE(member_func_type_help)
+};
+
+template
+<typename tp_type>
+struct
+dango::
+detail::
+member_func_type_help
+<tp_type, dango::enable_if<dango::is_member_func_ptr<tp_type>>>
+final
+{
+  using type = dango::member_func<tp_type>;
+
+  DANGO_UNINSTANTIABLE(member_func_type_help)
 };
 
 #endif
