@@ -238,10 +238,7 @@ dango
   min
   (tp_type)noexcept->
   dango::enable_if
-  <
-    dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
-    dango::remove_cv<tp_type>
-  >;
+  <dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
 
   template
   <typename tp_type>
@@ -249,10 +246,7 @@ dango
   min
   (tp_type, tp_type)noexcept->
   dango::enable_if
-  <
-    dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
-    dango::remove_cv<tp_type>
-  >;
+  <dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
 
   template
   <typename tp_type, typename... tp_types>
@@ -264,8 +258,8 @@ dango
   <
     !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
     (dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
-    (... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
-    dango::remove_cv<tp_type>
+    (... && dango::is_same<tp_types, tp_type>),
+    tp_type
   >;
 
   template
@@ -274,10 +268,7 @@ dango
   max
   (tp_type)noexcept->
   dango::enable_if
-  <
-    dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
-    dango::remove_cv<tp_type>
-  >;
+  <dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
 
   template
   <typename tp_type>
@@ -285,10 +276,7 @@ dango
   max
   (tp_type, tp_type)noexcept->
   dango::enable_if
-  <
-    dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
-    dango::remove_cv<tp_type>
-  >;
+  <dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
 
   template
   <typename tp_type, typename... tp_types>
@@ -300,8 +288,8 @@ dango
   <
     !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
     (dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
-    (... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
-    dango::remove_cv<tp_type>
+    (... && dango::is_same<tp_types, tp_type>),
+    tp_type
   >;
 }
 
@@ -312,10 +300,7 @@ dango::
 min
 (tp_type const a_arg)noexcept->
 dango::enable_if
-<
-  dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
-  dango::remove_cv<tp_type>
->
+<dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
 {
   return a_arg;
 }
@@ -327,10 +312,7 @@ dango::
 min
 (tp_type const a_arg1, tp_type const a_arg2)noexcept->
 dango::enable_if
-<
-  dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
-  dango::remove_cv<tp_type>
->
+<dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
 {
   return a_arg1 < a_arg2 ? a_arg1 : a_arg2;
 }
@@ -350,8 +332,8 @@ dango::enable_if
 <
   !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
   (dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
-  (... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
-  dango::remove_cv<tp_type>
+  (... && dango::is_same<tp_types, tp_type>),
+  tp_type
 >
 {
   return dango::min(a_arg1, dango::min(a_arg2, a_args...));
@@ -364,10 +346,7 @@ dango::
 max
 (tp_type const a_arg)noexcept->
 dango::enable_if
-<
-  dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
-  dango::remove_cv<tp_type>
->
+<dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
 {
   return a_arg;
 }
@@ -379,10 +358,7 @@ dango::
 max
 (tp_type const a_arg1, tp_type const a_arg2)noexcept->
 dango::enable_if
-<
-  dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>,
-  dango::remove_cv<tp_type>
->
+<dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
 {
   return a_arg1 > a_arg2 ? a_arg1 : a_arg2;
 }
@@ -402,8 +378,8 @@ dango::enable_if
 <
   !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
   (dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
-  (... && dango::is_same<tp_types, dango::remove_cv<tp_type>>),
-  dango::remove_cv<tp_type>
+  (... && dango::is_same<tp_types, tp_type>),
+  tp_type
 >
 {
   return dango::max(a_arg1, dango::max(a_arg2, a_args...));
@@ -480,7 +456,7 @@ dango
   constexpr auto
   next_multiple
   (tp_uint, tp_uint)noexcept->
-  dango::enable_if<dango::is_uint<tp_uint>, dango::remove_cv<tp_uint>>;
+  dango::enable_if<dango::is_uint<tp_uint>, tp_uint>;
 }
 
 template
@@ -489,7 +465,7 @@ constexpr auto
 dango::
 next_multiple
 (tp_uint const a_arg1, tp_uint const a_arg2)noexcept->
-dango::enable_if<dango::is_uint<tp_uint>, dango::remove_cv<tp_uint>>
+dango::enable_if<dango::is_uint<tp_uint>, tp_uint>
 {
   tp_uint const a_div = a_arg1 / a_arg2;
   tp_uint const a_mod = a_arg1 % a_arg2;
@@ -576,38 +552,40 @@ dango
   template
   <
     typename tp_func,
-    typename tp_ret = dango::detail::scope_guard<dango::decay<tp_func>>,
-    typename tp_enabled = decltype(tp_ret{ dango::declval<tp_func>() })
+    dango::enable_if
+    <
+      dango::is_constructible<dango::detail::scope_guard<dango::decay<tp_func>>, tp_func> &&
+      dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
+      dango::is_noexcept_destructible<dango::decay<tp_func>>
+    > = dango::enable_val
   >
   [[nodiscard]] auto
   make_guard
-  (tp_func&&)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
-  dango::enable_if
-  <
-    dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
-    dango::is_noexcept_destructible<dango::decay<tp_func>>,
-    tp_ret
-  >;
+  (tp_func&&)
+  noexcept(dango::is_noexcept_constructible<dango::detail::scope_guard<dango::decay<tp_func>>, tp_func>)->
+  detail::scope_guard<dango::decay<tp_func>>;
 }
 
 template
 <
   typename tp_func,
-  typename tp_ret,
-  typename tp_enabled
+  dango::enable_if
+  <
+    dango::is_constructible<dango::detail::scope_guard<dango::decay<tp_func>>, tp_func> &&
+    dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
+    dango::is_noexcept_destructible<dango::decay<tp_func>>
+  >
 >
-auto
+[[nodiscard]] auto
 dango::
 make_guard
-(tp_func&& a_func)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
-dango::enable_if
-<
-  dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
-  dango::is_noexcept_destructible<dango::decay<tp_func>>,
-  tp_ret
->
+(tp_func&& a_func)
+noexcept(dango::is_noexcept_constructible<dango::detail::scope_guard<dango::decay<tp_func>>, tp_func>)->
+detail::scope_guard<dango::decay<tp_func>>
 {
-  return tp_ret{ dango::forward<tp_func>(a_func) };
+  using return_type = dango::detail::scope_guard<dango::decay<tp_func>>;
+
+  return return_type{ dango::forward<tp_func>(a_func) };
 }
 
 /*** make_finally ***/
@@ -669,38 +647,41 @@ dango
   template
   <
     typename tp_func,
-    typename tp_ret = dango::detail::finally_guard<dango::decay<tp_func>>,
-    typename tp_enabled = decltype(tp_ret{ dango::declval<tp_func>() })
+    dango::enable_if
+    <
+      dango::is_constructible<dango::detail::finally_guard<dango::decay<tp_func>>, tp_func> &&
+      dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
+      dango::is_noexcept_destructible<dango::decay<tp_func>>
+    > = dango::enable_val
   >
   [[nodiscard]] auto
   make_finally
-  (tp_func&&)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
-  dango::enable_if
-  <
-    dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
-    dango::is_noexcept_destructible<dango::decay<tp_func>>,
-    tp_ret
-  >;
+  (tp_func&&)
+  noexcept(dango::is_noexcept_constructible<dango::detail::finally_guard<dango::decay<tp_func>>, tp_func>)->
+  dango::detail::finally_guard<dango::decay<tp_func>>;
+
 }
 
 template
 <
   typename tp_func,
-  typename tp_ret,
-  typename tp_enabled
+  dango::enable_if
+  <
+    dango::is_constructible<dango::detail::finally_guard<dango::decay<tp_func>>, tp_func> &&
+    dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
+    dango::is_noexcept_destructible<dango::decay<tp_func>>
+  >
 >
-auto
+[[nodiscard]] auto
 dango::
 make_finally
-(tp_func&& a_func)noexcept(noexcept(tp_ret{ dango::declval<tp_func>() }))->
-dango::enable_if
-<
-  dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
-  dango::is_noexcept_destructible<dango::decay<tp_func>>,
-  tp_ret
->
+(tp_func&& a_func)
+noexcept(dango::is_noexcept_constructible<dango::detail::finally_guard<dango::decay<tp_func>>, tp_func>)->
+dango::detail::finally_guard<dango::decay<tp_func>>
 {
-  return tp_ret{ dango::forward<tp_func>(a_func) };
+  using return_type = dango::detail::finally_guard<dango::decay<tp_func>>;
+
+  return return_type{ dango::forward<tp_func>(a_func) };
 }
 
 /*** member_func ***/
@@ -721,6 +702,15 @@ dango
   <typename tp_type>
   using member_func =
     dango::member_function<dango::remove_cv<tp_type>, dango::enable_tag>;
+
+  template
+  <typename tp_arg, dango::enable_if<dango::is_member_func_ptr<tp_arg>> = dango::enable_val>
+  constexpr auto
+  make_member_func
+  (tp_arg const a_arg)noexcept->dango::member_func<tp_arg>
+  {
+    return dango::member_func<tp_arg>{ a_arg };
+  }
 }
 
 template
