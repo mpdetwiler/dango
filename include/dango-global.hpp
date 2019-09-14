@@ -373,7 +373,7 @@ name##_namespace \
   static_assert(!dango::is_array<dango_global_value_type> && dango::is_object<dango_global_value_type>); \
   using dango_global_return_type = dango::remove_cv<dango_global_value_type>; \
   linkage auto dango_global_construct()noexcept->dango_global_return_type \
-  { try{ return dango_global_return_type{ __VA_ARGS__ }; }catch(...){ DANGO_GLOBAL_UNREACHABLE_TERMINATE(u8"constructor of global \"name\" threw exception"); } } \
+  { try{ return dango_global_return_type __VA_ARGS__ ; }catch(...){ DANGO_GLOBAL_UNREACHABLE_TERMINATE(u8"constructor of global \"name\" threw exception"); } } \
   using dango_global_storage_type = \
     dango::detail::global_storage<dango_global_value_type, dango_global_return_type, dango_global_construct>; \
   linkage dango_global_storage_type s_dango_global_storage{ }; \

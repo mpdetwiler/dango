@@ -34,7 +34,7 @@ constexpr auto operator = (name&&)& noexcept->name& = default;
 #define DANGO_TOKEN_CONCAT(x, y) DANGO_TOKEN_CONCAT_IMPL(x, y)
 #define DANGO_APPEND_LINE(x) DANGO_TOKEN_CONCAT(x, __LINE__)
 
-/*** parenth_type ***/
+/*** DANGO_PARENTH_TYPE ***/
 
 namespace
 dango::detail
@@ -68,6 +68,8 @@ final
 
   DANGO_UNINSTANTIABLE(parenth_type_help)
 };
+
+#define DANGO_PARENTH_TYPE(...) dango::parenth_type<void(__VA_ARGS__)noexcept>
 
 #endif
 

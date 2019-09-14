@@ -262,6 +262,8 @@ notifier::
   }
 
   m_control->notify_all();
+
+  dango::thread::self_access_check(true);
 }
 
 /*** thread ***/
@@ -359,6 +361,22 @@ thread_self_init
   thread_local notifier const t_notifier{ t_thread };
 
   return t_thread;
+}
+
+auto
+dango::
+thread::
+self_access_check
+(bool const a_clear)noexcept->bool
+{
+  thread_local bool t_access = true;
+
+  if(a_clear)
+  {
+    t_access = false;
+  }
+
+  return t_access;
 }
 
 void

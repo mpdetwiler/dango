@@ -1204,6 +1204,7 @@ private:
   static auto new_control_block(bool)noexcept->control_block*;
   static auto thread_self_init(bool)noexcept->thread const&;
   static void start_thread(thread_start_func, void*)noexcept(false);
+  static auto self_access_check(bool)noexcept->bool;
 
   template
   <typename tp_func>
@@ -1215,6 +1216,7 @@ private:
 public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
+  static auto can_call_self()noexcept->bool;
   static void main_join()noexcept;
   [[nodiscard]] static auto main_join_finally()noexcept;
 
@@ -1523,7 +1525,18 @@ thread::
 self
 ()noexcept->thread const&
 {
+  dango_assert(dango::thread::can_call_self());
+
   return thread_self_init(true);
+}
+
+inline auto
+dango::
+thread::
+can_call_self
+()noexcept->bool
+{
+  return self_access_check(false);
 }
 
 inline void
@@ -1913,7 +1926,7 @@ public:
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, )
+  DANGO_DEFINE_GLOBAL(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
 }
 
 #ifdef _WIN32
@@ -1997,7 +2010,7 @@ public:
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, )
+  DANGO_DEFINE_GLOBAL(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
 }
 
 #endif
