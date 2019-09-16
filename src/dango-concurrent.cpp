@@ -72,10 +72,11 @@ dango::
 thread::
 control_block::
 control_block
-(bool const a_daemon)noexcept:
+(bool const a_daemon, dango::thread_ID const a_thread_ID)noexcept:
 super_type{ },
 m_ref_count{ dango::usize(1) },
 m_daemon{ a_daemon },
+m_thread_ID{ a_thread_ID },
 m_mutex{ },
 m_cond{ m_mutex },
 m_alive{ true },
@@ -263,7 +264,7 @@ notifier::
 
   m_control->notify_all();
 
-  dango::thread::self_access_check(true);
+  thread::thread_self_access_check(true, dango::null);
 }
 
 /*** thread ***/
@@ -338,7 +339,7 @@ new_control_block
 {
   try
   {
-    return new control_block{ a_daemon };
+    return new control_block{ a_daemon, thread::self_ID() };
   }
   catch(...)
   {
@@ -366,14 +367,19 @@ thread_self_init
 auto
 dango::
 thread::
-self_access_check
-(bool const a_clear)noexcept->bool
+thread_self_access_check
+(bool const a_clear, void const** const a_ID)noexcept->bool
 {
   thread_local bool t_access = true;
 
   if(a_clear)
   {
     t_access = false;
+  }
+
+  if(a_ID)
+  {
+    *a_ID = &t_access;
   }
 
   return t_access;

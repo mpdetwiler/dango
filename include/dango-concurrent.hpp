@@ -1179,6 +1179,13 @@ namespace
 dango
 {
   class thread;
+
+  enum class
+  thread_ID:
+  dango::uptr
+  {
+    null_ID = dango::ptr_as_uint(dango::null)
+  };
 }
 
 class
@@ -1203,8 +1210,8 @@ private:
 private:
   static auto new_control_block(bool)noexcept->control_block*;
   static auto thread_self_init(bool)noexcept->thread const&;
+  static auto thread_self_access_check(bool, void const**)noexcept->bool;
   static void start_thread(thread_start_func, void*)noexcept(false);
-  static auto self_access_check(bool)noexcept->bool;
 
   template
   <typename tp_func>
@@ -1217,6 +1224,7 @@ public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
   static auto can_call_self()noexcept->bool;
+  static auto self_ID()noexcept->dango::thread_ID;
   static void main_join()noexcept;
   [[nodiscard]] static auto main_join_finally()noexcept;
 
@@ -1278,6 +1286,7 @@ public:
   void join()const noexcept;
   void join(dango::timeout const&)const noexcept;
   constexpr auto is_daemon()const noexcept->bool;
+  constexpr auto get_ID()const noexcept->dango::thread_ID;
   constexpr auto dango_operator_is_null()const noexcept->bool;
   constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
 private:
@@ -1299,7 +1308,7 @@ public:
   static auto operator new(dango::usize)dango_new_noexcept(true)->void*;
   static void operator delete(void*, dango::usize)noexcept;
 public:
-  explicit constexpr control_block(bool)noexcept;
+  explicit constexpr control_block(bool, dango::thread_ID)noexcept;
   ~control_block()noexcept;
   void increment()noexcept;
   auto decrement()noexcept->bool;
@@ -1308,9 +1317,11 @@ public:
   void notify_all()noexcept;
   auto is_alive()const noexcept->bool;
   constexpr auto is_daemon()const noexcept->bool;
+  constexpr auto get_ID()const noexcept->dango::thread_ID;
 private:
   dango::atomic<dango::usize> m_ref_count;
   bool const m_daemon;
+  dango::thread_ID const m_thread_ID;
   mutable dango::mutex m_mutex;
   mutable dango::cond_var_mutex m_cond;
   bool m_alive;
@@ -1367,6 +1378,16 @@ is_daemon
 ()const noexcept->bool
 {
   return m_daemon;
+}
+
+constexpr auto
+dango::
+thread::
+control_block::
+get_ID
+()const noexcept->dango::thread_ID
+{
+  return m_thread_ID;
 }
 
 /*** registry ***/
@@ -1525,7 +1546,7 @@ thread::
 self
 ()noexcept->thread const&
 {
-  dango_assert(dango::thread::can_call_self());
+  dango_assert(can_call_self());
 
   return thread_self_init(true);
 }
@@ -1536,7 +1557,20 @@ thread::
 can_call_self
 ()noexcept->bool
 {
-  return self_access_check(false);
+  return thread_self_access_check(false, dango::null);
+}
+
+inline auto
+dango::
+thread::
+self_ID
+()noexcept->dango::thread_ID
+{
+  void const* a_result;
+
+  thread_self_access_check(false, &a_result);
+
+  return dango::thread_ID{ dango::ptr_as_uint(a_result) };
 }
 
 inline void
@@ -1669,6 +1703,17 @@ is_daemon
   dango_assert(m_control != dango::null);
 
   return m_control->is_daemon();
+}
+
+constexpr auto
+dango::
+thread::
+get_ID
+()const noexcept->dango::thread_ID
+{
+  dango_assert(m_control != dango::null);
+
+  return m_control->get_ID();
 }
 
 constexpr auto

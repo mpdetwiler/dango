@@ -47,6 +47,8 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  dango_assert(dango::thread::self_ID() == dango::thread::self().get_ID());
+
   dango::thread a_thread = null;
 
   dango_assert(a_thread == a_thread);
