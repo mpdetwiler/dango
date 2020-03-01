@@ -9,7 +9,7 @@ operator_new
   dango::usize const a_size_arg,
   dango::usize const a_align_arg
 )
-dango_new_noexcept(true)->void*
+dango_new_noexcept->void*
 {
   dango_assert(a_size_arg != dango::usize(0));
   dango_assert(dango::is_pow_two(a_align_arg));

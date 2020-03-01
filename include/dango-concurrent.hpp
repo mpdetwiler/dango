@@ -1305,7 +1305,7 @@ public dango::intrusive_list_elem<control_block>
 private:
   using super_type = dango::intrusive_list_elem<control_block>;
 public:
-  static auto operator new(dango::usize)dango_new_noexcept(true)->void*;
+  static auto operator new(dango::usize)dango_new_noexcept->void*;
   static void operator delete(void*, dango::usize)noexcept;
 public:
   explicit constexpr control_block(bool, dango::thread_ID)noexcept;
@@ -1438,7 +1438,7 @@ final
 public:
   static auto
   operator new
-  (dango::usize const a_size)dango_new_noexcept(true)->void*
+  (dango::usize const a_size)dango_new_noexcept->void*
   {
     return dango::operator_new(a_size, alignof(runnable));
   }
@@ -1487,7 +1487,7 @@ final
 public:
   static auto
   operator new
-  (dango::usize const a_size)dango_new_noexcept(true)->void*
+  (dango::usize const a_size)dango_new_noexcept->void*
   {
     return dango::operator_new(a_size, alignof(runnable));
   }

@@ -120,42 +120,11 @@ dango
 #endif
 }
 
-namespace
-dango::detail
-{
-  constexpr auto true_bool()noexcept->bool;
+#define dango_new_noexcept noexcept(dango::c_operator_new_noexcept)
 
-  template
-  <typename tp_type>
-  constexpr auto
-  true_bool
-  (tp_type&&)noexcept->
-  dango::enable_if<dango::is_constructible<bool, tp_type>, bool>;
-}
+#define dango_new_noexcept_and(...) noexcept(dango::c_operator_new_noexcept && bool(__VA_ARGS__))
 
-constexpr auto
-dango::
-detail::
-true_bool
-()noexcept->bool
-{
-  return true;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-detail::
-true_bool
-(tp_type&& a_arg)noexcept->
-dango::enable_if<dango::is_constructible<bool, tp_type>, bool>
-{
-  return bool(dango::forward<tp_type>(a_arg));
-}
-
-#define dango_new_noexcept(...) \
-noexcept(dango::c_operator_new_noexcept && dango::detail::true_bool(__VA_ARGS__))
+#define dango_new_noexcept_or(...) noexcept(dango::c_operator_new_noexcept || bool(__VA_ARGS__))
 
 /*** launder ***/
 
@@ -304,7 +273,7 @@ dango
 {
   [[nodiscard]] auto
   operator_new
-  (dango::usize, dango::usize)dango_new_noexcept(true)->void*;
+  (dango::usize, dango::usize)dango_new_noexcept->void*;
 
   void operator_delete(void const volatile*, dango::usize, dango::usize)noexcept;
 }

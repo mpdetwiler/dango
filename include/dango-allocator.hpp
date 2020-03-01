@@ -27,12 +27,12 @@ protected:
   constexpr allocator_base()noexcept;
   ~allocator_base()noexcept = default;
 protected:
-  virtual auto alloc(dango::usize, dango::usize)dango_new_noexcept(true)->void*;
+  virtual auto alloc(dango::usize, dango::usize)dango_new_noexcept->void*;
   virtual void free(void const volatile*, dango::usize, dango::usize)noexcept;
 protected:
   void destructor_check()noexcept;
 private:
-  auto checked_alloc(dango::usize, dango::usize)dango_new_noexcept(true)->void*;
+  auto checked_alloc(dango::usize, dango::usize)dango_new_noexcept->void*;
   void checked_free(void const volatile*, dango::usize, dango::usize)noexcept;
 private:
   dango::atomic<dango::usize> m_alloc_count;
@@ -56,7 +56,7 @@ dango::
 detail::
 allocator_base::
 alloc
-(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept(true)->void*
+(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->void*
 {
   return dango::operator_new(a_size, a_align);
 }
@@ -76,7 +76,7 @@ dango::
 detail::
 allocator_base::
 checked_alloc
-(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept(true)->void*
+(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->void*
 {
   auto const a_ptr = alloc(a_size, a_align);
 
@@ -236,7 +236,7 @@ public:
   <typename tp_alloc, typename... tp_args>
   static auto
   make_local
-  (tp_args&&... a_args)dango_new_noexcept(dango::is_noexcept_constructible<tp_alloc, tp_args...>)->
+  (tp_args&&... a_args)dango_new_noexcept_and(dango::is_noexcept_constructible<tp_alloc, tp_args...>)->
   dango::enable_if
   <
     !dango::is_const<tp_alloc> &&
@@ -262,7 +262,7 @@ public:
   auto operator = (allocator&&)& noexcept->allocator&;
   constexpr explicit operator bool()const noexcept{ return m_control != dango::null; }
 public:
-  auto alloc(dango::usize, dango::usize)const dango_new_noexcept(true)->void*;
+  auto alloc(dango::usize, dango::usize)const dango_new_noexcept->void*;
   void free(void const volatile*, dango::usize, dango::usize)const noexcept;
 public:
   constexpr auto dango_operator_is_null()const noexcept->bool{ return m_control == dango::null; }
@@ -292,7 +292,7 @@ public:
   virtual void increment()noexcept = 0;
   virtual auto decrement()noexcept->bool = 0;
 public:
-  auto alloc(dango::usize, dango::usize)dango_new_noexcept(true)->void*;
+  auto alloc(dango::usize, dango::usize)dango_new_noexcept->void*;
   void free(void const volatile*, dango::usize, dango::usize)noexcept;
 private:
   dango::detail::allocator_base* const m_alloc_ptr;
@@ -306,7 +306,7 @@ dango::
 allocator::
 control_base::
 alloc
-(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept(true)->void*
+(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->void*
 {
   return m_alloc_ptr->checked_alloc(a_size, a_align);
 }
@@ -391,7 +391,7 @@ public dango::allocator::control_base
 private:
   using super_type = dango::allocator::control_base;
 public:
-  static auto operator new(dango::usize const a_size)dango_new_noexcept(true)->void*{ return dango::operator_new(a_size, alignof(local_control_block)); }
+  static auto operator new(dango::usize const a_size)dango_new_noexcept->void*{ return dango::operator_new(a_size, alignof(local_control_block)); }
   static void operator delete(void* const a_ptr, dango::usize const a_size)noexcept{ dango::operator_delete(a_ptr, a_size, alignof(local_control_block)); }
 public:
   template
@@ -570,7 +570,7 @@ inline auto
 dango::
 allocator::
 alloc
-(dango::usize const a_size, dango::usize const a_align)const dango_new_noexcept(true)->void*
+(dango::usize const a_size, dango::usize const a_align)const dango_new_noexcept->void*
 {
   dango_assert(m_control != dango::null);
 
@@ -615,7 +615,7 @@ private:
 private:
   template
   <typename tp_alloc, typename... tp_children>
-  static auto make_node(tp_alloc&&, tp_children&&...)dango_new_noexcept(true)->node_base*;
+  static auto make_node(tp_alloc&&, tp_children&&...)dango_new_noexcept->node_base*;
 public:
   template
   <
@@ -627,7 +627,7 @@ public:
   >
   explicit
   allocator_tree
-  (tp_alloc&&, tp_children&&...)dango_new_noexcept(true);
+  (tp_alloc&&, tp_children&&...)dango_new_noexcept;
 public:
   constexpr allocator_tree(dango::null_tag const)noexcept:m_node{ dango::null }{ }
   allocator_tree(allocator_tree const&)noexcept;
@@ -858,7 +858,7 @@ auto
 dango::
 allocator_tree::
 make_node
-(tp_alloc&& a_alloc, tp_children&&... a_children)dango_new_noexcept(true)->node_base*
+(tp_alloc&& a_alloc, tp_children&&... a_children)dango_new_noexcept->node_base*
 {
   using node_type = node<sizeof...(tp_children)>;
 
@@ -881,7 +881,7 @@ template
 dango::
 allocator_tree::
 allocator_tree
-(tp_alloc&& a_alloc, tp_children&&... a_children)dango_new_noexcept(true):
+(tp_alloc&& a_alloc, tp_children&&... a_children)dango_new_noexcept:
 m_node{ make_node(dango::forward<tp_alloc>(a_alloc), dango::forward<tp_children>(a_children)...) }
 {
 

@@ -62,7 +62,7 @@ dango::
 thread::
 control_block::
 operator new
-(dango::usize const a_size)dango_new_noexcept(true)->void*
+(dango::usize const a_size)dango_new_noexcept->void*
 {
   return dango::operator_new(a_size, alignof(control_block));
 }

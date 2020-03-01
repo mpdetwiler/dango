@@ -744,7 +744,7 @@ dango
   template
   <dango::usize tp_align = alignof(dango::max_align_type)>
   auto
-  auto_new(dango::usize const a_size)dango_new_noexcept(true)->
+  auto_new(dango::usize const a_size)dango_new_noexcept->
   dango::enable_if
   <dango::is_pow_two(tp_align), dango::auto_ptr<void, dango::detail::auto_new_config<tp_align, false>>>
   {
@@ -758,7 +758,7 @@ dango
   template
   <dango::usize tp_align = alignof(dango::max_align_type)>
   auto
-  auto_new(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept(true)->
+  auto_new(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->
   dango::enable_if
   <dango::is_pow_two(tp_align), dango::auto_ptr<void, dango::detail::auto_new_config<tp_align, true>>>
   {
