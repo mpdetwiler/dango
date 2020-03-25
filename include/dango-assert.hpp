@@ -28,8 +28,8 @@ public:
   static constexpr auto
   current
   (
-    dango::bchar const* = __builtin_FILE(),
-    dango::bchar const* = __builtin_FUNCTION(),
+    dango::bchar const* = dango::char_as_bchar(__builtin_FILE()),
+    dango::bchar const* = dango::char_as_bchar(__builtin_FUNCTION()),
     dango::builtin::sint = __builtin_LINE()
   )
   noexcept->source_location;
@@ -281,10 +281,10 @@ noexcept
 }
 
 #ifndef DANGO_NO_DEBUG
-#define dango_assert(cond) dango::detail::assert_func(bool(cond), #cond, dango::null)
-#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), #cond, dango::null, loc)
-#define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), #cond, msg)
-#define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), #cond, msg, loc)
+#define dango_assert(cond) dango::detail::assert_func(bool(cond), dango::char_as_bchar(#cond), dango::null)
+#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), dango::char_as_bchar(#cond), dango::null, loc)
+#define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), dango::char_as_bchar(#cond), msg)
+#define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), dango::char_as_bchar(#cond), msg, loc)
 #else
 #define dango_assert(cond) dango::assume(bool(cond))
 #define dango_assert_loc(cond, loc) dango_assert(cond)

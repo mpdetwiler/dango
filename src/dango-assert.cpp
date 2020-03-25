@@ -44,7 +44,7 @@ assert_fail_once
 
   if(t_recursion)
   {
-    fprintf(stderr, u8"assertion failure entered recursively\n");
+    fprintf(stderr, "assertion failure entered recursively\n");
 
     dango::trap_instruction();
   }
@@ -75,12 +75,12 @@ noexcept
     fprintf
     (
       stderr,
-      u8"%s[%u]: %s: assertion \"%s\" failed:\n%s\n",
-      a_loc.file(),
+      "%s[%u]: %s: assertion \"%s\" failed:\n%s\n",
+      dango::bchar_as_char(a_loc.file()),
       dango::builtin::uint(a_loc.line()),
-      a_loc.function(),
-      a_expr,
-      a_msg
+      dango::bchar_as_char(a_loc.function()),
+      dango::bchar_as_char(a_expr),
+      dango::bchar_as_char(a_msg)
     );
 
     return;
@@ -89,11 +89,11 @@ noexcept
   fprintf
   (
     stderr,
-    u8"%s[%u]: %s: assertion \"%s\" failed\n",
-    a_loc.file(),
+    "%s[%u]: %s: assertion \"%s\" failed\n",
+    dango::bchar_as_char(a_loc.file()),
     dango::builtin::uint(a_loc.line()),
-    a_loc.function(),
-    a_expr
+    dango::bchar_as_char(a_loc.function()),
+    dango::bchar_as_char(a_expr)
   );
 }
 

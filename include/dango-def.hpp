@@ -32,7 +32,7 @@ dango
 
   inline constexpr dango::null_tag const null{ };
 
-  using bchar = char;
+  using bchar = char8_t;
   using wchar = char16_t;
   using dchar = char32_t;
 
@@ -145,3 +145,4 @@ dango
 }
 
 #endif
+

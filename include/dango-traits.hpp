@@ -2400,5 +2400,46 @@ dango
   constexpr dango::usize const alignof_with_void<tp_type, tp_default, dango::enable_if<dango::is_void<tp_type>>> = tp_default;
 }
 
+/*** bchar_as_char char_as_bchar ***/
+
+namespace dango
+{
+
+template
+<typename tp_char>
+requires dango::is_same<dango::remove_cv<tp_char>, dango::bchar>
+constexpr auto
+bchar_as_char
+(tp_char* const a_ptr)noexcept->auto
+{
+  using ret_type = dango::preserve_cv<tp_char, char>*;
+
+  auto const a_ret =
+    __builtin_constant_p(reinterpret_cast<ret_type>(a_ptr))?
+    reinterpret_cast<ret_type>(a_ptr):
+    reinterpret_cast<ret_type>(a_ptr);
+
+  return a_ret;
+}
+
+template
+<typename tp_char>
+requires dango::is_same<dango::remove_cv<tp_char>, char>
+constexpr auto
+char_as_bchar
+(tp_char* const a_ptr)noexcept->auto
+{
+  using ret_type = dango::preserve_cv<tp_char, dango::bchar>*;
+
+  auto const a_ret =
+    __builtin_constant_p(reinterpret_cast<ret_type>(a_ptr))?
+    reinterpret_cast<ret_type>(a_ptr):
+    reinterpret_cast<ret_type>(a_ptr);
+
+  return a_ret;
+}
+
+}
+
 #endif
 

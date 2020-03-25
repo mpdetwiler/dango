@@ -3,8 +3,8 @@
 
 #include "dango-macro.hpp"
 #include "dango-def.hpp"
-#include "dango-assert.hpp"
 #include "dango-traits.hpp"
+#include "dango-assert.hpp"
 #include "dango-cstring.hpp"
 #include "dango-int.hpp"
 #include "dango-intrusive-list.hpp"
