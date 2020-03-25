@@ -71,5 +71,9 @@ final
 
 #define DANGO_PARENTH_TYPE(...) dango::parenth_type<void(__VA_ARGS__)noexcept>
 
+/*** DANGO_MAGIC_CONST_FOLD ***/
+
+#define DANGO_MAGIC_CONST_FOLD(...) (__builtin_constant_p((__VA_ARGS__))?(__VA_ARGS__):(__VA_ARGS__))
+
 #endif
 

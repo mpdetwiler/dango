@@ -194,10 +194,7 @@ ptr_as_uint
 {
   using ret_type = dango::uptr;
 
-  auto const a_ret =
-    __builtin_constant_p(reinterpret_cast<ret_type>(a_ptr))?
-    reinterpret_cast<ret_type>(a_ptr):
-    reinterpret_cast<ret_type>(a_ptr);
+  auto const a_ret = DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(a_ptr));
 
   return a_ret;
 }
@@ -209,10 +206,7 @@ ptr_as_sint
 {
   using ret_type = dango::sptr;
 
-  auto const a_ret =
-    __builtin_constant_p(reinterpret_cast<ret_type>(a_ptr))?
-    reinterpret_cast<ret_type>(a_ptr):
-    reinterpret_cast<ret_type>(a_ptr);
+  auto const a_ret = DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(a_ptr));
 
   return a_ret;
 }
