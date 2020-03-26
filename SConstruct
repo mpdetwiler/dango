@@ -32,15 +32,20 @@ compilation_target = GetOption('target_opt');
 compile_test = GetOption('test_opt');
 use_clang = GetOption('clang_opt');
 
-if(compilation_target == 'linux'):
-  print('building for \"' + compilation_target + '\"');
-elif(compilation_target == 'win32'):
-  print('building for \"' + compilation_target + '\"');
-elif(compilation_target == 'win64'):
-  print('building for \"' + compilation_target + '\"');
-else:
-  print('invalid target \"' + compilation_target + '\"');
+def target_valid(target_name):
+  print('building for target \"' + target_name + '\"');
+
+def target_invalid(target_name):
+  print('invalid target \"' + target_name + '\"');
   Exit(1);
+
+target_set = {
+  'linux': target_valid,
+  'win32': target_valid,
+  'win64': target_valid
+};
+
+target_set.get(compilation_target, target_invalid)(compilation_target);
 
 flags = [
 # '-S',
@@ -50,7 +55,7 @@ flags = [
 # '-fsanitize=leak',
   '-flto',
   '-O2',
-  '-std=c++2a' if use_clang else '-std=c++17',
+  '-std=c++2a',
   '-fsized-deallocation',
   '-fchar8_t',
   '' if use_clang else '-fconcepts',
@@ -116,11 +121,10 @@ shared_env.Append(CPPDEFINES = ['DANGO_COMPILING_DANGO', 'DANGO_COMPILING_DANGO_
 static_flags = [];
 shared_flags = [];
 
-
 if(compilation_target == 'linux'):
   shared_env.Append(LIBS = ['pthread']);
   static_flags += ['-fPIC'];
-  shared_flags += ['-fvisibility=hidden'];
+  shared_flags += ['-fvisibility=hidden']; # SCons automatically adds -fPIC when building shared library
 elif(compilation_target == 'win32' or compilation_target == 'win64'):
   shared_env.Append(LIBS = ['winmm']);
   shared_env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
