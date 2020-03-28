@@ -376,7 +376,7 @@ name##_namespace \
   { try{ return dango_global_return_type __VA_ARGS__ ; }catch(...){ DANGO_GLOBAL_UNREACHABLE_TERMINATE(u8"constructor of global \"name\" threw exception"); } } \
   using dango_global_storage_type = \
     dango::detail::global_storage<dango_global_value_type, dango_global_return_type, dango_global_construct>; \
-  linkage dango_global_storage_type s_dango_global_storage{ }; \
+  linkage constinit dango_global_storage_type s_dango_global_storage{ }; \
   using dango_global_strong_type = dango_global_storage_type::strong_incrementer<s_dango_global_storage>; \
   using dango_global_weak_type = dango_global_storage_type::weak_incrementer<s_dango_global_storage>; \
   DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(dango_global_strong_type, s_dango_global_strong) \

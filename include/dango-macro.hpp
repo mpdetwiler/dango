@@ -75,5 +75,11 @@ final
 
 #define DANGO_MAGIC_CONST_FOLD(...) (__builtin_constant_p((__VA_ARGS__))?(__VA_ARGS__):(__VA_ARGS__))
 
+// TODO constinit only works on clang 10. this is temporary until gcc 10 comes out:
+
+#ifndef __clang__
+#define constinit
+#endif
+
 #endif
 

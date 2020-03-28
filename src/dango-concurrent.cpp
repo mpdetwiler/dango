@@ -1781,7 +1781,7 @@ m_count{ dango::usize(0) }
 
 }
 
-dango::detail::windows_timer_res_manager
+constinit dango::detail::windows_timer_res_manager
 dango::
 detail::
 windows_timer_res_access::

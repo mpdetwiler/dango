@@ -369,6 +369,8 @@ public:
   DANGO_IMMOBILE(aligned_storage)
 };
 
+static_assert(dango::is_trivial_default_constructible<dango::aligned_storage<dango::usize(4), dango::usize(4)>>);
+
 template
 <dango::usize tp_size, dango::usize tp_align>
 constexpr auto

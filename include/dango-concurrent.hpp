@@ -1525,7 +1525,7 @@ public:
 
 /*** thread ***/
 
-inline dango::thread::registry
+inline constinit dango::thread::registry
 dango::
 thread::
 s_registry{ };
@@ -1945,7 +1945,7 @@ public:
   DANGO_UNINSTANTIABLE(cond_var_registry_access)
 };
 
-inline dango::detail::cond_var_registry
+inline constinit dango::detail::cond_var_registry
 dango::
 detail::
 cond_var_registry_access::
