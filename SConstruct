@@ -82,7 +82,7 @@ static_env.Append(ENV = {'PATH':os.environ['PATH']});
 if(use_clang):
   static_env.Replace(CXX = 'clang++');
   static_env.Replace(LINK = 'clang++');
-  static_env.Append(LINKFLAGS = '-fuse-ld=gold');
+  static_env.Append(LINKFLAGS = '-fuse-ld=lld');
   if(compilation_target == target.win64):
     clang_target_flag = '-target x86_64-pc-windows-gnu';
     static_env.Append(CXXFLAGS = clang_target_flag);
