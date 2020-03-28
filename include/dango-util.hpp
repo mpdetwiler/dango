@@ -520,7 +520,7 @@ template
 dango::
 detail::
 scope_guard<tp_func>::
-~scope_guard<tp_func>
+~scope_guard
 ()noexcept
 {
   static_assert(noexcept(m_func()));
@@ -632,7 +632,7 @@ template
 dango::
 detail::
 finally_guard<tp_func>::
-~finally_guard<tp_func>
+~finally_guard
 ()noexcept
 {
   static_assert(noexcept(m_func()));
