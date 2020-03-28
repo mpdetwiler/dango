@@ -123,3 +123,19 @@ main
   return 0;
 }
 
+constexpr auto const integer = 5;
+
+static_assert(dango::is_aligned(&integer, 4));
+static_assert(dango::is_aligned(&integer, 16));
+
+static_assert(u8"hello"[0] == u8'h');
+
+static_assert(dango::char_as_bchar(static_cast<char const*>(nullptr)) == nullptr);
+static_assert(dango::bchar_as_char(static_cast<dango::bchar const*>(nullptr)) == nullptr);
+static_assert(dango::ptr_as_uint(nullptr) == dango::ptr_as_sint(nullptr));
+
+constexpr auto const a_location = dango::source_location::current();
+
+static_assert(dango::str_size(a_location.file_as_char()) == 17);
+static_assert(dango::assume_aligned<8>(&a_location) == &a_location);
+

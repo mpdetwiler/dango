@@ -2400,5 +2400,20 @@ dango
   constexpr dango::usize const alignof_with_void<tp_type, tp_default, dango::enable_if<dango::is_void<tp_type>>> = tp_default;
 }
 
+/*** in_constexpr_context ***/
+
+namespace dango
+{
+  constexpr auto in_constexpr_context()noexcept->bool;
+}
+
+constexpr auto
+dango::
+in_constexpr_context
+()noexcept->bool
+{
+  return __builtin_is_constant_evaluated();
+}
+
 #endif
 

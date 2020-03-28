@@ -194,9 +194,14 @@ ptr_as_uint
 {
   using ret_type = dango::uptr;
 
-  auto const a_ret = DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(a_ptr));
-
-  return a_ret;
+  if(a_ptr)
+  {
+    return reinterpret_cast<ret_type>(a_ptr);
+  }
+  else
+  {
+    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void const*>(nullptr)));
+  }
 }
 
 constexpr auto
@@ -206,9 +211,14 @@ ptr_as_sint
 {
   using ret_type = dango::sptr;
 
-  auto const a_ret = DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(a_ptr));
-
-  return a_ret;
+  if(a_ptr)
+  {
+    return reinterpret_cast<ret_type>(a_ptr);
+  }
+  else
+  {
+    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void const*>(nullptr)));
+  }
 }
 
 /*** is_aligned ***/
@@ -226,9 +236,18 @@ is_aligned
 {
   dango_assert(dango::is_pow_two(a_align));
 
-  auto const a_int = dango::ptr_as_uint(a_ptr);
+  if constexpr(dango::in_constexpr_context())
+  {
+    return a_ptr != nullptr;
+  }
+  else
+  {
+    auto const a_int = dango::ptr_as_uint(a_ptr);
 
-  return (a_int % dango::uptr(a_align)) == dango::uptr(0);
+    auto const a_mod = a_int % dango::uptr(a_align);
+
+    return (a_ptr != nullptr) && (a_mod == dango::uptr(0));
+  }
 }
 
 /*** assume_aligned ***/
@@ -254,10 +273,17 @@ dango::enable_if<dango::is_pow_two(tp_align) && !dango::is_func<tp_type>, tp_typ
 {
   dango_assert(dango::is_aligned(a_ptr, tp_align));
 
-  auto const a_result =
-    __builtin_assume_aligned(const_cast<dango::remove_cv<tp_type> const*>(a_ptr), tp_align);
+  if(dango::in_constexpr_context())
+  {
+    return a_ptr;
+  }
+  else
+  {
+    auto const a_result =
+      __builtin_assume_aligned(const_cast<dango::remove_cv<tp_type> const*>(a_ptr), tp_align);
 
-  return static_cast<tp_type*>(a_result);
+    return static_cast<tp_type*>(a_result);
+  }
 }
 
 /*** operator_new operator_delete ***/

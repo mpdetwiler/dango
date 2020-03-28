@@ -15,9 +15,14 @@ bchar_as_char
 {
   using ret_type = dango::preserve_cv<tp_char, char>*;
 
-  auto const a_ret = DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(a_ptr));
-
-  return a_ret;
+  if(a_ptr)
+  {
+    return reinterpret_cast<ret_type>(a_ptr);
+  }
+  else
+  {
+    return static_cast<ret_type>(nullptr);
+  }
 }
 
 template
@@ -29,9 +34,14 @@ char_as_bchar
 {
   using ret_type = dango::preserve_cv<tp_char, dango::bchar>*;
 
-  auto const a_ret = DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(a_ptr));
-
-  return a_ret;
+  if(a_ptr)
+  {
+    return reinterpret_cast<ret_type>(a_ptr);
+  }
+  else
+  {
+    return static_cast<ret_type>(nullptr);
+  }
 }
 
 }
@@ -49,106 +59,62 @@ dango::
 source_location
 final
 {
+private:
+  using char_type = char;
+  using int_type = dango::builtin::sint;
 public:
-#ifdef __clang__
   static constexpr auto
   current
   (
-    dango::bchar const* = u8"TODO: clang++ FILE",
-    dango::bchar const* = u8"TODO: clang++ FUNCTION",
-    dango::builtin::sint = dango::builtin::sint(0)
+    char_type const* = __builtin_FILE(),
+    char_type const* = __builtin_FUNCTION(),
+    int_type = __builtin_LINE()
   )
   noexcept->source_location;
-#else
-  static constexpr auto
-  current
-  (
-    dango::bchar const* = dango::char_as_bchar(__builtin_FILE()),
-    dango::bchar const* = dango::char_as_bchar(__builtin_FUNCTION()),
-    dango::builtin::sint = __builtin_LINE()
-  )
-  noexcept->source_location;
-#endif
 private:
   constexpr
   source_location
   (
-    dango::bchar const*,
-    dango::bchar const*,
-    dango::uint
+    char_type const* const a_file,
+    char_type const* const a_func,
+    int_type const a_line
   )
-  noexcept;
+  noexcept:
+  m_file{ a_file },
+  m_func{ a_func },
+  m_line{ a_line }
+  { }
 public:
   ~source_location()noexcept = default;
 
-  constexpr auto file()const noexcept->dango::bchar const*;
-  constexpr auto function()const noexcept->dango::bchar const*;
-  constexpr auto line()const noexcept->dango::uint;
+  constexpr auto file_as_char()const noexcept->char_type const*{ return m_file; }
+  auto file()const noexcept->dango::bchar const*{ return dango::char_as_bchar(file_as_char()); }
+
+  constexpr auto function_as_char()const noexcept->char_type const*{ return m_func; }
+  auto function()const noexcept->dango::bchar const*{ return dango::char_as_bchar(function_as_char()); }
+
+  constexpr auto line()const noexcept->dango::uint{ return dango::uint(m_line); }
 private:
-  dango::bchar const* const m_file;
-  dango::bchar const* const m_func;
-  dango::uint const m_line;
+  char_type const* const m_file;
+  char_type const* const m_func;
+  int_type const m_line;
 public:
   DANGO_DELETE_DEFAULT(source_location)
   DANGO_IMMOBILE(source_location)
 };
-
-constexpr
-dango::
-source_location::
-source_location
-(
-  dango::bchar const* const a_file,
-  dango::bchar const* const a_func,
-  dango::uint const a_line
-)
-noexcept:
-m_file{ a_file },
-m_func{ a_func },
-m_line{ a_line }
-{
-
-}
-
-constexpr auto
-dango::
-source_location::
-file
-()const noexcept->dango::bchar const*
-{
-  return m_file;
-}
-
-constexpr auto
-dango::
-source_location::
-function
-()const noexcept->dango::bchar const*
-{
-  return m_func;
-}
-
-constexpr auto
-dango::
-source_location::
-line
-()const noexcept->dango::uint
-{
-  return m_line;
-}
 
 constexpr auto
 dango::
 source_location::
 current
 (
-  dango::bchar const* const a_file,
-  dango::bchar const* const a_func,
-  dango::builtin::sint const a_line
+  char_type const* const a_file,
+  char_type const* const a_func,
+  int_type const a_line
 )
 noexcept->source_location
 {
-  return source_location{ a_file, a_func, dango::uint(a_line) };
+  return source_location{ a_file, a_func, a_line };
 }
 
 /*** likely unlikely ***/
@@ -316,10 +282,10 @@ noexcept
 }
 
 #ifndef DANGO_NO_DEBUG
-#define dango_assert(cond) dango::detail::assert_func(bool(cond), dango::char_as_bchar(#cond), dango::null)
-#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), dango::char_as_bchar(#cond), dango::null, loc)
-#define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), dango::char_as_bchar(#cond), msg)
-#define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), dango::char_as_bchar(#cond), msg, loc)
+#define dango_assert(cond) dango::detail::assert_func(bool(cond), DANGO_TOKEN_CONCAT(u8, #cond), dango::null)
+#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), DANGO_TOKEN_CONCAT(u8, #cond), dango::null, loc)
+#define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), DANGO_TOKEN_CONCAT(u8, #cond), msg)
+#define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), DANGO_TOKEN_CONCAT(u8, #cond), msg, loc)
 #else
 #define dango_assert(cond) dango::assume(bool(cond))
 #define dango_assert_loc(cond, loc) dango_assert(cond)

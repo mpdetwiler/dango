@@ -1,3 +1,11 @@
+import enum;
+
+@enum.unique
+class target(enum.Enum):
+  linux = 0
+  win32 = 1
+  win64 = 2
+
 
 AddOption(
   '--target',
@@ -7,7 +15,7 @@ AddOption(
   action = 'store',
   metavar = 'DIR',
   help = 'build target',
-  default = 'linux'
+  default = target.linux.name
 );
 
 AddOption(
@@ -28,24 +36,18 @@ AddOption(
   default = False
 );
 
-compilation_target = GetOption('target_opt');
+compilation_target = None;
+
+try:
+  compilation_target = target[GetOption('target_opt')];
+except KeyError as err:
+  print('invalid compilation target \"' + err.args[0] + '\"');
+  Exit(1);
+
 compile_test = GetOption('test_opt');
 use_clang = GetOption('clang_opt');
 
-def target_valid(target_name):
-  print('building for target \"' + target_name + '\"');
-
-def target_invalid(target_name):
-  print('invalid target \"' + target_name + '\"');
-  Exit(1);
-
-target_set = {
-  'linux': target_valid,
-  'win32': target_valid,
-  'win64': target_valid
-};
-
-target_set.get(compilation_target, target_invalid)(compilation_target);
+print('building for target \"' + compilation_target.name + '\"');
 
 flags = [
 # '-S',
@@ -81,7 +83,7 @@ if(use_clang):
   static_env.Replace(CXX = 'clang++');
   static_env.Replace(LINK = 'clang++');
   static_env.Append(LINKFLAGS = '-fuse-ld=gold');
-  if(compilation_target == 'win64'):
+  if(compilation_target == target.win64):
     clang_target_flag = '-target x86_64-pc-windows-gnu';
     static_env.Append(CXXFLAGS = clang_target_flag);
     static_env.Append(LINKFLAGS = clang_target_flag);
@@ -121,11 +123,11 @@ shared_env.Append(CPPDEFINES = ['DANGO_COMPILING_DANGO', 'DANGO_COMPILING_DANGO_
 static_flags = [];
 shared_flags = [];
 
-if(compilation_target == 'linux'):
+if(compilation_target == target.linux):
   shared_env.Append(LIBS = ['pthread']);
   static_flags += ['-fPIC'];
   shared_flags += ['-fvisibility=hidden']; # SCons automatically adds -fPIC when building shared library
-elif(compilation_target == 'win32' or compilation_target == 'win64'):
+elif(compilation_target == target.win32 or compilation_target == target.win64):
   shared_env.Append(LIBS = ['winmm']);
   shared_env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
 
