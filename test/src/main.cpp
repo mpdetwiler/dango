@@ -107,7 +107,7 @@ main
     printf("%p\n", static_cast<void const*>(&a_empty.get<2>()));
     printf("%p\n", static_cast<void const*>(&a_empty.get<3>()));
 
-    a_empty = a_empty;
+    //a_empty = a_empty;
   }
 
   {
@@ -119,6 +119,8 @@ main
   dango::atomic<double*> a_atomic{ null };
 
   a_atomic.fetch_add(dango::ssize(5));
+
+  dango::address_of(a_atomic);
 
   return 0;
 }
@@ -138,4 +140,5 @@ constexpr auto const a_location = dango::source_location::current();
 
 static_assert(dango::str_size(a_location.file_as_char()) == 17);
 static_assert(dango::assume_aligned<8>(&a_location) == &a_location);
+static_assert(dango::address_of(a_location) == &a_location);
 

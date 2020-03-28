@@ -152,6 +152,8 @@ dango::enable_if<dango::is_object<tp_type>, tp_type*>
 
 /*** address_of ***/
 
+#ifdef __clang__
+
 namespace
 dango
 {
@@ -159,24 +161,44 @@ dango
   <typename tp_type>
   constexpr auto
   address_of
-  (tp_type&)noexcept->
-  dango::enable_if<dango::is_object<tp_type>, tp_type*>;
+  (tp_type&& a_arg)noexcept->
+  dango::enable_if<dango::is_object<dango::remove_ref<tp_type>> && dango::is_lvalue_ref<tp_type>, dango::remove_ref<tp_type>*>
+  {
+    return __builtin_addressof(a_arg);
+  }
+
+  template
+  <typename tp_type>
+  constexpr auto
+  address_of
+  (tp_type&&)noexcept->
+  dango::enable_if<dango::is_object<dango::remove_ref<tp_type>> && !dango::is_lvalue_ref<tp_type>, dango::remove_ref<tp_type>*> = delete;
 }
 
-template
-<typename tp_type>
-constexpr auto
-dango::
-address_of
-(tp_type& a_arg)noexcept->
-dango::enable_if<dango::is_object<tp_type>, tp_type*>
+#else
+
+namespace
+dango
 {
-  using cast_type = dango::preserve_cv<tp_type, dango::byte>;
+  template
+  <typename tp_type>
+  requires dango::is_object<dango::remove_ref<tp_type>> && dango::is_lvalue_ref<tp_type>
+  constexpr auto
+  address_of
+  (tp_type&& a_arg)noexcept->dango::remove_ref<tp_type>*
+  {
+    return __builtin_addressof(a_arg);
+  }
 
-  auto& a_ref = reinterpret_cast<cast_type&>(a_arg);
-
-  return reinterpret_cast<tp_type*>(&a_ref);
+  template
+  <typename tp_type>
+  requires dango::is_object<dango::remove_ref<tp_type>> && !dango::is_lvalue_ref<tp_type>
+  constexpr auto
+  address_of
+  (tp_type&&)noexcept = delete;
 }
+
+#endif
 
 /*** ptr_as_uint ptr_as_sint ***/
 

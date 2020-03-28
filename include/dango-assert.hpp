@@ -3,47 +3,46 @@
 
 /*** bchar_as_char char_as_bchar ***/
 
-namespace dango
+namespace
+dango
 {
-
-template
-<typename tp_char>
-requires dango::is_same<dango::remove_cv<tp_char>, dango::bchar>
-constexpr auto
-bchar_as_char
-(tp_char* const a_ptr)noexcept->auto
-{
-  using ret_type = dango::preserve_cv<tp_char, char>*;
-
-  if(a_ptr)
+  template
+  <typename tp_char>
+  requires dango::is_same<dango::remove_cv<tp_char>, dango::bchar>
+  constexpr auto
+  bchar_as_char
+  (tp_char* const a_ptr)noexcept->auto
   {
-    return reinterpret_cast<ret_type>(a_ptr);
-  }
-  else
-  {
-    return static_cast<ret_type>(nullptr);
-  }
-}
+    using ret_type = dango::preserve_cv<tp_char, char>*;
 
-template
-<typename tp_char>
-requires dango::is_same<dango::remove_cv<tp_char>, char>
-constexpr auto
-char_as_bchar
-(tp_char* const a_ptr)noexcept->auto
-{
-  using ret_type = dango::preserve_cv<tp_char, dango::bchar>*;
-
-  if(a_ptr)
-  {
-    return reinterpret_cast<ret_type>(a_ptr);
+    if(a_ptr)
+    {
+      return reinterpret_cast<ret_type>(a_ptr);
+    }
+    else
+    {
+      return static_cast<ret_type>(nullptr);
+    }
   }
-  else
-  {
-    return static_cast<ret_type>(nullptr);
-  }
-}
 
+  template
+  <typename tp_char>
+  requires dango::is_same<dango::remove_cv<tp_char>, char>
+  constexpr auto
+  char_as_bchar
+  (tp_char* const a_ptr)noexcept->auto
+  {
+    using ret_type = dango::preserve_cv<tp_char, dango::bchar>*;
+
+    if(a_ptr)
+    {
+      return reinterpret_cast<ret_type>(a_ptr);
+    }
+    else
+    {
+      return static_cast<ret_type>(nullptr);
+    }
+  }
 }
 
 /*** source_location ***/
