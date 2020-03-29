@@ -36,7 +36,7 @@ public dango::auto_ptr_default_config<tp_void>
 
 struct test_base{ virtual ~test_base()noexcept = default; };
 
-struct test_derived:test_base{ virtual ~test_derived()noexcept override = default; };
+struct test_derived:test_base{ ~test_derived()noexcept override = default; };
 
 static_assert(!dango::is_convertible<dango::mutex, dango::mutex const>);
 static_assert(dango::is_convertible_ret<dango::mutex, dango::mutex const>);
@@ -47,6 +47,17 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  {
+    using elem_type = double;
+    constexpr auto const c_count = dango::usize(4);
+
+    dango::aligned_storage<c_count * sizeof(elem_type), alignof(elem_type)> a_storage;
+
+    auto const a_array = ::new (dango::placement, a_storage.get(), sizeof(elem_type), alignof(elem_type), dango::usize(c_count)) elem_type[c_count];
+
+    dango_assert(a_array != dango::null);
+  }
+
   dango_assert(dango::thread::self_ID() == dango::thread::self().get_ID());
 
   dango::thread a_thread = null;

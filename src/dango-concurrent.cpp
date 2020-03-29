@@ -902,7 +902,7 @@ initialize
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  ::new (dango::placement, m_storage.get()) type{ };
+  dango::placement_new<type>(m_storage.get());
 }
 
 void
@@ -1025,7 +1025,7 @@ initialize
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  ::new (dango::placement, m_storage.get()) type{ };
+  dango::placement_new<type>(m_storage.get());
 }
 
 void
@@ -1560,7 +1560,7 @@ initialize
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  ::new (dango::placement, m_storage.get()) type{ };
+  dango::placement_new<type>(m_storage.get());
 }
 
 void
@@ -1672,7 +1672,7 @@ initialize
   static_assert(sizeof(type) <= sizeof(detail::primitive_storage));
   static_assert(alignof(type) <= alignof(detail::primitive_storage));
 
-  ::new (dango::placement, m_storage.get()) type{ };
+  dango::placement_new<type>(m_storage.get());
 }
 
 void

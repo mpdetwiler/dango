@@ -868,7 +868,7 @@ make_node
 
   auto const a_ptr = a_allocator.alloc(sizeof(node_type), alignof(node_type));
 
-  return ::new (dango::placement, a_ptr) node_type{ dango::move(a_allocator), dango::forward<tp_children>(a_children)... };
+  return dango::placement_new<node_type>(a_ptr, dango::move(a_allocator), dango::forward<tp_children>(a_children)...);
 }
 
 template

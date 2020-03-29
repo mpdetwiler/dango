@@ -57,7 +57,7 @@ public:
   class strong_incrementer;
 
   template
-  <dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct>  tp_storage>
+  <dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
   class weak_incrementer;
 public:
   constexpr global_storage()noexcept;
@@ -68,7 +68,8 @@ private:
   auto try_increment()noexcept->bool;
   void decrement()noexcept;
 private:
-  mutable dango::aligned_storage<sizeof(tp_ret), alignof(tp_ret)> m_storage;
+  tp_type* m_ptr;
+  dango::aligned_storage<sizeof(tp_type), alignof(tp_type)> m_storage;
   dango::exec_once m_init;
   dango::spin_mutex m_lock;
   dango::usize m_ref_count;
@@ -230,6 +231,7 @@ global_storage
 <tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
 global_storage
 ()noexcept:
+m_ptr{ dango::null },
 m_storage{ },
 m_init{ },
 m_lock{ },
@@ -252,7 +254,7 @@ global_storage
 get
 ()const noexcept->tp_type*
 {
-  return static_cast<tp_type*>(m_storage.get());
+  return m_ptr;
 }
 
 template
@@ -274,7 +276,8 @@ increment
   (
     [this]()noexcept->void
     {
-      ::new (dango::placement, m_storage.get()) tp_ret{ tp_construct() };
+      m_ptr =
+        ::new (dango::placement, m_storage.get(), sizeof(tp_type), alignof(tp_type)) tp_type{ tp_construct() };
 
       m_ref_count = dango::usize(1);
     }

@@ -1,85 +1,6 @@
 #ifndef __DANGO_MEM_HPP__
 #define __DANGO_MEM_HPP__
 
-/*** placement new ***/
-
-namespace
-dango
-{
-  struct
-  placement_tag
-  final
-  {
-    DANGO_TAG_TYPE(placement_tag)
-  };
-
-  inline constexpr dango::placement_tag const placement{ };
-}
-
-[[nodiscard]] constexpr auto
-operator new
-(dango::usize, dango::placement_tag, void*)noexcept->void*;
-
-[[nodiscard]] constexpr auto
-operator new[]
-(dango::usize, dango::placement_tag, void*)noexcept->void*;
-
-constexpr void
-operator delete
-(void*, dango::placement_tag, void*)noexcept;
-
-constexpr void
-operator delete[]
-(void*, dango::placement_tag, void*)noexcept;
-
-constexpr auto
-operator new
-(
-  dango::usize const,
-  dango::placement_tag const,
-  void* const a_addr
-)
-noexcept->void*
-{
-  return a_addr;
-}
-
-constexpr auto
-operator new[]
-(
-  dango::usize const,
-  dango::placement_tag const,
-  void* const a_addr
-)
-noexcept->void*
-{
-  return a_addr;
-}
-
-constexpr void
-operator delete
-(
-  void* const,
-  dango::placement_tag const,
-  void* const
-)
-noexcept
-{
-
-}
-
-constexpr void
-operator delete[]
-(
-  void* const,
-  dango::placement_tag const,
-  void* const
-)
-noexcept
-{
-
-}
-
 /*** destructor ***/
 
 namespace
@@ -268,7 +189,7 @@ dango::enable_if<dango::is_pow_two(tp_align) && !dango::is_func<tp_type>, tp_typ
 {
   dango_assert(dango::is_aligned(a_ptr, tp_align));
 
-  if(dango::in_constexpr_context())
+  if constexpr(dango::in_constexpr_context())
   {
     return a_ptr;
   }
@@ -315,6 +236,161 @@ noexcept->void*
   dango_assert(a_source != dango::null);
 
   return __builtin_memcpy(a_dest, a_source, a_count);
+}
+
+/*** placement new ***/
+
+namespace
+dango
+{
+  struct
+  placement_tag
+  final
+  {
+    DANGO_TAG_TYPE(placement_tag)
+  };
+
+  inline constexpr dango::placement_tag const placement{ };
+}
+
+[[nodiscard]] constexpr auto
+operator new
+(dango::usize, dango::placement_tag, void*, dango::usize, dango::usize)noexcept->void*;
+
+[[nodiscard]] constexpr auto
+operator new[]
+(dango::usize, dango::placement_tag, void*, dango::usize, dango::usize, dango::usize)noexcept->void*;
+
+constexpr void
+operator delete
+(void*, dango::placement_tag, void*, dango::usize, dango::usize)noexcept;
+
+constexpr void
+operator delete[]
+(void*, dango::placement_tag, void*, dango::usize, dango::usize, dango::usize)noexcept;
+
+namespace
+dango
+{
+  template
+  <typename tp_type, typename... tp_args>
+  requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_constructible<tp_type, tp_args...>)
+  constexpr auto
+  placement_new
+  (void*, tp_args&&...)noexcept(dango::is_noexcept_constructible<tp_type, tp_args...>)->tp_type*;
+
+  template
+  <typename tp_type>
+  requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
+  constexpr auto
+  placement_new_trivial
+  (void*)noexcept->tp_type*;
+
+  template
+  <typename tp_type>
+  requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
+  constexpr auto
+  placement_new_trivial_array
+  (void*, dango::usize)noexcept->tp_type*;
+}
+
+constexpr auto
+operator new
+(
+  dango::usize const a_size,
+  dango::placement_tag const,
+  void* const a_addr,
+  dango::usize const a_sizeof,
+  dango::usize const a_alignof
+)
+noexcept->void*
+{
+  dango_assert(a_addr != dango::null);
+  dango_assert(dango::is_aligned(a_addr, a_alignof));
+  dango_assert(a_size == a_sizeof);
+
+  return a_addr;
+}
+
+constexpr auto
+operator new[]
+(
+  dango::usize const a_size,
+  dango::placement_tag const,
+  void* const a_addr,
+  dango::usize const a_sizeof,
+  dango::usize const a_alignof,
+  dango::usize const a_count
+)
+noexcept->void*
+{
+  dango_assert(a_addr != dango::null);
+  dango_assert(dango::is_aligned(a_addr, a_alignof));
+  dango_assert(a_size == a_sizeof * a_count);
+
+  return a_addr;
+}
+
+constexpr void
+operator delete
+(
+  void* const,
+  dango::placement_tag const,
+  void* const,
+  dango::usize const,
+  dango::usize const
+)
+noexcept
+{
+
+}
+
+constexpr void
+operator delete[]
+(
+  void* const,
+  dango::placement_tag const,
+  void* const,
+  dango::usize const,
+  dango::usize const,
+  dango::usize const
+)
+noexcept
+{
+
+}
+
+template
+<typename tp_type, typename... tp_args>
+requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_constructible<tp_type, tp_args...>)
+constexpr auto
+dango::
+placement_new
+(void* const a_addr, tp_args&&... a_args)noexcept(dango::is_noexcept_constructible<tp_type, tp_args...>)->tp_type*
+{
+  return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type)) tp_type(dango::forward<tp_args>(a_args)...);
+}
+
+template
+<typename tp_type>
+requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
+constexpr auto
+dango::
+placement_new_trivial
+(void* const a_addr)noexcept->tp_type*
+{
+  return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type)) tp_type;
+}
+
+template
+<typename tp_type>
+requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
+constexpr auto
+dango::
+placement_new_trivial_array
+(void* const a_addr, dango::usize const a_count)noexcept->tp_type*
+{
+  return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type), a_count) tp_type[a_count];
 }
 
 /*** aligned_storage ***/
@@ -529,7 +605,7 @@ dango::enable_if
 
   do
   {
-    ::new (dango::placement, a_dst) tp_type{ *a_src };
+    dango::placement_new<tp_type>(*a_src);
 
     dango::destructor(a_src);
 
@@ -573,7 +649,7 @@ dango::enable_if
 
   do
   {
-    ::new (dango::placement, a_dst) tp_type{ dango::move(*a_src) };
+    dango::placement_new<tp_type>(dango::move(*a_src));
 
     ++a_src;
     ++a_dst;
@@ -614,7 +690,7 @@ dango::enable_if
 
   do
   {
-    ::new (dango::placement, a_dst) tp_type{ dango::move(*a_src) };
+    dango::placement_new<tp_type>(dango::move(*a_src));
 
     dango::destructor(a_src);
 
@@ -659,7 +735,7 @@ dango::enable_if
 
     do
     {
-      ::new (dango::placement, a_dst) tp_type{ dango::move(*a_src) };
+      dango::placement_new<tp_type>(dango::move(*a_src));
 
       dango::destructor(a_src);
 
@@ -680,7 +756,7 @@ dango::enable_if
       --a_src;
       --a_dst;
 
-      ::new (dango::placement, a_dst) tp_type{ dango::move(*a_src) };
+      dango::placement_new<tp_type>(dango::move(*a_src));
 
       dango::destructor(a_src);
     }

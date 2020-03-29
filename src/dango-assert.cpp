@@ -76,9 +76,9 @@ noexcept
     (
       stderr,
       "%s[%u]: %s: assertion \"%s\" failed:\n%s\n",
-      dango::bchar_as_char(a_loc.file()),
+      a_loc.file_as_char(),
       dango::builtin::uint(a_loc.line()),
-      dango::bchar_as_char(a_loc.function()),
+      a_loc.function_as_char(),
       dango::bchar_as_char(a_expr),
       dango::bchar_as_char(a_msg)
     );
@@ -90,9 +90,9 @@ noexcept
   (
     stderr,
     "%s[%u]: %s: assertion \"%s\" failed\n",
-    dango::bchar_as_char(a_loc.file()),
+    a_loc.file_as_char(),
     dango::builtin::uint(a_loc.line()),
-    dango::bchar_as_char(a_loc.function()),
+    a_loc.function_as_char(),
     dango::bchar_as_char(a_expr)
   );
 }

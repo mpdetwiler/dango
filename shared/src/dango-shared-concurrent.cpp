@@ -390,7 +390,7 @@ shared::
 perf_freq
 ()noexcept->dango::tick_count_type
 {
-  static constexpr auto const c_impl =
+  constexpr auto const c_impl =
   []()noexcept->dango::tick_count_type
   {
     LARGE_INTEGER a_result;
@@ -437,7 +437,7 @@ shared::
 srw_lock_init
 (void* const a_storage)noexcept
 {
-  auto const a_lock = ::new (dango::placement, a_storage) ::SRWLOCK;
+  auto const a_lock = dango::placement_new_trivial<::SRWLOCK>(a_storage);
 
   ::InitializeSRWLock(a_lock);
 }
@@ -448,7 +448,7 @@ shared::
 srw_lock_acquire
 (void* const a_storage)noexcept
 {
-  ::AcquireSRWLockExclusive(static_cast<SRWLOCK*>(a_storage));
+  ::AcquireSRWLockExclusive(static_cast<::SRWLOCK*>(a_storage));
 }
 
 DANGO_SHARED_API auto
@@ -457,7 +457,7 @@ shared::
 srw_lock_try_acquire
 (void* const a_storage)noexcept->bool
 {
-  auto const a_result = ::TryAcquireSRWLockExclusive(static_cast<SRWLOCK*>(a_storage));
+  auto const a_result = ::TryAcquireSRWLockExclusive(static_cast<::SRWLOCK*>(a_storage));
 
   return bool(a_result);
 }
@@ -468,7 +468,7 @@ shared::
 srw_lock_release
 (void* const a_storage)noexcept
 {
-  ::ReleaseSRWLockExclusive(static_cast<SRWLOCK*>(a_storage));
+  ::ReleaseSRWLockExclusive(static_cast<::SRWLOCK*>(a_storage));
 }
 
 DANGO_SHARED_API void
@@ -477,7 +477,7 @@ shared::
 condition_variable_init
 (void* const a_storage)noexcept
 {
-  auto const a_cond = ::new (dango::placement, a_storage) ::CONDITION_VARIABLE;
+  auto const a_cond = dango::placement_new_trivial<::CONDITION_VARIABLE>(a_storage);
 
   ::InitializeConditionVariable(a_cond);
 }
@@ -488,7 +488,7 @@ shared::
 condition_variable_wake
 (void* const a_storage)noexcept
 {
-  ::WakeConditionVariable(static_cast<CONDITION_VARIABLE*>(a_storage));
+  ::WakeConditionVariable(static_cast<::CONDITION_VARIABLE*>(a_storage));
 }
 
 DANGO_SHARED_API void
@@ -497,7 +497,7 @@ shared::
 condition_variable_wake_all
 (void* const a_storage)noexcept
 {
-  ::WakeAllConditionVariable(static_cast<CONDITION_VARIABLE*>(a_storage));
+  ::WakeAllConditionVariable(static_cast<::CONDITION_VARIABLE*>(a_storage));
 }
 
 DANGO_SHARED_API void
@@ -508,8 +508,8 @@ condition_variable_wait
 {
   ::SleepConditionVariableSRW
   (
-    static_cast<CONDITION_VARIABLE*>(a_storage),
-    static_cast<SRWLOCK*>(a_lock_storage),
+    static_cast<::CONDITION_VARIABLE*>(a_storage),
+    static_cast<::SRWLOCK*>(a_lock_storage),
     DWORD(INFINITE),
     ULONG(0)
   );
@@ -533,8 +533,8 @@ condition_variable_wait
 
   ::SleepConditionVariableSRW
   (
-    static_cast<CONDITION_VARIABLE*>(a_storage),
-    static_cast<SRWLOCK*>(a_lock_storage),
+    static_cast<::CONDITION_VARIABLE*>(a_storage),
+    static_cast<::SRWLOCK*>(a_lock_storage),
     DWORD(a_spec),
     ULONG(0)
   );
