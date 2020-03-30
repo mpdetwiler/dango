@@ -173,28 +173,28 @@ dango
   constexpr auto
   is_lesser
   (tp_type, tp_type)noexcept->
-  enable_if<dango::is_nonbool_arithmetic<tp_type>, bool>;
+  enable_if<dango::is_arithmetic_exclude_bool<tp_type>, bool>;
 
   template
   <typename tp_type>
   constexpr auto
   is_greater
   (tp_type, tp_type)noexcept->
-  enable_if<dango::is_nonbool_arithmetic<tp_type>, bool>;
+  enable_if<dango::is_arithmetic_exclude_bool<tp_type>, bool>;
 
   template
   <typename tp_type>
   constexpr auto
   is_lequal
   (tp_type, tp_type)noexcept->
-  enable_if<dango::is_nonbool_arithmetic<tp_type>, bool>;
+  enable_if<dango::is_arithmetic_exclude_bool<tp_type>, bool>;
 
   template
   <typename tp_type>
   constexpr auto
   is_gequal
   (tp_type, tp_type)noexcept->
-  enable_if<dango::is_nonbool_arithmetic<tp_type>, bool>;
+  enable_if<dango::is_arithmetic_exclude_bool<tp_type>, bool>;
 }
 
 template
@@ -215,7 +215,7 @@ constexpr auto \
 dango:: \
 is_##name \
 (tp_type const a_lhs, tp_type const a_rhs)noexcept-> \
-enable_if<dango::is_nonbool_arithmetic<tp_type>, bool> \
+enable_if<dango::is_arithmetic_exclude_bool<tp_type>, bool> \
 { \
   return a_lhs oper a_rhs; \
 }
@@ -238,7 +238,7 @@ dango
   min
   (tp_type)noexcept->
   dango::enable_if
-  <dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
+  <dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
 
   template
   <typename tp_type>
@@ -246,7 +246,7 @@ dango
   min
   (tp_type, tp_type)noexcept->
   dango::enable_if
-  <dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
+  <dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
 
   template
   <typename tp_type, typename... tp_types>
@@ -257,7 +257,7 @@ dango
   dango::enable_if
   <
     !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
-    (dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
+    (dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>) &&
     (... && dango::is_same<tp_types, tp_type>),
     tp_type
   >;
@@ -268,7 +268,7 @@ dango
   max
   (tp_type)noexcept->
   dango::enable_if
-  <dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
+  <dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
 
   template
   <typename tp_type>
@@ -276,7 +276,7 @@ dango
   max
   (tp_type, tp_type)noexcept->
   dango::enable_if
-  <dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
+  <dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>, tp_type>;
 
   template
   <typename tp_type, typename... tp_types>
@@ -287,7 +287,7 @@ dango
   dango::enable_if
   <
     !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
-    (dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
+    (dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>) &&
     (... && dango::is_same<tp_types, tp_type>),
     tp_type
   >;
@@ -300,7 +300,7 @@ dango::
 min
 (tp_type const a_arg)noexcept->
 dango::enable_if
-<dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
+<dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
 {
   return a_arg;
 }
@@ -312,7 +312,7 @@ dango::
 min
 (tp_type const a_arg1, tp_type const a_arg2)noexcept->
 dango::enable_if
-<dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
+<dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
 {
   return a_arg1 < a_arg2 ? a_arg1 : a_arg2;
 }
@@ -331,7 +331,7 @@ noexcept->
 dango::enable_if
 <
   !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
-  (dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
+  (dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>) &&
   (... && dango::is_same<tp_types, tp_type>),
   tp_type
 >
@@ -346,7 +346,7 @@ dango::
 max
 (tp_type const a_arg)noexcept->
 dango::enable_if
-<dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
+<dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
 {
   return a_arg;
 }
@@ -358,7 +358,7 @@ dango::
 max
 (tp_type const a_arg1, tp_type const a_arg2)noexcept->
 dango::enable_if
-<dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
+<dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>, tp_type>
 {
   return a_arg1 > a_arg2 ? a_arg1 : a_arg2;
 }
@@ -377,7 +377,7 @@ noexcept->
 dango::enable_if
 <
   !dango::is_equal(sizeof...(tp_types), dango::usize(0)) &&
-  (dango::is_nonbool_arithmetic<tp_type> || dango::is_object_ptr<tp_type>) &&
+  (dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>) &&
   (... && dango::is_same<tp_types, tp_type>),
   tp_type
 >

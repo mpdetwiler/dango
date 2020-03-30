@@ -11,20 +11,6 @@ dango
   constexpr auto declval()noexcept->tp_type&&;
 }
 
-/*** is_same ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type1, typename tp_type2>
-  constexpr bool const is_same = false;
-
-  template
-  <typename tp_type>
-  constexpr bool const is_same<tp_type, tp_type> = true;
-}
-
 /*** remove_const ***/
 
 namespace
@@ -1060,6 +1046,46 @@ final
   DANGO_UNINSTANTIABLE(conditional_help)
 };
 
+/*** is_same ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type1, typename tp_type2>
+  inline constexpr bool const is_same_help = false;
+
+  template
+  <typename tp_type>
+  inline constexpr bool const is_same_help<tp_type, tp_type> = true;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type1, typename tp_type2>
+  concept is_same =
+    dango::detail::is_same_help<tp_type1, tp_type2>;
+
+  template
+  <typename tp_type1, typename tp_type2>
+  concept is_same_ignore_cv =
+    dango::is_same<tp_type1, tp_type2> || dango::is_same<dango::remove_cv<tp_type1>, dango::remove_cv<tp_type2>>;
+
+  template
+  <typename tp_type1, typename tp_type2>
+  concept is_same_ignore_ref =
+    dango::is_same<tp_type1, tp_type2> || dango::is_same<dango::remove_ref<tp_type1>, dango::remove_ref<tp_type2>>;
+
+  template
+  <typename tp_type1, typename tp_type2>
+  concept is_same_ignore_cvref =
+    dango::is_same_ignore_cv<tp_type1, tp_type2> ||
+    dango::is_same_ignore_ref<tp_type1, tp_type2> ||
+    dango::is_same_ignore_cv<dango::remove_ref<tp_type1>, dango::remove_ref<tp_type2>>;
+}
+
 /*** is_void ***/
 
 namespace
@@ -1067,8 +1093,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_void =
-    dango::is_same<dango::remove_cv<tp_type>, void>;
+  concept is_void = dango::is_same_ignore_cv<tp_type, void>;
 }
 
 /*** is_null ***/
@@ -1078,56 +1103,47 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_null =
-    dango::is_same<dango::remove_cv<tp_type>, dango::null_tag>;
+  concept is_null = dango::is_same_ignore_cv<tp_type, dango::null_tag>;
+}
+
+/*** is_bool ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_bool = dango::is_same_ignore_cv<tp_type, bool>;
 }
 
 /*** is_uint ***/
 
 namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_uint_help =
-    dango::is_same<tp_type, dango::builtin::uchar> ||
-    dango::is_same<tp_type, dango::builtin::ushort> ||
-    dango::is_same<tp_type, dango::builtin::uint> ||
-    dango::is_same<tp_type, dango::builtin::ulong> ||
-    dango::is_same<tp_type, dango::builtin::ulonglong>;
-}
-
-namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_uint =
-    detail::is_uint_help<dango::remove_cv<tp_type>>;
+  concept is_uint =
+    dango::is_same_ignore_cv<tp_type, dango::builtin::uchar> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::ushort> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::uint> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::ulong> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::ulonglong>;
 }
 
 /*** is_sint ***/
 
 namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_sint_help =
-    dango::is_same<tp_type, dango::builtin::schar> ||
-    dango::is_same<tp_type, dango::builtin::sshort> ||
-    dango::is_same<tp_type, dango::builtin::sint> ||
-    dango::is_same<tp_type, dango::builtin::slong> ||
-    dango::is_same<tp_type, dango::builtin::slonglong>;
-}
-
-namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_sint =
-    detail::is_sint_help<dango::remove_cv<tp_type>>;
+  concept is_sint =
+    dango::is_same_ignore_cv<tp_type, dango::builtin::schar> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::sshort> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::sint> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::slong> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::slonglong>;
 }
 
 /*** is_int ***/
@@ -1137,100 +1153,84 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_int =
+  concept is_int =
     dango::is_uint<tp_type> || dango::is_sint<tp_type>;
 }
 
-/*** is_nonbool_integral ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_nonbool_integral_help =
-    dango::is_same<tp_type, char> ||
-    dango::is_same<tp_type, dango::builtin::wchar> ||
-    dango::is_same<tp_type, dango::bchar> ||
-    dango::is_same<tp_type, dango::wchar> ||
-    dango::is_same<tp_type, dango::dchar> ||
-    dango::is_int<tp_type>;
-}
+/*** is_integral_exclude_bool ***/
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_nonbool_integral =
-    detail::is_nonbool_integral_help<dango::remove_cv<tp_type>>;
+  concept is_integral_exclude_bool =
+    dango::is_int<tp_type> ||
+    dango::is_same_ignore_cv<tp_type, char> ||
+    dango::is_same_ignore_cv<tp_type, dango::builtin::wchar> ||
+    dango::is_same_ignore_cv<tp_type, dango::bchar> ||
+    dango::is_same_ignore_cv<tp_type, dango::wchar> ||
+    dango::is_same_ignore_cv<tp_type, dango::dchar>;
 }
 
 /* is_integral */
 
 namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_integral_help =
-    dango::is_same<tp_type, bool> ||
-    dango::detail::is_nonbool_integral_help<tp_type>;
-}
-
-namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_integral =
-    detail::is_integral_help<dango::remove_cv<tp_type>>;
+  concept is_integral =
+    dango::is_integral_exclude_bool<tp_type> || dango::is_bool<tp_type>;
 }
 
 /*** is_float ***/
 
 namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_float_help =
-    dango::is_same<tp_type, float> ||
-    dango::is_same<tp_type, double> ||
-    dango::is_same<tp_type, dango::real>;
-}
-
-namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_float =
-    detail::is_float_help<dango::remove_cv<tp_type>>;
+  concept is_float =
+    dango::is_same_ignore_cv<tp_type, float> ||
+    dango::is_same_ignore_cv<tp_type, double> ||
+    dango::is_same_ignore_cv<tp_type, dango::real>;
 }
 
 /*** is_array is_array_rt_bound is_array_ct_bound ***/
 
 namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  inline constexpr bool const is_array_rt_bound_help = false;
+  template
+  <typename tp_type>
+  inline constexpr bool const is_array_rt_bound_help<tp_type[]> = true;
+
+  template
+  <typename tp_type>
+  inline constexpr bool const is_array_ct_bound_help = false;
+  template
+  <typename tp_type, dango::usize tp_size>
+  inline constexpr bool const is_array_ct_bound_help<tp_type[tp_size]> = true;
+}
+
+namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_array_rt_bound = false;
-  template
-  <typename tp_type>
-  constexpr bool const is_array_rt_bound<tp_type[]> = true;
+  concept is_array_rt_bound = dango::detail::is_array_rt_bound_help<tp_type>;
 
   template
   <typename tp_type>
-  constexpr bool const is_array_ct_bound = false;
-  template
-  <typename tp_type, dango::usize tp_size>
-  constexpr bool const is_array_ct_bound<tp_type[tp_size]> = true;
+  concept is_array_ct_bound = dango::detail::is_array_ct_bound_help<tp_type>;
 
   template
   <typename tp_type>
-  constexpr bool const is_array =
+  concept is_array =
     dango::is_array_rt_bound<tp_type> || dango::is_array_ct_bound<tp_type>;
 }
 
@@ -1241,16 +1241,16 @@ dango
 {
   template
   <typename tp_type>
-  constexpr dango::usize const array_rank = dango::usize(0);
+  inline constexpr dango::usize const array_rank = dango::usize(0);
 
   template
   <typename tp_type>
-  constexpr dango::usize const array_rank<tp_type[]> =
+  inline constexpr dango::usize const array_rank<tp_type[]> =
     dango::array_rank<tp_type> + dango::usize(1);
 
   template
   <typename tp_type, dango::usize tp_size>
-  constexpr dango::usize const array_rank<tp_type[tp_size]> =
+  inline constexpr dango::usize const array_rank<tp_type[tp_size]> =
     dango::array_rank<tp_type> + dango::usize(1);
 }
 
@@ -1261,24 +1261,24 @@ dango
 {
   template
   <typename tp_type, dango::usize tp_dim = dango::usize(0)>
-  constexpr dango::usize const array_size = dango::usize(0);
+  inline constexpr dango::usize const array_size = dango::usize(0);
 
   template
   <typename tp_type>
-  constexpr dango::usize const array_size<tp_type[], dango::usize(0)> = dango::usize(0);
+  inline constexpr dango::usize const array_size<tp_type[], dango::usize(0)> = dango::usize(0);
 
   template
   <typename tp_type, dango::usize tp_dim>
-  constexpr dango::usize const array_size<tp_type[], tp_dim> =
+  inline constexpr dango::usize const array_size<tp_type[], tp_dim> =
     dango::array_size<tp_type, tp_dim - dango::usize(1)>;
 
   template
   <typename tp_type, dango::usize tp_size>
-  constexpr dango::usize const array_size<tp_type[tp_size], dango::usize(0)> = tp_size;
+  inline constexpr dango::usize const array_size<tp_type[tp_size], dango::usize(0)> = tp_size;
 
   template
   <typename tp_type, dango::usize tp_size, dango::usize tp_dim>
-  constexpr dango::usize const array_size<tp_type[tp_size], tp_dim> =
+  inline constexpr dango::usize const array_size<tp_type[tp_size], tp_dim> =
     dango::array_size<tp_type, tp_dim - dango::usize(1)>;
 }
 
@@ -1289,7 +1289,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_enum = __is_enum(tp_type);
+  concept is_enum = bool(__is_enum(tp_type));
 }
 
 /*** is_union ***/
@@ -1299,7 +1299,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_union = __is_union(tp_type);
+  concept is_union = bool(__is_union(tp_type));
 }
 
 /*** is_class ***/
@@ -1309,35 +1309,51 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_class = __is_class(tp_type);
+  concept is_class = bool(__is_class(tp_type));
 }
 
 /*** is_lvalue_ref ***/
 
 namespace
-dango
+dango::detail
 {
   template
   <typename tp_type>
-  constexpr bool const is_lvalue_ref = false;
+  inline constexpr bool const is_lvalue_ref_help = false;
 
   template
   <typename tp_type>
-  constexpr bool const is_lvalue_ref<tp_type&> = true;
+  inline constexpr bool const is_lvalue_ref_help<tp_type&> = true;
 }
-
-/*** is_rvalue_ref ***/
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_rvalue_ref = false;
+  concept is_lvalue_ref = dango::detail::is_lvalue_ref_help<tp_type>;
+}
+
+/*** is_rvalue_ref ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  inline constexpr bool const is_rvalue_ref_help = false;
 
   template
   <typename tp_type>
-  constexpr bool const is_rvalue_ref<tp_type&&> = true;
+  inline constexpr bool const is_rvalue_ref_help<tp_type&&> = true;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_rvalue_ref = dango::detail::is_rvalue_ref_help<tp_type>;
 }
 
 /*** is_ref ***/
@@ -1347,20 +1363,27 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_ref =
+  concept is_ref =
     dango::is_lvalue_ref<tp_type> || dango::is_rvalue_ref<tp_type>;
 }
 
 /*** is_func ***/
 
 namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  inline constexpr bool const is_func_help =
+    !dango::is_ref<tp_type> && dango::is_same<tp_type const volatile, dango::remove_cv<tp_type>>;
+}
+
+namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_func =
-    !dango::is_ref<tp_type> &&
-    dango::is_same<tp_type const volatile, dango::remove_cv<tp_type>>;
+  concept is_func = dango::detail::is_func_help<tp_type>;
 }
 
 /*** is_ptr ***/
@@ -1370,11 +1393,11 @@ dango::detail
 {
   template
   <typename tp_type>
-  constexpr bool const is_ptr_help = false;
+  inline constexpr bool const is_ptr_help = false;
 
   template
   <typename tp_type>
-  constexpr bool const is_ptr_help<tp_type*> = true;
+  inline constexpr bool const is_ptr_help<tp_type*> = true;
 }
 
 namespace
@@ -1382,80 +1405,40 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_ptr =
-    detail::is_ptr_help<dango::remove_cv<tp_type>>;
+  concept is_ptr = dango::detail::is_ptr_help<dango::remove_cv<tp_type>>;
 }
 
 /*** is_func_ptr ***/
 
 namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_func_ptr_help = false;
-
-  template
-  <typename tp_type>
-  constexpr bool const is_func_ptr_help<tp_type*> =
-    dango::is_func<tp_type>;
-}
-
-namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_func_ptr =
-    detail::is_func_ptr_help<dango::remove_cv<tp_type>>;
-}
-
-/*** is_object_ptr ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_object_ptr_help = false;
-
-  template
-  <typename tp_type>
-  constexpr bool const is_object_ptr_help<tp_type*> =
-    !dango::is_void<tp_type> && !dango::is_func<tp_type>;
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  constexpr bool const is_object_ptr =
-    detail::is_object_ptr_help<dango::remove_cv<tp_type>>;
+  concept is_func_ptr =
+    dango::is_ptr<tp_type> && dango::is_func<dango::remove_ptr<tp_type>>;
 }
 
 /*** is_void_ptr ***/
 
 namespace
-dango::detail
+dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_void_ptr_help = false;
-
-  template
-  <typename tp_type>
-  constexpr bool const is_void_ptr_help<tp_type*> =
-    dango::is_void<tp_type>;
+  concept is_void_ptr =
+    dango::is_ptr<tp_type> && dango::is_void<dango::remove_ptr<tp_type>>;
 }
+
+/*** is_object_ptr ***/
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_void_ptr =
-    detail::is_void_ptr_help<dango::remove_cv<tp_type>>;
+  concept is_object_ptr =
+    dango::is_ptr<tp_type> && !dango::is_func_ptr<tp_type> && !dango::is_void_ptr<tp_type>;
 }
 
 /*** is_member_ptr ***/
@@ -1465,11 +1448,11 @@ dango::detail
 {
   template
   <typename tp_type>
-  constexpr bool const is_member_ptr_help = false;
+  inline constexpr bool const is_member_ptr_help = false;
 
   template
   <typename tp_type, typename tp_class>
-  constexpr bool const is_member_ptr_help<tp_type tp_class::*> = true;
+  inline constexpr bool const is_member_ptr_help<tp_type tp_class::*> = true;
 }
 
 namespace
@@ -1477,8 +1460,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_member_ptr =
-    detail::is_member_ptr_help<dango::remove_cv<tp_type>>;
+  concept is_member_ptr = dango::detail::is_member_ptr_help<dango::remove_cv<tp_type>>;
 }
 
 /*** is_member_func_ptr ***/
@@ -1488,20 +1470,19 @@ dango::detail
 {
   template
   <typename tp_type>
-  constexpr bool const is_member_func_ptr_help = false;
+  inline constexpr bool const is_member_func_ptr_help = false;
 
   template
   <typename tp_type, typename tp_class>
-  constexpr bool const is_member_func_ptr_help<tp_type tp_class::*> =
-    dango::is_func<tp_type>;
+  inline constexpr bool const is_member_func_ptr_help<tp_type tp_class::*> = dango::is_func<tp_type>;
 }
 
 namespace dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_member_func_ptr =
-    detail::is_member_func_ptr_help<dango::remove_cv<tp_type>>;
+  concept is_member_func_ptr =
+    dango::is_member_ptr<tp_type> && dango::detail::is_member_func_ptr_help<dango::remove_cv<tp_type>>;
 }
 
 /*** is_member_object_ptr ***/
@@ -1511,19 +1492,19 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_member_object_ptr =
+  concept is_member_object_ptr =
     dango::is_member_ptr<tp_type> && !dango::is_member_func_ptr<tp_type>;
 }
 
-/*** is_nonbool_arithmetic ***/
+/*** is_arithmetic_exclude_bool ***/
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_nonbool_arithmetic =
-    dango::is_nonbool_integral<tp_type> || dango::is_float<tp_type>;
+  concept is_arithmetic_exclude_bool =
+    dango::is_integral_exclude_bool<tp_type> || dango::is_float<tp_type>;
 }
 
 /*** is_arithmetic ***/
@@ -1533,8 +1514,8 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_arithmetic =
-    dango::is_integral<tp_type> || dango::is_float<tp_type>;
+  concept is_arithmetic =
+    dango::is_arithmetic_exclude_bool<tp_type> || dango::is_bool<tp_type>;
 }
 
 /*** is_fundamnetal ***/
@@ -1544,7 +1525,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_fundamental =
+  concept is_fundamental =
     dango::is_void<tp_type> ||
     dango::is_null<tp_type> ||
     dango::is_arithmetic<tp_type>;
@@ -1557,12 +1538,25 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_scalar =
+  concept is_scalar =
     dango::is_arithmetic<tp_type> ||
     dango::is_enum<tp_type> ||
     dango::is_ptr<tp_type> ||
     dango::is_member_ptr<tp_type> ||
     dango::is_null<tp_type>;
+}
+
+/*** is_object_exclude_array ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_object_exclude_array =
+    dango::is_scalar<tp_type> ||
+    dango::is_union<tp_type> ||
+    dango::is_class<tp_type>;
 }
 
 /*** is_object ***/
@@ -1572,11 +1566,8 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_object =
-    dango::is_scalar<tp_type> ||
-    dango::is_array<tp_type> ||
-    dango::is_union<tp_type> ||
-    dango::is_class<tp_type>;
+  concept is_object =
+    dango::is_object_exclude_array<tp_type> || dango::is_array<tp_type>;
 }
 
 /*** is_compound ***/
@@ -1586,35 +1577,51 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_compound = !dango::is_fundamental<tp_type>;
+  concept is_compound = !dango::is_fundamental<tp_type>;
 }
 
 /*** is_const ***/
 
 namespace
-dango
+dango::detail
 {
   template
   <typename tp_type>
-  constexpr bool const is_const = false;
+  inline constexpr bool const is_const_help = false;
 
   template
   <typename tp_type>
-  constexpr bool const is_const<tp_type const> = true;
+  inline constexpr bool const is_const_help<tp_type const> = true;
 }
-
-/*** is_volatile ***/
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_volatile = false;
+  concept is_const = dango::detail::is_const_help<tp_type>;
+}
+
+/*** is_volatile ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  inline constexpr bool const is_volatile_help = false;
 
   template
   <typename tp_type>
-  constexpr bool const is_volatile<tp_type volatile> = true;
+  inline constexpr bool const is_volatile_help<tp_type volatile> = true;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_volatile = dango::detail::is_volatile_help<tp_type>;
 }
 
 /*** is_trivial ***/
@@ -1624,7 +1631,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_trivial = __is_trivial(tp_type);
+  concept is_trivial = bool(__is_trivial(tp_type));
 }
 
 /*** is_trivial_copyable ***/
@@ -1634,7 +1641,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_trivial_copyable = __is_trivially_copyable(tp_type);
+  concept is_trivial_copyable = bool(__is_trivially_copyable(tp_type));
 }
 
 /*** is_standard_layout ***/
@@ -1644,7 +1651,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_standard_layout = __is_standard_layout(tp_type);
+  concept is_standard_layout = bool(__is_standard_layout(tp_type));
 }
 
 /*** is_empty ***/
@@ -1654,7 +1661,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_empty = __is_empty(tp_type);
+  concept is_empty = bool(__is_empty(tp_type));
 }
 
 /*** is_polymorphic ***/
@@ -1664,7 +1671,7 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_polymorphic = __is_polymorphic(tp_type);
+  concept is_polymorphic = bool(__is_polymorphic(tp_type));
 }
 
 /*** is_abstract ***/
@@ -1674,22 +1681,29 @@ dango
 {
   template
   <typename tp_type>
-  constexpr bool const is_abstract = __is_abstract(tp_type);
+  concept is_abstract = bool(__is_abstract(tp_type));
 }
 
 /*** is_signed ***/
 
 namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  inline constexpr bool const is_signed_help = false;
+
+  template
+  <dango::is_arithmetic_exclude_bool tp_type>
+  inline constexpr bool const is_signed_help<tp_type> = bool(tp_type(-1) < tp_type(0));
+}
+
+namespace
 dango
 {
   template
-  <typename tp_type, typename tp_enabled = dango::enable_tag>
-  constexpr bool const is_signed = false;
-
-  template
   <typename tp_type>
-  constexpr bool const is_signed<tp_type, dango::enable_if<dango::is_arithmetic<tp_type>>> =
-    (tp_type(-1) < tp_type(0));
+  concept is_signed = dango::detail::is_signed_help<dango::remove_cv<tp_type>>;
 }
 
 /*** is_unsigned ***/
@@ -1698,13 +1712,8 @@ namespace
 dango
 {
   template
-  <typename tp_type, typename tp_enabled = dango::enable_tag>
-  constexpr bool const is_unsigned = false;
-
-  template
   <typename tp_type>
-  constexpr bool const is_unsigned<tp_type, dango::enable_if<dango::is_arithmetic<tp_type>>> =
-    (tp_type(-1) > tp_type(0));
+  concept is_unsigned = !dango::is_signed<tp_type>;
 }
 
 /*** is_base_of ***/
@@ -1714,7 +1723,17 @@ dango
 {
   template
   <typename tp_base, typename tp_derived>
-  constexpr bool const is_base_of = __is_base_of(tp_base, tp_derived);
+  concept is_base_of = bool(__is_base_of(tp_base, tp_derived));
+}
+
+/*** is_derived_from ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_derived, typename tp_base>
+  concept is_derived_from = dango::is_base_of<tp_base, tp_derived>;
 }
 
 /*** is_destructible is_trivial_destructible is_noexcept_destructible has_virtual_destructor ***/

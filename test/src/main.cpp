@@ -43,10 +43,75 @@ static_assert(dango::is_convertible_ret<dango::mutex, dango::mutex const>);
 static_assert(!dango::is_noexcept_convertible<dango::mutex, dango::mutex const>);
 static_assert(dango::is_noexcept_convertible_ret<dango::mutex, dango::mutex const>);
 
+template
+<typename tp_type>
+requires(dango::is_same_ignore_cvref<tp_type, bool>)
+struct
+concept_test
+{
+  static constexpr auto const* const value = "is_same_ignore_cvref";
+};
+
+template
+<typename tp_type>
+requires(dango::is_same_ignore_ref<tp_type, bool>)
+struct
+concept_test<tp_type>
+{
+  static constexpr auto const* const value = "is_same_ignore_ref";
+};
+
+template
+<typename tp_type>
+requires(dango::is_same_ignore_cv<tp_type, bool>)
+struct
+concept_test<tp_type>
+{
+  static constexpr auto const* const value = "is_same_ignore_cv";
+};
+
+template
+<typename tp_type>
+requires(dango::is_same<tp_type, bool>)
+struct
+concept_test<tp_type>
+{
+  static constexpr auto const* const value = "is_same";
+};
+
+template
+<typename tp_type>
+requires(dango::is_arithmetic<tp_type>)
+inline constexpr auto const* const c_arith_test = "is_arithmetic";
+
+template
+<typename tp_type>
+requires(dango::is_arithmetic_exclude_bool<tp_type>)
+inline constexpr auto const* const c_arith_test<tp_type> = "is_arithmetic_exclude_bool";
+
+template
+<typename tp_type>
+requires(dango::is_integral<tp_type>)
+inline constexpr auto const* const c_arith_test<tp_type> = "is_integral";
+
+template
+<typename tp_type>
+requires(dango::is_integral_exclude_bool<tp_type>)
+inline constexpr auto const* const c_arith_test<tp_type> = "is_integral_exclude_bool";
+
 auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  printf("%s\n", concept_test<bool const&>::value);
+  printf("%s\n", concept_test<bool&&>::value);
+  printf("%s\n", concept_test<bool const volatile>::value);
+  printf("%s\n", concept_test<bool>::value);
+
+  printf("%s\n", c_arith_test<float>);
+  printf("%s\n", c_arith_test<int>);
+  printf("%s\n", c_arith_test<bool>);
+
   {
     using elem_type = double;
     constexpr auto const c_count = dango::usize(4);

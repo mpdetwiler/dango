@@ -6,8 +6,8 @@ dango::detail
 {
   template
   <typename tp_char>
-  constexpr bool const is_cstring_char =
-    dango::is_nonbool_integral<tp_char>;
+  concept is_cstring_char =
+    dango::is_integral_exclude_bool<tp_char>;
 }
 
 namespace
