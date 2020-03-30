@@ -38,6 +38,11 @@ struct test_base{ virtual ~test_base()noexcept = default; };
 
 struct test_derived:test_base{ ~test_derived()noexcept override = default; };
 
+static_assert(dango::is_destructible<test_derived>);
+static_assert(dango::is_noexcept_destructible<test_derived>);
+static_assert(!dango::is_trivial_destructible<test_derived>);
+static_assert(dango::is_virtual_destructible<test_derived>);
+
 static_assert(!dango::is_convertible<dango::mutex, dango::mutex const>);
 static_assert(dango::is_convertible_ret<dango::mutex, dango::mutex const>);
 static_assert(!dango::is_noexcept_convertible<dango::mutex, dango::mutex const>);
@@ -98,6 +103,17 @@ template
 <typename tp_type>
 requires(dango::is_integral_exclude_bool<tp_type>)
 inline constexpr auto const* const c_arith_test<tp_type> = "is_integral_exclude_bool";
+
+template
+<typename tp_type>
+concept substitution_test = dango::is_same<tp_type, int> || dango::enable_if<false, tp_type>{ 42 };
+
+static_assert(substitution_test<int>);
+
+static_assert(dango::is_callable_ret<dango::mutex, dango::mutex(int)noexcept, int const&>);
+static_assert(dango::is_noexcept_callable_ret<dango::mutex, dango::mutex(int)noexcept, int const&>);
+static_assert(!dango::is_noexcept_callable_ret<dango::mutex, dango::mutex(int)noexcept(false), int const&>);
+
 
 auto
 main
