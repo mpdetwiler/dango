@@ -7,26 +7,14 @@ namespace
 dango
 {
   template
-  <typename tp_type>
-  auto
-  destructor
-  (tp_type const volatile*)
-  noexcept(dango::is_noexcept_destructible<tp_type>)->
-  dango::enable_if<dango::is_destructible<tp_type>, void>;
-}
+  <dango::is_destructible tp_type>
+  void destructor
+  (tp_type const volatile* a_ptr)noexcept(dango::is_noexcept_destructible<tp_type>)
+  {
+    dango_assert(a_ptr != dango::null);
 
-template
-<typename tp_type>
-auto
-dango::
-destructor
-(tp_type const volatile* const a_ptr)
-noexcept(dango::is_noexcept_destructible<tp_type>)->
-dango::enable_if<dango::is_destructible<tp_type>, void>
-{
-  dango_assert(a_ptr != dango::null);
-
-  a_ptr->~tp_type();
+    a_ptr->~tp_type();
+  }
 }
 
 /*** dango_new_noexcept ***/
@@ -55,20 +43,10 @@ dango
   template
   <typename tp_type>
   [[nodiscard]] constexpr auto
-  launder
-  (tp_type*)noexcept->
-  dango::enable_if<dango::is_object<tp_type>, tp_type*>;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-launder
-(tp_type* const a_arg)noexcept->
-dango::enable_if<dango::is_object<tp_type>, tp_type*>
-{
-  return __builtin_launder(a_arg);
+  launder(tp_type* const a_ptr)noexcept->tp_type*
+  {
+    return __builtin_launder(a_ptr);
+  }
 }
 
 /*** address_of ***/
@@ -116,7 +94,7 @@ ptr_as_uint
   }
   else
   {
-    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void const*>(nullptr)));
+    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void*>(nullptr)));
   }
 }
 
@@ -133,7 +111,7 @@ ptr_as_sint
   }
   else
   {
-    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void const*>(nullptr)));
+    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void*>(nullptr)));
   }
 }
 
@@ -173,32 +151,24 @@ dango
 {
   template
   <dango::usize tp_align, typename tp_type>
+  requires(dango::is_pow_two(tp_align) && !dango::is_func<tp_type>)
   [[nodiscard]] constexpr auto
   assume_aligned
-  (tp_type*)noexcept->
-  dango::enable_if<dango::is_pow_two(tp_align) && !dango::is_func<tp_type>, tp_type*>;
-}
-
-template
-<dango::usize tp_align, typename tp_type>
-[[nodiscard]] constexpr auto
-dango::
-assume_aligned
-(tp_type* const a_ptr)noexcept->
-dango::enable_if<dango::is_pow_two(tp_align) && !dango::is_func<tp_type>, tp_type*>
-{
-  dango_assert(dango::is_aligned(a_ptr, tp_align));
-
-  if constexpr(dango::in_constexpr_context())
+  (tp_type* const a_ptr)noexcept->tp_type*
   {
-    return a_ptr;
-  }
-  else
-  {
-    auto const a_result =
-      __builtin_assume_aligned(const_cast<dango::remove_cv<tp_type> const*>(a_ptr), tp_align);
+    dango_assert(dango::is_aligned(a_ptr, tp_align));
 
-    return static_cast<tp_type*>(a_result);
+    if constexpr(dango::in_constexpr_context())
+    {
+      return a_ptr;
+    }
+    else
+    {
+      auto const a_result =
+        __builtin_assume_aligned(const_cast<dango::remove_cv<tp_type> const*>(a_ptr), tp_align);
+
+      return static_cast<tp_type*>(a_result);
+    }
   }
 }
 
@@ -269,31 +239,6 @@ constexpr void
 operator delete[]
 (void*, dango::placement_tag, void*, dango::usize, dango::usize, dango::usize)noexcept;
 
-namespace
-dango
-{
-  template
-  <typename tp_type, typename... tp_args>
-  requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_constructible<tp_type, tp_args...>)
-  constexpr auto
-  placement_new
-  (void*, tp_args&&...)noexcept(dango::is_noexcept_constructible<tp_type, tp_args...>)->tp_type*;
-
-  template
-  <typename tp_type>
-  requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
-  constexpr auto
-  placement_new_trivial
-  (void*)noexcept->tp_type*;
-
-  template
-  <typename tp_type>
-  requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
-  constexpr auto
-  placement_new_trivial_array
-  (void*, dango::usize)noexcept->tp_type*;
-}
-
 constexpr auto
 operator new
 (
@@ -360,37 +305,48 @@ noexcept
 
 }
 
-template
-<typename tp_type, typename... tp_args>
-requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_constructible<tp_type, tp_args...>)
-constexpr auto
-dango::
-placement_new
-(void* const a_addr, tp_args&&... a_args)noexcept(dango::is_noexcept_constructible<tp_type, tp_args...>)->tp_type*
+namespace
+dango
 {
-  return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type)) tp_type(dango::forward<tp_args>(a_args)...);
-}
+  template
+  <typename tp_type, typename... tp_args>
+  requires(dango::is_object_exclude_array<tp_type> && dango::is_constructible<tp_type, tp_args...>)
+  constexpr auto
+  placement_new
+  (void* const a_addr, tp_args&&... a_args)noexcept(dango::is_noexcept_constructible<tp_type, tp_args...>)->tp_type*
+  {
+    return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type)) tp_type(dango::forward<tp_args>(a_args)...);
+  }
 
-template
-<typename tp_type>
-requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
-constexpr auto
-dango::
-placement_new_trivial
-(void* const a_addr)noexcept->tp_type*
-{
-  return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type)) tp_type;
-}
+  template
+  <typename tp_type, typename... tp_args>
+  requires(dango::is_object_exclude_array<tp_type> && dango::is_brace_constructible<tp_type, tp_args...>)
+  constexpr auto
+  placement_new_brace
+  (void* const a_addr, tp_args&&... a_args)noexcept(dango::is_noexcept_brace_constructible<tp_type, tp_args...>)->tp_type*
+  {
+    return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type)) tp_type{ dango::forward<tp_args>(a_args)... };
+  }
 
-template
-<typename tp_type>
-requires(dango::is_object<tp_type> && !dango::is_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
-constexpr auto
-dango::
-placement_new_trivial_array
-(void* const a_addr, dango::usize const a_count)noexcept->tp_type*
-{
-  return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type), a_count) tp_type[a_count];
+  template
+  <typename tp_type>
+  requires(dango::is_object_exclude_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
+  constexpr auto
+  placement_new_trivial
+  (void* const a_addr)noexcept->tp_type*
+  {
+    return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type)) tp_type;
+  }
+
+  template
+  <typename tp_type>
+  requires(dango::is_object_exclude_array<tp_type> && dango::is_trivial_default_constructible<tp_type>)
+  constexpr auto
+  placement_new_trivial_array
+  (void* const a_addr, dango::usize const a_count)noexcept->tp_type*
+  {
+    return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type), a_count) tp_type[a_count];
+  }
 }
 
 /*** aligned_storage ***/
@@ -400,34 +356,25 @@ dango::detail
 {
   template
   <dango::usize tp_size, dango::usize tp_align>
-  using aligned_storage_enable_spec =
-    dango::enable_if<!dango::is_equal(tp_size, dango::usize(0)) && dango::is_pow_two(tp_align)>;
+  concept aligned_storage_constraint_spec =
+    (tp_size != dango::usize(0)) && dango::is_pow_two(tp_align);
 }
 
 namespace
 dango
 {
   template
-  <
-    dango::usize tp_size,
-    dango::usize tp_align = alignof(dango::max_align_type),
-    typename tp_enabled = dango::enable_tag
-  >
+  <dango::usize tp_size, dango::usize tp_align = alignof(dango::max_align_type)>
+  requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
   class aligned_storage;
-
-  template
-  <dango::usize tp_size, dango::usize tp_align>
-  class
-  aligned_storage
-  <tp_size, tp_align, dango::detail::aligned_storage_enable_spec<tp_size, tp_align>>;
 }
 
 template
 <dango::usize tp_size, dango::usize tp_align>
+requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
 class
 dango::
 aligned_storage
-<tp_size, tp_align, dango::detail::aligned_storage_enable_spec<tp_size, tp_align>>
 {
 public:
   static constexpr dango::usize const c_size = dango::next_multiple(tp_size, tp_align);
@@ -445,14 +392,13 @@ public:
   DANGO_IMMOBILE(aligned_storage)
 };
 
-static_assert(dango::is_trivial_default_constructible<dango::aligned_storage<dango::usize(4), dango::usize(4)>>);
-
 template
 <dango::usize tp_size, dango::usize tp_align>
+requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
 constexpr auto
 dango::
 aligned_storage
-<tp_size, tp_align, dango::detail::aligned_storage_enable_spec<tp_size, tp_align>>::
+<tp_size, tp_align>::
 get
 ()noexcept->void*
 {
@@ -461,10 +407,11 @@ get
 
 template
 <dango::usize tp_size, dango::usize tp_align>
+requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
 constexpr auto
 dango::
 aligned_storage
-<tp_size, tp_align, dango::detail::aligned_storage_enable_spec<tp_size, tp_align>>::
+<tp_size, tp_align>::
 get
 ()const noexcept->void const*
 {
@@ -477,260 +424,124 @@ namespace
 dango
 {
   template
-  <typename tp_type>
+  <dango::is_noexcept_destructible tp_type>
   constexpr auto
   array_destroy
-  (tp_type const volatile*, dango::usize)noexcept->
-  dango::enable_if<dango::is_noexcept_destructible<tp_type>, void>;
+  (tp_type const volatile* const a_array, dango::usize const a_count)noexcept->void
+  {
+    dango_assert(a_array != dango::null);
+
+    if(a_count == dango::usize(0))
+    {
+      return;
+    }
+
+    auto const a_end = a_array + a_count;
+    auto a_cur = a_array;
+
+    while(a_cur != a_end)
+    {
+      dango::destructor(a_cur++);
+    }
+  }
 
   template
   <typename tp_type>
+  requires
+  (!dango::is_volatile<tp_type> && dango::is_copy_constructible<tp_type> && dango::is_noexcept_destructible<tp_type>)
   constexpr auto
   array_copy
-  (void* dango_restrict, tp_type const*, dango::usize)
-  noexcept(dango::is_noexcept_copy_constructible<tp_type>)->
-  dango::enable_if
-  <
-    !dango::is_volatile<tp_type> &&
-    dango::is_copy_constructible<tp_type> &&
-    dango::is_noexcept_destructible<tp_type>,
-    tp_type*
-  >;
+  (void* const dango_restrict a_dest, tp_type const* const a_array, dango::usize const a_count)
+  noexcept(dango::is_noexcept_copy_constructible<tp_type>)->tp_type*
+  {
+    dango_assert(a_dest != dango::null);
+    dango_assert(a_array != dango::null);
+
+    if(a_count == dango::usize(0))
+    {
+      return dango::null;
+    }
+
+    auto const a_end = a_array + a_count;
+    auto a_src = a_array;
+    auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
+    auto a_dst = a_result;
+
+    auto a_guard =
+    dango::make_guard
+    (
+      [a_result, &a_dst]()noexcept->void
+      {
+        dango::array_destroy(a_result, dango::usize(a_dst - a_result));
+      }
+    );
+
+    do
+    {
+      dango::placement_new<tp_type>(*a_src);
+
+      dango::destructor(a_src);
+
+      ++a_src;
+      ++a_dst;
+    }
+    while(a_src != a_end);
+
+    a_guard.dismiss();
+
+    return a_result;
+  }
 
   template
   <typename tp_type>
+  requires(!dango::is_const<tp_type> && !dango::is_volatile<tp_type> && dango::is_noexcept_move_constructible<tp_type>)
   constexpr auto
   array_move
-  (void* dango_restrict, tp_type*, dango::usize)
-  noexcept->
-  dango::enable_if
-  <
-    !dango::is_const<tp_type> &&
-    !dango::is_volatile<tp_type> &&
-    dango::is_noexcept_move_constructible<tp_type>,
-    tp_type*
-  >;
-
-  template
-  <typename tp_type>
-  constexpr auto
-  array_relocate
-  (void* dango_restrict, tp_type*, dango::usize)
-  noexcept->
-  dango::enable_if
-  <
-    !dango::is_const<tp_type> &&
-    !dango::is_volatile<tp_type> &&
-    dango::is_noexcept_move_constructible<tp_type> &&
-    dango::is_noexcept_destructible<tp_type>,
-    tp_type*
-  >;
-
-  template
-  <typename tp_type>
-  constexpr auto
-  array_shift
-  (dango::ssize, tp_type*, dango::usize)
-  noexcept->
-  dango::enable_if
-  <
-    !dango::is_const<tp_type> &&
-    !dango::is_volatile<tp_type> &&
-    dango::is_noexcept_move_constructible<tp_type> &&
-    dango::is_noexcept_destructible<tp_type>,
-    tp_type*
-  >;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-array_destroy
-(tp_type const volatile* const a_array, dango::usize const a_count)noexcept->
-dango::enable_if<dango::is_noexcept_destructible<tp_type>, void>
-{
-  dango_assert(a_array != dango::null);
-
-  if(a_count == dango::usize(0))
+  (void* const dango_restrict a_dest, tp_type* const a_array, dango::usize const a_count)noexcept->tp_type*
   {
-    return;
-  }
+    dango_assert(a_dest != dango::null);
+    dango_assert(a_array != dango::null);
 
-  auto const a_end = a_array + a_count;
-  auto a_cur = a_array;
-
-  while(a_cur != a_end)
-  {
-    dango::destructor(a_cur++);
-  }
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-array_copy
-(void* const dango_restrict a_dest, tp_type const* const a_array, dango::usize const a_count)
-noexcept(dango::is_noexcept_copy_constructible<tp_type>)->
-dango::enable_if
-<
-  !dango::is_volatile<tp_type> &&
-  dango::is_copy_constructible<tp_type> &&
-  dango::is_noexcept_destructible<tp_type>,
-  tp_type*
->
-{
-  dango_assert(a_dest != dango::null);
-  dango_assert(a_array != dango::null);
-
-  if(a_count == dango::usize(0))
-  {
-    return dango::null;
-  }
-
-  auto const a_end = a_array + a_count;
-  auto a_src = a_array;
-  auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
-  auto a_dst = a_result;
-
-  auto a_guard =
-  dango::make_guard
-  (
-    [a_result, &a_dst]()noexcept->void
+    if(a_count == dango::usize(0))
     {
-      dango::array_destroy(a_result, dango::usize(a_dst - a_result));
+      return dango::null;
     }
-  );
 
-  do
-  {
-    dango::placement_new<tp_type>(*a_src);
-
-    dango::destructor(a_src);
-
-    ++a_src;
-    ++a_dst;
-  }
-  while(a_src != a_end);
-
-  a_guard.dismiss();
-
-  return a_result;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-array_move
-(void* const dango_restrict a_dest, tp_type* const a_array, dango::usize const a_count)
-noexcept->
-dango::enable_if
-<
-  !dango::is_const<tp_type> &&
-  !dango::is_volatile<tp_type> &&
-  dango::is_noexcept_move_constructible<tp_type>,
-  tp_type*
->
-{
-  dango_assert(a_dest != dango::null);
-  dango_assert(a_array != dango::null);
-
-  if(a_count == dango::usize(0))
-  {
-    return dango::null;
-  }
-
-  tp_type const* const a_end = a_array + a_count;
-  auto a_src = a_array;
-  auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
-  auto a_dst = a_result;
-
-  do
-  {
-    dango::placement_new<tp_type>(dango::move(*a_src));
-
-    ++a_src;
-    ++a_dst;
-  }
-  while(a_src != a_end);
-
-  return a_result;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-array_relocate
-(void* const dango_restrict a_dest, tp_type* const a_array, dango::usize const a_count)
-noexcept->
-dango::enable_if
-<
-  !dango::is_const<tp_type> &&
-  !dango::is_volatile<tp_type> &&
-  dango::is_noexcept_move_constructible<tp_type> &&
-  dango::is_noexcept_destructible<tp_type>,
-  tp_type*
->
-{
-  dango_assert(a_dest != dango::null);
-  dango_assert(a_array != dango::null);
-
-  if(a_count == dango::usize(0))
-  {
-    return dango::null;
-  }
-
-  tp_type const* const a_end = a_array + a_count;
-  auto a_src = a_array;
-  auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
-  auto a_dst = a_result;
-
-  do
-  {
-    dango::placement_new<tp_type>(dango::move(*a_src));
-
-    dango::destructor(a_src);
-
-    ++a_src;
-    ++a_dst;
-  }
-  while(a_src != a_end);
-
-  return a_result;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-array_shift
-(dango::ssize const a_shift, tp_type* const a_array, dango::usize const a_count)
-noexcept->
-dango::enable_if
-<
-  !dango::is_const<tp_type> &&
-  !dango::is_volatile<tp_type> &&
-  dango::is_noexcept_move_constructible<tp_type> &&
-  dango::is_noexcept_destructible<tp_type>,
-  tp_type*
->
-{
-  dango_assert(a_array != dango::null);
-
-  if(a_count == dango::usize(0))
-  {
-    return dango::null;
-  }
-
-  auto const a_result = a_array + a_shift;
-
-  if(a_shift < dango::ssize(0))
-  {
     tp_type const* const a_end = a_array + a_count;
     auto a_src = a_array;
+    auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
+    auto a_dst = a_result;
+
+    do
+    {
+      dango::placement_new<tp_type>(dango::move(*a_src));
+
+      ++a_src;
+      ++a_dst;
+    }
+    while(a_src != a_end);
+
+    return a_result;
+  }
+
+  template
+  <typename tp_type>
+  requires(!dango::is_const<tp_type> && !dango::is_volatile<tp_type> && dango::is_noexcept_move_constructible<tp_type>)
+  constexpr auto
+  array_relocate
+  (void* const dango_restrict a_dest, tp_type* const a_array, dango::usize const a_count)noexcept->tp_type*
+  {
+    dango_assert(a_dest != dango::null);
+    dango_assert(a_array != dango::null);
+
+    if(a_count == dango::usize(0))
+    {
+      return dango::null;
+    }
+
+    tp_type const* const a_end = a_array + a_count;
+    auto a_src = a_array;
+    auto const a_result = dango::assume_aligned<alignof(tp_type)>(static_cast<tp_type*>(a_dest));
     auto a_dst = a_result;
 
     do
@@ -743,27 +554,64 @@ dango::enable_if
       ++a_dst;
     }
     while(a_src != a_end);
+
+    return a_result;
   }
 
-  if(a_shift > dango::ssize(0))
+  template
+  <typename tp_type>
+  requires(!dango::is_const<tp_type> && !dango::is_volatile<tp_type> && dango::is_noexcept_move_constructible<tp_type>)
+  constexpr auto
+  array_shift
+  (dango::ssize const a_shift, tp_type* const a_array, dango::usize const a_count)noexcept->tp_type*
   {
-    tp_type const* const a_end = a_array;
-    auto a_src = a_array + a_count;
-    auto a_dst = a_result + a_count;
+    dango_assert(a_array != dango::null);
 
-    do
+    if(a_count == dango::usize(0))
     {
-      --a_src;
-      --a_dst;
-
-      dango::placement_new<tp_type>(dango::move(*a_src));
-
-      dango::destructor(a_src);
+      return dango::null;
     }
-    while(a_src != a_end);
-  }
 
-  return a_result;
+    auto const a_result = a_array + a_shift;
+
+    if(a_shift < dango::ssize(0))
+    {
+      tp_type const* const a_end = a_array + a_count;
+      auto a_src = a_array;
+      auto a_dst = a_result;
+
+      do
+      {
+        dango::placement_new<tp_type>(dango::move(*a_src));
+
+        dango::destructor(a_src);
+
+        ++a_src;
+        ++a_dst;
+      }
+      while(a_src != a_end);
+    }
+
+    if(a_shift > dango::ssize(0))
+    {
+      tp_type const* const a_end = a_array;
+      auto a_src = a_array + a_count;
+      auto a_dst = a_result + a_count;
+
+      do
+      {
+        --a_src;
+        --a_dst;
+
+        dango::placement_new<tp_type>(dango::move(*a_src));
+
+        dango::destructor(a_src);
+      }
+      while(a_src != a_end);
+    }
+
+    return a_result;
+  }
 }
 
 #endif

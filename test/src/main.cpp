@@ -227,9 +227,9 @@ static_assert(dango::is_aligned(&integer, 16));
 
 static_assert(u8"hello"[0] == u8'h');
 
-static_assert(dango::char_as_bchar(static_cast<char const*>(nullptr)) == nullptr);
-static_assert(dango::bchar_as_char(static_cast<dango::bchar const*>(nullptr)) == nullptr);
-static_assert(dango::ptr_as_uint(nullptr) == dango::ptr_as_sint(nullptr));
+static_assert(dango::char_as_bchar(static_cast<char const*>(null)) == null);
+static_assert(dango::bchar_as_char(static_cast<dango::bchar const*>(null)) == null);
+static_assert(dango::ptr_as_uint(null) == dango::ptr_as_sint(null));
 
 constexpr auto const a_location = dango::source_location::current();
 

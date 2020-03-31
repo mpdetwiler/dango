@@ -13,14 +13,14 @@ dango
 
   template
   <typename tp_elem>
-  concept intrusive_list_constraint =
+  concept intrusive_list_constraint_spec =
     dango::is_class<tp_elem> &&
     dango::is_derived_from<tp_elem, dango::intrusive_list_elem<tp_elem>> &&
     !dango::is_const<tp_elem> &&
     !dango::is_volatile<tp_elem>;
 
   template
-  <dango::intrusive_list_constraint tp_elem>
+  <dango::intrusive_list_constraint_spec tp_elem>
   class intrusive_list;
 }
 
@@ -40,7 +40,7 @@ dango::
 intrusive_list_elem
 {
   template
-  <dango::intrusive_list_constraint>
+  <dango::intrusive_list_constraint_spec>
   friend class dango::intrusive_list;
 private:
   using elem_type = intrusive_list_elem;
@@ -84,7 +84,7 @@ public:
 };
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 class
 dango::
 intrusive_list
@@ -163,7 +163,7 @@ public:
 };
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr void
 dango::
 intrusive_list<tp_elem>::
@@ -188,7 +188,7 @@ remove(elem_ptr const a_element)noexcept
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr
 dango::
 intrusive_list<tp_elem>::
@@ -200,7 +200,7 @@ m_tail{ }
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr void
 dango::
 intrusive_list<tp_elem>::
@@ -211,7 +211,7 @@ clear()noexcept
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr auto
 dango::
 intrusive_list<tp_elem>::
@@ -221,7 +221,7 @@ is_empty()const noexcept->bool
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr auto
 dango::
 intrusive_list<tp_elem>::
@@ -236,7 +236,7 @@ first()noexcept->elem_ptr
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr auto
 dango::
 intrusive_list<tp_elem>::
@@ -251,7 +251,7 @@ last()noexcept->elem_ptr
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr auto
 dango::
 intrusive_list<tp_elem>::
@@ -266,7 +266,7 @@ first()const noexcept->elem_const_ptr
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr auto
 dango::
 intrusive_list<tp_elem>::
@@ -281,7 +281,7 @@ last()const noexcept->elem_const_ptr
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr void
 dango::
 intrusive_list<tp_elem>::
@@ -306,7 +306,7 @@ add_first(elem_ptr const a_element)noexcept
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr void
 dango::
 intrusive_list<tp_elem>::
@@ -331,7 +331,7 @@ add_last(elem_ptr const a_element)noexcept
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr auto
 dango::
 intrusive_list<tp_elem>::
@@ -350,7 +350,7 @@ remove_first()noexcept->elem_ptr
 }
 
 template
-<dango::intrusive_list_constraint tp_elem>
+<dango::intrusive_list_constraint_spec tp_elem>
 constexpr auto
 dango::
 intrusive_list<tp_elem>::

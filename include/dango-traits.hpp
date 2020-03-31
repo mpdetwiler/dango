@@ -1086,14 +1086,14 @@ dango
   concept is_void = dango::is_same_ignore_cv<tp_type, void>;
 }
 
-/*** is_null ***/
+/*** is_null_tag ***/
 
 namespace
 dango
 {
   template
   <typename tp_type>
-  concept is_null = dango::is_same_ignore_cv<tp_type, dango::null_tag>;
+  concept is_null_tag = dango::is_same_ignore_cv<tp_type, dango::null_tag>;
 }
 
 /*** is_bool ***/
@@ -1579,7 +1579,7 @@ dango
   <typename tp_type>
   concept is_fundamental =
     dango::is_void<tp_type> ||
-    dango::is_null<tp_type> ||
+    dango::is_null_tag<tp_type> ||
     dango::is_arithmetic<tp_type>;
 }
 
@@ -1595,7 +1595,7 @@ dango
     dango::is_enum<tp_type> ||
     dango::is_ptr<tp_type> ||
     dango::is_member_ptr<tp_type> ||
-    dango::is_null<tp_type>;
+    dango::is_null_tag<tp_type>;
 }
 
 /*** is_object_exclude_array ***/

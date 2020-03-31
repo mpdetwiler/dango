@@ -55,17 +55,17 @@ public:
 
   template
   <typename tp_func, typename... tp_args>
+  requires(dango::is_callable_ret<void, tp_func, tp_args...>)
   auto exec
   (tp_func&&, tp_args&&...)
-  noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, tp_args...>)->
-  dango::enable_if<dango::is_callable_ret<void, dango::remove_ref<tp_func>&, tp_args...>, bool>;
+  noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool;
 
   template
   <typename tp_func, typename... tp_args>
+  requires(dango::is_callable_ret<bool, tp_func, tp_args...>)
   auto exec
   (tp_func&&, tp_args&&...)
-  noexcept(dango::is_noexcept_callable_ret<bool, dango::remove_ref<tp_func>&, tp_args...>)->
-  dango::enable_if<dango::is_callable_ret<bool, dango::remove_ref<tp_func>&, tp_args...>, bool>;
+  noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool;
 
   auto has_executed()const noexcept->bool;
   void reset()noexcept;
@@ -140,28 +140,28 @@ release
 
 template
 <typename tp_func, typename... tp_args>
+requires(dango::is_callable_ret<void, tp_func, tp_args...>)
 auto
 dango::
 exec_once::
 exec
 (tp_func&& a_func, tp_args&&... a_args)
-noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, tp_args...>)->
-dango::enable_if<dango::is_callable_ret<void, dango::remove_ref<tp_func>&, tp_args...>, bool>
+noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool
 {
   if(dango::likely(!try_acquire()))
   {
     return false;
   }
 
-  if constexpr(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, tp_args...>)
+  if constexpr(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)
   {
-    a_func(dango::forward<tp_args>(a_args)...);
+    dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
   }
   else
   {
     auto a_guard = dango::make_guard([this]()noexcept->void{ release(false); });
 
-    a_func(dango::forward<tp_args>(a_args)...);
+    dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
 
     a_guard.dismiss();
   }
@@ -173,13 +173,13 @@ dango::enable_if<dango::is_callable_ret<void, dango::remove_ref<tp_func>&, tp_ar
 
 template
 <typename tp_func, typename... tp_args>
+requires(dango::is_callable_ret<bool, tp_func, tp_args...>)
 auto
 dango::
 exec_once::
 exec
 (tp_func&& a_func, tp_args&&... a_args)
-noexcept(dango::is_noexcept_callable_ret<bool, dango::remove_ref<tp_func>&, tp_args...>)->
-dango::enable_if<dango::is_callable_ret<bool, dango::remove_ref<tp_func>&, tp_args...>, bool>
+noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool
 {
   if(dango::likely(!try_acquire()))
   {
@@ -188,15 +188,15 @@ dango::enable_if<dango::is_callable_ret<bool, dango::remove_ref<tp_func>&, tp_ar
 
   bool a_success;
 
-  if constexpr(dango::is_noexcept_callable_ret<bool, dango::remove_ref<tp_func>&, tp_args...>)
+  if constexpr(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)
   {
-    a_success = a_func(dango::forward<tp_args>(a_args)...);
+    a_success =  dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
   }
   else
   {
     auto a_guard = dango::make_guard([this]()noexcept->void{ release(false); });
 
-    a_success = a_func(dango::forward<tp_args>(a_args)...);
+    a_success =  dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
 
     a_guard.dismiss();
   }
