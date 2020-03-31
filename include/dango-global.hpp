@@ -5,59 +5,29 @@ namespace
 dango::detail
 {
   template
-  <
-    typename tp_type,
-    typename tp_ret,
-    tp_ret(& tp_construct)()noexcept,
-    typename tp_enabled = dango::enable_tag
-  >
+  <dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
   class global_storage;
 
   template
-  <typename tp_type, typename tp_ret>
-  using global_storage_enable_spec =
-  dango::enable_if
-  <
-    !dango::is_array<tp_type> &&
-    dango::is_object<tp_type> &&
-    dango::is_same<dango::remove_cv<tp_type>, tp_ret>
-  >;
-
-  template
-  <
-    typename tp_type,
-    typename tp_ret,
-    tp_ret(& tp_construct)()noexcept
-  >
-  class global_storage
-  <tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>;
-
-  template
-  <typename tp_type, typename tp_ret, tp_ret(& tp_construct)()noexcept>
-  using global_storage_ref =
-    dango::detail::global_storage<tp_type, tp_ret, tp_construct, dango::enable_tag>&;
+  <typename tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+  using global_storage_ref = dango::detail::global_storage<tp_type, tp_construct>&;
 }
 
 template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
+<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
 class alignas(dango::cache_align_type)
 dango::
 detail::
 global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>
 final
 {
 public:
   template
-  <dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
+  <dango::detail::global_storage_ref<tp_type, tp_construct> tp_storage>
   class strong_incrementer;
 
   template
-  <dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
+  <dango::detail::global_storage_ref<tp_type, tp_construct> tp_storage>
   class weak_incrementer;
 public:
   constexpr global_storage()noexcept;
@@ -80,87 +50,51 @@ private:
 /*** strong_incrementer ***/
 
 template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
+<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
 template
-<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
+<dango::detail::global_storage_ref<tp_type, tp_construct> tp_storage>
 class
 dango::
 detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
+global_storage<tp_type, tp_construct>::
 strong_incrementer
 final
 {
 public:
-  strong_incrementer()noexcept;
-  ~strong_incrementer()noexcept;
+  strong_incrementer()noexcept{ tp_storage.increment(); }
+  ~strong_incrementer()noexcept{ tp_storage.decrement(); }
 public:
   DANGO_IMMOBILE(strong_incrementer)
 };
 
-template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
-template
-<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
-dango::
-detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
-strong_incrementer<tp_storage>::
-strong_incrementer
-()noexcept
-{
-  tp_storage.increment();
-}
-
-template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
-template
-<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
-dango::
-detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
-strong_incrementer<tp_storage>::
-~strong_incrementer
-()noexcept
-{
-  tp_storage.decrement();
-}
-
 /*** weak_incrementer ***/
 
 template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
+<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
 template
-<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
+<dango::detail::global_storage_ref<tp_type, tp_construct> tp_storage>
 class
 dango::
 detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
+global_storage<tp_type, tp_construct>::
 weak_incrementer
 final
 {
 public:
-  weak_incrementer(DANGO_SRC_LOC_ARG())noexcept;
-  ~weak_incrementer()noexcept;
+  weak_incrementer(DANGO_SRC_LOC_ARG(a_loc))noexcept
+  {
+      if(tp_storage.try_increment())
+      {
+        return;
+      }
+#ifndef DANGO_NO_DEBUG
+      dango_assert_msg_loc(false, u8"attempt to access already-destroyed global", a_loc);
+#else
+      dango::terminate();
+#endif
+  }
+
+  ~weak_incrementer()noexcept{ tp_storage.decrement(); }
 public:
   constexpr auto get()const noexcept->tp_type*{ return tp_storage.get(); }
   constexpr auto operator -> ()const noexcept->tp_type*{ return tp_storage.get(); }
@@ -169,66 +103,14 @@ public:
   DANGO_IMMOBILE(weak_incrementer)
 };
 
-template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
-template
-<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
-dango::
-detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
-weak_incrementer<tp_storage>::
-weak_incrementer
-(DANGO_SRC_LOC_ARG(a_loc))noexcept
-{
-  bool const a_alive = tp_storage.try_increment();
-
-#ifndef DANGO_NO_DEBUG
-  dango_assert_msg_loc(a_alive, u8"attempt to access already-destroyed global", a_loc);
-#else
-  if(!a_alive)
-  {
-    dango::terminate();
-  }
-#endif
-}
-
-template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
-template
-<dango::detail::global_storage_ref<tp_type, tp_ret, tp_construct> tp_storage>
-dango::
-detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
-weak_incrementer<tp_storage>::
-~weak_incrementer
-()noexcept
-{
-  tp_storage.decrement();
-}
-
 /*** global_storage ***/
 
 template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
+<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
 constexpr
 dango::
 detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
+global_storage<tp_type, tp_construct>::
 global_storage
 ()noexcept:
 m_ptr{ dango::null },
@@ -241,16 +123,11 @@ m_ref_count{ dango::usize(0) }
 }
 
 template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
+<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
 constexpr auto
 dango::
 detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
+global_storage<tp_type, tp_construct>::
 get
 ()const noexcept->tp_type*
 {
@@ -258,16 +135,11 @@ get
 }
 
 template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
+<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
 void
 dango::
 detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
+global_storage<tp_type, tp_construct>::
 increment
 ()noexcept
 {
@@ -305,16 +177,11 @@ increment
 }
 
 template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
+<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
 auto
 dango::
 detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
+global_storage<tp_type, tp_construct>::
 try_increment
 ()noexcept->bool
 {
@@ -332,16 +199,11 @@ try_increment
 }
 
 template
-<
-  typename tp_type,
-  typename tp_ret,
-  tp_ret(& tp_construct)()noexcept
->
+<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
 void
 dango::
 detail::
-global_storage
-<tp_type, tp_ret, tp_construct, dango::detail::global_storage_enable_spec<tp_type, tp_ret>>::
+global_storage<tp_type, tp_construct>::
 decrement
 ()noexcept
 {
@@ -373,12 +235,12 @@ namespace \
 name##_namespace \
 { \
   using dango_global_value_type = type_name; \
-  static_assert(!dango::is_array<dango_global_value_type> && dango::is_object<dango_global_value_type>); \
+  static_assert(dango::is_object_exclude_array<dango_global_value_type>); \
   using dango_global_return_type = dango::remove_cv<dango_global_value_type>; \
   linkage auto dango_global_construct()noexcept->dango_global_return_type \
   { try{ return dango_global_return_type __VA_ARGS__ ; }catch(...){ DANGO_GLOBAL_UNREACHABLE_TERMINATE(u8"constructor of global \"name\" threw exception"); } } \
   using dango_global_storage_type = \
-    dango::detail::global_storage<dango_global_value_type, dango_global_return_type, dango_global_construct>; \
+    dango::detail::global_storage<dango_global_value_type, dango_global_construct>; \
   linkage constinit dango_global_storage_type s_dango_global_storage{ }; \
   using dango_global_strong_type = dango_global_storage_type::strong_incrementer<s_dango_global_storage>; \
   using dango_global_weak_type = dango_global_storage_type::weak_incrementer<s_dango_global_storage>; \

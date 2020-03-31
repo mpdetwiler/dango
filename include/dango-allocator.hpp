@@ -206,19 +206,17 @@ public:
 public:
   template
   <typename tp_alloc, typename... tp_args>
+  requires
+  (
+    !dango::is_const<tp_alloc> && !dango::is_volatile<tp_alloc> &&
+    dango::is_class<tp_alloc> &&
+    dango::is_derived_from<tp_alloc, dango::static_allocator> &&
+    dango::is_trivial_destructible<tp_alloc> &&
+    dango::is_noexcept_brace_constructible<tp_alloc, tp_args...>
+  )
   static constexpr auto
   make_static_storage
-  (tp_args&&... a_args)noexcept->
-  dango::enable_if
-  <
-    !dango::is_const<tp_alloc> &&
-    !dango::is_volatile<tp_alloc> &&
-    dango::is_class<tp_alloc> &&
-    dango::is_base_of<dango::static_allocator, tp_alloc> &&
-    dango::is_trivial_destructible<tp_alloc> &&
-    dango::is_noexcept_constructible<tp_alloc, tp_args...>,
-    static_allocator_storage<tp_alloc>
-  >
+  (tp_args&&... a_args)noexcept->static_allocator_storage<tp_alloc>
   {
     return static_allocator_storage<tp_alloc>{ dango::forward<tp_args>(a_args)... };
   }
@@ -234,19 +232,18 @@ public:
 
   template
   <typename tp_alloc, typename... tp_args>
+  requires
+  (
+    !dango::is_const<tp_alloc> && !dango::is_volatile<tp_alloc> &&
+    dango::is_class<tp_alloc> &&
+    dango::is_derived_from<tp_alloc, dango::local_allocator> &&
+    dango::is_noexcept_destructible<tp_alloc> &&
+    dango::is_brace_constructible<tp_alloc, tp_args...>
+  )
   static auto
   make_local
-  (tp_args&&... a_args)dango_new_noexcept_and(dango::is_noexcept_constructible<tp_alloc, tp_args...>)->
-  dango::enable_if
-  <
-    !dango::is_const<tp_alloc> &&
-    !dango::is_volatile<tp_alloc> &&
-    dango::is_class<tp_alloc> &&
-    dango::is_base_of<dango::local_allocator, tp_alloc> &&
-    dango::is_noexcept_destructible<tp_alloc> &&
-    dango::is_constructible<tp_alloc, tp_args...>,
-    allocator
-  >
+  (tp_args&&... a_args)
+  dango_new_noexcept_and(dango::is_noexcept_brace_constructible<tp_alloc, tp_args...>)->allocator
   {
     return allocator{ new local_control_block<tp_alloc>{ dango::forward<tp_args>(a_args)... } };
   }
@@ -604,27 +601,24 @@ final
 private:
   class node_base;
   template
-  <dango::usize tp_size, typename tp_enabled = dango::enable_tag>
+  <dango::usize tp_size>
   class node;
   template
   <dango::usize tp_size>
-  class node<tp_size, dango::enable_if<dango::is_equal(tp_size, dango::usize(0))>>;
+  requires(tp_size != dango::usize(0))
+  class node<tp_size>;
   template
   <dango::usize tp_size>
-  class node<tp_size, dango::enable_if<!dango::is_equal(tp_size, dango::usize(0))>>;
+  requires(tp_size == dango::usize(0))
+  class node<tp_size>;
 private:
   template
   <typename tp_alloc, typename... tp_children>
   static auto make_node(tp_alloc&&, tp_children&&...)dango_new_noexcept->node_base*;
 public:
   template
-  <
-    typename tp_alloc,
-    typename... tp_children,
-    dango::enable_if
-    <(dango::is_constructible<dango::allocator, tp_alloc> && ... && dango::is_constructible<dango::allocator_tree, tp_children>)>
-      = dango::enable_val
-  >
+  <typename tp_alloc, typename... tp_children>
+  requires((dango::is_brace_constructible<dango::allocator, tp_alloc> && ... && dango::is_brace_constructible<dango::allocator_tree, tp_children>))
   explicit
   allocator_tree
   (tp_alloc&&, tp_children&&...)dango_new_noexcept;
@@ -727,10 +721,11 @@ decrement
 
 template
 <dango::usize tp_size>
+requires(tp_size != dango::usize(0))
 class
 dango::
 allocator_tree::
-node<tp_size, dango::enable_if<dango::is_equal(tp_size, dango::usize(0))>>
+node<tp_size>
 final:
 public dango::allocator_tree::node_base
 {
@@ -738,57 +733,17 @@ private:
   using super_type = dango::allocator_tree::node_base;
   using super_type::destructor_func;
 private:
-  static void destructor(super_type*)noexcept;
-public:
-  template
-  <typename tp_alloc>
-  explicit
-  node
-  (tp_alloc&& a_alloc)noexcept:
-  super_type{ destructor, dango::forward<tp_alloc>(a_alloc) }
-  { }
-  ~node()noexcept = default;
-public:
-  virtual auto get_child(dango::usize const)const noexcept->dango::allocator_tree const* override final{ return dango::null; }
-public:
-  DANGO_DELETE_DEFAULT(node)
-  DANGO_IMMOBILE(node)
-};
+  static void
+  destructor(super_type* const a_node)noexcept
+  {
+    auto const a_this = static_cast<node*>(a_node);
 
-template
-<dango::usize tp_size>
-void
-dango::
-allocator_tree::
-node<tp_size, dango::enable_if<dango::is_equal(tp_size, dango::usize(0))>>::
-destructor
-(super_type* const a_node)noexcept
-{
-  auto const a_this = static_cast<node*>(a_node);
+    auto const a_alloc = dango::move(a_this->get_allocator_mutable());
 
-  auto const a_alloc = dango::move(a_this->get_allocator_mutable());
+    dango::destructor(a_this);
 
-  dango::destructor(a_this);
-
-  a_alloc.free(a_this, sizeof(node), alignof(node));
-}
-
-/*****************************/
-
-template
-<dango::usize tp_size>
-class
-dango::
-allocator_tree::
-node<tp_size, dango::enable_if<!dango::is_equal(tp_size, dango::usize(0))>>
-final:
-public dango::allocator_tree::node_base
-{
-private:
-  using super_type = dango::allocator_tree::node_base;
-  using super_type::destructor_func;
-private:
-  static void destructor(super_type*)noexcept;
+    a_alloc.free(a_this, sizeof(node), alignof(node));
+  }
 public:
   template
   <typename tp_alloc, typename... tp_children>
@@ -800,7 +755,22 @@ public:
   { }
   ~node()noexcept = default;
 public:
-  virtual auto get_child(dango::usize)const noexcept->dango::allocator_tree const* override final;
+  auto get_child(dango::usize const a_index)const noexcept->dango::allocator_tree const* final
+  {
+    if(a_index >= tp_size)
+    {
+      return dango::null;
+    }
+
+    auto const& a_child = m_child[a_index];
+
+    if(a_child == dango::null)
+    {
+      return dango::null;
+    }
+
+    return &a_child;
+  }
 private:
   dango::allocator_tree const m_child[tp_size];
 public:
@@ -808,47 +778,48 @@ public:
   DANGO_IMMOBILE(node)
 };
 
-template
-<dango::usize tp_size>
-void
-dango::
-allocator_tree::
-node<tp_size, dango::enable_if<!dango::is_equal(tp_size, dango::usize(0))>>::
-destructor
-(super_type* const a_node)noexcept
-{
-  auto const a_this = static_cast<node*>(a_node);
-
-  auto const a_alloc = dango::move(a_this->get_allocator_mutable());
-
-  dango::destructor(a_this);
-
-  a_alloc.free(a_this, sizeof(node), alignof(node));
-}
+/*****************************/
 
 template
 <dango::usize tp_size>
-auto
+requires(tp_size == dango::usize(0))
+class
 dango::
 allocator_tree::
-node<tp_size, dango::enable_if<!dango::is_equal(tp_size, dango::usize(0))>>::
-get_child
-(dango::usize const a_index)const noexcept->dango::allocator_tree const*
+node<tp_size>
+final:
+public dango::allocator_tree::node_base
 {
-  if(a_index >= tp_size)
+private:
+  using super_type = dango::allocator_tree::node_base;
+  using super_type::destructor_func;
+private:
+  static void
+  destructor(super_type* const a_node)noexcept
   {
-    return dango::null;
+    auto const a_this = static_cast<node*>(a_node);
+
+    auto const a_alloc = dango::move(a_this->get_allocator_mutable());
+
+    dango::destructor(a_this);
+
+    a_alloc.free(a_this, sizeof(node), alignof(node));
   }
-
-  auto const& a_child = m_child[a_index];
-
-  if(a_child == dango::null)
-  {
-    return dango::null;
-  }
-
-  return &a_child;
-}
+public:
+  template
+  <typename tp_alloc>
+  explicit
+  node
+  (tp_alloc&& a_alloc)noexcept:
+  super_type{ destructor, dango::forward<tp_alloc>(a_alloc) }
+  { }
+  ~node()noexcept = default;
+public:
+  auto get_child(dango::usize const)const noexcept->dango::allocator_tree const* final{ return dango::null; }
+public:
+  DANGO_DELETE_DEFAULT(node)
+  DANGO_IMMOBILE(node)
+};
 
 /*****************************/
 
@@ -868,16 +839,12 @@ make_node
 
   auto const a_ptr = a_allocator.alloc(sizeof(node_type), alignof(node_type));
 
-  return dango::placement_new<node_type>(a_ptr, dango::move(a_allocator), dango::forward<tp_children>(a_children)...);
+  return dango::placement_new_brace<node_type>(a_ptr, dango::move(a_allocator), dango::forward<tp_children>(a_children)...);
 }
 
 template
-<
-  typename tp_alloc,
-  typename... tp_children,
-  dango::enable_if
-  <(dango::is_constructible<dango::allocator, tp_alloc> && ... && dango::is_constructible<dango::allocator_tree, tp_children>)>
->
+<typename tp_alloc, typename... tp_children>
+requires((dango::is_brace_constructible<dango::allocator, tp_alloc> && ... && dango::is_brace_constructible<dango::allocator_tree, tp_children>))
 dango::
 allocator_tree::
 allocator_tree
