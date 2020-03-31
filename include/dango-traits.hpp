@@ -1,16 +1,6 @@
 #ifndef __DANGO_TRAITS_HPP__
 #define __DANGO_TRAITS_HPP__
 
-/*** declval ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  constexpr auto declval()noexcept->tp_type&&;
-}
-
 /*** remove_const ***/
 
 namespace
@@ -528,26 +518,26 @@ final
   DANGO_UNINSTANTIABLE(remove_all_array_help)
 };
 
-/*** preserve_cv ***/
+/*** copy_cv ***/
 
 namespace
 dango::detail
 {
   template
   <typename tp_from, typename tp_to>
-  struct preserve_cv_help;
+  struct copy_cv_help;
 
   template
   <typename tp_from, typename tp_to>
-  struct preserve_cv_help<tp_from const, tp_to>;
+  struct copy_cv_help<tp_from const, tp_to>;
 
   template
   <typename tp_from, typename tp_to>
-  struct preserve_cv_help<tp_from volatile, tp_to>;
+  struct copy_cv_help<tp_from volatile, tp_to>;
 
   template
   <typename tp_from, typename tp_to>
-  struct preserve_cv_help<tp_from const volatile, tp_to>;
+  struct copy_cv_help<tp_from const volatile, tp_to>;
 }
 
 namespace
@@ -555,8 +545,8 @@ dango
 {
   template
   <typename tp_from, typename tp_to>
-  using preserve_cv =
-    typename detail::preserve_cv_help<tp_from, tp_to>::type;
+  using copy_cv =
+    typename detail::copy_cv_help<tp_from, tp_to>::type;
 }
 
 template
@@ -564,12 +554,12 @@ template
 struct
 dango::
 detail::
-preserve_cv_help
+copy_cv_help
 final
 {
   using type = tp_to;
 
-  DANGO_UNINSTANTIABLE(preserve_cv_help)
+  DANGO_UNINSTANTIABLE(copy_cv_help)
 };
 
 template
@@ -577,12 +567,12 @@ template
 struct
 dango::
 detail::
-preserve_cv_help<tp_from const, tp_to>
+copy_cv_help<tp_from const, tp_to>
 final
 {
   using type = tp_to const;
 
-  DANGO_UNINSTANTIABLE(preserve_cv_help)
+  DANGO_UNINSTANTIABLE(copy_cv_help)
 };
 
 template
@@ -590,12 +580,12 @@ template
 struct
 dango::
 detail::
-preserve_cv_help<tp_from volatile, tp_to>
+copy_cv_help<tp_from volatile, tp_to>
 final
 {
   using type = tp_to volatile;
 
-  DANGO_UNINSTANTIABLE(preserve_cv_help)
+  DANGO_UNINSTANTIABLE(copy_cv_help)
 };
 
 template
@@ -603,12 +593,12 @@ template
 struct
 dango::
 detail::
-preserve_cv_help<tp_from const volatile, tp_to>
+copy_cv_help<tp_from const volatile, tp_to>
 final
 {
   using type = tp_to const volatile;
 
-  DANGO_UNINSTANTIABLE(preserve_cv_help)
+  DANGO_UNINSTANTIABLE(copy_cv_help)
 };
 
 /*** make_uint ***/
@@ -638,7 +628,7 @@ dango
   template
   <typename tp_type>
   using make_uint =
-    dango::preserve_cv<tp_type, typename detail::make_uint_help<dango::remove_cv<tp_type>>::type>;
+    dango::copy_cv<tp_type, typename detail::make_uint_help<dango::remove_cv<tp_type>>::type>;
 }
 
 template
@@ -741,7 +731,7 @@ dango
   template
   <typename tp_type>
   using make_sint =
-    dango::preserve_cv<tp_type, typename detail::make_sint_help<dango::remove_cv<tp_type>>::type>;
+    dango::copy_cv<tp_type, typename detail::make_sint_help<dango::remove_cv<tp_type>>::type>;
 }
 
 template
@@ -1114,6 +1104,68 @@ dango
   template
   <typename tp_type>
   concept is_bool = dango::is_same_ignore_cv<tp_type, bool>;
+}
+
+/*** declval move forward ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto declval()noexcept->tp_type&&;
+
+  template
+  <dango::is_void tp_type>
+  constexpr void declval()noexcept;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto move(tp_type&&)noexcept->dango::remove_ref<tp_type>&&;
+
+  template
+  <typename tp_type>
+  constexpr auto forward(dango::remove_ref<tp_type>&)noexcept->tp_type&&;
+
+  template
+  <typename tp_type>
+  constexpr auto forward(dango::remove_ref<tp_type>&&)noexcept->tp_type&&;
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+move
+(tp_type&& a_arg)noexcept->dango::remove_ref<tp_type>&&
+{
+  using ret_type = dango::remove_ref<tp_type>&&;
+
+  return static_cast<ret_type>(a_arg);
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+forward
+(dango::remove_ref<tp_type>& a_arg)noexcept->tp_type&&
+{
+  return static_cast<tp_type&&>(a_arg);
+}
+
+template
+<typename tp_type>
+constexpr auto
+dango::
+forward
+(dango::remove_ref<tp_type>&& a_arg)noexcept->tp_type&&
+{
+  return static_cast<tp_type&&>(a_arg);
 }
 
 /*** is_uint ***/
@@ -1743,7 +1795,7 @@ dango::detail
 {
   template
   <typename tp_type>
-  inline constexpr bool const is_destructible_help = requires(tp_type a_arg){ a_arg.~tp_type(); };
+  inline constexpr bool const is_destructible_help = requires{ dango::declval<tp_type&>().~tp_type(); };
   template
   <typename tp_type>
   inline constexpr bool const is_destructible_help<tp_type&> = true;
@@ -1759,7 +1811,7 @@ dango::detail
 
   template
   <typename tp_type>
-  inline constexpr bool const is_noexcept_destructible_help = requires(tp_type a_arg){ { a_arg.~tp_type() }noexcept; };
+  inline constexpr bool const is_noexcept_destructible_help = requires{ { dango::declval<tp_type&>().~tp_type() }noexcept; };
   template
   <typename tp_type>
   inline constexpr bool const is_noexcept_destructible_help<tp_type&> = true;
@@ -1980,12 +2032,16 @@ dango
   template
   <typename tp_type, typename... tp_args>
   concept is_noexcept_constructible =
-    dango::is_constructible<tp_type, tp_args...> && dango::detail::is_noexcept_constructible_help<tp_type, tp_args...>;
+    dango::is_constructible<tp_type, tp_args...> &&
+    dango::is_noexcept_destructible<tp_type> &&
+    dango::detail::is_noexcept_constructible_help<tp_type, tp_args...>;
 
   template
   <typename tp_type, typename... tp_args>
   concept is_trivial_constructible =
-    dango::is_noexcept_constructible<tp_type, tp_args...> && dango::detail::is_trivial_constructible_help<tp_type, tp_args...>;
+    dango::is_noexcept_constructible<tp_type, tp_args...> &&
+    dango::is_trivial_destructible<tp_type> &&
+    dango::detail::is_trivial_constructible_help<tp_type, tp_args...>;
 
   template
   <typename tp_type, typename... tp_args>
@@ -1995,7 +2051,9 @@ dango
   template
   <typename tp_type, typename... tp_args>
   concept is_noexcept_brace_constructible =
-    dango::is_brace_constructible<tp_type, tp_args...> && requires{ { tp_type{ dango::declval<tp_args>()... } }noexcept; };
+    dango::is_brace_constructible<tp_type, tp_args...> &&
+    dango::is_noexcept_destructible<tp_type> &&
+    requires{ { tp_type{ dango::declval<tp_args>()... } }noexcept; };
 }
 
 /*** is_default_constructible is_trivial_default_constructible is_noexcept_default_constructible ***/
@@ -2188,18 +2246,18 @@ namespace
 dango
 {
   template
-  <typename tp_type, dango::usize tp_default = dango::usize(1), typename tp_enabled = dango::enable_tag>
+  <typename tp_type, dango::usize tp_default = dango::usize(1)>
   inline constexpr dango::usize const sizeof_with_void = sizeof(tp_type);
   template
-  <typename tp_type, dango::usize tp_default>
-  inline constexpr dango::usize const sizeof_with_void<tp_type, tp_default, dango::enable_if<dango::is_void<tp_type>>> = tp_default;
+  <dango::is_void tp_type, dango::usize tp_default>
+  inline constexpr dango::usize const sizeof_with_void<tp_type, tp_default> = tp_default;
 
   template
-  <typename tp_type, dango::usize tp_default = dango::usize(1), typename tp_enabled = dango::enable_tag>
+  <typename tp_type, dango::usize tp_default = dango::usize(1)>
   inline constexpr dango::usize const alignof_with_void = alignof(tp_type);
   template
-  <typename tp_type, dango::usize tp_default>
-  inline constexpr dango::usize const alignof_with_void<tp_type, tp_default, dango::enable_if<dango::is_void<tp_type>>> = tp_default;
+  <dango::is_void tp_type, dango::usize tp_default>
+  inline constexpr dango::usize const alignof_with_void<tp_type, tp_default> = tp_default;
 }
 
 /*** in_constexpr_context ***/
@@ -2215,6 +2273,39 @@ in_constexpr_context
 ()noexcept->bool
 {
   return __builtin_is_constant_evaluated();
+}
+
+/*** integer_seq ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_int, tp_int... tp_integers>
+  struct
+  integer_seq
+  final
+  {
+    DANGO_TAG_TYPE(integer_seq)
+  };
+
+#ifdef __clang__
+  template
+  <typename tp_int, tp_int tp_len>
+  using make_integer_seq = __make_integer_seq<dango::integer_seq, tp_int, tp_len>;
+#else
+  template
+  <typename tp_int, tp_int tp_len>
+  using make_integer_seq = dango::integer_seq<tp_int, __integer_pack(tp_len)...>;
+#endif
+
+  template
+  <dango::usize... tp_indices>
+  using index_seq = dango::integer_seq<dango::usize, tp_indices...>;
+
+  template
+  <dango::usize tp_len>
+  using make_index_seq = dango::make_integer_seq<dango::usize, tp_len>;
 }
 
 #endif

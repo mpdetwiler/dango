@@ -119,6 +119,9 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);
+  dango_assert(dango::str_size(dango::char_as_bchar("hello")) == 5);
+
   printf("%s\n", concept_test<bool const&>::value);
   printf("%s\n", concept_test<bool&&>::value);
   printf("%s\n", concept_test<bool const volatile>::value);

@@ -7,13 +7,12 @@ namespace
 dango
 {
   template
-  <typename tp_char>
-  requires dango::is_same<dango::remove_cv<tp_char>, dango::bchar>
+  <dango::is_same_ignore_cv<dango::bchar> tp_char>
   constexpr auto
   bchar_as_char
   (tp_char* const a_ptr)noexcept->auto
   {
-    using ret_type = dango::preserve_cv<tp_char, char>*;
+    using ret_type = dango::copy_cv<tp_char, char>*;
 
     if(a_ptr)
     {
@@ -26,13 +25,12 @@ dango
   }
 
   template
-  <typename tp_char>
-  requires dango::is_same<dango::remove_cv<tp_char>, char>
+  <dango::is_same_ignore_cv<char> tp_char>
   constexpr auto
   char_as_bchar
   (tp_char* const a_ptr)noexcept->auto
   {
-    using ret_type = dango::preserve_cv<tp_char, dango::bchar>*;
+    using ret_type = dango::copy_cv<tp_char, dango::bchar>*;
 
     if(a_ptr)
     {

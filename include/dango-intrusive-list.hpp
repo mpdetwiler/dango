@@ -7,51 +7,21 @@ namespace
 dango
 {
   template
-  <typename tp_elem, typename tp_enabled = dango::enable_tag>
+  <dango::is_class tp_elem>
+  requires(!dango::is_const<tp_elem> && !dango::is_volatile<tp_elem>)
   class intrusive_list_elem;
 
   template
-  <typename tp_elem, typename tp_enabled = dango::enable_tag>
-  class intrusive_list;
-}
-
-namespace
-dango::detail
-{
-  template
   <typename tp_elem>
-  using intrusive_list_elem_enable_spec =
-  dango::enable_if
-  <
-    !dango::is_const<tp_elem> &&
-    !dango::is_volatile<tp_elem> &&
-    dango::is_class<tp_elem>
-  >;
-
-  template
-  <typename tp_elem>
-  using intrusive_list_enable_spec =
-  dango::enable_if
-  <
-    !dango::is_const<tp_elem> &&
-    !dango::is_volatile<tp_elem> &&
+  concept intrusive_list_constraint =
     dango::is_class<tp_elem> &&
-    dango::is_base_of<dango::intrusive_list_elem<tp_elem>, tp_elem>
-  >;
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_elem>
-  class
-  intrusive_list_elem<tp_elem, dango::detail::intrusive_list_elem_enable_spec<tp_elem>>;
+    dango::is_derived_from<tp_elem, dango::intrusive_list_elem<tp_elem>> &&
+    !dango::is_const<tp_elem> &&
+    !dango::is_volatile<tp_elem>;
 
   template
-  <typename tp_elem>
-  class
-  intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>;
+  <dango::intrusive_list_constraint tp_elem>
+  class intrusive_list;
 }
 
 namespace
@@ -63,12 +33,15 @@ dango::detail
 }
 
 template
-<typename tp_elem>
+<dango::is_class tp_elem>
+requires(!dango::is_const<tp_elem> && !dango::is_volatile<tp_elem>)
 class
 dango::
-intrusive_list_elem<tp_elem, dango::detail::intrusive_list_elem_enable_spec<tp_elem>>
+intrusive_list_elem
 {
-  friend dango::intrusive_list<tp_elem>;
+  template
+  <dango::intrusive_list_constraint>
+  friend class dango::intrusive_list;
 private:
   using elem_type = intrusive_list_elem;
 private:
@@ -111,10 +84,10 @@ public:
 };
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 class
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>
+intrusive_list
 final
 {
 private:
@@ -141,19 +114,47 @@ public:
 public:
   template
   <typename tp_func>
-  constexpr auto
+  requires(dango::is_callable_ret<void, tp_func, elem_ptr const&>)
+  constexpr void
   for_each
-  (tp_func&& a_func)
-  noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>)->
-  dango::enable_if<is_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>, void>;
+  (tp_func&& a_func)noexcept(dango::is_noexcept_callable_ret<void, tp_func, elem_ptr const&>)
+  {
+    elem_type* a_current = m_head.m_next;
+    elem_type const* const a_end = &m_tail;
+
+    while(a_current != a_end)
+    {
+      elem_type* const a_next = a_current->m_next;
+
+      auto const a_elem = static_cast<elem_ptr>(a_current);
+
+      dango::forward<tp_func>(a_func)(a_elem);
+
+      a_current = a_next;
+    }
+  }
 
   template
   <typename tp_func>
-  constexpr auto
+  requires(dango::is_callable_ret<void, tp_func, elem_const_ptr const&>)
+  constexpr void
   for_each
-  (tp_func&& a_func)const
-  noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>)->
-  dango::enable_if<is_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>, void>;
+  (tp_func&& a_func)const noexcept(dango::is_noexcept_callable_ret<void, tp_func, elem_const_ptr const&>)
+  {
+    elem_type const* a_current = m_head.m_next;
+    elem_type const* const a_end = &m_tail;
+
+    while(a_current != a_end)
+    {
+      elem_type const* const a_next = a_current->m_next;
+
+      auto const a_elem = static_cast<elem_const_ptr>(a_current);
+
+      dango::forward<tp_func>(a_func)(a_elem);
+
+      a_current = a_next;
+    }
+  }
 private:
   sentinel_type m_head;
   sentinel_type m_tail;
@@ -162,10 +163,10 @@ public:
 };
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr void
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 remove(elem_ptr const a_element)noexcept
 {
   elem_type* const a_elem = a_element;
@@ -187,10 +188,10 @@ remove(elem_ptr const a_element)noexcept
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 intrusive_list()noexcept:
 m_head{ },
 m_tail{ }
@@ -199,10 +200,10 @@ m_tail{ }
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr void
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 clear()noexcept
 {
   m_head.m_next = &m_tail;
@@ -210,20 +211,20 @@ clear()noexcept
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr auto
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 is_empty()const noexcept->bool
 {
   return m_head.m_next == &m_tail;
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr auto
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 first()noexcept->elem_ptr
 {
   if(is_empty())
@@ -235,10 +236,10 @@ first()noexcept->elem_ptr
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr auto
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 last()noexcept->elem_ptr
 {
   if(is_empty())
@@ -250,10 +251,10 @@ last()noexcept->elem_ptr
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr auto
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 first()const noexcept->elem_const_ptr
 {
   if(is_empty())
@@ -265,10 +266,10 @@ first()const noexcept->elem_const_ptr
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr auto
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 last()const noexcept->elem_const_ptr
 {
   if(is_empty())
@@ -280,10 +281,10 @@ last()const noexcept->elem_const_ptr
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr void
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 add_first(elem_ptr const a_element)noexcept
 {
   elem_type* const a_elem = a_element;
@@ -305,10 +306,10 @@ add_first(elem_ptr const a_element)noexcept
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr void
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 add_last(elem_ptr const a_element)noexcept
 {
   elem_type* const a_elem = a_element;
@@ -330,10 +331,10 @@ add_last(elem_ptr const a_element)noexcept
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr auto
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 remove_first()noexcept->elem_ptr
 {
   if(is_empty())
@@ -349,10 +350,10 @@ remove_first()noexcept->elem_ptr
 }
 
 template
-<typename tp_elem>
+<dango::intrusive_list_constraint tp_elem>
 constexpr auto
 dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
+intrusive_list<tp_elem>::
 remove_last()noexcept->elem_ptr
 {
   if(is_empty())
@@ -365,60 +366,6 @@ remove_last()noexcept->elem_ptr
   remove(a_result);
 
   return a_result;
-}
-
-template
-<typename tp_elem>
-template
-<typename tp_func>
-constexpr auto
-dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
-for_each
-(tp_func&& a_func)
-noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>)->
-dango::enable_if<is_callable_ret<void, dango::remove_ref<tp_func>&, elem_ptr const&>, void>
-{
-  elem_type* a_current = m_head.m_next;
-  elem_type const* const a_end = &m_tail;
-
-  while(a_current != a_end)
-  {
-    elem_type* const a_next = a_current->m_next;
-
-    auto const a_elem = static_cast<elem_ptr>(a_current);
-
-    a_func(a_elem);
-
-    a_current = a_next;
-  }
-}
-
-template
-<typename tp_elem>
-template
-<typename tp_func>
-constexpr auto
-dango::
-intrusive_list<tp_elem, dango::detail::intrusive_list_enable_spec<tp_elem>>::
-for_each
-(tp_func&& a_func)const
-noexcept(dango::is_noexcept_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>)->
-dango::enable_if<is_callable_ret<void, dango::remove_ref<tp_func>&, elem_const_ptr const&>, void>
-{
-  elem_type const* a_current = m_head.m_next;
-  elem_type const* const a_end = &m_tail;
-
-  while(a_current != a_end)
-  {
-    elem_type const* const a_next = a_current->m_next;
-
-    auto const a_elem = static_cast<elem_const_ptr>(a_current);
-
-    a_func(a_elem);
-
-    a_current = a_next;
-  }
 }
 
 #endif

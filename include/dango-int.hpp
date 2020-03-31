@@ -5,12 +5,14 @@ namespace
 dango::detail
 {
   template
-  <typename tp_integer>
-  inline constexpr dango::bad_variable_template<tp_integer> max_val_help;
+  <dango::is_int tp_integer>
+  requires(!dango::is_const<tp_integer> && !dango::is_volatile<tp_integer>)
+  inline constexpr auto const max_val_help = tp_integer(0);
 
   template
-  <typename tp_integer>
-  inline constexpr dango::bad_variable_template<tp_integer> min_val_help;
+  <dango::is_int tp_integer>
+  requires(!dango::is_const<tp_integer> && !dango::is_volatile<tp_integer>)
+  inline constexpr auto const min_val_help = tp_integer(0);
 
   template<>
   inline constexpr auto const max_val_help<dango::builtin::uchar> = dango::builtin::uchar(-1);
@@ -66,30 +68,16 @@ dango::detail
     dango::builtin::slonglong(-detail::max_val_help<dango::builtin::slonglong> - 1);
 }
 
-//constexpr auto const bad_inst = dango::detail::max_val_help<float>;
-
 namespace
 dango::integer
 {
   template
-  <typename tp_integer, typename tp_enabled = dango::enable_tag>
-  inline constexpr dango::bad_variable_template<tp_integer, tp_enabled> MAX_VAL;
+  <dango::is_int tp_integer>
+  inline constexpr auto const MIN_VAL = dango::detail::min_val_help<dango::remove_cv<tp_integer>>;
 
   template
-  <typename tp_integer>
-  inline constexpr dango::remove_cv<tp_integer> const
-  MAX_VAL<tp_integer, dango::enable_if<dango::is_int<tp_integer>>> =
-    dango::detail::max_val_help<dango::remove_cv<tp_integer>>;
-
-  template
-  <typename tp_integer, typename tp_enabled = dango::enable_tag>
-  inline constexpr dango::bad_variable_template<tp_integer, tp_enabled> MIN_VAL;
-
-  template
-  <typename tp_integer>
-  inline constexpr dango::remove_cv<tp_integer> const
-  MIN_VAL<tp_integer, dango::enable_if<dango::is_int<tp_integer>>> =
-    dango::detail::min_val_help<dango::remove_cv<tp_integer>>;
+  <dango::is_int tp_integer>
+  inline constexpr auto const MAX_VAL = dango::detail::max_val_help<dango::remove_cv<tp_integer>>;
 }
 
 namespace
@@ -107,7 +95,7 @@ namespace
 dango::integer
 {
   template
-  <typename tp_int, dango::enable_if<dango::is_sint<tp_int>> = dango::enable_val>
+  <dango::is_sint tp_int>
   constexpr auto
   safe_add_test
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->bool
@@ -121,7 +109,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_sint<tp_int>> = dango::enable_val>
+  <dango::is_sint tp_int>
   constexpr auto
   safe_sub_test
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->bool
@@ -135,7 +123,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_sint<tp_int>> = dango::enable_val>
+  <dango::is_sint tp_int>
   constexpr auto
   safe_mul_test
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->bool
@@ -175,7 +163,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_sint<tp_int>> = dango::enable_val>
+  <dango::is_sint tp_int>
   constexpr auto
   safe_div_test
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->bool
@@ -200,7 +188,7 @@ namespace
 dango::integer
 {
   template
-  <typename tp_int, dango::enable_if<dango::is_uint<tp_int>> = dango::enable_val>
+  <dango::is_uint tp_int>
   constexpr auto
   safe_add_test
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->bool
@@ -209,7 +197,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_uint<tp_int>> = dango::enable_val>
+  <dango::is_uint tp_int>
   constexpr auto
   safe_sub_test
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->bool
@@ -218,7 +206,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_uint<tp_int>> = dango::enable_val>
+  <dango::is_uint tp_int>
   constexpr auto
   safe_mul_test
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->bool
@@ -232,7 +220,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_uint<tp_int>> = dango::enable_val>
+  <dango::is_uint tp_int>
   constexpr auto
   safe_div_test
   (tp_int const, tp_int const a_rhs)noexcept->bool
@@ -247,7 +235,7 @@ namespace
 dango::integer
 {
   template
-  <typename tp_int, dango::enable_if<dango::is_int<tp_int>> = dango::enable_val>
+  <dango::is_int tp_int>
   constexpr auto
   safe_add
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->tp_int
@@ -258,7 +246,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_int<tp_int>> = dango::enable_val>
+  <dango::is_int tp_int>
   constexpr auto
   safe_sub
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->tp_int
@@ -269,7 +257,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_int<tp_int>> = dango::enable_val>
+  <dango::is_int tp_int>
   constexpr auto
   safe_mul
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->tp_int
@@ -280,7 +268,7 @@ dango::integer
   }
 
   template
-  <typename tp_int, dango::enable_if<dango::is_int<tp_int>> = dango::enable_val>
+  <dango::is_int tp_int>
   constexpr auto
   safe_div
   (tp_int const a_lhs, tp_int const a_rhs)noexcept->tp_int

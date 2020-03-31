@@ -2,7 +2,7 @@
 #define __DANGO_CSTRING_HPP__
 
 namespace
-dango::detail
+dango
 {
   template
   <typename tp_char>
@@ -14,7 +14,7 @@ namespace
 dango
 {
   template
-  <typename tp_char, dango::enable_if<detail::is_cstring_char<tp_char>> = dango::enable_val>
+  <dango::is_cstring_char tp_char>
   constexpr auto
   str_size
   (tp_char const* a_str)noexcept->dango::usize
@@ -32,7 +32,7 @@ dango
   }
 
   template
-  <typename tp_char, dango::enable_if<detail::is_cstring_char<tp_char>> = dango::enable_val>
+  <dango::is_cstring_char tp_char>
   constexpr auto
   str_copy
   (
@@ -74,7 +74,7 @@ dango
   }
 
   template
-  <typename tp_char, dango::enable_if<detail::is_cstring_char<tp_char>> = dango::enable_val>
+  <dango::is_cstring_char tp_char>
   constexpr auto
   str_term_copy
   (
