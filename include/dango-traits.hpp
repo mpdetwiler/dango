@@ -1632,6 +1632,17 @@ dango
   concept is_compound = !dango::is_fundamental<tp_type>;
 }
 
+/*** is_referenceable ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_referenceable =
+    dango::is_func<tp_type> || dango::is_object<tp_type>;
+}
+
 /*** is_const ***/
 
 namespace
