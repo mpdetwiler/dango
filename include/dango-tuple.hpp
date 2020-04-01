@@ -269,7 +269,8 @@ dango
     constexpr auto operator = (empty_elem const&&)const& noexcept->empty_elem const&{ return *this; }
 
     template
-    <typename tp_arg, dango::enable_if<!dango::is_same<empty_elem, dango::remove_cvref<tp_arg>>> = dango::enable_val>
+    <typename tp_arg>
+    requires(!dango::is_same_ignore_cvref<tp_arg, empty_elem>)
     constexpr explicit empty_elem(tp_arg&&)noexcept{ }
   };
 }
@@ -383,35 +384,40 @@ namespace
 dango::detail
 {
   template
-  <typename tp_pack, typename tp_enabled = dango::enable_tag>
+  <typename tp_pack>
   class tuple_storage;
 
   template
   <typename tp_first>
-  class tuple_storage<detail::tuple_pack<tp_first>, dango::enable_if<detail::is_empty_elem<tp_first>>>;
+  requires(dango::detail::is_empty_elem<tp_first>)
+  class tuple_storage<detail::tuple_pack<tp_first>>;
 
   template
   <typename tp_first>
-  class tuple_storage<detail::tuple_pack<tp_first>, dango::enable_if<!detail::is_empty_elem<tp_first>>>;
+  requires(!dango::detail::is_empty_elem<tp_first>)
+  class tuple_storage<detail::tuple_pack<tp_first>>;
 
   template
   <typename tp_first, typename... tp_next>
-  class tuple_storage<detail::tuple_pack<tp_first, tp_next...>, dango::enable_if<detail::is_empty_elem<tp_first>>>;
+  requires(dango::detail::is_empty_elem<tp_first>)
+  class tuple_storage<detail::tuple_pack<tp_first, tp_next...>>;
 
   template
   <typename tp_first, typename... tp_next>
-  class tuple_storage<detail::tuple_pack<tp_first, tp_next...>, dango::enable_if<!detail::is_empty_elem<tp_first>>>;
+  requires(!dango::detail::is_empty_elem<tp_first>)
+  class tuple_storage<detail::tuple_pack<tp_first, tp_next...>>;
 }
 
 /*** empty ***/
 
 template
 <typename tp_first>
+requires(dango::detail::is_empty_elem<tp_first>)
 class
 dango::
 detail::
 tuple_storage
-<dango::detail::tuple_pack<tp_first>, dango::enable_if<dango::detail::is_empty_elem<tp_first>>>
+<dango::detail::tuple_pack<tp_first>>
 {
 public:
   using value_type = dango::tuple_value_type<tp_first>;
@@ -514,11 +520,12 @@ public:
 
 template
 <typename tp_first>
+requires(!dango::detail::is_empty_elem<tp_first>)
 class
 dango::
 detail::
 tuple_storage
-<dango::detail::tuple_pack<tp_first>, dango::enable_if<!dango::detail::is_empty_elem<tp_first>>>
+<dango::detail::tuple_pack<tp_first>>
 {
 public:
   using value_type = dango::tuple_value_type<tp_first>;
@@ -658,11 +665,12 @@ private:
 
 template
 <typename tp_first, typename... tp_next>
+requires(dango::detail::is_empty_elem<tp_first>)
 class
 dango::
 detail::
 tuple_storage
-<dango::detail::tuple_pack<tp_first, tp_next...>, dango::enable_if<dango::detail::is_empty_elem<tp_first>>>:
+<dango::detail::tuple_pack<tp_first, tp_next...>>:
 public dango::detail::tuple_storage<dango::detail::tuple_pack<tp_next...>>
 {
 public:
@@ -813,11 +821,12 @@ public:
 
 template
 <typename tp_first, typename... tp_next>
+requires(!dango::detail::is_empty_elem<tp_first>)
 class
 dango::
 detail::
 tuple_storage
-<dango::detail::tuple_pack<tp_first, tp_next...>, dango::enable_if<!dango::detail::is_empty_elem<tp_first>>>:
+<dango::detail::tuple_pack<tp_first, tp_next...>>:
 public dango::detail::tuple_storage<dango::detail::tuple_pack<tp_next...>>
 {
 public:

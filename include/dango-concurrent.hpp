@@ -1230,39 +1230,48 @@ public:
 
   template
   <typename tp_func, typename... tp_args>
+  requires
+  (
+    dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
+    dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
+    dango::is_noexcept_destructible<dango::decay<tp_func>> &&
+    dango::is_noexcept_destructible<dango::tuple<dango::decay<tp_args>...>> &&
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::decay<tp_args>&...>
+  )
   static auto
-  create(bool, tp_func&&, tp_args&&...)noexcept(false)->
-  dango::enable_if
-  <
-    (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
-    (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
-    dango::thread
-  >;
+  create(bool, tp_func&&, tp_args&&...)noexcept(false)->dango::thread;
 
   template
   <typename tp_func, typename... tp_args>
+  requires
+  (
+    dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
+    dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
+    dango::is_noexcept_destructible<dango::decay<tp_func>> &&
+    dango::is_noexcept_destructible<dango::tuple<dango::decay<tp_args>...>> &&
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::decay<tp_args>&...>
+  )
   static auto
-  create(tp_func&&, tp_args&&...)noexcept(false)->
-  dango::enable_if
-  <
-    (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
-    (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
-    dango::thread
-  >;
+  create(tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->dango::thread
+  {
+    return thread::create(false, dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)...);
+  }
 
   template
   <typename tp_func, typename... tp_args>
+  requires
+  (
+    dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
+    dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
+    dango::is_noexcept_destructible<dango::decay<tp_func>> &&
+    dango::is_noexcept_destructible<dango::tuple<dango::decay<tp_args>...>> &&
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::decay<tp_args>&...>
+  )
   static auto
-  create_daemon(tp_func&&, tp_args&&...)noexcept(false)->
-  dango::enable_if
-  <
-    (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
-    (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
-    dango::thread
-  >;
+  create_daemon(tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->dango::thread
+  {
+    return thread::create(true, dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)...);
+  }
 
   static void sleep(dango::timeout const&)noexcept;
   static void sleep_rel(dango::tick_count_type)noexcept;
@@ -1736,18 +1745,19 @@ dango_operator_equals
 
 template
 <typename tp_func, typename... tp_args>
+requires
+(
+  dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
+  dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
+  dango::is_noexcept_destructible<dango::decay<tp_func>> &&
+  dango::is_noexcept_destructible<dango::tuple<dango::decay<tp_args>...>> &&
+  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::decay<tp_args>&...>
+)
 auto
 dango::
 thread::
 create
-(bool const a_daemon, tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->
-dango::enable_if
-<
-  (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
-  (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
-  dango::thread
->
+(bool const a_daemon, tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->dango::thread
 {
   constexpr auto const acquire = dango::mem_order::acquire;
   constexpr auto const release = dango::mem_order::release;
@@ -1808,42 +1818,6 @@ dango::enable_if
   a_guard.dismiss();
 
   return a_ret;
-}
-
-template
-<typename tp_func, typename... tp_args>
-auto
-dango::
-thread::
-create
-(tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->
-dango::enable_if
-<
-  (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
-  (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
-  dango::thread
->
-{
-  return thread::create(false, dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)...);
-}
-
-template
-<typename tp_func, typename... tp_args>
-auto
-dango::
-thread::
-create_daemon
-(tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->
-dango::enable_if
-<
-  (dango::is_constructible<dango::decay<tp_func>, tp_func> && ... && dango::is_constructible<dango::decay<tp_args>, tp_args>) &&
-  (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::decay<tp_args>, false>...>,
-  dango::thread
->
-{
-  return thread::create(true, dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)...);
 }
 
 template

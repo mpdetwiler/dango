@@ -30,7 +30,7 @@ public:
   <dango::detail::global_storage_ref<tp_type, tp_construct> tp_storage>
   class weak_incrementer;
 public:
-  constexpr global_storage()noexcept;
+  explicit constexpr global_storage()noexcept;
   ~global_storage()noexcept = default;
   constexpr auto get()const noexcept->tp_type*;
 private:

@@ -380,7 +380,7 @@ public:
   static constexpr dango::usize const c_size = dango::next_multiple(tp_size, tp_align);
   static constexpr dango::usize const c_align = tp_align;
 public:
-  constexpr aligned_storage()noexcept = default;
+  explicit constexpr aligned_storage()noexcept = default;
 
   ~aligned_storage()noexcept = default;
 

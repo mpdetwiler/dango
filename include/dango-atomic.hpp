@@ -319,8 +319,8 @@ public:
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_value_type = value_type> \
-requires(dango::is_same<tp_value_type, value_type> && dango::is_int<tp_value_type>) \
+<dango::mem_order tp_order = dango::mem_order::seq_cst> \
+requires(dango::is_int<value_type>) \
 auto name(value_type const a_data)noexcept->value_type \
 { \
   return dango::atomic_##name<tp_order>(&m_data, a_data); \
@@ -342,8 +342,8 @@ auto name(value_type const a_data)noexcept->value_type \
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst, typename tp_value_type = value_type> \
-requires(dango::is_same<tp_value_type, value_type> && dango::is_object_ptr<tp_value_type>) \
+<dango::mem_order tp_order = dango::mem_order::seq_cst> \
+requires(dango::is_object_ptr<value_type>) \
 auto name(dango::ssize const a_data)noexcept->value_type \
 { \
   return dango::atomic_##name<tp_order>(&m_data, a_data); \

@@ -11,7 +11,7 @@ constexpr name(name&&)noexcept = delete; \
 constexpr auto operator = (name&&)& noexcept->name& = delete;
 
 #define DANGO_DELETE_DEFAULT(name) \
-constexpr name()noexcept = delete;
+explicit constexpr name()noexcept = delete;
 
 #define DANGO_UNINSTANTIABLE(name) \
 DANGO_IMMOBILE(name) \
@@ -23,7 +23,7 @@ constexpr auto operator = (name const&)& noexcept->name& = delete; \
 constexpr auto operator = (name&&)& noexcept->name& = delete;
 
 #define DANGO_TAG_TYPE(name) \
-constexpr name()noexcept = default; \
+explicit constexpr name()noexcept = default; \
 constexpr name(name const&)noexcept = default; \
 constexpr name(name&&)noexcept = default; \
 ~name()noexcept = default; \

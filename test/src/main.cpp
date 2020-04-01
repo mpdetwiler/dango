@@ -211,11 +211,23 @@ main
     dango::auto_ptr<test_base const> a_tb{ dango::move(a_td) };
   }
 
-  dango::atomic<double*> a_atomic{ null };
+  {
+    dango::atomic<dango::ssize*> a_atomic{ null };
 
-  a_atomic.fetch_add(dango::ssize(5));
+    a_atomic.fetch_add(dango::ssize(5));
 
-  dango::address_of(a_atomic);
+    dango::address_of(a_atomic);
+  }
+
+  {
+    dango::atomic<dango::ssize> a_atomic{ 0 };
+
+    a_atomic.fetch_add(dango::ssize(5));
+
+    a_atomic.fetch_and(dango::ssize(5));
+
+    dango::address_of(a_atomic);
+  }
 
   return 0;
 }
