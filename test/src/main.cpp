@@ -6,7 +6,7 @@
 
 static_assert(dango::is_nullable<dango::null_tag>);
 static_assert(dango::is_nullable<dango::thread>);
-
+/*
 template
 <typename tp_void, typename tp_enabled = dango::enable_tag>
 struct test_config;
@@ -32,11 +32,20 @@ public dango::auto_ptr_default_config<tp_void>
 
     }
   };
-};
+};*/
 
 struct test_base{ virtual ~test_base()noexcept = default; };
 
 struct test_derived:test_base{ ~test_derived()noexcept override = default; };
+
+static_assert(dango::is_constructible<void*, int* const&>);
+static_assert(dango::is_brace_constructible<void*, int* const&>);
+static_assert(dango::is_constructible<test_base*, test_derived* const&>);
+static_assert(dango::is_brace_constructible<test_base*, test_derived* const&>);
+static_assert(dango::is_constructible<test_base&, test_derived&>);
+static_assert(dango::is_brace_constructible<test_base&, test_derived&>);
+static_assert(!dango::is_constructible<test_derived&, test_base&>);
+static_assert(!dango::is_brace_constructible<test_derived&, test_base&>);
 
 static_assert(dango::is_destructible<test_derived>);
 static_assert(dango::is_noexcept_destructible<test_derived>);
@@ -47,6 +56,51 @@ static_assert(!dango::is_convertible<dango::mutex, dango::mutex const>);
 static_assert(dango::is_convertible_ret<dango::mutex, dango::mutex const>);
 static_assert(!dango::is_noexcept_convertible<dango::mutex, dango::mutex const>);
 static_assert(dango::is_noexcept_convertible_ret<dango::mutex, dango::mutex const>);
+
+struct int_holder
+{
+  int m_int = 5;
+  int& m_ref = m_int;
+  int&& m_rref = dango::move(m_int);
+};
+
+static_assert(dango::is_same<decltype(dango::declval<int_holder&&>().m_int), int>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder&&>().m_int)), int&&>);
+static_assert(dango::is_same<decltype(dango::declval<int_holder&>().m_int), int>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder&>().m_int)), int&>);
+static_assert(dango::is_same<decltype(dango::declval<int_holder const&>().m_int), int>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder const&>().m_int)), int const&>);
+
+static_assert(dango::is_same<decltype(dango::declval<int_holder&&>().m_ref), int&>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder&&>().m_ref)), int&>);
+static_assert(dango::is_same<decltype(dango::declval<int_holder&>().m_ref), int&>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder&>().m_ref)), int&>);
+static_assert(dango::is_same<decltype(dango::declval<int_holder const&>().m_ref), int&>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder const&>().m_ref)), int&>);
+
+static_assert(dango::is_same<decltype(dango::declval<int_holder&&>().m_rref), int&&>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder&&>().m_rref)), int&>);
+static_assert(dango::is_same<decltype(dango::declval<int_holder&>().m_rref), int&&>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder&>().m_rref)), int&>);
+static_assert(dango::is_same<decltype(dango::declval<int_holder const&>().m_rref), int&&>);
+static_assert(dango::is_same<decltype((dango::declval<int_holder const&>().m_rref)), int&>);
+
+constexpr auto func_test(int&&)noexcept->bool
+{
+  return true;
+}
+
+constexpr auto func_test(int const&)noexcept->bool
+{
+  return false;
+}
+
+static_assert(func_test(int_holder{ }.m_int));
+static_assert(func_test(dango::move(int_holder{ }).m_int));
+static_assert(!func_test(int_holder{ }.m_ref));
+static_assert(!func_test(dango::move(int_holder{ }).m_ref));
+static_assert(!func_test(int_holder{ }.m_rref));
+static_assert(!func_test(dango::move(int_holder{ }).m_rref));
 
 template
 <typename tp_type>
@@ -167,7 +221,7 @@ main
     a_tree2.get_child(0).get_allocator();
 
   }
-
+/*
   static_assert(sizeof(dango::auto_ptr<void const>) == 24);
 
   dango::auto_ptr<double> a_double{ new double{ 1.0 } };
@@ -209,7 +263,7 @@ main
     dango::auto_ptr<test_derived> a_td{ new test_derived{ } };
 
     dango::auto_ptr<test_base const> a_tb{ dango::move(a_td) };
-  }
+  }*/
 
   {
     dango::atomic<dango::ssize*> a_atomic{ null };

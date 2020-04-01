@@ -3,6 +3,8 @@
 
 /*** auto_ptr ***/
 
+/*
+
 namespace
 dango::detail
 {
@@ -720,7 +722,11 @@ public:
   DANGO_UNCOPYABLE(auto_ptr)
 };
 
+*/
+
 /*** auto_new ***/
+
+/*
 
 namespace
 dango::detail
@@ -772,6 +778,8 @@ dango
     return return_type{ a_ptr, a_size, a_align };
   }
 }
+
+*/
 
 #endif
 
