@@ -81,7 +81,7 @@ if(compilation_target == target.linux):
     static_env = Environment(platform = 'posix', tools = ['default', 'g++']);
 elif(compilation_target == target.win32 or compilation_target == target.win64):
   if(use_clang):
-    static_env = Environment(platform = 'posix', tools = ['mingw', 'clangxx']);
+    static_env = Environment(platform = 'win32', tools = ['mingw', 'clangxx']);
   else:
     static_env = Environment(platform = 'win32', tools = ['mingw', 'g++']);
 
