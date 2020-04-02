@@ -93,7 +93,7 @@ if(use_clang):
     clang_target_flag = '-target x86_64-pc-windows-gnu';
     static_env.Append(CXXFLAGS = clang_target_flag);
     static_env.Append(LINKFLAGS = clang_target_flag);
-    static_env.Append(CXXFLAGS = ['-fuse-cxa-atexit']);
+    #static_env.Append(CXXFLAGS = ['-fuse-cxa-atexit']);
 
 static_env.Append(CPPPATH = ['include/']);
 static_env.Append(CXXFLAGS = flags);
@@ -107,14 +107,6 @@ if(compile_test):
 #static_env.Append(CPPDEFINES = 'DANGO_NO_MULTICORE');
 #static_env.Append(CPPDEFINES = 'DANGO_NEW_NOEXCEPT');
 
-shared_env = static_env.Clone();
-
-if(compile_test):
-  test_env = static_env.Clone();
-
-static_env.Append(CPPPATH = ['shared/include/']);
-shared_env.Append(CPPPATH = ['shared/include/']);
-
 if(use_clang):
   static_env.Replace(AR = 'llvm-ar');
 else:
@@ -122,6 +114,14 @@ else:
 
 static_env.Replace(ARFLAGS = 'rcs');
 static_env.Replace(RANLIBCOM = '');
+
+shared_env = static_env.Clone();
+
+if(compile_test):
+  test_env = static_env.Clone();
+
+static_env.Append(CPPPATH = ['shared/include/']);
+shared_env.Append(CPPPATH = ['shared/include/']);
 
 static_env.Append(CPPDEFINES = ['DANGO_COMPILING_DANGO']);
 shared_env.Append(CPPDEFINES = ['DANGO_COMPILING_DANGO', 'DANGO_COMPILING_DANGO_SHARED']);
@@ -154,5 +154,5 @@ if(compile_test):
   test_env.Append(LIBS = ['dangoshared', 'dango']);
   test_env.Append(LIBPATH = ['./']);
   test_env.Append(RPATH = ['./']);
-  test_env.Program('run', [Glob('test/src/*.cpp')]);
+  test_env.Program('exe_test', [Glob('test/src/*.cpp')]);
 

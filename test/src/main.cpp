@@ -6,33 +6,6 @@
 
 static_assert(dango::is_nullable<dango::null_tag>);
 static_assert(dango::is_nullable<dango::thread>);
-/*
-template
-<typename tp_void, typename tp_enabled = dango::enable_tag>
-struct test_config;
-
-template
-<typename tp_void>
-struct
-test_config<tp_void, dango::enable_if<dango::is_void<tp_void>>>
-final:
-public dango::auto_ptr_default_config<tp_void>
-{
-  static constexpr bool const store_size = false;
-  static constexpr bool const store_align = false;
-  static constexpr bool const destroy_size = false;
-  static constexpr bool const destroy_align = false;
-  static constexpr dango::usize const alignment = dango::usize(16);
-
-  struct destroyer
-  {
-    static void
-    destroy(tp_void* const)noexcept
-    {
-
-    }
-  };
-};*/
 
 struct test_base{ virtual ~test_base()noexcept = default; };
 
@@ -255,6 +228,12 @@ main
 
     dango::address_of(a_atomic);
   }
+
+  printf("joining\n");
+
+  dango::thread::main_join();
+
+  printf("exiting main\n");
 
   return 0;
 }
