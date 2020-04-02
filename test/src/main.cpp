@@ -141,6 +141,12 @@ static_assert(dango::is_callable_ret<dango::mutex, dango::mutex(int)noexcept, in
 static_assert(dango::is_noexcept_callable_ret<dango::mutex, dango::mutex(int)noexcept, int const&>);
 static_assert(!dango::is_noexcept_callable_ret<dango::mutex, dango::mutex(int)noexcept(false), int const&>);
 
+struct printer
+{
+  printer()noexcept{ printf("printer::printer()\n"); }
+  ~printer()noexcept{ printf("printer::~printer()\n"); }
+  void print()noexcept{ printf("printer::print()\n"); }
+};
 
 auto
 main
@@ -229,7 +235,7 @@ main
     dango::address_of(a_atomic);
   }
 
-  //dango::thread::create([]()noexcept->void{ printf("thread print\n"); });
+  dango::thread::create([]()noexcept->void{ static thread_local printer t_printer{ }; t_printer.print(); });
 
   printf("joining\n");
 
