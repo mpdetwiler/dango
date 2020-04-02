@@ -235,13 +235,13 @@ main
     dango::address_of(a_atomic);
   }
 
-  dango::thread::create([]()noexcept->void{ static thread_local printer t_printer{ }; t_printer.print(); });
+  dango::thread::create(true, []()noexcept->void{ static thread_local printer t_printer{ }; t_printer.print(); });
 
-  printf("joining\n");
+  printf("main joining\n");
 
   dango::thread::main_join();
 
-  printf("exiting main\n");
+  printf("main main exiting\n");
 
   return 0;
 }

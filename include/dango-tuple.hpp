@@ -452,7 +452,7 @@ public:
 
   template
   <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && !dango::is_const<value_type>)
+  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
   get()& noexcept->value_type&
   {
@@ -461,7 +461,7 @@ public:
 
   template
   <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && !dango::is_const<value_type>)
+  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
   get()&& noexcept->value_type&&
   {
@@ -470,7 +470,7 @@ public:
 
   template
   <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && !dango::is_const<value_type>)
+  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
   get()const& noexcept->value_type const&
   {
@@ -479,27 +479,9 @@ public:
 
   template
   <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && !dango::is_const<value_type>)
+  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
   get()const&& noexcept->value_type const&&
-  {
-    return dango::move(m_value);
-  }
-
-  template
-  <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && dango::is_const<value_type>)
-  constexpr auto
-  get()const& noexcept->value_type&
-  {
-    return m_value;
-  }
-
-  template
-  <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && dango::is_const<value_type>)
-  constexpr auto
-  get()const&& noexcept->value_type&&
   {
     return dango::move(m_value);
   }
@@ -600,7 +582,7 @@ public:
 
   template
   <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && !dango::is_const<value_type>)
+  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
   get()& noexcept->value_type&
   {
@@ -609,7 +591,7 @@ public:
 
   template
   <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && !dango::is_const<value_type>)
+  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
   get()&& noexcept->value_type&&
   {
@@ -618,7 +600,7 @@ public:
 
   template
   <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && !dango::is_const<value_type>)
+  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
   get()const& noexcept->value_type const&
   {
@@ -627,27 +609,9 @@ public:
 
   template
   <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && !dango::is_const<value_type>)
+  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
   get()const&& noexcept->value_type const&&
-  {
-    return dango::move(m_value);
-  }
-
-  template
-  <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && dango::is_const<value_type>)
-  constexpr auto
-  get()const& noexcept->value_type&
-  {
-    return m_value;
-  }
-
-  template
-  <dango::usize tp_index>
-  requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type> && dango::is_const<value_type>)
-  constexpr auto
-  get()const&& noexcept->value_type&&
   {
     return dango::move(m_value);
   }
