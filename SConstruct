@@ -59,7 +59,6 @@ flags = [
   '-O2',
   '-std=c++20' if use_clang else '-std=c++2a',
   '' if use_clang else '-fconcepts',
-  '-stdlib=libstdc++' if use_clang else '',
   '-fsized-deallocation',
   '-pedantic',
   '-pedantic-errors',
@@ -94,7 +93,11 @@ if(use_clang):
     clang_target_flag = '-target x86_64-pc-windows-gnu';
     static_env.Append(CXXFLAGS = clang_target_flag);
     static_env.Append(LINKFLAGS = clang_target_flag);
-    #static_env.Append(CXXFLAGS = ['-fuse-cxa-atexit']);
+  elif(compilation_target == target.win32):
+    clang_target_flag = '-target i686-pc-windows-gnu';
+    static_env.Append(CXXFLAGS = clang_target_flag);
+    static_env.Append(LINKFLAGS = clang_target_flag);
+
 
 static_env.Append(CPPPATH = ['include/']);
 static_env.Append(CXXFLAGS = flags);
