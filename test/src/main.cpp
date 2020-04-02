@@ -221,49 +221,19 @@ main
     a_tree2.get_child(0).get_allocator();
 
   }
-/*
-  static_assert(sizeof(dango::auto_ptr<void const>) == 24);
-
-  dango::auto_ptr<double> a_double{ new double{ 1.0 } };
-
-  static_assert(sizeof(a_double) == 8);
-
-  dango_assert(a_double != null);
-
-  auto a_d2 = dango::auto_ptr<double const>{ dango::move(a_double) };
-
-  double const& a_d = *a_d2;
-
-  dango_assert(a_d == 1.0);
-
-  auto a_void = dango::auto_new(128, 64);
-
-  static_assert(sizeof(a_void) == 24);
-
-  dango_assert(a_void.align() == 64);
-
-  auto a_void2 = dango::auto_new(128);
-
-  static_assert(sizeof(a_void2) == 16);
 
   {
-    dango::tuple<dango::empty_elem, dango::uint, dango::empty_elem const, float> a_empty{ 5, 5, 5, 5 };
+    dango::tuple<slong, ushort, sshort, float> a_tup{ 5, 5, 5, 5 };
 
-    static_assert(sizeof(a_empty) == 8);
+    static_assert(sizeof(a_tup) == 16);
 
-    printf("%p\n", static_cast<void const*>(&a_empty.get<0>()));
-    printf("%p\n", static_cast<void const*>(&a_empty.get<1>()));
-    printf("%p\n", static_cast<void const*>(&a_empty.get<2>()));
-    printf("%p\n", static_cast<void const*>(&a_empty.get<3>()));
+    printf("%p\n", static_cast<void const*>(&a_tup.first()));
+    printf("%p\n", static_cast<void const*>(&a_tup.second()));
+    printf("%p\n", static_cast<void const*>(&a_tup.third()));
+    printf("%p\n", static_cast<void const*>(&a_tup.fourth()));
 
-    //a_empty = a_empty;
+    //a_tup = a_tup;
   }
-
-  {
-    dango::auto_ptr<test_derived> a_td{ new test_derived{ } };
-
-    dango::auto_ptr<test_base const> a_tb{ dango::move(a_td) };
-  }*/
 
   {
     dango::atomic<dango::ssize*> a_atomic{ null };
