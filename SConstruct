@@ -74,7 +74,10 @@ static_env = None;
 shared_env = None;
 test_env = None;
 
-static_env = DefaultEnvironment();
+if(compilation_target == target.linux):
+    static_env = Environment(platform = 'posix', tools = ['gcc', 'gnulink']);
+elif(compilation_target == target.win32 or compilation_target == target.win64):
+    static_env = Environment(platform = 'win32', tools = ['mingw']);
 
 static_env.Append(ENV = {'PATH':os.environ['PATH']});
 
