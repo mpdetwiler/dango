@@ -232,7 +232,10 @@ main
     printf("%p\n", static_cast<void const*>(&a_tup.third()));
     printf("%p\n", static_cast<void const*>(&a_tup.fourth()));
 
-    //a_tup = a_tup;
+    static_assert(dango::is_same<decltype(a_tup.first()), slong&>);
+    static_assert(dango::is_same<decltype(dango::move(a_tup).first()), slong&&>);
+
+    a_tup = dango::move(a_tup);
   }
 
   {

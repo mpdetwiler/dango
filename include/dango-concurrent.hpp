@@ -1232,11 +1232,10 @@ public:
   <typename tp_func, typename... tp_args>
   requires
   (
+    (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
     dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
     dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
-    dango::is_noexcept_destructible<dango::decay<tp_func>> &&
-    dango::is_noexcept_destructible<dango::tuple<dango::decay<tp_args>...>> &&
-    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::decay<tp_args>&...>
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
   )
   static auto
   create(bool, tp_func&&, tp_args&&...)noexcept(false)->dango::thread;
@@ -1245,11 +1244,10 @@ public:
   <typename tp_func, typename... tp_args>
   requires
   (
+    (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
     dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
     dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
-    dango::is_noexcept_destructible<dango::decay<tp_func>> &&
-    dango::is_noexcept_destructible<dango::tuple<dango::decay<tp_args>...>> &&
-    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::decay<tp_args>&...>
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
   )
   static auto
   create(tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->dango::thread
@@ -1261,11 +1259,10 @@ public:
   <typename tp_func, typename... tp_args>
   requires
   (
+    (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
     dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
     dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
-    dango::is_noexcept_destructible<dango::decay<tp_func>> &&
-    dango::is_noexcept_destructible<dango::tuple<dango::decay<tp_args>...>> &&
-    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::decay<tp_args>&...>
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
   )
   static auto
   create_daemon(tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->dango::thread
@@ -1747,11 +1744,10 @@ template
 <typename tp_func, typename... tp_args>
 requires
 (
+  (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
   dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
   dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
-  dango::is_noexcept_destructible<dango::decay<tp_func>> &&
-  dango::is_noexcept_destructible<dango::tuple<dango::decay<tp_args>...>> &&
-  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::decay<tp_args>&...>
+  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
 )
 auto
 dango::
