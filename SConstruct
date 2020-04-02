@@ -75,15 +75,19 @@ shared_env = None;
 test_env = None;
 
 if(compilation_target == target.linux):
-    static_env = Environment(platform = 'posix', tools = ['gcc', 'gnulink']);
+  if(use_clang):
+    static_env = Environment(platform = 'posix', tools = ['default', 'clangxx']);
+  else:
+    static_env = Environment(platform = 'posix', tools = ['default', 'g++']);
 elif(compilation_target == target.win32 or compilation_target == target.win64):
-    static_env = Environment(platform = 'win32', tools = ['mingw']);
+  if(use_clang):
+    static_env = Environment(platform = 'posix', tools = ['mingw', 'clangxx']);
+  else:
+    static_env = Environment(platform = 'win32', tools = ['mingw', 'g++']);
 
-static_env.Append(ENV = {'PATH':os.environ['PATH']});
+static_env.Append(ENV = { 'PATH':os.environ['PATH'] });
 
 if(use_clang):
-  static_env.Replace(CXX = 'clang++');
-  static_env.Replace(LINK = 'clang++');
   static_env.Append(LINKFLAGS = '-fuse-ld=lld');
   if(compilation_target == target.win64):
     clang_target_flag = '-target x86_64-pc-windows-gnu';

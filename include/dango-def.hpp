@@ -135,22 +135,13 @@ dango
   {
 
   };
-}
 
-namespace
-dango::detail
-{
-  enum class
-  byte_enum:dango::ubyte
+  enum class [[gnu::may_alias]]
+  byte:
+  dango::ubyte
   {
 
   };
-}
-
-namespace
-dango
-{
-  using byte [[gnu::may_alias]] = dango::detail::byte_enum;
 }
 
 #endif
