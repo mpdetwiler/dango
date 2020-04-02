@@ -229,6 +229,8 @@ main
     dango::address_of(a_atomic);
   }
 
+  //dango::thread::create([]()noexcept->void{ printf("thread print\n"); });
+
   printf("joining\n");
 
   dango::thread::main_join();

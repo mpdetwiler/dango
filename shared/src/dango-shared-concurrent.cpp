@@ -70,7 +70,7 @@ noexcept->bool
     (
       &a_thread_ID,
       dango::null,
-      thread_start_address<decltype(a_func)>,
+      &thread_start_address<decltype(a_func)>,
       &a_func
     );
 
@@ -298,6 +298,7 @@ namespace
 #ifdef _WIN32
 
 #include <windows.h>
+#include <process.h>
 
 static_assert(sizeof(dango::shared::srw_lock_storage) == sizeof(::SRWLOCK));
 static_assert(alignof(dango::shared::srw_lock_storage) == alignof(::SRWLOCK));
@@ -308,7 +309,7 @@ namespace
 {
   template
   <typename tp_func>
-  auto WINAPI thread_start_address(LPVOID)noexcept->DWORD;
+  auto __stdcall thread_start_address(void*)noexcept->dango::builtin::uint;
 
   auto perf_count()noexcept->dango::tick_count_type;
 
@@ -344,25 +345,31 @@ noexcept->bool
   };
 
   {
-    auto const a_handle =
-    ::CreateThread
+    auto const a_temp =
+    ::_beginthreadex
     (
       dango::null,
-      SIZE_T(0),
-      thread_start_address<decltype(a_func)>,
+      0u,
+      &thread_start_address<decltype(a_func)>,
       &a_func,
-      DWORD(0),
+      0x04u,
       dango::null
     );
 
-    if(a_handle == NULL)
+    if(a_temp == 0)
     {
       return false;
     }
 
-    auto const a_result = ::CloseHandle(a_handle);
+    auto const a_handle = reinterpret_cast<HANDLE>(a_temp);
 
-    dango_assert(a_result != 0);
+    auto const a_resume = ::ResumeThread(a_handle);
+
+    dango_assert(a_resume != DWORD(-1));
+
+    auto const a_close = ::CloseHandle(a_handle);
+
+    dango_assert(a_close);
   }
 
   auto a_count = detail::c_spin_count_init;
@@ -588,9 +595,9 @@ namespace
 {
   template
   <typename tp_func>
-  auto WINAPI
+  auto __stdcall
   thread_start_address
-  (LPVOID const a_data)noexcept->DWORD
+  (void* const a_data)noexcept->dango::builtin::uint
   {
     static_assert(!dango::is_ref<tp_func>);
     static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
@@ -615,7 +622,7 @@ namespace
 #endif
     }
 
-    return DWORD(0);
+    return dango::builtin::uint(0);
   }
 
   auto
