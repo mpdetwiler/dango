@@ -1,5 +1,5 @@
-#ifndef __DANGO_AUTO_PTR_HPP__
-#define __DANGO_AUTO_PTR_HPP__
+#ifndef DANGO_AUTO_PTR_HPP_INCLUDED
+#define DANGO_AUTO_PTR_HPP_INCLUDED
 
 /*** auto_ptr ***/
 
@@ -781,5 +781,5 @@ dango
 
 */
 
-#endif
+#endif // DANGO_AUTO_PTR_HPP_INCLUDED
 

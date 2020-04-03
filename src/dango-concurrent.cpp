@@ -343,11 +343,7 @@ new_control_block
   }
   catch(...)
   {
-#ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg(u8"thread control block allocation failed");
-#else
-    dango::terminate();
-#endif
+    dango_unreachable_terminate_msg(u8"thread control block allocation failed");
   }
 }
 
@@ -724,11 +720,7 @@ start_thread
   }
   catch(...)
   {
-#ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg(u8"cond_var watcher-thread creation failed");
-#else
-    dango::terminate();
-#endif
+    dango_unreachable_terminate_msg(u8"cond_var watcher-thread creation failed");
   }
 }
 
@@ -925,9 +917,7 @@ mutex_base::
 acquire
 ()noexcept->mutex_base*
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   get()->lock();
 
@@ -941,9 +931,7 @@ mutex_base::
 try_acquire
 ()noexcept->mutex_base*
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   if(get()->try_lock())
   {
@@ -960,9 +948,7 @@ mutex_base::
 release
 ()noexcept
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   get()->unlock();
 }
@@ -1050,9 +1036,7 @@ wait
 {
   dango_assert(a_lock != dango::null);
 
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   get()->wait(a_lock->get());
 }
@@ -1066,9 +1050,7 @@ wait
 {
   dango_assert(a_lock != dango::null);
 
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   auto const a_rem = a_timeout.remaining();
 
@@ -1463,7 +1445,7 @@ namespace
 #endif
 }
 
-#endif /* __linux__ */
+#endif // __linux__
 
 #ifdef _WIN32
 
@@ -1583,9 +1565,7 @@ mutex_base::
 acquire
 ()noexcept->mutex_base*
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   get()->lock();
 
@@ -1599,9 +1579,7 @@ mutex_base::
 try_acquire
 ()noexcept->mutex_base*
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   if(get()->try_lock())
   {
@@ -1618,9 +1596,7 @@ mutex_base::
 release
 ()noexcept
 {
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   get()->unlock();
 }
@@ -1697,9 +1673,7 @@ wait
 {
   dango_assert(a_lock != dango::null);
 
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   get()->wait(a_lock->get());
 }
@@ -1713,9 +1687,7 @@ wait
 {
   dango_assert(a_lock != dango::null);
 
-#ifndef DANGO_NO_DEBUG
-  dango_assert(m_init.has_executed());
-#endif
+  dango_assert_noassume(m_init.has_executed());
 
   auto const a_rem = a_timeout.remaining();
 
@@ -2017,11 +1989,7 @@ start_thread
   }
   catch(...)
   {
-#ifndef DANGO_NO_DEBUG
-    dango_unreachable_msg(u8"windows timer-res manager thread creation failed");
-#else
-    dango::terminate();
-#endif
+    dango_unreachable_terminate_msg(u8"windows timer-res manager thread creation failed");
   }
 }
 
@@ -2253,5 +2221,5 @@ namespace
   }
 }
 
-#endif /* _WIN32 */
+#endif // _WIN32
 

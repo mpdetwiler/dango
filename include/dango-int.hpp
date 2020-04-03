@@ -1,5 +1,5 @@
-#ifndef __DANGO_INT_HPP__
-#define __DANGO_INT_HPP__
+#ifndef DANGO_INT_HPP_INCLUDED
+#define DANGO_INT_HPP_INCLUDED
 
 namespace
 dango::detail
@@ -279,5 +279,5 @@ dango::integer
   }
 }
 
-#endif
+#endif // DANGO_INT_HPP_INCLUDED
 

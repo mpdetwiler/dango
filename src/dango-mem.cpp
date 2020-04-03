@@ -25,11 +25,7 @@ dango_new_noexcept->void*
     }
     catch(...)
     {
-#ifndef DANGO_NO_DEBUG
-      dango_unreachable_msg(u8"memory allocation failed");
-#else
-      dango::terminate();
-#endif
+      dango_unreachable_terminate_msg(u8"memory allocation failed");
     }
   }
   else

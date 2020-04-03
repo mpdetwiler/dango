@@ -233,11 +233,7 @@ namespace
     }
     catch(...)
     {
-#ifndef DANGO_NO_DEBUG
-      dango_unreachable_msg(u8"uncaught exception in thread");
-#else
-      dango::terminate();
-#endif
+      dango_unreachable_terminate_msg(u8"uncaught exception in thread");
     }
 
     return dango::null;
@@ -293,7 +289,7 @@ namespace
   }
 }
 
-#endif /* __linux__ */
+#endif // __linux__
 
 #ifdef _WIN32
 
@@ -562,11 +558,7 @@ time_begin_period
     return;
   }
 
-#ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg(u8"timeBeginPeriod failed");
-#else
-  dango::terminate();
-#endif
+  dango_unreachable_terminate_msg(u8"timeBeginPeriod failed");
 }
 
 DANGO_SHARED_API void
@@ -584,11 +576,7 @@ time_end_period
     return;
   }
 
-#ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg(u8"timeEndPeriod failed");
-#else
-  dango::terminate();
-#endif
+  dango_unreachable_terminate_msg(u8"timeEndPeriod failed");
 }
 
 namespace
@@ -615,11 +603,7 @@ namespace
     }
     catch(...)
     {
-#ifndef DANGO_NO_DEBUG
-      dango_unreachable_msg(u8"uncaught exception in thread");
-#else
-      dango::terminate();
-#endif
+      dango_unreachable_terminate_msg(u8"uncaught exception in thread");
     }
 
     return dango::builtin::uint(0);
@@ -643,20 +627,16 @@ namespace
     constexpr auto c_impl =
     []()noexcept->dango::uint
     {
-        ::TIMECAPS a_caps;
+      ::TIMECAPS a_caps;
 
-        auto const a_error = ::timeGetDevCaps(&a_caps, sizeof(a_caps));
+      auto const a_error = ::timeGetDevCaps(&a_caps, sizeof(a_caps));
 
-        if(a_error == MMSYSERR_NOERROR)
-        {
-          return dango::uint(a_caps.wPeriodMin);
-        }
+      if(a_error == MMSYSERR_NOERROR)
+      {
+        return dango::uint(a_caps.wPeriodMin);
+      }
 
-#ifndef DANGO_NO_DEBUG
-        dango_unreachable_msg(u8"timeGetDevCaps failed");
-#else
-        dango::terminate();
-#endif
+      dango_unreachable_terminate_msg(u8"timeGetDevCaps failed");
     };
 
     static auto const s_period = c_impl();
@@ -665,5 +645,5 @@ namespace
   }
 }
 
-#endif /* _WIN32 */
+#endif // _WIN32
 

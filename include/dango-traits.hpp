@@ -1,5 +1,5 @@
-#ifndef __DANGO_TRAITS_HPP__
-#define __DANGO_TRAITS_HPP__
+#ifndef DANGO_TRAITS_HPP_INCLUDED
+#define DANGO_TRAITS_HPP_INCLUDED
 
 /*** remove_const ***/
 
@@ -2224,5 +2224,5 @@ dango
   using make_index_seq = dango::make_integer_seq<dango::usize, tp_len>;
 }
 
-#endif
+#endif // DANGO_TRAITS_HPP_INCLUDED
 

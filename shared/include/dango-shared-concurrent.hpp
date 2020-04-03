@@ -1,5 +1,5 @@
-#ifndef __DANGO_SHARED_CONCURRENT_HPP__
-#define __DANGO_SHARED_CONCURRENT_HPP__
+#ifndef DANGO_SHARED_CONCURRENT_HPP_INCLUDED
+#define DANGO_SHARED_CONCURRENT_HPP_INCLUDED
 
 #include "dango-shared.hpp"
 
@@ -28,7 +28,7 @@ dango::shared
   DANGO_SHARED_API void futex_wake_requeue(shared::futex_type*, shared::futex_type*)noexcept;
 }
 
-#endif /* __linux__ */
+#endif // __linux__
 
 #ifdef _WIN32
 
@@ -57,7 +57,7 @@ dango::shared
   DANGO_SHARED_API void time_end_period()noexcept;
 }
 
-#endif /* _WIN32 */
+#endif // _WIN32
 
-#endif
+#endif // DANGO_SHARED_CONCURRENT_HPP_INCLUDED
 

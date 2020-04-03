@@ -1,5 +1,5 @@
-#ifndef __DANGO_ALLOCATOR_HPP__
-#define __DANGO_ALLOCATOR_HPP__
+#ifndef DANGO_ALLOCATOR_HPP_INCLUDED
+#define DANGO_ALLOCATOR_HPP_INCLUDED
 
 /*** allocator classes ***/
 
@@ -98,11 +98,8 @@ checked_free
 
     return;
   }
-#ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg(u8"allocator: double free detected");
-#else
-  dango::terminate();
-#endif
+
+  dango_unreachable_terminate_msg(u8"allocator: double free detected");
 }
 
 inline void
@@ -116,11 +113,8 @@ destructor_check
   {
     return;
   }
-#ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg(u8"allocator: attempt to destroy with unfreed allocations");
-#else
-  dango::terminate();
-#endif
+
+  dango_unreachable_terminate_msg(u8"allocator: attempt to destroy with unfreed allocations");
 }
 
 /*****************************/
@@ -973,5 +967,5 @@ get_default_allocator
   return dango::allocator::make_static(dango::default_static_allocator_storage);
 }
 
-#endif
+#endif // DANGO_ALLOCATOR_HPP_INCLUDED
 

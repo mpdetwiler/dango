@@ -1,5 +1,5 @@
-#ifndef __DANGO_TUPLE_HPP__
-#define __DANGO_TUPLE_HPP__
+#ifndef DANGO_TUPLE_HPP_INCLUDED
+#define DANGO_TUPLE_HPP_INCLUDED
 
 namespace
 dango::detail
@@ -1489,5 +1489,5 @@ std
   tuple_element<tp_index, dango::tuple<> const volatile>;
 }
 
-#endif
+#endif // DANGO_TUPLE_HPP_INCLUDED
 

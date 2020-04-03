@@ -6,46 +6,79 @@ class target(enum.Enum):
   win32 = 1
   win64 = 2
 
-
 AddOption(
   '--target',
-  dest = 'target_opt',
+  dest = 'target-opt',
   type = 'string',
   nargs = 1,
   action = 'store',
-  metavar = 'DIR',
+  metavar = 'STRING',
   help = 'build target',
   default = target.linux.name
 );
 
 AddOption(
   '--test',
-  dest = 'test_opt',
+  dest = 'test-opt',
   action = 'store_true',
-  metavar = 'DIR',
   help = 'compile test program',
   default = False
 );
 
 AddOption(
-  '--clang',
-  dest = 'clang_opt',
+  '--use-clang',
+  dest = 'use-clang-opt',
   action = 'store_true',
-  metavar = 'DIR',
   help = 'use clang++ instead of g++',
+  default = False
+);
+
+AddOption(
+  '--no-debug',
+  dest = 'no-debug-opt',
+  action = 'store_true',
+  help = 'define DANGO_NO_DEBUG',
+  default = False
+);
+
+AddOption(
+  '--no-multicore',
+  dest = 'no-multicore-opt',
+  action = 'store_true',
+  help = 'define DANGO_NO_MULTICORE',
+  default = False
+);
+
+AddOption(
+  '--big-cache-lines',
+  dest = 'big-cache-lines-opt',
+  action = 'store_true',
+  help = 'define DANGO_CACHE_LINE_SIZE as 128 instead of 64',
+  default = False
+);
+
+AddOption(
+  '--new-noexcept',
+  dest = 'new-noexcept-opt',
+  action = 'store_true',
+  help = 'define DANGO_NEW_NOEXCEPT',
   default = False
 );
 
 compilation_target = None;
 
 try:
-  compilation_target = target[GetOption('target_opt')];
+  compilation_target = target[GetOption('target-opt')];
 except KeyError as err:
   print('invalid compilation target \"' + err.args[0] + '\"');
   Exit(1);
 
-compile_test = GetOption('test_opt');
-use_clang = GetOption('clang_opt');
+compile_test = GetOption('test-opt');
+use_clang = GetOption('use-clang-opt');
+no_debug = GetOption('no-debug-opt');
+no_multicore = GetOption('no-multicore-opt');
+big_cache_lines = GetOption('big-cache-lines-opt');
+new_noexcept = GetOption('new-noexcept-opt');
 
 print('building for target \"' + compilation_target.name + '\"');
 
@@ -106,11 +139,6 @@ static_env.Append(LINKFLAGS = flags);
 if(compile_test):
   static_env.Append(CPPDEFINES = 'DANGO_TESTING_DANGO');
 
-#static_env.Append(CPPDEFINES = ('DANGO_CACHE_LINE_SIZE', '64'));
-#static_env.Append(CPPDEFINES = 'DANGO_NO_DEBUG');
-#static_env.Append(CPPDEFINES = 'DANGO_NO_MULTICORE');
-#static_env.Append(CPPDEFINES = 'DANGO_NEW_NOEXCEPT');
-
 if(use_clang):
   static_env.Replace(AR = 'llvm-ar');
 else:
@@ -118,6 +146,15 @@ else:
 
 static_env.Replace(ARFLAGS = 'rcs');
 static_env.Replace(RANLIBCOM = '');
+
+if(no_debug):
+  static_env.Append(CPPDEFINES = 'DANGO_NO_DEBUG');
+if(no_multicore):
+  static_env.Append(CPPDEFINES = 'DANGO_NO_MULTICORE');
+if(big_cache_lines):
+  static_env.Append(CPPDEFINES = ('DANGO_CACHE_LINE_SIZE', '128'));
+if(new_noexcept):
+  static_env.Append(CPPDEFINES = 'DANGO_NEW_NOEXCEPT');
 
 shared_env = static_env.Clone();
 

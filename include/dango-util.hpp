@@ -1,5 +1,5 @@
-#ifndef __DANGO_UTIL_HPP__
-#define __DANGO_UTIL_HPP__
+#ifndef DANGO_UTIL_HPP_INCLUDED
+#define DANGO_UTIL_HPP_INCLUDED
 
 /*** swap ***/
 
@@ -498,5 +498,5 @@ final
   DANGO_UNINSTANTIABLE(member_func_type_help)
 };
 
-#endif
+#endif // DANGO_UTIL_HPP_INCLUDED
 

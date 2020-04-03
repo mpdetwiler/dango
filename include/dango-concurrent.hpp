@@ -1,5 +1,5 @@
-#ifndef __DANGO_CONCURRENT_HPP__
-#define __DANGO_CONCURRENT_HPP__
+#ifndef DANGO_CONCURRENT_HPP_INCLUDED
+#define DANGO_CONCURRENT_HPP_INCLUDED
 
 /*** get_tick_count ***/
 
@@ -2028,7 +2028,7 @@ dango::detail
   DANGO_DEFINE_GLOBAL(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
 }
 
-#endif
+#endif // _WIN32
 
-#endif
+#endif // DANGO_CONCURRENT_HPP_INCLUDED
 

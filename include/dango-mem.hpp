@@ -1,5 +1,5 @@
-#ifndef __DANGO_MEM_HPP__
-#define __DANGO_MEM_HPP__
+#ifndef DANGO_MEM_HPP_INCLUDED
+#define DANGO_MEM_HPP_INCLUDED
 
 /*** destructor ***/
 
@@ -614,5 +614,5 @@ dango
   }
 }
 
-#endif
+#endif // DANGO_MEM_HPP_INCLUDED
 

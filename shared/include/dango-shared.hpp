@@ -1,5 +1,5 @@
-#ifndef __DANGO_SHARED_HPP__
-#define __DANGO_SHARED_HPP__
+#ifndef DANGO_SHARED_HPP_INCLUDED
+#define DANGO_SHARED_HPP_INCLUDED
 
 #include <dango.hpp>
 
@@ -17,5 +17,5 @@
 #endif
 #endif
 
-#endif
+#endif // DANGO_SHARED_HPP_INCLUDED
 

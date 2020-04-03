@@ -1,5 +1,5 @@
-#ifndef __DANGO_HPP__
-#define __DANGO_HPP__
+#ifndef DANGO_HPP_INCLUDED
+#define DANGO_HPP_INCLUDED
 
 #include "dango-macro.hpp"
 #include "dango-def.hpp"
@@ -20,5 +20,5 @@
 #include "dango-auto-ptr.hpp"
 #include "dango-concurrent.hpp"
 
-#endif
+#endif // DANGO_HPP_INCLUDED
 

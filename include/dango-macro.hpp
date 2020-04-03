@@ -1,5 +1,5 @@
-#ifndef __DANGO_MACRO_HPP__
-#define __DANGO_MACRO_HPP__
+#ifndef DANGO_MACRO_HPP_INCLUDED
+#define DANGO_MACRO_HPP_INCLUDED
 
 #define DANGO_UNCOPYABLE(name) \
 constexpr name(name const&)noexcept = delete; \
@@ -38,6 +38,8 @@ constexpr auto operator = (name&&)& noexcept->name& = default;
 
 /*** DANGO_PARENTH_TYPE ***/
 
+#define DANGO_PARENTH_TYPE(...) dango::parenth_type<void(__VA_ARGS__)noexcept>
+
 namespace
 dango::detail
 {
@@ -55,7 +57,7 @@ dango
 {
   template
   <typename tp_type>
-  using parenth_type = typename detail::parenth_type_help<tp_type>::type;
+  using parenth_type = typename dango::detail::parenth_type_help<tp_type>::type;
 }
 
 template
@@ -71,17 +73,9 @@ final
   DANGO_UNINSTANTIABLE(parenth_type_help)
 };
 
-#define DANGO_PARENTH_TYPE(...) dango::parenth_type<void(__VA_ARGS__)noexcept>
-
 /*** DANGO_MAGIC_CONST_FOLD ***/
 
 #define DANGO_MAGIC_CONST_FOLD(...) (__builtin_constant_p((__VA_ARGS__))?(__VA_ARGS__):(__VA_ARGS__))
 
-// TODO constinit only works on clang 10. this is temporary until gcc 10 comes out:
-
-#ifndef __clang__
-#define constinit
-#endif
-
-#endif
+#endif // DANGO_MACRO_HPP_INCLUDED
 

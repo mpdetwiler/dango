@@ -1,5 +1,5 @@
-#ifndef __DANGO_GLOBAL_HPP__
-#define __DANGO_GLOBAL_HPP__
+#ifndef DANGO_GLOBAL_HPP_INCLUDED
+#define DANGO_GLOBAL_HPP_INCLUDED
 
 namespace
 dango::detail
@@ -83,15 +83,12 @@ final
 public:
   weak_incrementer(DANGO_SRC_LOC_ARG(a_loc))noexcept
   {
-      if(tp_storage.try_increment())
-      {
-        return;
-      }
-#ifndef DANGO_NO_DEBUG
-      dango_assert_msg_loc(false, u8"attempt to access already-destroyed global", a_loc);
-#else
-      dango::terminate();
-#endif
+    if(tp_storage.try_increment())
+    {
+      return;
+    }
+
+    dango_unreachable_terminate_msg_loc(u8"attempt to access already-destroyed global", a_loc);
   }
 
   ~weak_incrementer()noexcept{ tp_storage.decrement(); }
@@ -169,11 +166,8 @@ increment
       return;
     }
   }
-#ifndef DANGO_NO_DEBUG
-  dango_unreachable_msg(u8"attempt to initialize already-destroyed global");
-#else
-  dango::terminate();
-#endif
+
+  dango_unreachable_terminate_msg(u8"attempt to initialize already-destroyed global");
 }
 
 template
@@ -224,12 +218,6 @@ decrement
 #define DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(type_name, name)
 #endif
 
-#ifndef DANGO_NO_DEBUG
-#define DANGO_GLOBAL_UNREACHABLE_TERMINATE(msg) dango_unreachable_msg(msg)
-#else
-#define DANGO_GLOBAL_UNREACHABLE_TERMINATE(msg) dango::terminate()
-#endif
-
 #define DANGO_DEFINE_GLOBAL_IMPL(linkage, type_name, name, ...) \
 namespace \
 name##_namespace \
@@ -238,7 +226,7 @@ name##_namespace \
   static_assert(dango::is_object_exclude_array<name##_value_type>); \
   using name##_return_type = dango::remove_cv<name##_value_type>; \
   linkage auto name##_construct()noexcept->name##_return_type \
-  { try{ return name##_return_type __VA_ARGS__ ; }catch(...){ DANGO_GLOBAL_UNREACHABLE_TERMINATE(u8"constructor of global \"name\" threw exception"); } } \
+  { try{ return name##_return_type __VA_ARGS__ ; }catch(...){ dango_unreachable_terminate_msg(u8"constructor of global \"name\" threw exception"); } } \
   using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
   linkage constinit name##_storage_type s_##name##_storage{ }; \
   using name##_strong_type = name##_storage_type::strong_incrementer<s_##name##_storage>; \
@@ -263,5 +251,5 @@ DANGO_DEFINE_GLOBAL_IMPL(static, type_name, name, __VA_ARGS__)
 #define dango_access_global(global_name, local_name) \
 if constexpr(auto const local_name = global_name(); true)
 
-#endif
+#endif // DANGO_GLOBAL_HPP_INCLUDED
 

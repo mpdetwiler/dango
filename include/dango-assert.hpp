@@ -1,5 +1,5 @@
-#ifndef __DANGO_ASSERT_HPP__
-#define __DANGO_ASSERT_HPP__
+#ifndef DANGO_ASSERT_HPP_INCLUDED
+#define DANGO_ASSERT_HPP_INCLUDED
 
 /*** bchar_as_char char_as_bchar ***/
 
@@ -279,10 +279,10 @@ noexcept
 }
 
 #ifndef DANGO_NO_DEBUG
-#define dango_assert(cond) dango::detail::assert_func(bool(cond), DANGO_TOKEN_CONCAT(u8, #cond), dango::null)
-#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), DANGO_TOKEN_CONCAT(u8, #cond), dango::null, loc)
-#define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), DANGO_TOKEN_CONCAT(u8, #cond), msg)
-#define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), DANGO_TOKEN_CONCAT(u8, #cond), msg, loc)
+#define dango_assert(cond) dango::detail::assert_func(bool(cond), u8###cond, dango::null)
+#define dango_assert_loc(cond, loc) dango::detail::assert_func(bool(cond), u8###cond, dango::null, loc)
+#define dango_assert_msg(cond, msg) dango::detail::assert_func(bool(cond), u8###cond, msg)
+#define dango_assert_msg_loc(cond, msg, loc) dango::detail::assert_func(bool(cond), u8###cond, msg, loc)
 #else
 #define dango_assert(cond) dango::assume(bool(cond))
 #define dango_assert_loc(cond, loc) dango_assert(cond)
@@ -317,53 +317,49 @@ unreachable_func
 )
 noexcept
 {
-  detail::assert_fail_log(detail::unreachable_expr, a_msg, a_loc);
+  detail::assert_fail_log(dango::detail::unreachable_expr, a_msg, a_loc);
 
   dango::trap_instruction();
 }
 
 #ifndef DANGO_NO_DEBUG
 #define dango_unreachable dango::detail::unreachable_func(dango::detail::unreachable_message)
+#define dango_unreachable_loc(loc) dango::detail::unreachable_func(dango::detail::unreachable_message, loc)
 #define dango_unreachable_msg(msg) dango::detail::unreachable_func(msg)
+#define dango_unreachable_msg_loc(msg, loc) dango::detail::unreachable_func(msg, loc)
 #else
 #define dango_unreachable do{ __builtin_unreachable(); }while(false)
+#define dango_unreachable_loc(loc) dango_unreachable
 #define dango_unreachable_msg(msg) dango_unreachable
+#define dango_unreachable_msg_loc(msg, loc) dango_unreachable
 #endif
 
-/*** source location arg ***/
+/*** dango_assert_noassume ***/
 
 #ifndef DANGO_NO_DEBUG
-
-#define DANGO_SRC_LOC_ARG_DEFAULT(name) \
-dango::source_location const& name = dango::source_location::current()
-
-#define DANGO_SRC_LOC_ARG(name) dango::source_location const& name
-
-#define DANGO_SRC_LOC_ARG_FORWARD(name) name
-
+#define dango_assert_noassume(cond) dango_assert(cond)
+#define dango_assert_noassume_loc(cond, loc) dango_assert_loc(cond, loc)
+#define dango_assert_noassume_msg(cond, msg) dango_assert_msg(cond, msg)
+#define dango_assert_noassume_msg_loc(cond, msg, loc) dango_assert_msg_loc(cond, msg, loc)
 #else
+#define dango_assert_noassume(cond)
+#define dango_assert_noassume_loc(cond, loc)
+#define dango_assert_noassume_msg(cond, msg)
+#define dango_assert_noassume_msg_loc(cond, msg, loc)
+#endif
 
-namespace
-dango::detail
-{
-  struct
-  assert_dummy_tag
-  final
-  {
-    DANGO_TAG_TYPE(assert_dummy_tag)
-  };
+/*** dango_unreachable_noassume ***/
 
-  inline constexpr assert_dummy_tag const assert_dummy_val{ };
-}
-
-
-#define DANGO_SRC_LOC_ARG_DEFAULT(name) \
-dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
-
-#define DANGO_SRC_LOC_ARG(name) dango::detail::assert_dummy_tag const
-
-#define DANGO_SRC_LOC_ARG_FORWARD(name) dango::detail::assert_dummy_val
-
+#ifndef DANGO_NO_DEBUG
+#define dango_unreachable_noassume dango_unreachable
+#define dango_unreachable_noassume_loc(loc) dango_unreachable_loc(loc)
+#define dango_unreachable_noassume_msg(msg) dango_unreachable_msg(msg)
+#define dango_unreachable_noassume_msg_loc(msg, loc) dango_unreachable_msg_loc(msg, loc)
+#else
+#define dango_unreachable_noassume
+#define dango_unreachable_noassume_loc(loc)
+#define dango_unreachable_noassume_msg(msg)
+#define dango_unreachable_noassume_msg_loc(msg, loc)
 #endif
 
 /*** terminate get_terminate set_terminate ***/
@@ -379,5 +375,59 @@ dango
   [[noreturn]] void terminate()noexcept;
 }
 
+/*** dango_assert_terminate ***/
+
+#ifndef DANGO_NO_DEBUG
+#define dango_assert_terminate(cond) dango_assert(cond)
+#define dango_assert_terminate_loc(cond, loc) dango_assert_loc(cond, loc)
+#define dango_assert_terminate_msg(cond, msg) dango_assert_msg(cond, msg)
+#define dango_assert_terminate_msg_loc(cond, msg, loc) dango_assert_msg_loc(cond, msg, loc)
+#else
+#define dango_assert_terminate(cond) do{ if(dango::unlikely(!bool(cond)){ dango::terminate(); } }while(false)
+#define dango_assert_terminate_loc(cond, loc) dango_assert_terminate(cond)
+#define dango_assert_terminate_msg(cond, msg) dango_assert_terminate(cond)
+#define dango_assert_terminate_msg_loc(cond, msg, loc) dango_assert_terminate(cond)
 #endif
+
+/*** dango_unreachable_terminate ***/
+
+#ifndef DANGO_NO_DEBUG
+#define dango_unreachable_terminate dango_unreachable
+#define dango_unreachable_terminate_loc(loc) dango_unreachable_loc(loc)
+#define dango_unreachable_terminate_msg(msg) dango_unreachable_msg(msg)
+#define dango_unreachable_terminate_msg_loc(msg, loc) dango_unreachable_msg_loc(msg, loc)
+#else
+#define dango_unreachable_terminate dango::terminate()
+#define dango_unreachable_terminate_loc(loc) dango_unreachable_terminate
+#define dango_unreachable_terminate_msg(msg) dango_unreachable_terminate
+#define dango_unreachable_terminate_msg_loc(msg, loc) dango_unreachable_terminate
+#endif
+
+/*** source location arg ***/
+
+#ifndef DANGO_NO_DEBUG
+#define DANGO_SRC_LOC_ARG_DEFAULT(name) dango::source_location const& name = dango::source_location::current()
+#define DANGO_SRC_LOC_ARG(name) dango::source_location const& name
+#define DANGO_SRC_LOC_ARG_FORWARD(name) name
+#else
+#define DANGO_SRC_LOC_ARG_DEFAULT(name) dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
+#define DANGO_SRC_LOC_ARG(name) dango::detail::assert_dummy_tag const
+#define DANGO_SRC_LOC_ARG_FORWARD(name) dango::detail::assert_dummy_val
+
+namespace
+dango::detail
+{
+  struct
+  assert_dummy_tag
+  final
+  {
+    DANGO_TAG_TYPE(assert_dummy_tag)
+  };
+
+  inline constexpr assert_dummy_tag const assert_dummy_val{ };
+}
+
+#endif
+
+#endif // DANGO_ASSERT_HPP_INCLUDED
 

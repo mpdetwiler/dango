@@ -1,5 +1,5 @@
-#ifndef __DANGO_ATOMIC_HPP__
-#define __DANGO_ATOMIC_HPP__
+#ifndef DANGO_ATOMIC_HPP_INCLUDED
+#define DANGO_ATOMIC_HPP_INCLUDED
 
 namespace
 dango
@@ -428,5 +428,5 @@ compare_exchange
   return dango::atomic_compare_exchange<tp_success, tp_failure>(&m_data, &a_expected, a_data);
 }
 
-#endif
+#endif // DANGO_ATOMIC_HPP_INCLUDED
 

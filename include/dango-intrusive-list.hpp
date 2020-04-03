@@ -1,5 +1,5 @@
-#ifndef __DANGO_INTRUSIVE_LIST_HPP__
-#define __DANGO_INTRUSIVE_LIST_HPP__
+#ifndef DANGO_INTRUSIVE_LIST_HPP_INCLUDED
+#define DANGO_INTRUSIVE_LIST_HPP_INCLUDED
 
 /*** intrusive_list ***/
 
@@ -368,5 +368,5 @@ remove_last()noexcept->elem_ptr
   return a_result;
 }
 
-#endif
+#endif // DANGO_INTRUSIVE_LIST_HPP_INCLUDED
 

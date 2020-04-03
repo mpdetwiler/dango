@@ -1,5 +1,5 @@
-#ifndef __DANGO_NET_HPP__
-#define __DANGO_NET_HPP__
+#ifndef DANGO_NET_HPP_INCLUDED
+#define DANGO_NET_HPP_INCLUDED
 
 namespace
 dango::detail
@@ -79,5 +79,5 @@ dango
   constexpr auto ntoh(dango::ulong const a_arg)noexcept->dango::ulong{ return detail::byte_order_funcs<>::ntoh(a_arg); }
 }
 
-#endif
+#endif // DANGO_NET_HPP_INCLUDED
 

@@ -1,5 +1,5 @@
-#ifndef __DANGO_OPERATOR_HPP__
-#define __DANGO_OPERATOR_HPP__
+#ifndef DANGO_OPERATOR_HPP_INCLUDED
+#define DANGO_OPERATOR_HPP_INCLUDED
 
 /*** dango_operator_is_null ***/
 
@@ -169,5 +169,5 @@ dango
     dango::is_assignable<dango::remove_cv<tp_type>&, dango::null_tag&&>;
 }
 
-#endif
+#endif // DANGO_OPERATOR_HPP_INCLUDED
 

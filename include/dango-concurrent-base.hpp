@@ -1,5 +1,5 @@
-#ifndef __DANGO_CONCURRENT_BASE_HPP__
-#define __DANGO_CONCURRENT_BASE_HPP__
+#ifndef DANGO_CONCURRENT_BASE_HPP_INCLUDED
+#define DANGO_CONCURRENT_BASE_HPP_INCLUDED
 
 /*** dango_crit ***/
 
@@ -453,5 +453,5 @@ spin_yield
 }
 #endif
 
-#endif
+#endif // DANGO_CONCURRENT_BASE_HPP_INCLUDED
 

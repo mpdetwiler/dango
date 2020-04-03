@@ -1,5 +1,5 @@
-#ifndef __DANGO_CSTRING_HPP__
-#define __DANGO_CSTRING_HPP__
+#ifndef DANGO_CSTRING_HPP_INCLUDED
+#define DANGO_CSTRING_HPP_INCLUDED
 
 namespace
 dango
@@ -125,5 +125,5 @@ dango
   }
 }
 
-#endif
+#endif // DANGO_CSTRING_HPP_INCLUDED
 

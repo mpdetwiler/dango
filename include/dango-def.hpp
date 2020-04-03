@@ -1,5 +1,5 @@
-#ifndef __DANGO_DEF_HPP__
-#define __DANGO_DEF_HPP__ 1
+#ifndef DANGO_DEF_HPP_INCLUDED
+#define DANGO_DEF_HPP_INCLUDED
 
 #define dango_restrict __restrict__
 
@@ -144,5 +144,5 @@ dango
   };
 }
 
-#endif
+#endif // DANGO_DEF_HPP_INCLUDED
 
