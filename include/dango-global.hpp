@@ -234,25 +234,24 @@ decrement
 namespace \
 name##_namespace \
 { \
-  using dango_global_value_type = type_name; \
-  static_assert(dango::is_object_exclude_array<dango_global_value_type>); \
-  using dango_global_return_type = dango::remove_cv<dango_global_value_type>; \
-  linkage auto dango_global_construct()noexcept->dango_global_return_type \
-  { try{ return dango_global_return_type __VA_ARGS__ ; }catch(...){ DANGO_GLOBAL_UNREACHABLE_TERMINATE(u8"constructor of global \"name\" threw exception"); } } \
-  using dango_global_storage_type = \
-    dango::detail::global_storage<dango_global_value_type, dango_global_construct>; \
-  linkage constinit dango_global_storage_type s_dango_global_storage{ }; \
-  using dango_global_strong_type = dango_global_storage_type::strong_incrementer<s_dango_global_storage>; \
-  using dango_global_weak_type = dango_global_storage_type::weak_incrementer<s_dango_global_storage>; \
-  DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(dango_global_strong_type, s_dango_global_strong) \
+  using name##_value_type = type_name; \
+  static_assert(dango::is_object_exclude_array<name##_value_type>); \
+  using name##_return_type = dango::remove_cv<name##_value_type>; \
+  linkage auto name##_construct()noexcept->name##_return_type \
+  { try{ return name##_return_type __VA_ARGS__ ; }catch(...){ DANGO_GLOBAL_UNREACHABLE_TERMINATE(u8"constructor of global \"name\" threw exception"); } } \
+  using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
+  linkage constinit name##_storage_type s_##name##_storage{ }; \
+  using name##_strong_type = name##_storage_type::strong_incrementer<s_##name##_storage>; \
+  using name##_weak_type = name##_storage_type::weak_incrementer<s_##name##_storage>; \
+  DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(name##_strong_type, s_##name##_strong) \
 } \
 [[nodiscard]] linkage auto \
 name \
 (DANGO_SRC_LOC_ARG_DEFAULT(a_loc)) \
-noexcept->name##_namespace::dango_global_weak_type \
+noexcept->name##_namespace::name##_weak_type \
 { \
-  static name##_namespace::dango_global_strong_type const s_strong{ }; \
-  return name##_namespace::dango_global_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
+  static name##_namespace::name##_strong_type const s_strong{ }; \
+  return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
 }
 
 #define DANGO_DEFINE_GLOBAL(type_name, name, ...) \
