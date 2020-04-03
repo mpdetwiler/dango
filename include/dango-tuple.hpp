@@ -23,7 +23,7 @@ dango::detail
 
   template
   <typename tp_type, typename tp_pack>
-  using tuple_pack_prepend = typename detail::tuple_pack_prepend_help<tp_type, tp_pack>::type;
+  using tuple_pack_prepend = typename dango::detail::tuple_pack_prepend_help<tp_type, tp_pack>::type;
 }
 
 template
@@ -52,7 +52,7 @@ dango::detail
 
   template
   <typename... tp_types>
-  using tuple_pack_reverse = typename detail::tuple_pack_reverse_help<detail::tuple_pack<>, tp_types...>::type;
+  using tuple_pack_reverse = typename dango::detail::tuple_pack_reverse_help<detail::tuple_pack<>, tp_types...>::type;
 }
 
 template
@@ -63,7 +63,7 @@ detail::
 tuple_pack_reverse_help
 final
 {
-  using type = typename detail::tuple_pack_reverse_help<detail::tuple_pack_prepend<tp_first, tp_pack>, tp_next...>::type;
+  using type = typename dango::detail::tuple_pack_reverse_help<detail::tuple_pack_prepend<tp_first, tp_pack>, tp_next...>::type;
 
   DANGO_UNINSTANTIABLE(tuple_pack_reverse_help)
 };
@@ -76,7 +76,7 @@ detail::
 tuple_pack_reverse_help<tp_pack, tp_first>
 final
 {
-  using type = detail::tuple_pack_prepend<tp_first, tp_pack>;
+  using type = dango::detail::tuple_pack_prepend<tp_first, tp_pack>;
 
   DANGO_UNINSTANTIABLE(tuple_pack_reverse_help)
 };
@@ -103,7 +103,7 @@ dango
 {
   template
   <typename tp_type>
-  using tuple_value_type = typename detail::tuple_value_type_help<tp_type>::type;
+  using tuple_value_type = typename dango::detail::tuple_value_type_help<tp_type>::type;
 }
 
 template
@@ -251,7 +251,7 @@ dango
   template
   <typename tp_model, typename tp_type>
   using tuple_get_type =
-    typename detail::tuple_get_type_help<tp_model, dango::tuple_value_type<tp_type>>::type;
+    typename dango::detail::tuple_get_type_help<tp_model, dango::tuple_value_type<tp_type>>::type;
 }
 
 namespace
@@ -356,7 +356,7 @@ dango::detail
   template
   <typename tp_arg, typename tp_type>
   concept tuple_is_convertible =
-    detail::tuple_is_convertible_help<tp_arg, dango::tuple_value_type<tp_type>>;
+    dango::detail::tuple_is_convertible_help<tp_arg, dango::tuple_value_type<tp_type>>;
 }
 
 namespace
@@ -364,20 +364,20 @@ dango::detail
 {
   template
   <typename tp_pack>
-  class tuple_storage;
+  struct tuple_storage;
 
   template
   <typename tp_first>
-  class tuple_storage<dango::detail::tuple_pack<tp_first>>;
+  struct tuple_storage<dango::detail::tuple_pack<tp_first>>;
 
   template
   <typename tp_first, typename... tp_next>
-  class tuple_storage<dango::detail::tuple_pack<tp_first, tp_next...>>;
+  struct tuple_storage<dango::detail::tuple_pack<tp_first, tp_next...>>;
 }
 
 template
 <typename tp_first>
-class
+struct
 dango::
 detail::
 tuple_storage
@@ -495,7 +495,7 @@ private:
 
 template
 <typename tp_first, typename... tp_next>
-class
+struct
 dango::
 detail::
 tuple_storage
@@ -775,7 +775,7 @@ tuple
 {
 private:
   using storage_type =
-    detail::tuple_storage<detail::tuple_pack_reverse<tp_types...>>;
+    dango::detail::tuple_storage<detail::tuple_pack_reverse<tp_types...>>;
 public:
   static constexpr auto size()noexcept->dango::usize{ return sizeof...(tp_types); }
 public:
@@ -954,7 +954,7 @@ public:
     !( ... && dango::detail::is_tuple_tag<tp_args>) &&
     ( ... && dango::detail::tuple_is_constructible<tp_types, dango::tuple_get_type<dango::tuple_model const&, tp_args>>)
   )
-  explicit(!( ... && detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
+  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...> const& a_tup)
@@ -976,7 +976,7 @@ public:
     !( ... && dango::is_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
     !( ... && dango::is_convertible<dango::tuple<tp_args...> const&, tp_types>)
   )
-  explicit(!( ... && detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
+  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...> const& a_tup)
@@ -1038,7 +1038,7 @@ public:
     !( ... && dango::detail::is_tuple_tag<tp_args>) &&
     ( ... && dango::detail::tuple_is_constructible<tp_types, dango::tuple_get_type<dango::tuple_model&&, tp_args>>)
   )
-  explicit(!( ... && detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
+  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...>&& a_tup)
@@ -1060,7 +1060,7 @@ public:
     !( ... && dango::is_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
     !( ... && dango::is_convertible<dango::tuple<tp_args...>&&, tp_types>)
   )
-  explicit(!( ... && detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
+  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...>&& a_tup)

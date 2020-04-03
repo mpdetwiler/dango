@@ -199,6 +199,14 @@ main
     dango::tuple<slong, ushort, sshort, float> a_tup{ 5, 5, 5, 5 };
 
     static_assert(sizeof(a_tup) == 16);
+    static_assert(dango::is_trivial_default_constructible<decltype(a_tup)>);
+    static_assert(dango::is_trivial_copy_constructible<decltype(a_tup)>);
+    static_assert(dango::is_trivial_move_constructible<decltype(a_tup)>);
+    static_assert(dango::is_trivial_copy_assignable<decltype(a_tup)>);
+    static_assert(dango::is_trivial_move_assignable<decltype(a_tup)>);
+    static_assert(dango::is_trivial_destructible<decltype(a_tup)>);
+    static_assert(dango::is_trivial<decltype(a_tup)>);
+    static_assert(!dango::is_standard_layout<decltype(a_tup)>);
 
     printf("%p\n", static_cast<void const*>(&a_tup.first()));
     printf("%p\n", static_cast<void const*>(&a_tup.second()));
