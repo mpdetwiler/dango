@@ -3,6 +3,12 @@
 
 /*** auto_ptr ***/
 
+namespace
+dango
+{
+
+}
+
 /*
 
 namespace

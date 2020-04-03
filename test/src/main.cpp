@@ -210,7 +210,7 @@ main
 
     printf("%p\n", static_cast<void const*>(&a_tup.first()));
     printf("%p\n", static_cast<void const*>(&a_tup.second()));
-    printf("%p\n", static_cast<void const*>(&a_tup.third()));
+    printf("%p\n", static_cast<void const*>(&dango::tuple_get<dango::usize(2)>(a_tup)));
     printf("%p\n", static_cast<void const*>(&a_tup.fourth()));
 
     static_assert(dango::is_same<decltype(a_tup.first()), slong&>);
