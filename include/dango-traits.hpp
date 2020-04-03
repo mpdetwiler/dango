@@ -2057,7 +2057,8 @@ dango
 {
   template
   <typename tp_type>
-  concept is_copy_assignable = dango::is_assignable<tp_type&, tp_type const&>;
+  concept is_copy_assignable =
+    !dango::is_ref<tp_type> && dango::is_assignable<tp_type&, tp_type const&>;
 
   template
   <typename tp_type>
@@ -2077,7 +2078,8 @@ dango
 {
   template
   <typename tp_type>
-  concept is_move_assignable = dango::is_assignable<tp_type&, tp_type&&>;
+  concept is_move_assignable =
+    !dango::is_ref<tp_type> && dango::is_assignable<tp_type&, tp_type&&>;
 
   template
   <typename tp_type>
