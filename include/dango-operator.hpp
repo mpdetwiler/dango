@@ -9,14 +9,14 @@ dango
   template
   <typename tp_type>
   concept has_dango_operator_is_null =
-    dango::is_class<tp_type> &&
-    requires(dango::remove_cv<tp_type> const& a_arg){ { a_arg.dango_operator_is_null() }->dango::is_convertible_ret<bool>; };
+    dango::is_class<tp_type> && !dango::is_volatile<tp_type> &&
+    requires(tp_type const& a_arg){ { a_arg.dango_operator_is_null() }->dango::is_convertible_ret<bool>; };
 
   template
   <typename tp_type>
   concept has_noexcept_dango_operator_is_null =
     dango::has_dango_operator_is_null<tp_type> &&
-    requires(dango::remove_cv<tp_type> const& a_arg){ { a_arg.dango_operator_is_null() }noexcept->dango::is_noexcept_convertible_ret<bool>; };
+    requires(tp_type const& a_arg){ { a_arg.dango_operator_is_null() }noexcept->dango::is_noexcept_convertible_ret<bool>; };
 }
 
 namespace
@@ -68,14 +68,15 @@ dango
   <typename tp_lhs, typename tp_rhs>
   concept has_dango_operator_equals =
     dango::is_class<tp_lhs> && dango::is_referenceable<tp_rhs> &&
-    requires(dango::remove_cv<tp_lhs> const& a_lhs, dango::remove_cv<tp_rhs> const& a_rhs)
+    !dango::is_volatile<tp_lhs> && !dango::is_volatile<tp_rhs> &&
+    requires(tp_lhs const& a_lhs, tp_rhs const& a_rhs)
     { { a_lhs.dango_operator_equals(a_rhs) }->dango::is_convertible_ret<bool>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_noexcept_dango_operator_equals =
     dango::has_dango_operator_equals<tp_lhs, tp_rhs> &&
-    requires(dango::remove_cv<tp_lhs> const& a_lhs, dango::remove_cv<tp_rhs> const& a_rhs)
+    requires(tp_lhs const& a_lhs, tp_rhs const& a_rhs)
     { { a_lhs.dango_operator_equals(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
 }
 
@@ -94,12 +95,32 @@ dango
 
   template
   <typename tp_lhs, typename tp_rhs>
+  requires(dango::has_dango_operator_equals<tp_rhs, tp_lhs> && !dango::has_dango_operator_equals<tp_lhs, tp_rhs>)
+  constexpr auto
+  operator ==
+  (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::has_noexcept_dango_operator_equals<tp_lhs, tp_rhs>)->bool
+  {
+    return a_rhs.dango_operator_equals(a_lhs);
+  }
+
+  template
+  <typename tp_lhs, typename tp_rhs>
   requires(dango::has_dango_operator_equals<tp_lhs, tp_rhs>)
   constexpr auto
   operator !=
   (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::has_noexcept_dango_operator_equals<tp_lhs, tp_rhs>)->bool
   {
     return !a_lhs.dango_operator_equals(a_rhs);
+  }
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  requires(dango::has_dango_operator_equals<tp_rhs, tp_lhs> && !dango::has_dango_operator_equals<tp_lhs, tp_rhs>)
+  constexpr auto
+  operator !=
+  (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::has_noexcept_dango_operator_equals<tp_lhs, tp_rhs>)->bool
+  {
+    return !a_rhs.dango_operator_equals(a_lhs);
   }
 }
 
