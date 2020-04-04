@@ -7,6 +7,18 @@
 static_assert(dango::is_nullable<dango::null_tag>);
 static_assert(dango::is_nullable<dango::thread>);
 
+struct has_const{ int const m_int = 5; };
+
+static_assert(!dango::is_copy_constructible<dango::auto_ptr<int> const>);
+static_assert(!dango::is_move_constructible<dango::auto_ptr<int> const>);
+static_assert(!dango::is_copy_constructible<dango::tuple<dango::auto_ptr<int>> const>);
+static_assert(!dango::is_move_constructible<dango::tuple<dango::auto_ptr<int>> const>);
+
+static_assert(!dango::is_copy_constructible<dango::auto_ptr<int>>);
+static_assert(dango::is_move_constructible<dango::auto_ptr<int>>);
+static_assert(!dango::is_copy_constructible<dango::tuple<dango::auto_ptr<int>>>);
+static_assert(dango::is_move_constructible<dango::tuple<dango::auto_ptr<int>>>);
+
 struct test_base{ virtual ~test_base()noexcept = default; };
 
 struct test_derived:test_base{ ~test_derived()noexcept override = default; };

@@ -165,23 +165,35 @@ auto_ptr
 final
 {
 public:
-  using value_type = tp_type*;
-  using value_const_type = tp_type const*;
-  using ref_type = tp_type&;
-  using ref_const_type = tp_type const&;
+  using value_type = tp_type;
+  using value_const_type = tp_type const;
+  using ptr_type = value_type*;
+  using ptr_const_type = value_const_type*;
+  using ref_type = value_type&;
+  using ref_const_type = value_const_type&;
   using config = tp_config;
   using deleter = typename config::deleter;
 private:
   template
+  <typename tp_arg>
+  static constexpr auto
+  converting_construct_help()noexcept->bool
+  {
+    if(dango::is_same_ignore_cv<tp_arg, value_type>){ return true; }
+    if(!config::differing_deleter_requires_virtual_destruct){ return true; }
+    return dango::is_derived_from<tp_arg, value_type> && dango::is_virtual_destructible<value_type>;
+  }
+
+  template
   <typename tp_arg, typename tp_arg_config>
   static constexpr auto
-  conversion_help()noexcept->bool
+  converting_move_construct_help()noexcept->bool
   {
     if(dango::is_same<typename tp_arg_config::type, typename config::type>){ return true; }
     if(dango::is_same<typename tp_arg_config::deleter, deleter>){ return true; }
     if(config::conversion_requires_same_deleter){ return false; }
     if(!config::differing_deleter_requires_virtual_destruct){ return true; }
-    return dango::is_derived_from<tp_arg, tp_type> && dango::is_virtual_destructible<tp_type>;
+    return dango::is_derived_from<tp_arg, value_type> && dango::is_virtual_destructible<value_type>;
   }
 public:
   constexpr auto_ptr()noexcept = delete;
@@ -189,6 +201,8 @@ public:
   constexpr auto_ptr(auto_ptr&&)noexcept = delete;
   constexpr auto operator = (auto_ptr const&)& noexcept = delete;
   constexpr auto operator = (auto_ptr&&)& noexcept = delete;
+
+  /*** destruct ***/
 
   ~auto_ptr()noexcept
   {
@@ -200,107 +214,175 @@ public:
     }
   }
 
+  /*** null-construct ***/
+
   constexpr auto_ptr(dango::null_tag const)noexcept:m_ptr{ dango::null }{ }
 
-  constexpr explicit(!config::enable_implicit_conversion)
-  auto_ptr(value_type const a_ptr)noexcept:m_ptr{ a_ptr }{ }
+  /*** converting construct ***/
+
+  template
+  <typename tp_arg>
+  requires(dango::is_brace_constructible<ptr_type, tp_arg* const&> && converting_construct_help<tp_arg>())
+  constexpr
+  explicit(!config::enable_implicit_conversion || !dango::is_convertible<tp_arg* const&, ptr_type>)
+  auto_ptr(tp_arg* const a_ptr)noexcept:m_ptr{ a_ptr }{ }
+
+  /*** move-construct ***/
 
   constexpr auto_ptr(auto_ptr&& a_ptr)noexcept
   requires(config::enable_move_construct):m_ptr{ a_ptr.release() }{ }
+
+  /*** converting move-construct ***/
 
   template
   <typename tp_arg, typename tp_arg_config>
   requires
   (
-    config::enable_move_construct &&
-    !(dango::is_same<tp_arg, tp_type> && dango::is_same<tp_arg_config, config>) &&
-    dango::is_brace_constructible<value_type, tp_arg* const&> &&
-    conversion_help<tp_arg, tp_arg_config>()
+    config::enable_move_construct && !dango::is_same<auto_ptr, dango::auto_ptr<tp_arg, tp_arg_config>> &&
+    dango::is_brace_constructible<ptr_type, typename dango::auto_ptr<tp_arg, tp_arg_config>::ptr_type> &&
+    converting_move_construct_help<tp_arg, tp_arg_config>()
   )
-  constexpr explicit(!config::enable_implicit_conversion)
+  constexpr
+  explicit(!config::enable_implicit_conversion || !dango::is_convertible<typename dango::auto_ptr<tp_arg, tp_arg_config>::ptr_type, ptr_type>)
   auto_ptr(dango::auto_ptr<tp_arg, tp_arg_config>&& a_ptr)noexcept:m_ptr{ a_ptr.release() }{ }
+
+  /*** null-assign ***/
 
   constexpr auto operator = (dango::null_tag const)& noexcept->auto_ptr&
   {
     auto_ptr a_temp{ dango::null };
+
     dango::swap(m_ptr, a_temp.m_ptr);
+
     return *this;
   }
+
+  /*** converting assign ***/
+
+  template
+  <typename tp_arg>
+  requires
+  (
+    config::enable_move_assign && config::enable_implicit_conversion &&
+    dango::is_assignable<ptr_type&, tp_arg* const&> &&
+    dango::is_brace_constructible<auto_ptr, tp_arg* const&>
+  )
+  constexpr auto operator = (tp_arg* const a_ptr)& noexcept->auto_ptr&
+  {
+    auto_ptr a_temp{ a_ptr };
+
+    dango::swap(m_ptr, a_temp.m_ptr);
+
+    return *this;
+  }
+
+  /*** move-assign ***/
 
   constexpr auto operator = (auto_ptr&& a_ptr)& noexcept->auto_ptr&
   requires(config::enable_move_assign)
   {
     auto_ptr a_temp{ dango::move(a_ptr) };
+
     dango::swap(m_ptr, a_temp.m_ptr);
+
     return *this;
   }
+
+  /*** converting move-assign ***/
 
   template
   <typename tp_arg, typename tp_arg_config>
   requires
   (
-    config::enable_move_assign &&
-    !(dango::is_same<tp_arg, tp_type> && dango::is_same<tp_arg_config, config>) &&
-    dango::is_assignable<value_type&, tp_arg* const&> &&
+    config::enable_move_assign && config::enable_implicit_conversion &&
+    !dango::is_same<auto_ptr, dango::auto_ptr<tp_arg, tp_arg_config>> &&
+    dango::is_assignable<ptr_type&, typename dango::auto_ptr<tp_arg, tp_arg_config>::ptr_type&> &&
     dango::is_brace_constructible<auto_ptr, dango::auto_ptr<tp_arg, tp_arg_config>&&>
   )
   constexpr auto operator = (dango::auto_ptr<tp_arg, tp_arg_config>&& a_ptr)& noexcept->auto_ptr&
   {
     auto_ptr a_temp{ dango::move(a_ptr) };
+
     dango::swap(m_ptr, a_temp.m_ptr);
+
     return *this;
   }
 
+  /*** operations ***/
+
   constexpr auto
-  get()noexcept->value_type
+  get()noexcept->ptr_type
   requires(config::enable_deep_const){ return m_ptr; }
   constexpr auto
-  get()const noexcept->value_const_type
+  get()const noexcept->ptr_const_type
   requires(config::enable_deep_const){ return m_ptr; }
   constexpr auto
-  get()const noexcept->value_type
+  get()const noexcept->ptr_type
   requires(!config::enable_deep_const){ return m_ptr; }
 
   constexpr auto
-  release()noexcept->value_type
+  release()noexcept->ptr_type
   {
     auto const a_ptr = get();
     m_ptr = dango::null;
     return a_ptr;
   }
 
+  constexpr void reset()noexcept{ reset(dango::null); }
+
+  constexpr void
+  reset(dango::null_tag const)noexcept
+  {
+    auto_ptr a_temp{ dango::null };
+
+    dango::swap(m_ptr, a_temp.m_ptr);
+  }
+
+  template
+  <typename tp_arg>
+  requires(dango::is_brace_constructible<auto_ptr, tp_arg* const&>)
+  constexpr void
+  reset(tp_arg* const a_ptr)noexcept
+  {
+    auto_ptr a_temp{ a_ptr };
+
+    dango::swap(m_ptr, a_temp.m_ptr);
+  }
+
   constexpr auto
   dango_operator_is_null()const noexcept->bool{ return get() == dango::null; }
+
+  explicit operator bool()const noexcept{ return !dango_operator_is_null(); }
 
   constexpr auto
   dango_operator_equals(dango::null_tag)const noexcept = delete;
 
   template
   <typename tp_arg>
-  requires(dango::is_equatable<value_type, tp_arg*>)
   constexpr auto
   dango_operator_equals(tp_arg* const a_ptr)const noexcept->bool
+  requires(dango::is_equatable<decltype(this->get()), tp_arg* const&>)
   {
     return get() == a_ptr;
   }
 
   template
   <typename tp_arg, typename tp_arg_config>
-  requires(dango::is_equatable<value_type, tp_arg*>)
   constexpr auto
   dango_operator_equals(dango::auto_ptr<tp_arg, tp_arg_config> const& a_ptr)const noexcept->bool
+  requires(dango::is_equatable<decltype(this->get()), decltype(a_ptr.get())>)
   {
     return get() == a_ptr.get();
   }
 
   constexpr auto
-  operator -> ()noexcept->value_type
+  operator -> ()noexcept->ptr_type
   requires(config::enable_deep_const){ return get(); }
   constexpr auto
-  operator -> ()const noexcept->value_const_type
+  operator -> ()const noexcept->ptr_const_type
   requires(config::enable_deep_const){ return get(); }
   constexpr auto
-  operator -> ()const noexcept->value_type
+  operator -> ()const noexcept->ptr_type
   requires(!config::enable_deep_const){ return get(); }
 
   constexpr auto
@@ -312,16 +394,16 @@ public:
   constexpr auto
   operator * ()const noexcept->ref_type
   requires(!config::enable_deep_const){ return *get(); }
-
-  explicit operator bool()const noexcept{ return !dango_operator_is_null(); }
 private:
-  value_type m_ptr;
+  ptr_type m_ptr;
 };
 
 static_assert(dango::is_nullable<dango::auto_ptr<double>>);
 static_assert(dango::is_nullable<dango::auto_ptr<double const>>);
 static_assert(dango::is_equatable<dango::auto_ptr<double>, double const*>);
 static_assert(dango::is_equatable<dango::auto_ptr<double const>, double*>);
+static_assert(dango::is_equatable<double const*, dango::auto_ptr<double>>);
+static_assert(dango::is_equatable<double*, dango::auto_ptr<double const>>);
 static_assert(dango::is_equatable<dango::auto_ptr<double>, dango::auto_ptr<double const>>);
 static_assert(dango::is_equatable<dango::auto_ptr<double const>, dango::auto_ptr<double>>);
 

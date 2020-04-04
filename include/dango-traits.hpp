@@ -1977,7 +1977,8 @@ dango
 {
   template
   <typename tp_type>
-  concept is_default_constructible = dango::is_constructible<tp_type>;
+  concept is_default_constructible =
+    !dango::is_ref<tp_type> && dango::is_constructible<tp_type>;
 
   template
   <typename tp_type>
@@ -1997,17 +1998,18 @@ dango
 {
   template
   <typename tp_type>
-  concept is_copy_constructible = dango::is_constructible<tp_type, tp_type const&>;
+  concept is_copy_constructible =
+    dango::is_ref<tp_type> || dango::is_constructible<tp_type, tp_type const&>;
 
   template
   <typename tp_type>
   concept is_noexcept_copy_constructible =
-    dango::is_copy_constructible<tp_type> && dango::is_noexcept_constructible<tp_type, tp_type const&>;
+    dango::is_ref<tp_type> || (dango::is_copy_constructible<tp_type> && dango::is_noexcept_constructible<tp_type, tp_type const&>);
 
   template
   <typename tp_type>
   concept is_trivial_copy_constructible =
-    dango::is_noexcept_copy_constructible<tp_type> && dango::is_trivial_constructible<tp_type, tp_type const&>;
+    dango::is_ref<tp_type> || (dango::is_noexcept_copy_constructible<tp_type> && dango::is_trivial_constructible<tp_type, tp_type const&>);
 }
 
 /*** is_move_constructible is_trivial_move_constructible is_noexcept_move_constructible ***/
@@ -2017,17 +2019,18 @@ dango
 {
   template
   <typename tp_type>
-  concept is_move_constructible = dango::is_constructible<tp_type, tp_type&&>;
+  concept is_move_constructible =
+    dango::is_ref<tp_type> || dango::is_constructible<tp_type, tp_type&&>;
 
   template
   <typename tp_type>
   concept is_noexcept_move_constructible =
-    dango::is_move_constructible<tp_type> && dango::is_noexcept_constructible<tp_type, tp_type&&>;
+    dango::is_ref<tp_type> || (dango::is_move_constructible<tp_type> && dango::is_noexcept_constructible<tp_type, tp_type&&>);
 
   template
   <typename tp_type>
   concept is_trivial_move_constructible =
-    dango::is_noexcept_move_constructible<tp_type> && dango::is_trivial_constructible<tp_type, tp_type&&>;
+    dango::is_ref<tp_type> || (dango::is_noexcept_move_constructible<tp_type> && dango::is_trivial_constructible<tp_type, tp_type&&>);
 }
 
 /*** is_assignable is_trivial_assignable is_noexcept_assignable ***/
