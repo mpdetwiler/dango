@@ -7,7 +7,8 @@ dango
   template
   <typename tp_type>
   concept auto_ptr_constraint_spec =
-    dango::is_void<tp_type> || dango::is_object_exclude_array<tp_type>;
+    dango::is_void<tp_type> ||
+    (dango::is_object_exclude_array<tp_type> && dango::is_noexcept_destructible<tp_type>);
 }
 
 namespace
@@ -324,7 +325,9 @@ public:
   release()noexcept->ptr_type
   {
     auto const a_ptr = get();
+
     m_ptr = dango::null;
+
     return a_ptr;
   }
 
@@ -398,15 +401,6 @@ private:
   ptr_type m_ptr;
 };
 
-static_assert(dango::is_nullable<dango::auto_ptr<double>>);
-static_assert(dango::is_nullable<dango::auto_ptr<double const>>);
-static_assert(dango::is_equatable<dango::auto_ptr<double>, double const*>);
-static_assert(dango::is_equatable<dango::auto_ptr<double const>, double*>);
-static_assert(dango::is_equatable<double const*, dango::auto_ptr<double>>);
-static_assert(dango::is_equatable<double*, dango::auto_ptr<double const>>);
-static_assert(dango::is_equatable<dango::auto_ptr<double>, dango::auto_ptr<double const>>);
-static_assert(dango::is_equatable<dango::auto_ptr<double const>, dango::auto_ptr<double>>);
-
 template
 <dango::is_void tp_type, dango::is_auto_ptr_config tp_config>
 class
@@ -414,10 +408,226 @@ dango::
 auto_ptr<tp_type, tp_config>
 final
 {
+public:
+  using value_type = tp_type;
+  using value_const_type = tp_type const;
+  using ptr_type = value_type*;
+  using ptr_const_type = value_const_type*;
+  using ref_type = value_type&;
+  using ref_const_type = value_const_type&;
+  using size_type = dango::usize;
+  using tuple_type = dango::tuple<ptr_type, size_type, size_type>;
+  using config = tp_config;
+  using deleter = typename config::deleter;
+private:
 
+public:
+  constexpr auto_ptr()noexcept = delete;
+  constexpr auto_ptr(auto_ptr const&)noexcept = delete;
+  constexpr auto_ptr(auto_ptr&&)noexcept = delete;
+  constexpr auto operator = (auto_ptr const&)& noexcept = delete;
+  constexpr auto operator = (auto_ptr&&)& noexcept = delete;
+  constexpr explicit auto_ptr(dango::null_tag, size_type, size_type)noexcept = delete;
+
+  /*** destruct ***/
+
+  ~auto_ptr()noexcept
+  {
+    auto const a_ptr = get();
+    auto const a_size = size();
+    auto const a_align = align();
+
+    if(a_ptr)
+    {
+      deleter::del(a_ptr, a_size, a_align);
+    }
+  }
+
+  /*** null-construct ***/
+
+  constexpr auto_ptr(dango::null_tag const)noexcept:
+  m_data{ dango::null, size_type(0), size_type(0) }{ }
+
+  /*** converting construct ***/
+
+  template
+  <dango::is_void tp_arg>
+  requires(dango::is_brace_constructible<ptr_type, tp_arg* const&>)
+  constexpr
+  explicit(!config::enable_implicit_conversion || !dango::is_convertible<tp_arg* const&, ptr_type>)
+  auto_ptr(tp_arg* const a_ptr, size_type const a_size, size_type const a_align)noexcept:
+  m_data{ a_ptr, a_size, a_align }
+  {
+    dango_assert((a_ptr == dango::null && a_size == size_type(0) && a_align == size_type(0)) || (a_size != size_type(0) && dango::is_pow_two(a_align)));
+  }
+
+  /*** move-construct ***/
+
+  constexpr auto_ptr(auto_ptr&& a_ptr)noexcept
+  requires(config::enable_move_construct):m_data{ a_ptr.release() }{ }
+
+  /*** converting move-construct ***/
+
+  template
+  <dango::is_void tp_arg, typename tp_arg_config>
+  requires
+  (
+    config::enable_move_construct &&
+    !dango::is_same<auto_ptr, dango::auto_ptr<tp_arg, tp_arg_config>> &&
+    dango::is_brace_constructible<ptr_type, typename dango::auto_ptr<tp_arg, tp_arg_config>::ptr_type>
+  )
+  constexpr
+  explicit(!config::enable_implicit_conversion || !dango::is_convertible<typename dango::auto_ptr<tp_arg, tp_arg_config>::ptr_type, ptr_type>)
+  auto_ptr(dango::auto_ptr<tp_arg, tp_arg_config>&& a_ptr)noexcept:m_data{ a_ptr.release() }{ }
+
+  /*** null-assign ***/
+
+  constexpr auto operator = (dango::null_tag const)& noexcept->auto_ptr&
+  {
+    auto_ptr a_temp{ dango::null };
+
+    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+
+    return *this;
+  }
+
+  /*** converting assign ***/
+
+  template
+  <dango::is_void tp_arg>
+  requires
+  (
+    config::enable_move_assign && config::enable_implicit_conversion &&
+    dango::is_assignable<ptr_type&, tp_arg* const&> &&
+    dango::is_brace_constructible<auto_ptr, tp_arg* const&>
+  )
+  constexpr auto operator = (tp_arg* const a_ptr)& noexcept->auto_ptr&
+  {
+    auto_ptr a_temp{ a_ptr };
+
+    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+
+    return *this;
+  }
+
+  /*** move-assign ***/
+
+  constexpr auto operator = (auto_ptr&& a_ptr)& noexcept->auto_ptr&
+  requires(config::enable_move_assign)
+  {
+    auto_ptr a_temp{ dango::move(a_ptr) };
+
+    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+
+    return *this;
+  }
+
+  /*** converting move-assign ***/
+
+  template
+  <dango::is_void tp_arg, typename tp_arg_config>
+  requires
+  (
+    config::enable_move_assign && config::enable_implicit_conversion &&
+    !dango::is_same<auto_ptr, dango::auto_ptr<tp_arg, tp_arg_config>> &&
+    dango::is_assignable<ptr_type&, typename dango::auto_ptr<tp_arg, tp_arg_config>::ptr_type&> &&
+    dango::is_brace_constructible<auto_ptr, dango::auto_ptr<tp_arg, tp_arg_config>&&>
+  )
+  constexpr auto operator = (dango::auto_ptr<tp_arg, tp_arg_config>&& a_ptr)& noexcept->auto_ptr&
+  {
+    auto_ptr a_temp{ dango::move(a_ptr) };
+
+    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+
+    return *this;
+  }
+
+  /*** operations ***/
+
+  constexpr auto
+  get()noexcept->ptr_type
+  requires(config::enable_deep_const){ return m_data.first(); }
+  constexpr auto
+  get()const noexcept->ptr_const_type
+  requires(config::enable_deep_const){ return m_data.first(); }
+  constexpr auto
+  get()const noexcept->ptr_type
+  requires(!config::enable_deep_const){ return m_data.first(); }
+
+  constexpr auto size()const noexcept->size_type{ return m_data.second(); }
+  constexpr auto align()const noexcept->size_type{ return m_data.third(); }
+
+  constexpr auto
+  release()noexcept->tuple_type
+  {
+    tuple_type const a_ret{ m_data };
+
+    m_data = tuple_type{ dango::null, size_type(0), size_type(0) };
+
+    return a_ret;
+  }
+
+  constexpr void reset()noexcept{ reset(dango::null); }
+
+  constexpr void
+  reset(dango::null_tag const)noexcept
+  {
+    auto_ptr a_temp{ dango::null };
+
+    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+  }
+
+  template
+  <dango::is_void tp_arg>
+  requires(dango::is_brace_constructible<auto_ptr, tp_arg* const&>)
+  constexpr void
+  reset(tp_arg* const a_ptr)noexcept
+  {
+    auto_ptr a_temp{ a_ptr };
+
+    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
+    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+  }
+
+  constexpr auto
+  dango_operator_is_null()const noexcept->bool{ return get() == dango::null; }
+
+  explicit operator bool()const noexcept{ return !dango_operator_is_null(); }
+
+  constexpr auto
+  dango_operator_equals(dango::null_tag)const noexcept = delete;
+
+  template
+  <dango::is_void tp_arg>
+  constexpr auto
+  dango_operator_equals(tp_arg* const a_ptr)const noexcept->bool
+  requires(dango::is_equatable<decltype(this->get()), tp_arg* const&>)
+  {
+    return get() == a_ptr;
+  }
+
+  template
+  <dango::is_void tp_arg, typename tp_arg_config>
+  constexpr auto
+  dango_operator_equals(dango::auto_ptr<tp_arg, tp_arg_config> const& a_ptr)const noexcept->bool
+  requires(dango::is_equatable<decltype(this->get()), decltype(a_ptr.get())>)
+  {
+    return get() == a_ptr.get();
+  }
+private:
+  tuple_type m_data;
 };
-
-
 
 #endif // DANGO_AUTO_PTR_HPP_INCLUDED
 
