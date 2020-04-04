@@ -179,8 +179,8 @@ test_assert_handler
 
 #endif
 
-DANGO_SHARED_API dango::assert_log_handler dango_shared_set_assert(dango::assert_log_handler)noexcept;
-DANGO_SHARED_API dango::assert_log_handler dango_shared_get_assert()noexcept;
+DANGO_SHARED_API dango::assert_log_func dango_shared_set_assert(dango::assert_log_func)noexcept;
+DANGO_SHARED_API dango::assert_log_func dango_shared_get_assert()noexcept;
 
 auto
 main
@@ -188,16 +188,16 @@ main
 {
   {
     dango_assert(dango_shared_get_assert() == null);
-    dango_assert(dango::get_assert_log_handler() == null);
+    dango_assert(dango::assert_log_handler::get() == null);
 
-    dango::set_assert_log_handler(test_assert_handler);
+    dango::assert_log_handler::set(test_assert_handler);
 
-    dango_assert(dango_shared_get_assert() == dango::get_assert_log_handler());
+    dango_assert(dango_shared_get_assert() == dango::assert_log_handler::get());
 
     dango_shared_set_assert(null);
 
     dango_assert(dango_shared_get_assert() == null);
-    dango_assert(dango::get_assert_log_handler() == null);
+    dango_assert(dango::assert_log_handler::get() == null);
   }
 
   dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);

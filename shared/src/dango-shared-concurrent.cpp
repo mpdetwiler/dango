@@ -647,7 +647,7 @@ namespace
 
 #endif // _WIN32
 
-DANGO_SHARED_API dango::assert_log_handler dango_shared_set_assert(dango::assert_log_handler const a_handler)noexcept{ return dango::set_assert_log_handler(a_handler); }
+DANGO_SHARED_API dango::assert_log_func dango_shared_set_assert(dango::assert_log_func const a_handler)noexcept{ return dango::assert_log_handler::set(a_handler); }
 
-DANGO_SHARED_API dango::assert_log_handler dango_shared_get_assert()noexcept{ return dango::get_assert_log_handler(); }
+DANGO_SHARED_API dango::assert_log_func dango_shared_get_assert()noexcept{ return dango::assert_log_handler::get(); }
 

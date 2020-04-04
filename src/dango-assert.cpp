@@ -3,22 +3,22 @@
 #include <cstdio>
 #include <exception>
 
-static dango::atomic<dango::assert_log_handler> s_assert_log_handler{ dango::null };
-
 auto
 dango::
-set_assert_log_handler
-(dango::assert_log_handler const a_handler)noexcept->dango::assert_log_handler
+assert_log_handler::
+set
+(dango::assert_log_func const a_handler)noexcept->dango::assert_log_func
 {
-  return s_assert_log_handler.exchange(a_handler);
+  return dango::atomic_exchange(&s_handler_func, a_handler);
 }
 
 auto
 dango::
-get_assert_log_handler
-()noexcept->dango::assert_log_handler
+assert_log_handler::
+get
+()noexcept->dango::assert_log_func
 {
-  return s_assert_log_handler.load();
+  return dango::atomic_load(&s_handler_func);
 }
 
 void
@@ -87,7 +87,7 @@ noexcept
 auto
 dango::
 set_terminate
-(dango::terminate_handler const a_handler)noexcept->dango::terminate_handler
+(dango::terminate_func const a_handler)noexcept->dango::terminate_func
 {
   auto const a_result = std::set_terminate(a_handler);
 
@@ -97,7 +97,7 @@ set_terminate
 auto
 dango::
 get_terminate
-()noexcept->dango::terminate_handler
+()noexcept->dango::terminate_func
 {
   auto const a_result = std::get_terminate();
 

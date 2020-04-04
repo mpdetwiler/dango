@@ -21,8 +21,8 @@
 
 #endif
 
-DANGO_SHARED_API dango::assert_log_handler dango_shared_set_assert(dango::assert_log_handler)noexcept;
-DANGO_SHARED_API dango::assert_log_handler dango_shared_get_assert()noexcept;
+DANGO_SHARED_API dango::assert_log_func dango_shared_set_assert(dango::assert_log_func)noexcept;
+DANGO_SHARED_API dango::assert_log_func dango_shared_get_assert()noexcept;
 
 #endif // DANGO_SHARED_HPP_INCLUDED
 

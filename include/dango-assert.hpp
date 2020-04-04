@@ -188,12 +188,31 @@ trap_instruction()noexcept
 namespace
 dango
 {
-  using assert_log_handler =
+  using assert_log_func =
     void(*)(dango::bchar const*, dango::bchar const*, dango::source_location const&)noexcept;
 
-  auto set_assert_log_handler(dango::assert_log_handler)noexcept->dango::assert_log_handler;
-  auto get_assert_log_handler()noexcept->dango::assert_log_handler;
+  class assert_log_handler;
 }
+
+class
+dango::
+assert_log_handler
+final
+{
+private:
+  static dango::assert_log_func s_handler_func;
+public:
+  static auto set(dango::assert_log_func)noexcept->dango::assert_log_func;
+  static auto get()noexcept->dango::assert_log_func;
+public:
+  DANGO_UNINSTANTIABLE(assert_log_handler)
+};
+
+inline constinit
+dango::assert_log_func
+dango::
+assert_log_handler::
+s_handler_func = dango::null;
 
 namespace
 dango::detail
@@ -232,7 +251,7 @@ noexcept
 {
   detail::assert_fail_once();
 
-  auto const a_handler = dango::get_assert_log_handler();
+  auto const a_handler = dango::assert_log_handler::get();
 
   if(a_handler)
   {
@@ -367,10 +386,10 @@ noexcept
 namespace
 dango
 {
-  using terminate_handler = void(*)()noexcept(false);
+  using terminate_func = void(*)()noexcept(false);
 
-  auto set_terminate(terminate_handler)noexcept->dango::terminate_handler;
-  auto get_terminate()noexcept->dango::terminate_handler;
+  auto set_terminate(dango::terminate_func)noexcept->dango::terminate_func;
+  auto get_terminate()noexcept->dango::terminate_func;
 
   [[noreturn]] void terminate()noexcept;
 }
