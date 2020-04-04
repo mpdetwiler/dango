@@ -154,10 +154,52 @@ struct printer
   void print()noexcept{ printf("printer::print()\n"); }
 };
 
+void
+test_assert_handler
+(dango::bchar const* const, dango::bchar const* const, dango::source_location const&)noexcept
+{
+  printf("test_assert_handler\n");
+}
+
+#ifdef _WIN32
+
+#ifdef DANGO_COMPILING_DANGO_SHARED
+#define DANGO_SHARED_API __declspec(dllexport)
+#else
+#define DANGO_SHARED_API __declspec(dllimport)
+#endif
+
+#else
+
+#ifdef DANGO_COMPILING_DANGO_SHARED
+#define DANGO_SHARED_API __attribute__((visibility("default")))
+#else
+#define DANGO_SHARED_API __attribute__((visibility("default")))
+#endif
+
+#endif
+
+DANGO_SHARED_API dango::assert_log_handler dango_shared_set_assert(dango::assert_log_handler)noexcept;
+DANGO_SHARED_API dango::assert_log_handler dango_shared_get_assert()noexcept;
+
 auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  {
+    dango_assert(dango_shared_get_assert() == null);
+    dango_assert(dango::get_assert_log_handler() == null);
+
+    dango::set_assert_log_handler(test_assert_handler);
+
+    dango_assert(dango_shared_get_assert() == dango::get_assert_log_handler());
+
+    dango_shared_set_assert(null);
+
+    dango_assert(dango_shared_get_assert() == null);
+    dango_assert(dango::get_assert_log_handler() == null);
+  }
+
   dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);
   dango_assert(dango::str_size(dango::char_as_bchar("hello")) == 5);
 

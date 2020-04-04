@@ -303,8 +303,8 @@ dango::detail
   )
   noexcept;
 
-  extern dango::bchar const* const unreachable_expr;
-  extern dango::bchar const* const unreachable_message;
+  inline constexpr dango::bchar const unreachable_expr[]{ u8"unreachable" };
+  inline constexpr dango::bchar const unreachable_message[]{ u8"unreachable statement reached" };
 }
 
 inline void

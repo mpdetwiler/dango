@@ -3,20 +3,7 @@
 #include <cstdio>
 #include <exception>
 
-namespace
-{
-  dango::atomic<dango::assert_log_handler> s_assert_log_handler{ dango::null };
-}
-
-constexpr dango::bchar const* const
-dango::
-detail::
-unreachable_expr = u8"unreachable";
-
-constexpr dango::bchar const* const
-dango::
-detail::
-unreachable_message = u8"unreachable statement reached";
+static dango::atomic<dango::assert_log_handler> s_assert_log_handler{ dango::null };
 
 auto
 dango::

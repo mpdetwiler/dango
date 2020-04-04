@@ -1679,7 +1679,8 @@ dango
 {
   template
   <typename tp_type>
-  concept is_unsigned = !dango::is_signed<tp_type>;
+  concept is_unsigned =
+    dango::is_arithmetic<tp_type> && !dango::is_signed<tp_type>;
 }
 
 /*** is_base_of ***/
