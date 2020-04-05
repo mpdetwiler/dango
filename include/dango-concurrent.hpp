@@ -16,14 +16,14 @@ dango
 namespace
 dango::detail
 {
-  auto tick_count()noexcept->dango::tick_count_type;
-  auto tick_count_sa()noexcept->dango::tick_count_type;
-  auto suspend_bias()noexcept->dango::tick_count_type;
+  DANGO_EXPORT auto tick_count()noexcept->dango::tick_count_type;
+  DANGO_EXPORT auto tick_count_sa()noexcept->dango::tick_count_type;
+  DANGO_EXPORT auto suspend_bias()noexcept->dango::tick_count_type;
 
   using tick_count_tuple =
     dango::tuple<dango::tick_count_type, dango::tick_count_type, dango::tick_count_type>;
 
-  auto init_tick_count()noexcept->detail::tick_count_tuple const&;
+  DANGO_EXPORT auto init_tick_count()noexcept->detail::tick_count_tuple const&;
 }
 
 inline auto
@@ -1315,7 +1315,7 @@ public:
   static void operator delete(void*, dango::usize)noexcept;
 public:
   explicit constexpr control_block(bool, dango::thread_ID)noexcept;
-  ~control_block()noexcept;
+  ~control_block()noexcept = default;
   void increment()noexcept;
   auto decrement()noexcept->bool;
   void wait()noexcept;
@@ -1337,6 +1337,16 @@ public:
   DANGO_IMMOBILE(control_block)
 };
 
+inline auto
+dango::
+thread::
+control_block::
+operator new
+(dango::usize const a_size)dango_new_noexcept->void*
+{
+  return dango::operator_new(a_size, alignof(control_block));
+}
+
 inline void
 dango::
 thread::
@@ -1347,12 +1357,23 @@ operator delete
   dango::operator_delete(a_ptr, a_size, alignof(control_block));
 }
 
-inline
+constexpr
 dango::
 thread::
 control_block::
-~control_block
-()noexcept = default;
+control_block
+(bool const a_daemon, dango::thread_ID const a_thread_ID)noexcept:
+super_type{ },
+m_ref_count{ dango::usize(1) },
+m_daemon{ a_daemon },
+m_thread_ID{ a_thread_ID },
+m_mutex{ },
+m_cond{ m_mutex },
+m_alive{ true },
+m_waiter_count{ dango::usize(0) }
+{
+
+}
 
 inline void
 dango::
@@ -1374,6 +1395,77 @@ decrement
 ()noexcept->bool
 {
   return m_ref_count.sub_fetch<dango::mem_order::release>(dango::usize(1)) == dango::usize(0);
+}
+
+inline void
+dango::
+thread::
+control_block::
+wait
+()noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    while(m_alive)
+    {
+      ++m_waiter_count;
+
+      a_crit.wait();
+
+      --m_waiter_count;
+    }
+  }
+}
+
+inline void
+dango::
+thread::
+control_block::
+wait
+(dango::timeout const& a_timeout)noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    while(m_alive && !a_timeout.has_expired())
+    {
+      ++m_waiter_count;
+
+      a_crit.wait(a_timeout);
+
+      --m_waiter_count;
+    }
+  }
+}
+
+inline void
+dango::
+thread::
+control_block::
+notify_all
+()noexcept
+{
+  dango_crit_full(m_cond, a_crit)
+  {
+    m_alive = false;
+
+    if(m_waiter_count != dango::usize(0))
+    {
+      m_cond.notify_all();
+    }
+  }
+}
+
+inline auto
+dango::
+thread::
+control_block::
+is_alive
+()const noexcept->bool
+{
+  dango_crit(m_mutex)
+  {
+    return m_alive;
+  }
 }
 
 constexpr auto
@@ -1429,6 +1521,117 @@ m_mutex{ },
 m_list{ }
 {
 
+}
+
+inline void
+dango::
+thread::
+registry::
+regist
+(control_block* const a_elem)noexcept
+{
+  dango_crit(m_mutex)
+  {
+    m_list.add_last(a_elem);
+  }
+}
+
+inline void
+dango::
+thread::
+registry::
+unregist
+(control_block* const a_elem)noexcept
+{
+  dango_crit(m_mutex)
+  {
+    m_list.remove(a_elem);
+  }
+}
+
+inline void
+dango::
+thread::
+registry::
+join_all
+()noexcept
+{
+  while(join_first());
+}
+
+inline auto
+dango::
+thread::
+registry::
+join_first
+()noexcept->bool
+{
+  dango::thread a_thread{ dango::null };
+
+  dango_crit(m_mutex)
+  {
+    if(m_list.is_empty())
+    {
+      return false;
+    }
+
+    auto const a_control = m_list.first();
+
+    a_thread = thread{ a_control };
+  }
+
+  a_thread.join();
+
+  return true;
+}
+
+/*** notifier ***/
+
+class
+dango::
+thread::
+notifier
+final
+{
+public:
+  notifier(thread const&)noexcept;
+  ~notifier()noexcept;
+private:
+  control_block* const m_control;
+public:
+  DANGO_DELETE_DEFAULT(notifier)
+  DANGO_IMMOBILE(notifier)
+};
+
+inline
+dango::
+thread::
+notifier::
+notifier
+(thread const& a_thread)noexcept:
+m_control{ a_thread.m_control }
+{
+  if(!m_control->is_daemon())
+  {
+    dango::thread::s_registry.regist(m_control);
+  }
+}
+
+inline
+dango::
+thread::
+notifier::
+~notifier
+()noexcept
+{
+  if(!m_control->is_daemon())
+  {
+    dango::thread::s_registry.unregist(m_control);
+  }
+
+  m_control->notify_all();
+
+  thread::thread_self_access_check(true, dango::null);
 }
 
 /*** runnable ***/

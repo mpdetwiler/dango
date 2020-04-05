@@ -11,7 +11,7 @@ init_tick_count
   using tc64 = dango::tick_count_type;
   using tuple_type = detail::tick_count_tuple;
 
-  constexpr auto const c_impl =
+  static constexpr auto const c_impl =
   []()noexcept->tuple_type
   {
     tc64 x0;
@@ -42,218 +42,6 @@ init_tick_count
   static tuple_type const s_init{ c_impl() };
 
   return s_init;
-}
-
-/*** control_block ***/
-
-auto
-dango::
-thread::
-control_block::
-operator new
-(dango::usize const a_size)dango_new_noexcept->void*
-{
-  return dango::operator_new(a_size, alignof(control_block));
-}
-
-constexpr
-dango::
-thread::
-control_block::
-control_block
-(bool const a_daemon, dango::thread_ID const a_thread_ID)noexcept:
-super_type{ },
-m_ref_count{ dango::usize(1) },
-m_daemon{ a_daemon },
-m_thread_ID{ a_thread_ID },
-m_mutex{ },
-m_cond{ m_mutex },
-m_alive{ true },
-m_waiter_count{ dango::usize(0) }
-{
-
-}
-
-void
-dango::
-thread::
-control_block::
-wait
-()noexcept
-{
-  dango_crit_full(m_cond, a_crit)
-  {
-    while(m_alive)
-    {
-      ++m_waiter_count;
-
-      a_crit.wait();
-
-      --m_waiter_count;
-    }
-  }
-}
-
-void
-dango::
-thread::
-control_block::
-wait
-(dango::timeout const& a_timeout)noexcept
-{
-  dango_crit_full(m_cond, a_crit)
-  {
-    while(m_alive && !a_timeout.has_expired())
-    {
-      ++m_waiter_count;
-
-      a_crit.wait(a_timeout);
-
-      --m_waiter_count;
-    }
-  }
-}
-
-void
-dango::
-thread::
-control_block::
-notify_all
-()noexcept
-{
-  dango_crit_full(m_cond, a_crit)
-  {
-    m_alive = false;
-
-    if(m_waiter_count != dango::usize(0))
-    {
-      m_cond.notify_all();
-    }
-  }
-}
-
-auto
-dango::
-thread::
-control_block::
-is_alive
-()const noexcept->bool
-{
-  dango_crit(m_mutex)
-  {
-    return m_alive;
-  }
-}
-
-/*** registry ***/
-
-void
-dango::
-thread::
-registry::
-regist
-(control_block* const a_elem)noexcept
-{
-  dango_crit(m_mutex)
-  {
-    m_list.add_last(a_elem);
-  }
-}
-
-void
-dango::
-thread::
-registry::
-unregist
-(control_block* const a_elem)noexcept
-{
-  dango_crit(m_mutex)
-  {
-    m_list.remove(a_elem);
-  }
-}
-
-void
-dango::
-thread::
-registry::
-join_all
-()noexcept
-{
-  while(join_first());
-}
-
-auto
-dango::
-thread::
-registry::
-join_first
-()noexcept->bool
-{
-  dango::thread a_thread{ dango::null };
-
-  dango_crit(m_mutex)
-  {
-    if(m_list.is_empty())
-    {
-      return false;
-    }
-
-    auto const a_control = m_list.first();
-
-    a_thread = thread{ a_control };
-  }
-
-  a_thread.join();
-
-  return true;
-}
-
-/*** notifier ***/
-
-class
-dango::
-thread::
-notifier
-final
-{
-public:
-  notifier(thread const&)noexcept;
-  ~notifier()noexcept;
-private:
-  control_block* const m_control;
-public:
-  DANGO_DELETE_DEFAULT(notifier)
-  DANGO_IMMOBILE(notifier)
-};
-
-dango::
-thread::
-notifier::
-notifier
-(thread const& a_thread)noexcept:
-m_control{ a_thread.m_control }
-{
-  if(!m_control->is_daemon())
-  {
-    dango::thread::s_registry.regist(m_control);
-  }
-}
-
-dango::
-thread::
-notifier::
-~notifier
-()noexcept
-{
-  if(!m_control->is_daemon())
-  {
-    dango::thread::s_registry.unregist(m_control);
-  }
-
-  m_control->notify_all();
-
-  thread::thread_self_access_check(true, dango::null);
 }
 
 /*** thread ***/
@@ -342,9 +130,9 @@ thread::
 thread_self_init
 (bool const a_daemon)noexcept->thread const&
 {
-  thread_local thread const t_thread{ construct_tag{ }, a_daemon };
+  static thread_local thread const t_thread{ construct_tag{ }, a_daemon };
 
-  thread_local notifier const t_notifier{ t_thread };
+  static thread_local notifier const t_notifier{ t_thread };
 
   return t_thread;
 }
@@ -355,7 +143,7 @@ thread::
 thread_self_access_check
 (bool const a_clear, void const** const a_ID)noexcept->bool
 {
-  thread_local bool t_access = true;
+  static thread_local constinit bool t_access = true;
 
   if(a_clear)
   {
@@ -376,8 +164,8 @@ thread::
 sleep
 (dango::timeout const& a_timeout)noexcept
 {
-  static dango::static_mutex s_mutex{ };
-  static dango::static_cond_var_mutex s_cond{ s_mutex };
+  static constinit dango::static_mutex s_mutex{ };
+  static constinit dango::static_cond_var_mutex s_cond{ s_mutex };
 
   if(a_timeout.has_expired())
   {

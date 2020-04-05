@@ -9,7 +9,6 @@ dango::shared
   using thread_func_type = void(*)(void*)noexcept(false);
 
   DANGO_EXPORT auto create_thread(shared::thread_func_type, void*)noexcept->bool;
-  DANGO_EXPORT void yield_thread()noexcept;
 }
 
 #ifdef __linux__
