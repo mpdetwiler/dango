@@ -1,0 +1,9 @@
+#ifndef DANGO_SHARED_HPP_INCLUDED
+#define DANGO_SHARED_HPP_INCLUDED
+
+#include "dango.hpp"
+
+
+
+#endif // DANGO_SHARED_HPP_INCLUDED
+

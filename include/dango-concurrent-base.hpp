@@ -21,6 +21,14 @@ if(auto const local_name = (lockable).try_lock())
 #define dango_try_crit_cond(cond, mutex, local_name) \
 if(auto const local_name = (cond).try_lock(mutex))
 
+/*** thread_yield ***/
+
+namespace
+dango
+{
+  DANGO_EXPORT void thread_yield()noexcept;
+}
+
 /*** exec_once ***/
 
 namespace
@@ -419,11 +427,6 @@ try_lock
 
 /*** spin_yield ***/
 
-namespace dango::detail
-{
-  void thread_yield()noexcept;
-}
-
 #ifndef DANGO_NO_MULTICORE
 inline void
 dango::
@@ -440,7 +443,7 @@ spin_yield
     return;
   }
 
-  detail::thread_yield();
+  dango::thread_yield();
 }
 #else
 inline void
@@ -449,7 +452,7 @@ detail::
 spin_yield
 (dango::uint&)noexcept
 {
-  detail::thread_yield();
+  dango::thread_yield();
 }
 #endif
 

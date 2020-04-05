@@ -1,16 +1,5 @@
 #include "dango.hpp"
 
-/*** thread_yield ***/
-
-void
-dango::
-detail::
-thread_yield
-()noexcept
-{
-  dango::thread::yield();
-}
-
 /*** init_tick_count ***/
 
 auto
@@ -747,7 +736,7 @@ cond_var_registry_thread::
   m_thread.join();
 }
 
-#include <dango-shared-concurrent.hpp>
+#include "dango-concurrent-private.hpp"
 
 /*** thread ***/
 
@@ -767,15 +756,6 @@ noexcept(false)
   }
 
   throw u8"thread creation failed"; // TODO
-}
-
-void
-dango::
-thread::
-yield
-()noexcept
-{
-  dango::shared::yield_thread();
 }
 
 #ifdef __linux__

@@ -1,4 +1,4 @@
-#include "dango-shared-concurrent.hpp"
+#include "dango-concurrent-private.hpp"
 
 #ifdef __linux__
 
@@ -32,7 +32,7 @@ namespace
   noexcept->linux_int;
 }
 
-DANGO_SHARED_API auto
+auto
 dango::
 shared::
 create_thread
@@ -92,16 +92,15 @@ noexcept->bool
   return true;
 }
 
-DANGO_SHARED_API void
+void
 dango::
-shared::
-yield_thread
+thread_yield
 ()noexcept
 {
   ::sched_yield();
 }
 
-DANGO_SHARED_API auto
+auto
 dango::
 shared::
 tick_count_monotonic
@@ -110,7 +109,7 @@ tick_count_monotonic
   return tick_count_help(CLOCK_MONOTONIC);
 }
 
-DANGO_SHARED_API auto
+auto
 dango::
 shared::
 tick_count_boottime
@@ -119,7 +118,7 @@ tick_count_boottime
   return tick_count_help(CLOCK_BOOTTIME);
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 futex_wait
@@ -136,7 +135,7 @@ futex_wait
   );
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 futex_wait
@@ -173,7 +172,7 @@ noexcept
   );
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 futex_wake
@@ -190,7 +189,7 @@ futex_wake
   );
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 futex_wake_requeue
@@ -312,7 +311,7 @@ namespace
   auto time_min_period()noexcept->dango::uint;
 }
 
-DANGO_SHARED_API auto
+auto
 dango::
 shared::
 create_thread
@@ -378,16 +377,15 @@ noexcept->bool
   return true;
 }
 
-DANGO_SHARED_API void
+void
 dango::
-shared::
-yield_thread
+thread_yield
 ()noexcept
 {
   ::Sleep(DWORD(0));
 }
 
-DANGO_SHARED_API auto
+auto
 dango::
 shared::
 perf_freq
@@ -408,7 +406,7 @@ perf_freq
   return s_result;
 }
 
-DANGO_SHARED_API auto
+auto
 dango::
 shared::
 perf_count_suspend_bias
@@ -434,7 +432,7 @@ perf_count_suspend_bias
   return a_count;
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 srw_lock_init
@@ -445,7 +443,7 @@ srw_lock_init
   ::InitializeSRWLock(a_lock);
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 srw_lock_acquire
@@ -454,7 +452,7 @@ srw_lock_acquire
   ::AcquireSRWLockExclusive(static_cast<::SRWLOCK*>(a_storage));
 }
 
-DANGO_SHARED_API auto
+auto
 dango::
 shared::
 srw_lock_try_acquire
@@ -465,7 +463,7 @@ srw_lock_try_acquire
   return bool(a_result);
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 srw_lock_release
@@ -474,7 +472,7 @@ srw_lock_release
   ::ReleaseSRWLockExclusive(static_cast<::SRWLOCK*>(a_storage));
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 condition_variable_init
@@ -485,7 +483,7 @@ condition_variable_init
   ::InitializeConditionVariable(a_cond);
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 condition_variable_wake
@@ -494,7 +492,7 @@ condition_variable_wake
   ::WakeConditionVariable(static_cast<::CONDITION_VARIABLE*>(a_storage));
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 condition_variable_wake_all
@@ -503,7 +501,7 @@ condition_variable_wake_all
   ::WakeAllConditionVariable(static_cast<::CONDITION_VARIABLE*>(a_storage));
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 condition_variable_wait
@@ -518,7 +516,7 @@ condition_variable_wait
   );
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 condition_variable_wait
@@ -543,7 +541,7 @@ condition_variable_wait
   );
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 time_begin_period
@@ -561,7 +559,7 @@ time_begin_period
   dango_unreachable_terminate_msg(u8"timeBeginPeriod failed");
 }
 
-DANGO_SHARED_API void
+void
 dango::
 shared::
 time_end_period
@@ -646,8 +644,3 @@ namespace
 }
 
 #endif // _WIN32
-
-DANGO_SHARED_API dango::assert_log_func dango_shared_set_assert(dango::assert_log_func const a_handler)noexcept{ return dango::assert_log_handler::set(a_handler); }
-
-DANGO_SHARED_API dango::assert_log_func dango_shared_get_assert()noexcept{ return dango::assert_log_handler::get(); }
-

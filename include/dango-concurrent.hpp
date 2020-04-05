@@ -1546,6 +1546,15 @@ dango::
 thread::
 s_tick_count_init = dango::get_tick_count();
 
+inline void
+dango::
+thread::
+yield
+()noexcept
+{
+  dango::thread_yield();
+}
+
 inline auto
 dango::
 thread::

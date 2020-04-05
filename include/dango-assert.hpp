@@ -163,7 +163,7 @@ assume
 namespace
 dango
 {
-  [[noreturn]] void infinite_loop()noexcept;
+  [[noreturn]] DANGO_EXPORT void infinite_loop()noexcept;
 }
 
 /*** trap_instruction ***/
@@ -191,28 +191,9 @@ dango
   using assert_log_func =
     void(*)(dango::bchar const*, dango::bchar const*, dango::source_location const&)noexcept;
 
-  class assert_log_handler;
+  DANGO_EXPORT auto set_assert_logger(dango::assert_log_func)noexcept->dango::assert_log_func;
+  DANGO_EXPORT auto get_assert_logger()noexcept->dango::assert_log_func;
 }
-
-class
-dango::
-assert_log_handler
-final
-{
-private:
-  static dango::assert_log_func s_handler_func;
-public:
-  static auto set(dango::assert_log_func)noexcept->dango::assert_log_func;
-  static auto get()noexcept->dango::assert_log_func;
-public:
-  DANGO_UNINSTANTIABLE(assert_log_handler)
-};
-
-inline constinit
-dango::assert_log_func
-dango::
-assert_log_handler::
-s_handler_func = dango::null;
 
 namespace
 dango::detail
@@ -226,9 +207,9 @@ dango::detail
   )
   noexcept;
 
-  void assert_fail_once()noexcept;
+  DANGO_EXPORT void assert_fail_once()noexcept;
 
-  void
+  DANGO_EXPORT void
   default_assert_log_handler
   (
     dango::bchar const*,
@@ -249,9 +230,9 @@ assert_fail_log
 )
 noexcept
 {
-  detail::assert_fail_once();
+  dango::detail::assert_fail_once();
 
-  auto const a_handler = dango::assert_log_handler::get();
+  auto const a_handler = dango::get_assert_logger();
 
   if(a_handler)
   {
@@ -259,7 +240,7 @@ noexcept
   }
   else
   {
-    detail::default_assert_log_handler(a_expr, a_msg, a_loc);
+    dango::detail::default_assert_log_handler(a_expr, a_msg, a_loc);
   }
 }
 
@@ -291,7 +272,7 @@ noexcept
 {
   if(dango::unlikely(!a_cond))
   {
-    detail::assert_fail_log(a_expr, a_msg, a_loc);
+    dango::detail::assert_fail_log(a_expr, a_msg, a_loc);
 
     dango::trap_instruction();
   }
@@ -315,12 +296,7 @@ namespace
 dango::detail
 {
   [[noreturn]] void
-  unreachable_func
-  (
-    dango::bchar const* const,
-    dango::source_location const& = dango::source_location::current()
-  )
-  noexcept;
+  unreachable_func(dango::bchar const* const, dango::source_location const& = dango::source_location::current())noexcept;
 
   inline constexpr dango::bchar const unreachable_expr[]{ u8"unreachable" };
   inline constexpr dango::bchar const unreachable_message[]{ u8"unreachable statement reached" };
@@ -330,13 +306,9 @@ inline void
 dango::
 detail::
 unreachable_func
-(
-  dango::bchar const* const a_msg,
-  dango::source_location const& a_loc
-)
-noexcept
+(dango::bchar const* const a_msg, dango::source_location const& a_loc)noexcept
 {
-  detail::assert_fail_log(dango::detail::unreachable_expr, a_msg, a_loc);
+  dango::detail::assert_fail_log(dango::detail::unreachable_expr, a_msg, a_loc);
 
   dango::trap_instruction();
 }
@@ -388,10 +360,10 @@ dango
 {
   using terminate_func = void(*)()noexcept(false);
 
-  auto set_terminate(dango::terminate_func)noexcept->dango::terminate_func;
-  auto get_terminate()noexcept->dango::terminate_func;
+  DANGO_EXPORT auto set_terminate(dango::terminate_func)noexcept->dango::terminate_func;
+  DANGO_EXPORT auto get_terminate()noexcept->dango::terminate_func;
 
-  [[noreturn]] void terminate()noexcept;
+  [[noreturn]] DANGO_EXPORT void terminate()noexcept;
 }
 
 /*** dango_assert_terminate ***/

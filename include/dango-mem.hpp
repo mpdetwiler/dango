@@ -177,11 +177,9 @@ dango
 namespace
 dango
 {
-  [[nodiscard]] auto
-  operator_new
-  (dango::usize, dango::usize)dango_new_noexcept->void*;
+  [[nodiscard]] DANGO_EXPORT auto operator_new(dango::usize, dango::usize)dango_new_noexcept->void*;
 
-  void operator_delete(void const volatile*, dango::usize, dango::usize)noexcept;
+  DANGO_EXPORT void operator_delete(void const volatile*, dango::usize, dango::usize)noexcept;
 }
 
 /*** mem_copy ***/

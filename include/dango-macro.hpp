@@ -1,6 +1,26 @@
 #ifndef DANGO_MACRO_HPP_INCLUDED
 #define DANGO_MACRO_HPP_INCLUDED
 
+#ifdef _WIN32
+
+#ifdef DANGO_BUILDING_DANGO
+#define DANGO_EXPORT __declspec(dllexport)
+#else
+#define DANGO_EXPORT __declspec(dllimport)
+#endif
+
+#endif
+
+#ifdef __linux__
+
+#ifdef DANGO_BUILDING_DANGO
+#define DANGO_EXPORT [[gnu::visibility("default")]]
+#else
+#define DANGO_EXPORT [[gnu::visibility("default")]]
+#endif
+
+#endif
+
 #define DANGO_UNCOPYABLE(name) \
 constexpr name(name const&)noexcept = delete; \
 constexpr auto operator = (name const&)& noexcept->name& = delete;

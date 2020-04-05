@@ -212,7 +212,7 @@ decrement
   dango::destructor(get());
 }
 
-#ifndef DANGO_COMPILING_DANGO
+#ifndef DANGO_BUILDING_DANGO
 #define DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(type_name, name) static type_name const name{ };
 #else
 #define DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(type_name, name)
@@ -238,7 +238,7 @@ name \
 (DANGO_SRC_LOC_ARG_DEFAULT(a_loc)) \
 noexcept->name##_namespace::name##_weak_type \
 { \
-  static name##_namespace::name##_strong_type const s_strong{ }; \
+  static name##_namespace::name##_strong_type const s_##name##_func_strong{ }; \
   return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
 }
 
