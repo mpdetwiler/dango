@@ -183,7 +183,7 @@ main
 
   dango_assert(dango::thread::self_ID() == dango::thread::self().get_ID());
 
-  dango::thread a_thread = null;
+  dango::thread a_thread = dango::thread::self();
 
   dango_assert(a_thread == a_thread);
   dango_assert(!(a_thread != a_thread));

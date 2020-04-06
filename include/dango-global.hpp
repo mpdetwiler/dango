@@ -5,16 +5,25 @@ namespace
 dango::detail
 {
   template
-  <dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+  <typename tp_type>
+  concept global_storage_constraint_spec =
+    dango::is_object_exclude_array<tp_type> && dango::is_noexcept_destructible<tp_type>;
+
+  template
+  <typename tp_type>
+  using global_storage_construct_ref = dango::remove_cv<tp_type>(&)()noexcept;
+
+  template
+  <dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
   class global_storage;
 
   template
-  <typename tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+  <typename tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
   using global_storage_ref = dango::detail::global_storage<tp_type, tp_construct>&;
 }
 
 template
-<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+<dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
 class alignas(dango::cache_align_type)
 dango::
 detail::
@@ -50,7 +59,7 @@ private:
 /*** strong_incrementer ***/
 
 template
-<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+<dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
 template
 <dango::detail::global_storage_ref<tp_type, tp_construct> tp_storage>
 class
@@ -70,7 +79,7 @@ public:
 /*** weak_incrementer ***/
 
 template
-<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+<dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
 template
 <dango::detail::global_storage_ref<tp_type, tp_construct> tp_storage>
 class
@@ -103,7 +112,7 @@ public:
 /*** global_storage ***/
 
 template
-<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+<dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
 constexpr
 dango::
 detail::
@@ -120,7 +129,7 @@ m_ref_count{ dango::usize(0) }
 }
 
 template
-<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+<dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
 constexpr auto
 dango::
 detail::
@@ -132,7 +141,7 @@ get
 }
 
 template
-<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+<dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
 void
 dango::
 detail::
@@ -171,7 +180,7 @@ increment
 }
 
 template
-<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+<dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
 auto
 dango::
 detail::
@@ -193,7 +202,7 @@ try_increment
 }
 
 template
-<dango::is_object_exclude_array tp_type, dango::remove_cv<tp_type>(& tp_construct)()noexcept>
+<dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
 void
 dango::
 detail::
@@ -209,31 +218,39 @@ decrement
     }
   }
 
-  dango::destructor(get());
+  auto const a_ptr = get();
+
+  m_ptr = dango::null;
+
+  dango::destructor(a_ptr);
 }
 
-#ifndef DANGO_BUILDING_DANGO
+#ifdef DANGO_BUILDING_DANGO
+#define DANGO_GOBAL_LAZY_INIT_ONLY
+#endif
+
+#ifndef DANGO_GOBAL_LAZY_INIT_ONLY
 #define DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(type_name, name) static type_name const name{ };
 #else
 #define DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(type_name, name)
 #endif
 
-#define DANGO_DEFINE_GLOBAL_IMPL(linkage, type_name, name, ...) \
+#define DANGO_DEFINE_GLOBAL_IMPL(export_tag, type_name, name, ...) \
 namespace \
 name##_namespace \
 { \
   using name##_value_type = type_name; \
-  static_assert(dango::is_object_exclude_array<name##_value_type>); \
+  static_assert(dango::detail::global_storage_constraint_spec<name##_value_type>); \
   using name##_return_type = dango::remove_cv<name##_value_type>; \
-  linkage auto name##_construct()noexcept->name##_return_type \
+  export_tag inline auto name##_construct()noexcept->name##_return_type \
   { try{ return name##_return_type __VA_ARGS__ ; }catch(...){ dango_unreachable_terminate_msg(u8"constructor of global \"name\" threw exception"); } } \
   using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
-  linkage constinit name##_storage_type s_##name##_storage{ }; \
+  export_tag inline constinit name##_storage_type s_##name##_storage{ }; \
   using name##_strong_type = name##_storage_type::strong_incrementer<s_##name##_storage>; \
   using name##_weak_type = name##_storage_type::weak_incrementer<s_##name##_storage>; \
   DANGO_GLOBAL_DEFINE_STATIC_STRONG_INCREMENTER(name##_strong_type, s_##name##_strong) \
 } \
-[[nodiscard]] linkage auto \
+[[nodiscard]] export_tag inline auto \
 name \
 (DANGO_SRC_LOC_ARG_DEFAULT(a_loc)) \
 noexcept->name##_namespace::name##_weak_type \
@@ -243,10 +260,10 @@ noexcept->name##_namespace::name##_weak_type \
 }
 
 #define DANGO_DEFINE_GLOBAL(type_name, name, ...) \
-DANGO_DEFINE_GLOBAL_IMPL(inline, type_name, name, __VA_ARGS__)
+DANGO_DEFINE_GLOBAL_IMPL( , type_name, name, __VA_ARGS__)
 
-#define DANGO_DEFINE_GLOBAL_STATIC(type_name, name, ...) \
-DANGO_DEFINE_GLOBAL_IMPL(static, type_name, name, __VA_ARGS__)
+#define DANGO_DEFINE_DANGO_GLOBAL(type_name, name, ...) \
+DANGO_DEFINE_GLOBAL_IMPL(DANGO_EXPORT_ONLY, type_name, name, __VA_ARGS__)
 
 #define dango_access_global(global_name, local_name) \
 if constexpr(auto const local_name = global_name(); true)

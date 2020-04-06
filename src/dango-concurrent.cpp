@@ -46,84 +46,6 @@ init_tick_count
 
 /*** thread ***/
 
-struct
-dango::
-thread::
-construct_tag
-final
-{
-  DANGO_TAG_TYPE(construct_tag)
-};
-
-dango::
-thread::
-thread
-(construct_tag const, bool const a_daemon)noexcept:
-m_control{ new_control_block(a_daemon) }
-{
-
-}
-
-dango::
-thread::
-thread
-(control_block* const a_control)noexcept:
-m_control{ a_control }
-{
-  dango_assert(m_control != dango::null);
-
-  m_control->increment();
-}
-
-auto
-dango::
-thread::
-is_alive
-()const noexcept->bool
-{
-  dango_assert(m_control != dango::null);
-
-  return m_control->is_alive();
-}
-
-void
-dango::
-thread::
-join
-()const noexcept
-{
-  dango_assert(m_control != dango::null);
-
-  m_control->wait();
-}
-
-void
-dango::
-thread::
-join
-(dango::timeout const& a_timeout)const noexcept
-{
-  dango_assert(m_control != dango::null);
-
-  m_control->wait(a_timeout);
-}
-
-auto
-dango::
-thread::
-new_control_block
-(bool const a_daemon)noexcept->control_block*
-{
-  try
-  {
-    return new control_block{ a_daemon, thread::self_ID() };
-  }
-  catch(...)
-  {
-    dango_unreachable_terminate_msg(u8"thread control block allocation failed");
-  }
-}
-
 auto
 dango::
 thread::
@@ -179,50 +101,6 @@ sleep
       a_crit.wait(a_timeout);
     }
   }
-}
-
-void
-dango::
-thread::
-sleep_rel
-(dango::tick_count_type const a_interval)noexcept
-{
-  auto const a_timeout = dango::make_timeout_rel(a_interval);
-
-  thread::sleep(a_timeout);
-}
-
-void
-dango::
-thread::
-sleep_rel_hr
-(dango::tick_count_type const a_interval)noexcept
-{
-  auto const a_timeout = dango::make_timeout_rel_hr(a_interval);
-
-  thread::sleep(a_timeout);
-}
-
-void
-dango::
-thread::
-sleep_rel_sa
-(dango::tick_count_type const a_interval)noexcept
-{
-  auto const a_timeout = dango::make_timeout_rel_sa(a_interval);
-
-  thread::sleep(a_timeout);
-}
-
-void
-dango::
-thread::
-sleep_rel_hr_sa
-(dango::tick_count_type const a_interval)noexcept
-{
-  auto const a_timeout = dango::make_timeout_rel_hr_sa(a_interval);
-
-  thread::sleep(a_timeout);
 }
 
 /*** cond_var_registry ***/
@@ -489,6 +367,8 @@ cond_var_registry_thread::
 start_thread
 ()noexcept->dango::thread
 {
+  printf("cond_var_registry_thread::start_thread\n");
+
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
   try
@@ -499,29 +379,6 @@ start_thread
   {
     dango_unreachable_terminate_msg(u8"cond_var watcher-thread creation failed");
   }
-}
-
-dango::
-detail::
-cond_var_registry_thread::
-cond_var_registry_thread
-()noexcept:
-m_thread{ start_thread() }
-{
-
-}
-
-dango::
-detail::
-cond_var_registry_thread::
-~cond_var_registry_thread
-()noexcept
-{
-  constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
-
-  c_registry.notify_exit();
-
-  m_thread.join();
 }
 
 #include "dango-concurrent-private.hpp"
@@ -1503,30 +1360,6 @@ notify_all
   get()->notify_all();
 }
 
-/*** windows_timer_res_access ***/
-
-constexpr
-dango::
-detail::
-windows_timer_res_manager::
-windows_timer_res_manager
-()noexcept:
-m_mutex{ },
-m_cond{ m_mutex },
-m_alive{ true },
-m_waiting{ false },
-m_timer_state{ timer_state::DEACTIVATED },
-m_count{ dango::usize(0) }
-{
-
-}
-
-constinit dango::detail::windows_timer_res_manager
-dango::
-detail::
-windows_timer_res_access::
-s_manager{ };
-
 /*** windows_timer_res_manager ***/
 
 void
@@ -1749,7 +1582,9 @@ windows_timer_res_daemon::
 start_thread
 ()noexcept->dango::thread
 {
-  constexpr auto& c_manager = detail::windows_timer_res_access::s_manager;
+  constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
+
+  printf("windows_timer_res_daemon::start_thread: c_manager=%p\n", static_cast<void*>(&c_manager));
 
   try
   {
@@ -1759,29 +1594,6 @@ start_thread
   {
     dango_unreachable_terminate_msg(u8"windows timer-res manager thread creation failed");
   }
-}
-
-dango::
-detail::
-windows_timer_res_daemon::
-windows_timer_res_daemon
-()noexcept:
-m_thread{ start_thread() }
-{
-
-}
-
-dango::
-detail::
-windows_timer_res_daemon::
-~windows_timer_res_daemon
-()noexcept
-{
-  constexpr auto& c_manager = detail::windows_timer_res_access::s_manager;
-
-  c_manager.notify_exit();
-
-  m_thread.join();
 }
 
 /*** mutex_impl ***/
