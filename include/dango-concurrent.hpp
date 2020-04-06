@@ -1746,11 +1746,6 @@ final
   DANGO_TAG_TYPE(construct_tag)
 };
 
-inline constinit dango::thread::registry
-dango::
-thread::
-s_registry{ };
-
 inline auto
 dango::
 thread::
@@ -2298,18 +2293,13 @@ m_waiting{ false }
 
 /*** data ***/
 
-inline constinit
-dango::detail::cond_var_registry
-dango::
-detail::
-cond_var_registry_access::
-s_registry{ };
-
+#ifndef DANGO_BUILDING_DANGO
 namespace
 dango::detail
 {
-  DANGO_DEFINE_DANGO_GLOBAL(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
+  DANGO_DEFINE_GLOBAL(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
 }
+#endif
 
 #ifdef _WIN32
 
@@ -2439,20 +2429,13 @@ m_count{ dango::usize(0) }
 
 }
 
-/*** data ***/
-
-inline constinit
-dango::detail::windows_timer_res_manager
-dango::
-detail::
-windows_timer_res_access::
-s_manager{ };
-
+#ifndef DANGO_BUILDING_DANGO
 namespace
 dango::detail
 {
-  DANGO_DEFINE_DANGO_GLOBAL(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
+  DANGO_DEFINE_GLOBAL(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
 }
+#endif
 
 #endif // _WIN32
 

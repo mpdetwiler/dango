@@ -46,6 +46,12 @@ init_tick_count
 
 /*** thread ***/
 
+constinit
+dango::thread::registry
+dango::
+thread::
+s_registry{ };
+
 auto
 dango::
 thread::
@@ -104,6 +110,13 @@ sleep
 }
 
 /*** cond_var_registry ***/
+
+constinit
+dango::detail::cond_var_registry
+dango::
+detail::
+cond_var_registry_access::
+s_registry{ };
 
 void
 dango::
@@ -1361,6 +1374,13 @@ notify_all
 }
 
 /*** windows_timer_res_manager ***/
+
+constinit
+dango::detail::windows_timer_res_manager
+dango::
+detail::
+windows_timer_res_access::
+s_manager{ };
 
 void
 dango::
