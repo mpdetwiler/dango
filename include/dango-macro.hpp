@@ -1,12 +1,28 @@
 #ifndef DANGO_MACRO_HPP_INCLUDED
 #define DANGO_MACRO_HPP_INCLUDED
 
+#ifdef _WIN32
+
 #ifdef DANGO_BUILDING_DANGO
 #define DANGO_EXPORT [[gnu::dllexport]]
 #define DANGO_EXPORT_ONLY DANGO_EXPORT
 #else
 #define DANGO_EXPORT [[gnu::dllimport]]
 #define DANGO_EXPORT_ONLY
+#endif
+
+#endif
+
+#ifdef __linux__
+
+#ifdef DANGO_BUILDING_DANGO
+#define DANGO_EXPORT [[gnu::visibility("default")]]
+#define DANGO_EXPORT_ONLY DANGO_EXPORT
+#else
+#define DANGO_EXPORT
+#define DANGO_EXPORT_ONLY
+#endif
+
 #endif
 
 #define DANGO_UNCOPYABLE(name) \
