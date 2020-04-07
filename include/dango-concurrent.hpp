@@ -2270,7 +2270,7 @@ cond_var_registry_thread::
 namespace
 dango::detail
 {
-  DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
+  DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread)
 }
 
 #ifdef _WIN32
@@ -2382,7 +2382,7 @@ windows_timer_res_daemon::
 namespace
 dango::detail
 {
-  DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
+  DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon)
 }
 
 #endif // _WIN32

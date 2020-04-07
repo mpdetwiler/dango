@@ -226,30 +226,30 @@ decrement
 }
 
 #ifndef DANGO_BUILDING_SHARED_LIB
-#define DANGO_GLOBAL_DEFINE_STATIC_INC(type_name, var_name) static type_name const var_name{ };
-#define DANGO_GLOBAL_DEFINE_INLINE_INC(type_name, var_name, name) namespace name##_namespace{ inline type_name const var_name{ name() }; }
+#define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static name##_strong_type const name##_strong{ };
+#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline name##_weak_type const name##_weak{ name() }; }
 #else
-#define DANGO_GLOBAL_DEFINE_STATIC_INC(type_name, var_name)
-#define DANGO_GLOBAL_DEFINE_INLINE_INC(type_name, var_name, name)
+#define DANGO_GLOBAL_DEFINE_STATIC_INC(name)
+#define DANGO_GLOBAL_DEFINE_INLINE_INC(name)
 #endif
 
 /*** extern globals ***/
 
-#define DANGO_DECLARE_GLOBAL_EXTERN(type_name, name, ...) \
+#define DANGO_DECLARE_GLOBAL_EXTERN(type_name, name) \
 namespace name##_namespace \
 { \
   using name##_value_type = type_name; \
   using name##_return_type = dango::remove_cv<name##_value_type>; \
   DANGO_EXPORT auto name##_construct()noexcept->name##_return_type; \
   using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
-  DANGO_EXPORT_ONLY extern name##_storage_type s_##name##_storage; \
-  using name##_strong_type = name##_storage_type::strong_incrementer<s_##name##_storage>; \
-  using name##_weak_type = name##_storage_type::weak_incrementer<s_##name##_storage>; \
-  DANGO_GLOBAL_DEFINE_STATIC_INC(name##_strong_type, s_##name##_strong) \
+  DANGO_EXPORT_ONLY extern name##_storage_type name##_storage; \
+  using name##_strong_type = name##_storage_type::strong_incrementer<name##_storage>; \
+  using name##_weak_type = name##_storage_type::weak_incrementer<name##_storage>; \
+  DANGO_GLOBAL_DEFINE_STATIC_INC(name) \
 } \
 [[nodiscard]] DANGO_EXPORT auto \
-name(DANGO_SRC_LOC_ARG_DEFAULT( ))noexcept->name##_namespace::name##_weak_type; \
-DANGO_GLOBAL_DEFINE_INLINE_INC(name##_weak_type, s_##name##_weak, name)
+name(DANGO_SRC_LOC_ARG_DEFAULT())noexcept->name##_namespace::name##_weak_type; \
+DANGO_GLOBAL_DEFINE_INLINE_INC(name)
 
 
 #define DANGO_DEFINE_GLOBAL_EXTERN(type_name, name, ...) \
@@ -257,13 +257,14 @@ namespace name##_namespace \
 { \
   static_assert(dango::detail::global_storage_constraint_spec<name##_value_type>); \
   auto name##_construct()noexcept->name##_return_type \
-  { try{ return name##_return_type __VA_ARGS__ ; }catch(...){ dango_unreachable_terminate_msg(u8"constructor of global \"name\" threw exception"); } } \
-  constinit name##_storage_type s_##name##_storage{ }; \
+  { try{ return name##_return_type __VA_ARGS__ ; }catch(...) \
+    { dango_unreachable_terminate_msg(u8"constructor of extern global \"name\" threw exception"); } } \
+  constinit name##_storage_type name##_storage{ }; \
 } \
 auto \
 name(DANGO_SRC_LOC_ARG(a_loc))noexcept->name##_namespace::name##_weak_type \
 { \
-  static name##_namespace::name##_strong_type const s_##name##_strong_func{ }; \
+  static name##_namespace::name##_strong_type const name##_strong_func{ }; \
   return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
 }
 
@@ -277,20 +278,21 @@ namespace name##_namespace \
   static_assert(dango::detail::global_storage_constraint_spec<name##_value_type>); \
   using name##_return_type = dango::remove_cv<name##_value_type>; \
   inline auto name##_construct()noexcept->name##_return_type \
-  { try{ return name##_return_type __VA_ARGS__ ; }catch(...){ dango_unreachable_terminate_msg(u8"constructor of global \"name\" threw exception"); } } \
+  { try{ return name##_return_type __VA_ARGS__ ; }catch(...) \
+    { dango_unreachable_terminate_msg(u8"constructor of inline global \"name\" threw exception"); } } \
   using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
-  inline constinit name##_storage_type s_##name##_storage{ }; \
-  using name##_strong_type = name##_storage_type::strong_incrementer<s_##name##_storage>; \
-  using name##_weak_type = name##_storage_type::weak_incrementer<s_##name##_storage>; \
-  static name##_strong_type const s_##name##_strong{ }; \
+  inline constinit name##_storage_type name##_storage{ }; \
+  using name##_strong_type = name##_storage_type::strong_incrementer<name##_storage>; \
+  using name##_weak_type = name##_storage_type::weak_incrementer<name##_storage>; \
+  DANGO_GLOBAL_DEFINE_STATIC_INC(name) \
 } \
 [[nodiscard]] inline auto \
 name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
 { \
-  static name##_namespace::name##_strong_type const s_##name##_strong_func{ }; \
+  static name##_namespace::name##_strong_type const name##_strong_func{ }; \
   return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
 } \
-namespace name##_namespace{ inline name##_weak_type const s_##name##_weak{ name() }; }
+DANGO_GLOBAL_DEFINE_INLINE_INC(name)
 #else
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...)
 #endif
