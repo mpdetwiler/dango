@@ -2163,9 +2163,6 @@ thread_start_address
 
 /*** cond_var_registry ***/
 
-#include <stdio.h>
-
-
 namespace
 dango::detail
 {
@@ -2226,6 +2223,8 @@ public:
   DANGO_IMMOBILE(cond_var_registry)
 };
 
+/*** cond_var_registry_thread ***/
+
 class
 dango::
 detail::
@@ -2242,8 +2241,6 @@ private:
 public:
   DANGO_IMMOBILE(cond_var_registry_thread)
 };
-
-/*** cond_var_registry_thread ***/
 
 inline
 dango::
@@ -2263,8 +2260,6 @@ cond_var_registry_thread::
 ~cond_var_registry_thread
 ()noexcept
 {
-  printf("cond_var_registry_thread::~cond_var_registry_thread\n");
-
   constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
 
   c_registry.notify_exit();
@@ -2272,34 +2267,11 @@ cond_var_registry_thread::
   m_thread.join();
 }
 
-/*** cond_var_registry ***/
-
-constexpr
-dango::
-detail::
-cond_var_registry::
-cond_var_registry
-()noexcept:
-m_mutex{ },
-m_cond{ m_mutex },
-m_list{ { }, { } },
-m_external_list{ &m_list[0] },
-m_internal_list{ &m_list[1] },
-m_alive{ true },
-m_waiting{ false }
-{
-
-}
-
-/*** data ***/
-
-#ifndef DANGO_BUILDING_DANGO
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
+  DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
 }
-#endif
 
 #ifdef _WIN32
 
@@ -2363,6 +2335,8 @@ public:
   DANGO_IMMOBILE(windows_timer_res_manager)
 };
 
+/*** windows_timer_res_daemon ***/
+
 class
 dango::
 detail::
@@ -2379,8 +2353,6 @@ private:
 public:
   DANGO_IMMOBILE(windows_timer_res_daemon)
 };
-
-/*** windows_timer_res_daemon ***/
 
 inline
 dango::
@@ -2402,40 +2374,16 @@ windows_timer_res_daemon::
 {
   constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
 
-  printf("windows_timer_res_daemon::~windows_timer_res_daemon: c_manager=%p\n", static_cast<void*>(&c_manager));
-
   c_manager.notify_exit();
 
   m_thread.join();
-
-  printf("windows_timer_res_daemon::~windows_timer_res_daemon: join() returned\n");
 }
 
-/*** windows_timer_res_manager ***/
-
-constexpr
-dango::
-detail::
-windows_timer_res_manager::
-windows_timer_res_manager
-()noexcept:
-m_mutex{ },
-m_cond{ m_mutex },
-m_alive{ true },
-m_waiting{ false },
-m_timer_state{ timer_state::DEACTIVATED },
-m_count{ dango::usize(0) }
-{
-
-}
-
-#ifndef DANGO_BUILDING_DANGO
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
+  DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
 }
-#endif
 
 #endif // _WIN32
 

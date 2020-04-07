@@ -1,9 +1,15 @@
 #ifndef DANGO_MACRO_HPP_INCLUDED
 #define DANGO_MACRO_HPP_INCLUDED
 
+#ifdef DANGO_BUILDING_DANGO
+#ifndef DANGO_BUILDING_SHARED_LIB
+#define DANGO_BUILDING_SHARED_LIB
+#endif
+#endif
+
 #ifdef _WIN32
 
-#ifdef DANGO_BUILDING_DANGO
+#ifdef DANGO_BUILDING_SHARED_LIB
 #define DANGO_EXPORT [[gnu::dllexport]]
 #define DANGO_EXPORT_ONLY DANGO_EXPORT
 #else
@@ -15,7 +21,7 @@
 
 #ifdef __linux__
 
-#ifdef DANGO_BUILDING_DANGO
+#ifdef DANGO_BUILDING_SHARED_LIB
 #define DANGO_EXPORT [[gnu::visibility("default")]]
 #define DANGO_EXPORT_ONLY DANGO_EXPORT
 #else

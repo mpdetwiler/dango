@@ -1112,6 +1112,21 @@ dango
     dango::is_uint<tp_type> || dango::is_sint<tp_type>;
 }
 
+/*** is_char ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_char =
+    dango::is_same_ignore_cv<tp_type, char> ||
+    dango::is_same_ignore_cv<tp_type, wchar_t> ||
+    dango::is_same_ignore_cv<tp_type, dango::bchar> ||
+    dango::is_same_ignore_cv<tp_type, dango::wchar> ||
+    dango::is_same_ignore_cv<tp_type, dango::dchar>;
+}
+
 /*** is_integral_exclude_bool ***/
 
 namespace
@@ -1120,12 +1135,7 @@ dango
   template
   <typename tp_type>
   concept is_integral_exclude_bool =
-    dango::is_int<tp_type> ||
-    dango::is_same_ignore_cv<tp_type, char> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::wchar> ||
-    dango::is_same_ignore_cv<tp_type, dango::bchar> ||
-    dango::is_same_ignore_cv<tp_type, dango::wchar> ||
-    dango::is_same_ignore_cv<tp_type, dango::dchar>;
+    dango::is_int<tp_type> || dango::is_char<tp_type>;
 }
 
 /* is_integral */
@@ -1150,6 +1160,17 @@ dango
     dango::is_same_ignore_cv<tp_type, float> ||
     dango::is_same_ignore_cv<tp_type, double> ||
     dango::is_same_ignore_cv<tp_type, dango::real>;
+}
+
+/*** is_num ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_num =
+    dango::is_int<tp_type> || dango::is_float<tp_type>;
 }
 
 /*** is_array is_array_rt_bound is_array_ct_bound ***/

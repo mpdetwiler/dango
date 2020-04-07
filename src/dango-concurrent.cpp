@@ -111,6 +111,23 @@ sleep
 
 /*** cond_var_registry ***/
 
+constexpr
+dango::
+detail::
+cond_var_registry::
+cond_var_registry
+()noexcept:
+m_mutex{ },
+m_cond{ m_mutex },
+m_list{ { }, { } },
+m_external_list{ &m_list[0] },
+m_internal_list{ &m_list[1] },
+m_alive{ true },
+m_waiting{ false }
+{
+
+}
+
 constinit
 dango::detail::cond_var_registry
 dango::
@@ -373,6 +390,12 @@ pop_internal
 
 /*** cond_var_registry_thread ***/
 
+namespace
+dango::detail
+{
+  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
+}
+
 auto
 dango::
 detail::
@@ -380,8 +403,6 @@ cond_var_registry_thread::
 start_thread
 ()noexcept->dango::thread
 {
-  printf("cond_var_registry_thread::start_thread\n");
-
   constexpr auto& c_registry = detail::cond_var_registry_access::s_registry;
 
   try
@@ -1375,6 +1396,22 @@ notify_all
 
 /*** windows_timer_res_manager ***/
 
+constexpr
+dango::
+detail::
+windows_timer_res_manager::
+windows_timer_res_manager
+()noexcept:
+m_mutex{ },
+m_cond{ m_mutex },
+m_alive{ true },
+m_waiting{ false },
+m_timer_state{ timer_state::DEACTIVATED },
+m_count{ dango::usize(0) }
+{
+
+}
+
 constinit
 dango::detail::windows_timer_res_manager
 dango::
@@ -1604,8 +1641,6 @@ start_thread
 {
   constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
 
-  printf("windows_timer_res_daemon::start_thread: c_manager=%p\n", static_cast<void*>(&c_manager));
-
   try
   {
     return dango::thread::create_daemon([]()noexcept->void{ c_manager.thread_func(); });
@@ -1614,6 +1649,12 @@ start_thread
   {
     dango_unreachable_terminate_msg(u8"windows timer-res manager thread creation failed");
   }
+}
+
+namespace
+dango::detail
+{
+  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
 }
 
 /*** mutex_impl ***/

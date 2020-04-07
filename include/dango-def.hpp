@@ -21,8 +21,6 @@ dango::builtin
   using sint = signed int;
   using slong = signed long int;
   using slonglong = signed long long int;
-
-  using wchar = wchar_t;
 }
 
 namespace
@@ -99,7 +97,7 @@ private:
   void*                         m_01;
   dango::null_tag               m_02;
   char                          m_03;
-  dango::builtin::wchar         m_04;
+  wchar_t                       m_04;
   dango::bchar                  m_05;
   dango::wchar                  m_06;
   dango::dchar                  m_07;
