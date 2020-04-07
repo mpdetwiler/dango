@@ -1,4 +1,5 @@
 #include "dango.hpp"
+#include "dango-global-test.hpp"
 
 #include <cstdio>
 #include <string>
@@ -149,9 +150,9 @@ static_assert(!dango::is_noexcept_callable_ret<dango::mutex, dango::mutex(int)no
 
 struct printer
 {
-  printer()noexcept{ printf("printer::printer()\n"); }
-  ~printer()noexcept{ printf("printer::~printer()\n"); }
-  void print()noexcept{ printf("printer::print()\n"); }
+  printer()noexcept{ fprintf(stderr, "printer::printer()\n"); }
+  ~printer()noexcept{ fprintf(stderr, "printer::~printer()\n"); }
+  void print()noexcept{ fprintf(stderr, "printer::print()\n"); }
 };
 
 auto
@@ -161,14 +162,14 @@ main
   dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);
   dango_assert(dango::str_size(dango::char_as_bchar("hello")) == 5);
 
-  printf("%s\n", concept_test<bool const&>::value);
-  printf("%s\n", concept_test<bool&&>::value);
-  printf("%s\n", concept_test<bool const volatile>::value);
-  printf("%s\n", concept_test<bool>::value);
+  fprintf(stderr, "%s\n", concept_test<bool const&>::value);
+  fprintf(stderr, "%s\n", concept_test<bool&&>::value);
+  fprintf(stderr, "%s\n", concept_test<bool const volatile>::value);
+  fprintf(stderr, "%s\n", concept_test<bool>::value);
 
-  printf("%s\n", c_arith_test<float>);
-  printf("%s\n", c_arith_test<int>);
-  printf("%s\n", c_arith_test<bool>);
+  fprintf(stderr, "%s\n", c_arith_test<float>);
+  fprintf(stderr, "%s\n", c_arith_test<int>);
+  fprintf(stderr, "%s\n", c_arith_test<bool>);
 
   {
     using elem_type = double;
@@ -220,10 +221,10 @@ main
     static_assert(dango::is_trivial<decltype(a_tup)>);
     static_assert(!dango::is_standard_layout<decltype(a_tup)>);
 
-    printf("%p\n", static_cast<void const*>(&a_tup.first()));
-    printf("%p\n", static_cast<void const*>(&a_tup.second()));
-    printf("%p\n", static_cast<void const*>(&dango::tuple_get<dango::usize(2)>(a_tup)));
-    printf("%p\n", static_cast<void const*>(&a_tup.fourth()));
+    fprintf(stderr, "%p\n", static_cast<void const*>(&a_tup.first()));
+    fprintf(stderr, "%p\n", static_cast<void const*>(&a_tup.second()));
+    fprintf(stderr, "%p\n", static_cast<void const*>(&dango::tuple_get<dango::usize(2)>(a_tup)));
+    fprintf(stderr, "%p\n", static_cast<void const*>(&a_tup.fourth()));
 
     static_assert(dango::is_same<decltype(a_tup.first()), slong&>);
     static_assert(dango::is_same<decltype(dango::move(a_tup).first()), slong&&>);
@@ -249,13 +250,13 @@ main
     dango::address_of(a_atomic);
   }
 
-  dango::thread::create(true, []()noexcept->void{ static thread_local printer t_printer{ }; t_printer.print(); });
+  dango::thread::create([]()noexcept->void{ static thread_local printer t_printer{ }; t_printer.print(); });
 
-  printf("main joining\n");
+  fprintf(stderr, "main joining\n");
 
   dango::thread::main_join();
 
-  printf("main main exiting\n");
+  fprintf(stderr, "main main exiting\n");
 
   return 0;
 }

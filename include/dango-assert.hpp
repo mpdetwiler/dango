@@ -290,6 +290,20 @@ noexcept
 #define dango_assert_msg_loc(cond, msg, loc) dango_assert(cond)
 #endif
 
+/*** dango_assert_noassume ***/
+
+#ifndef DANGO_NO_DEBUG
+#define dango_assert_noassume(cond) dango_assert(cond)
+#define dango_assert_noassume_loc(cond, loc) dango_assert_loc(cond, loc)
+#define dango_assert_noassume_msg(cond, msg) dango_assert_msg(cond, msg)
+#define dango_assert_noassume_msg_loc(cond, msg, loc) dango_assert_msg_loc(cond, msg, loc)
+#else
+#define dango_assert_noassume(cond)
+#define dango_assert_noassume_loc(cond, loc)
+#define dango_assert_noassume_msg(cond, msg)
+#define dango_assert_noassume_msg_loc(cond, msg, loc)
+#endif
+
 /*** dango_unreachable ***/
 
 namespace
@@ -323,34 +337,6 @@ unreachable_func
 #define dango_unreachable_loc(loc) dango_unreachable
 #define dango_unreachable_msg(msg) dango_unreachable
 #define dango_unreachable_msg_loc(msg, loc) dango_unreachable
-#endif
-
-/*** dango_assert_noassume ***/
-
-#ifndef DANGO_NO_DEBUG
-#define dango_assert_noassume(cond) dango_assert(cond)
-#define dango_assert_noassume_loc(cond, loc) dango_assert_loc(cond, loc)
-#define dango_assert_noassume_msg(cond, msg) dango_assert_msg(cond, msg)
-#define dango_assert_noassume_msg_loc(cond, msg, loc) dango_assert_msg_loc(cond, msg, loc)
-#else
-#define dango_assert_noassume(cond)
-#define dango_assert_noassume_loc(cond, loc)
-#define dango_assert_noassume_msg(cond, msg)
-#define dango_assert_noassume_msg_loc(cond, msg, loc)
-#endif
-
-/*** dango_unreachable_noassume ***/
-
-#ifndef DANGO_NO_DEBUG
-#define dango_unreachable_noassume dango_unreachable
-#define dango_unreachable_noassume_loc(loc) dango_unreachable_loc(loc)
-#define dango_unreachable_noassume_msg(msg) dango_unreachable_msg(msg)
-#define dango_unreachable_noassume_msg_loc(msg, loc) dango_unreachable_msg_loc(msg, loc)
-#else
-#define dango_unreachable_noassume
-#define dango_unreachable_noassume_loc(loc)
-#define dango_unreachable_noassume_msg(msg)
-#define dango_unreachable_noassume_msg_loc(msg, loc)
 #endif
 
 /*** terminate get_terminate set_terminate ***/
@@ -401,7 +387,7 @@ dango
 #define DANGO_SRC_LOC_ARG(name) dango::source_location const& name
 #define DANGO_SRC_LOC_ARG_FORWARD(name) name
 #else
-#define DANGO_SRC_LOC_ARG_DEFAULT(name) dango::detail::assert_dummy_tag = dango::detail::assert_dummy_val
+#define DANGO_SRC_LOC_ARG_DEFAULT(name) dango::detail::assert_dummy_tag const = dango::detail::assert_dummy_val
 #define DANGO_SRC_LOC_ARG(name) dango::detail::assert_dummy_tag const
 #define DANGO_SRC_LOC_ARG_FORWARD(name) dango::detail::assert_dummy_val
 
