@@ -1,22 +1,6 @@
 #ifndef DANGO_MEM_HPP_INCLUDED
 #define DANGO_MEM_HPP_INCLUDED
 
-/*** destructor ***/
-
-namespace
-dango
-{
-  template
-  <dango::is_destructible tp_type>
-  void destructor
-  (tp_type const volatile* a_ptr)noexcept(dango::is_noexcept_destructible<tp_type>)
-  {
-    dango_assert(a_ptr != dango::null);
-
-    a_ptr->~tp_type();
-  }
-}
-
 /*** dango_new_noexcept ***/
 
 namespace
@@ -34,86 +18,6 @@ dango
 #define dango_new_noexcept_and(...) noexcept(dango::c_operator_new_noexcept && bool(__VA_ARGS__))
 
 #define dango_new_noexcept_or(...) noexcept(dango::c_operator_new_noexcept || bool(__VA_ARGS__))
-
-/*** launder ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  [[nodiscard]] constexpr auto
-  launder(tp_type* const a_ptr)noexcept->tp_type*
-  {
-    return __builtin_launder(a_ptr);
-  }
-}
-
-/*** address_of ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  requires(dango::is_object<dango::remove_ref<tp_type>> && dango::is_lvalue_ref<tp_type>)
-  constexpr auto
-  address_of
-  (tp_type&& a_arg)noexcept->dango::remove_ref<tp_type>*
-  {
-    return __builtin_addressof(a_arg);
-  }
-
-  template
-  <typename tp_type>
-  requires(dango::is_object<dango::remove_ref<tp_type>> && !dango::is_lvalue_ref<tp_type>)
-  constexpr auto
-  address_of
-  (tp_type&&)noexcept = delete;
-}
-
-/*** ptr_as_uint ptr_as_sint ***/
-
-namespace
-dango
-{
-  constexpr auto ptr_as_uint(void const volatile*)noexcept->dango::uptr;
-  constexpr auto ptr_as_sint(void const volatile*)noexcept->dango::sptr;
-}
-
-constexpr auto
-dango::
-ptr_as_uint
-(void const volatile* const a_ptr)noexcept->dango::uptr
-{
-  using ret_type = dango::uptr;
-
-  if(a_ptr)
-  {
-    return reinterpret_cast<ret_type>(a_ptr);
-  }
-  else
-  {
-    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void*>(nullptr)));
-  }
-}
-
-constexpr auto
-dango::
-ptr_as_sint
-(void const volatile* const a_ptr)noexcept->dango::sptr
-{
-  using ret_type = dango::sptr;
-
-  if(a_ptr)
-  {
-    return reinterpret_cast<ret_type>(a_ptr);
-  }
-  else
-  {
-    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void*>(nullptr)));
-  }
-}
 
 /*** is_aligned ***/
 
@@ -345,75 +249,6 @@ dango
   {
     return ::new (dango::placement, a_addr, sizeof(tp_type), alignof(tp_type), a_count) tp_type[a_count];
   }
-}
-
-/*** aligned_storage ***/
-
-namespace
-dango::detail
-{
-  template
-  <dango::usize tp_size, dango::usize tp_align>
-  concept aligned_storage_constraint_spec =
-    (tp_size != dango::usize(0)) && dango::is_pow_two(tp_align);
-}
-
-namespace
-dango
-{
-  template
-  <dango::usize tp_size, dango::usize tp_align = alignof(dango::max_align_type)>
-  requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
-  class aligned_storage;
-}
-
-template
-<dango::usize tp_size, dango::usize tp_align>
-requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
-class
-dango::
-aligned_storage
-{
-public:
-  static constexpr dango::usize const c_size = dango::next_multiple(tp_size, tp_align);
-  static constexpr dango::usize const c_align = tp_align;
-public:
-  explicit constexpr aligned_storage()noexcept = default;
-
-  ~aligned_storage()noexcept = default;
-
-  constexpr auto get()noexcept->void*;
-  constexpr auto get()const noexcept->void const*;
-private:
-  alignas(c_align) dango::byte m_storage[c_size];
-public:
-  DANGO_IMMOBILE(aligned_storage)
-};
-
-template
-<dango::usize tp_size, dango::usize tp_align>
-requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
-constexpr auto
-dango::
-aligned_storage
-<tp_size, tp_align>::
-get
-()noexcept->void*
-{
-  return m_storage;
-}
-
-template
-<dango::usize tp_size, dango::usize tp_align>
-requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
-constexpr auto
-dango::
-aligned_storage
-<tp_size, tp_align>::
-get
-()const noexcept->void const*
-{
-  return m_storage;
 }
 
 /*** array_destroy array_copy array_move array_relocate array_shift ***/

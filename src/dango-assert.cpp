@@ -3,7 +3,9 @@
 #include <cstdio>
 #include <exception>
 
-static constinit dango::atomic<dango::assert_log_func> s_handler_func{ dango::null };
+static constinit
+dango::atomic<dango::assert_log_func>
+s_handler_func{ dango::null };
 
 auto
 dango::
@@ -92,23 +94,5 @@ terminate
 ()noexcept
 {
   std::terminate();
-}
-
-void
-dango::
-infinite_loop
-()noexcept
-{
-  auto a_true = true;
-
-  auto const volatile& a_read = a_true;
-
-  do
-  {
-    dango::thread_yield();
-  }
-  while(a_read);
-
-  dango_unreachable;
 }
 

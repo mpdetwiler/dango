@@ -64,7 +64,7 @@ dango
       { tp_config::enable_implicit_conversion }noexcept->dango::is_same<bool const>;
       { tp_config::conversion_requires_same_deleter }noexcept->dango::is_same<bool const>;
       { tp_config::differing_deleter_requires_virtual_destruct }noexcept->dango::is_same<bool const>;
-      requires(dango::logical_implication(tp_config::enable_move_assign, tp_config::enable_move_construct));
+      requires(dango::logic_implies(tp_config::enable_move_assign, tp_config::enable_move_construct));
     };
 }
 

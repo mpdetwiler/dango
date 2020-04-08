@@ -1,48 +1,6 @@
 #ifndef DANGO_ASSERT_HPP_INCLUDED
 #define DANGO_ASSERT_HPP_INCLUDED
 
-/*** bchar_as_char char_as_bchar ***/
-
-namespace
-dango
-{
-  template
-  <dango::is_same_ignore_cv<dango::bchar> tp_char>
-  constexpr auto
-  bchar_as_char
-  (tp_char* const a_ptr)noexcept->auto
-  {
-    using ret_type = dango::copy_cv<tp_char, char>*;
-
-    if(a_ptr)
-    {
-      return reinterpret_cast<ret_type>(a_ptr);
-    }
-    else
-    {
-      return static_cast<ret_type>(nullptr);
-    }
-  }
-
-  template
-  <dango::is_same_ignore_cv<char> tp_char>
-  constexpr auto
-  char_as_bchar
-  (tp_char* const a_ptr)noexcept->auto
-  {
-    using ret_type = dango::copy_cv<tp_char, dango::bchar>*;
-
-    if(a_ptr)
-    {
-      return reinterpret_cast<ret_type>(a_ptr);
-    }
-    else
-    {
-      return static_cast<ret_type>(nullptr);
-    }
-  }
-}
-
 /*** source_location ***/
 
 namespace
@@ -112,75 +70,6 @@ current
 noexcept->source_location
 {
   return source_location{ a_file, a_func, a_line };
-}
-
-/*** likely unlikely ***/
-
-namespace
-dango
-{
-  constexpr auto likely(bool)noexcept->bool;
-  constexpr auto unlikely(bool)noexcept->bool;
-}
-
-constexpr auto
-dango::
-likely
-(bool const a_cond)noexcept->bool
-{
-  return bool(__builtin_expect(a_cond, true));
-}
-
-constexpr auto
-dango::
-unlikely
-(bool const a_cond)noexcept->bool
-{
-  return bool(__builtin_expect(a_cond, false));
-}
-
-/*** assume ***/
-
-namespace
-dango
-{
-  constexpr void assume(bool)noexcept;
-}
-
-constexpr void
-dango::
-assume
-(bool const a_cond)noexcept
-{
-  if(dango::unlikely(!a_cond))
-  {
-    __builtin_unreachable();
-  }
-}
-
-/*** infinite_loop ***/
-
-namespace
-dango
-{
-  [[noreturn]] DANGO_EXPORT void infinite_loop()noexcept;
-}
-
-/*** trap_instruction ***/
-
-namespace
-dango
-{
-  [[noreturn]] void trap_instruction()noexcept;
-}
-
-inline void
-dango::
-trap_instruction()noexcept
-{
-  __builtin_trap();
-
-  dango::infinite_loop();
 }
 
 /*** dango_assert ***/

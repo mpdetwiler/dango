@@ -1009,7 +1009,7 @@ dango
   concept is_bool = dango::is_same_ignore_cv<tp_type, bool>;
 }
 
-/*** declval move forward ***/
+/*** declval ***/
 
 namespace
 dango
@@ -1021,54 +1021,6 @@ dango
   template
   <dango::is_void tp_type>
   constexpr void declval()noexcept;
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  constexpr auto move(tp_type&&)noexcept->dango::remove_ref<tp_type>&&;
-
-  template
-  <typename tp_type>
-  constexpr auto forward(dango::remove_ref<tp_type>&)noexcept->tp_type&&;
-
-  template
-  <typename tp_type>
-  constexpr auto forward(dango::remove_ref<tp_type>&&)noexcept->tp_type&&;
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-move
-(tp_type&& a_arg)noexcept->dango::remove_ref<tp_type>&&
-{
-  using ret_type = dango::remove_ref<tp_type>&&;
-
-  return static_cast<ret_type>(a_arg);
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-forward
-(dango::remove_ref<tp_type>& a_arg)noexcept->tp_type&&
-{
-  return static_cast<tp_type&&>(a_arg);
-}
-
-template
-<typename tp_type>
-constexpr auto
-dango::
-forward
-(dango::remove_ref<tp_type>&& a_arg)noexcept->tp_type&&
-{
-  return static_cast<tp_type&&>(a_arg);
 }
 
 /*** is_uint ***/
@@ -2199,54 +2151,6 @@ dango
   template
   <dango::is_void tp_type, dango::usize tp_default>
   inline constexpr dango::usize const alignof_with_void<tp_type, tp_default> = tp_default;
-}
-
-/*** in_constexpr_context ***/
-
-namespace dango
-{
-  constexpr auto in_constexpr_context()noexcept->bool;
-}
-
-constexpr auto
-dango::
-in_constexpr_context
-()noexcept->bool
-{
-  return __builtin_is_constant_evaluated();
-}
-
-/*** integer_seq ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_int, tp_int... tp_integers>
-  struct
-  integer_seq
-  final
-  {
-    DANGO_TAG_TYPE(integer_seq)
-  };
-
-#ifdef __clang__
-  template
-  <typename tp_int, tp_int tp_len>
-  using make_integer_seq = __make_integer_seq<dango::integer_seq, tp_int, tp_len>;
-#else
-  template
-  <typename tp_int, tp_int tp_len>
-  using make_integer_seq = dango::integer_seq<tp_int, __integer_pack(tp_len)...>;
-#endif
-
-  template
-  <dango::usize... tp_indices>
-  using index_seq = dango::integer_seq<dango::usize, tp_indices...>;
-
-  template
-  <dango::usize tp_len>
-  using make_index_seq = dango::make_integer_seq<dango::usize, tp_len>;
 }
 
 #endif // DANGO_TRAITS_HPP_INCLUDED
