@@ -1781,12 +1781,14 @@ dango::detail
 
   template
   <typename tp_type1, typename tp_type2>
-  concept is_both_void = dango::is_void<tp_type1> && dango::is_void<tp_type2>;
+  concept both_void = dango::is_void<tp_type1> && dango::is_void<tp_type2>;
+  template
+  <typename tp_type1, typename tp_type2>
+  concept neither_void = !dango::is_void<tp_type1> && !dango::is_void<tp_type2>;
 
   template
   <typename tp_type>
   concept is_destructible_exclude_array = !dango::is_array<tp_type> && dango::is_destructible<tp_type>;
-
   template
   <typename tp_type>
   concept is_noexcept_destructible_exclude_array =
@@ -1797,7 +1799,6 @@ dango::detail
   concept is_convertible_help =
     dango::detail::is_destructible_exclude_array<tp_to> &&
     requires{ dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()); };
-
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_help =
@@ -1809,7 +1810,6 @@ dango::detail
   concept is_convertible_ret_help =
     (dango::is_same_ignore_cv<tp_from, tp_to> && dango::detail::is_destructible_exclude_array<tp_to>) ||
     dango::detail::is_convertible_help<tp_from, tp_to>;
-
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_ret_help =
@@ -1823,22 +1823,26 @@ dango
   template
   <typename tp_from, typename tp_to>
   concept is_convertible =
-    dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_convertible_help<tp_from, tp_to>;
+    dango::detail::both_void<tp_from, tp_to> ||
+    (dango::detail::neither_void<tp_from, tp_to> && dango::detail::is_convertible_help<tp_from, tp_to>);
 
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible =
-    dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_noexcept_convertible_help<tp_from, tp_to>;
+    dango::detail::both_void<tp_from, tp_to> ||
+    (dango::detail::neither_void<tp_from, tp_to> && dango::detail::is_noexcept_convertible_help<tp_from, tp_to>);
 
   template
   <typename tp_from, typename tp_to>
   concept is_convertible_ret =
-    dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_convertible_ret_help<tp_from, tp_to>;
+    dango::detail::both_void<tp_from, tp_to> ||
+    (dango::detail::neither_void<tp_from, tp_to> && dango::detail::is_convertible_ret_help<tp_from, tp_to>);
 
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_ret =
-    dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_noexcept_convertible_ret_help<tp_from, tp_to>;
+    dango::detail::both_void<tp_from, tp_to> ||
+    (dango::detail::neither_void<tp_from, tp_to> && dango::detail::is_noexcept_convertible_ret_help<tp_from, tp_to>);
 }
 
 /*** is_callable is_noexcept_callable is_callable_ret is_noexcept_callable_ret ***/

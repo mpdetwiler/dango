@@ -202,16 +202,12 @@ cond_var_registry::
 notify_exit
 ()noexcept
 {
-  fprintf(stderr, "notify_exit\n");
-
   dango_crit(m_cond)
   {
     m_alive = false;
 
     if(m_waiting)
     {
-      fprintf(stderr, "notify_exit: m_waiting=true\n");
-
       m_cond.notify();
     }
   }
@@ -224,8 +220,6 @@ cond_var_registry::
 thread_func
 ()noexcept
 {
-  fprintf(stderr, "cond_var_registry::thread_func: ID=%p\n", reinterpret_cast<void*>(dango::uptr(dango::thread::self_ID())));
-
   do
   {
     if(wait_empty())
@@ -240,8 +234,6 @@ thread_func
     while(poll_bias(a_bias, a_timeout));
   }
   while(true);
-
-  fprintf(stderr, "cond_var_registry::thread_func: exiting\n");
 }
 
 void
@@ -287,11 +279,7 @@ wait_empty
 
       m_waiting = true;
 
-      fprintf(stderr, "wait_empty: sleeping...\n");
-
       a_crit.wait();
-
-      fprintf(stderr, "wait_empty: awakened\n");
 
       m_waiting = false;
     }
@@ -416,8 +404,6 @@ start_thread
 ()noexcept->dango::thread
 {
   auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
-
-  fprintf(stderr, "cond_var_registry_thread::start_thread(): registry=%p\n", static_cast<void*>(&a_registry));
 
   try
   {
@@ -1853,7 +1839,7 @@ timed_wait
 namespace
 dango::detail
 {
-  //DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
+  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
 }
 
 auto

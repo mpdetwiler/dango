@@ -96,10 +96,10 @@ dango
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_dango_operator_equals<tp_rhs const&, tp_lhs const&> && !dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&>)
+  requires(!dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_equals<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   operator ==
-  (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::has_noexcept_dango_operator_equals<tp_lhs const&, tp_rhs const&>)->bool
+  (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::has_noexcept_dango_operator_equals<tp_rhs const&, tp_lhs const&>)->bool
   {
     return a_rhs.dango_operator_equals(a_lhs);
   }
@@ -116,10 +116,10 @@ dango
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_dango_operator_equals<tp_rhs const&, tp_lhs const&> && !dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&>)
+  requires(!dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_equals<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   operator !=
-  (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::has_noexcept_dango_operator_equals<tp_lhs const&, tp_rhs const&>)->bool
+  (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::has_noexcept_dango_operator_equals<tp_rhs const&, tp_lhs const&>)->bool
   {
     return !a_rhs.dango_operator_equals(a_lhs);
   }

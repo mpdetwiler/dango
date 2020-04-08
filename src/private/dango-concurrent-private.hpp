@@ -49,7 +49,7 @@ dango::detail
 
     template
     <dango::is_object tp_type>
-    constexpr auto launder_get()const noexcept->tp_type*{ return m_storage.launder_get<tp_type>(); }
+    constexpr auto launder_get()const noexcept->tp_type*;
   private:
     dango::aligned_storage<sizeof(void*), alignof(void*)> m_storage;
   public:
@@ -73,7 +73,7 @@ dango::detail
 
     template
     <dango::is_object tp_type>
-    constexpr auto launder_get()const noexcept->tp_type*{ return m_storage.launder_get<tp_type>(); }
+    constexpr auto launder_get()const noexcept->tp_type*;
   private:
     dango::aligned_storage<sizeof(void*), alignof(void*)> m_storage;
   public:
