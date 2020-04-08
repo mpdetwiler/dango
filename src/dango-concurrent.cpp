@@ -390,12 +390,6 @@ pop_internal
 
 /*** cond_var_registry_thread ***/
 
-namespace
-dango::detail
-{
-  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
-}
-
 auto
 dango::
 detail::
@@ -403,7 +397,7 @@ cond_var_registry_thread::
 start_thread
 ()noexcept->dango::thread
 {
-  constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
+  static constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
 
   try
   {
@@ -413,6 +407,12 @@ start_thread
   {
     dango_unreachable_terminate_msg(u8"cond_var watcher-thread creation failed");
   }
+}
+
+namespace
+dango::detail
+{
+  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
 }
 
 #include "dango-concurrent-private.hpp"
@@ -470,8 +470,8 @@ detail::
 suspend_bias
 ()noexcept->dango::tick_count_type
 {
-  static dango::spin_mutex s_lock{ };
-  static auto s_prev = dango::tick_count_type(0);
+  static constinit dango::spin_mutex s_lock{ };
+  static constinit auto s_prev = dango::tick_count_type(0);
 
   dango::tick_count_type a_result;
 
@@ -507,7 +507,10 @@ private:
     CONTENDED
   };
 public:
-  constexpr mutex_impl()noexcept;
+  constexpr
+  mutex_impl()noexcept:
+  m_state{ state::UNLOCKED }
+  { }
   ~mutex_impl()noexcept = default;
   void lock()noexcept;
   auto try_lock()noexcept->bool;
@@ -520,17 +523,6 @@ public:
   DANGO_IMMOBILE(mutex_impl)
 };
 
-constexpr
-dango::
-detail::
-mutex_base::
-mutex_impl::
-mutex_impl()noexcept:
-m_state{ state::UNLOCKED }
-{
-
-}
-
 auto
 dango::
 detail::
@@ -538,7 +530,9 @@ mutex_base::
 get
 ()noexcept->mutex_impl*
 {
-  return static_cast<mutex_impl*>(m_storage.get());
+  using type = mutex_impl;
+
+  return m_storage.launder_get<type>();
 }
 
 void
@@ -625,7 +619,8 @@ private:
   using mutex_ptr = dango::detail::mutex_base::mutex_impl*;
   using seq_type = dango::detail::futex_type;
 public:
-  constexpr cond_var_impl()noexcept:
+  constexpr
+  cond_var_impl()noexcept:
   m_seq{ seq_type(0) },
   m_lock{ },
   m_mutex{ dango::null },
@@ -655,7 +650,9 @@ cond_var_base::
 get
 ()noexcept->cond_var_impl*
 {
-  return static_cast<cond_var_impl*>(m_storage.get());
+  using type = cond_var_impl;
+
+  return m_storage.launder_get<type>();
 }
 
 void
@@ -718,7 +715,7 @@ wait
     return;
   }
 
-  constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
+  static constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
 
   c_registry.regist(this, a_timeout);
 
@@ -756,8 +753,6 @@ notify_all
 namespace
 {
   auto spin_relax(dango::uint&)noexcept->bool;
-
-  //constexpr auto const c_spin_count_init = dango::uint(128);
 }
 
 void
@@ -768,11 +763,11 @@ mutex_impl::
 lock
 ()noexcept
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
+  using dango::mem_order::acquire;
 
   state_type a_last;
 
-  auto a_count = c_spin_count_init;
+  auto a_count = dango::detail::c_spin_count_init;
 
   do
   {
@@ -811,7 +806,7 @@ mutex_impl::
 try_lock
 ()noexcept->bool
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
+  using dango::mem_order::acquire;
 
   auto a_last = dango::atomic_load<acquire>(&m_state);
 
@@ -831,11 +826,11 @@ mutex_impl::
 relock
 ()noexcept
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
+  using dango::mem_order::acquire;
 
   state_type a_last;
 
-  auto a_count = c_spin_count_init;
+  auto a_count = dango::detail::c_spin_count_init;
 
   do
   {
@@ -876,7 +871,7 @@ mutex_impl::
 unlock
 ()noexcept
 {
-  constexpr auto const release = dango::mem_order::release;
+  using dango::mem_order::release;
 
   auto const a_last = dango::atomic_exchange<release>(&m_state, state::UNLOCKED);
 
@@ -911,7 +906,7 @@ cond_var_impl::
 notify
 ()noexcept
 {
-  constexpr auto const relaxed = dango::mem_order::relaxed;
+  using dango::mem_order::relaxed;
 
   dango_crit(m_lock)
   {
@@ -934,7 +929,7 @@ cond_var_impl::
 notify_all
 ()noexcept
 {
-  constexpr auto const relaxed = dango::mem_order::relaxed;
+  using dango::mem_order::relaxed;
 
   mutex_ptr a_mutex;
 
@@ -963,7 +958,7 @@ cond_var_impl::
 wait
 (mutex_ptr const a_mutex)noexcept
 {
-  constexpr auto const relaxed = dango::mem_order::relaxed;
+  using dango::mem_order::relaxed;
 
   dango_assert(a_mutex != dango::null);
 
@@ -988,7 +983,7 @@ cond_var_impl::
 wait
 (mutex_ptr const a_mutex, dango::tick_count_type const a_interval)noexcept
 {
-  constexpr auto const relaxed = dango::mem_order::relaxed;
+  using dango::mem_order::relaxed;
 
   dango_assert(a_mutex != dango::null);
 
@@ -1186,7 +1181,9 @@ mutex_base::
 get
 ()noexcept->mutex_impl*
 {
-  return static_cast<mutex_impl*>(m_storage.get());
+  using type = mutex_impl;
+
+  return m_storage.launder_get<type>();
 }
 
 void
@@ -1292,7 +1289,9 @@ cond_var_base::
 get
 ()noexcept->cond_var_impl*
 {
-  return static_cast<cond_var_impl*>(m_storage.get());
+  using type = cond_var_impl;
+
+  return m_storage.launder_get<type>();
 }
 
 void
@@ -1355,9 +1354,9 @@ wait
     return;
   }
 
-  constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
+  static constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
 
-  constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
+  static constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
 
   c_manager.activate(a_timeout);
 
@@ -1392,6 +1391,211 @@ notify_all
   init();
 
   get()->notify_all();
+}
+
+/*** mutex_impl ***/
+
+dango::
+detail::
+mutex_base::
+mutex_impl::
+mutex_impl
+()noexcept:
+m_lock{ }
+{
+  dango::detail::srw_lock_init(&m_lock);
+}
+
+void
+dango::
+detail::
+mutex_base::
+mutex_impl::
+lock
+()noexcept
+{
+  dango::detail::srw_lock_acquire(&m_lock);
+}
+
+auto
+dango::
+detail::
+mutex_base::
+mutex_impl::
+try_lock
+()noexcept->bool
+{
+  return dango::detail::srw_lock_try_acquire(&m_lock);
+}
+
+void
+dango::
+detail::
+mutex_base::
+mutex_impl::
+unlock
+()noexcept
+{
+  dango::detail::srw_lock_release(&m_lock);
+}
+
+auto
+dango::
+detail::
+mutex_base::
+mutex_impl::
+lock_ptr
+()noexcept->lock_type*
+{
+  return &m_lock;
+}
+
+/*** cond_var_impl ***/
+
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+cond_var_impl
+()noexcept:
+m_cond{ }
+{
+  dango::detail::condition_variable_init(&m_cond);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+notify
+()noexcept
+{
+  dango::detail::condition_variable_wake(&m_cond);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+notify_all
+()noexcept
+{
+  dango::detail::condition_variable_wake_all(&m_cond);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+wait
+(mutex_ptr const a_mutex)noexcept
+{
+  dango_assert(a_mutex != dango::null);
+
+  dango::detail::condition_variable_wait(&m_cond, a_mutex->lock_ptr());
+}
+
+void
+dango::
+detail::
+cond_var_base::
+cond_var_impl::
+wait
+(mutex_ptr const a_mutex, dango::tick_count_type const a_interval)noexcept
+{
+  dango_assert(a_mutex != dango::null);
+
+  dango::detail::condition_variable_wait(&m_cond, a_mutex->lock_ptr(), a_interval);
+}
+
+/*** static ***/
+
+namespace
+{
+  auto
+  time_spec_from_perf
+  (dango::tick_count_type const a_count, dango::tick_count_type const a_freq)noexcept->time_spec
+  {
+    using tc64 = dango::tick_count_type;
+
+    static constexpr auto const c_billion = tc64(1'000'000'000);
+
+    auto const a_div = a_count / a_freq;
+    auto const a_mod = a_count % a_freq;
+
+    return time_spec{ a_div, (a_mod * c_billion) / a_freq };
+  }
+
+  void
+  time_spec_add
+  (time_spec& a_spec, time_spec const& a_add)noexcept
+  {
+    using tc64 = dango::tick_count_type;
+
+    static constexpr auto const c_billion = tc64(1'000'000'000);
+
+    auto& [a_s1, a_n1] = a_spec;
+
+    auto const& [a_s2, a_n2] = a_add;
+
+    dango_assert(a_n1 < c_billion);
+    dango_assert(a_n2 < c_billion);
+
+    a_s1 += a_s2;
+    a_n1 += a_n2;
+
+    auto const a_overflow = tc64(a_n1 >= c_billion);
+
+    a_s1 += a_overflow;
+    a_n1 -= a_overflow * c_billion;
+
+    dango_assert(a_n1 < c_billion);
+  }
+
+  auto
+  tick_count_help
+  (dango::tick_count_type* const a_suspend_bias)noexcept->dango::tick_count_type
+  {
+    using tc64 = dango::tick_count_type;
+
+    static dango::spin_mutex s_lock{ };
+    static time_spec s_current{ tc64(0), tc64(0) };
+    static auto s_init_bias = tc64(0);
+    static auto s_prev_count = dango::detail::perf_count_suspend_bias(s_init_bias);
+
+    auto const a_freq = dango::detail::perf_freq();
+
+    tc64 a_sec;
+    tc64 a_nsec;
+    tc64 a_bias;
+
+    dango_crit(s_lock)
+    {
+      auto const a_count = dango::detail::perf_count_suspend_bias(a_bias);
+      auto const a_count_delta = a_count - s_prev_count;
+
+      s_prev_count = a_count;
+
+      auto const a_delta = time_spec_from_perf(a_count_delta, a_freq);
+
+      time_spec_add(s_current, a_delta);
+
+      a_sec = s_current.first();
+      a_nsec = s_current.second();
+    }
+
+    dango_assert(a_bias >= s_init_bias);
+
+    if(a_suspend_bias)
+    {
+      (*a_suspend_bias) = (a_bias - s_init_bias) / tc64(10'000);
+    }
+
+    return (a_sec * tc64(1'000)) + (a_nsec / tc64(1'000'000));
+  }
 }
 
 /*** windows_timer_res_manager ***/
@@ -1639,7 +1843,7 @@ windows_timer_res_daemon::
 start_thread
 ()noexcept->dango::thread
 {
-  constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
+  static constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
 
   try
   {
@@ -1657,210 +1861,6 @@ dango::detail
   DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
 }
 
-/*** mutex_impl ***/
-
-dango::
-detail::
-mutex_base::
-mutex_impl::
-mutex_impl
-()noexcept:
-m_lock{ }
-{
-  dango::detail::srw_lock_init(&m_lock);
-}
-
-void
-dango::
-detail::
-mutex_base::
-mutex_impl::
-lock
-()noexcept
-{
-  dango::detail::srw_lock_acquire(&m_lock);
-}
-
-auto
-dango::
-detail::
-mutex_base::
-mutex_impl::
-try_lock
-()noexcept->bool
-{
-  return dango::detail::srw_lock_try_acquire(&m_lock);
-}
-
-void
-dango::
-detail::
-mutex_base::
-mutex_impl::
-unlock
-()noexcept
-{
-  dango::detail::srw_lock_release(&m_lock);
-}
-
-auto
-dango::
-detail::
-mutex_base::
-mutex_impl::
-lock_ptr
-()noexcept->lock_type*
-{
-  return &m_lock;
-}
-
-/*** cond_var_impl ***/
-
-dango::
-detail::
-cond_var_base::
-cond_var_impl::
-cond_var_impl
-()noexcept:
-m_cond{ }
-{
-  dango::detail::condition_variable_init(&m_cond);
-}
-
-void
-dango::
-detail::
-cond_var_base::
-cond_var_impl::
-notify
-()noexcept
-{
-  dango::detail::condition_variable_wake(&m_cond);
-}
-
-void
-dango::
-detail::
-cond_var_base::
-cond_var_impl::
-notify_all
-()noexcept
-{
-  dango::detail::condition_variable_wake_all(&m_cond);
-}
-
-void
-dango::
-detail::
-cond_var_base::
-cond_var_impl::
-wait
-(mutex_ptr const a_mutex)noexcept
-{
-  dango_assert(a_mutex != dango::null);
-
-  dango::detail::condition_variable_wait(&m_cond, a_mutex->lock_ptr());
-}
-
-void
-dango::
-detail::
-cond_var_base::
-cond_var_impl::
-wait
-(mutex_ptr const a_mutex, dango::tick_count_type const a_interval)noexcept
-{
-  dango_assert(a_mutex != dango::null);
-
-  dango::detail::condition_variable_wait(&m_cond, a_mutex->lock_ptr(), a_interval);
-}
-
-/*** static ***/
-
-namespace
-{
-  auto
-  time_spec_from_perf
-  (dango::tick_count_type const a_count, dango::tick_count_type const a_freq)noexcept->time_spec
-  {
-    using tc64 = dango::tick_count_type;
-
-    constexpr auto const c_billion = tc64(1'000'000'000);
-
-    auto const a_div = a_count / a_freq;
-    auto const a_mod = a_count % a_freq;
-
-    return time_spec{ a_div, (a_mod * c_billion) / a_freq };
-  }
-
-  void
-  time_spec_add
-  (time_spec& a_spec, time_spec const& a_add)noexcept
-  {
-    using tc64 = dango::tick_count_type;
-
-    constexpr auto const c_billion = tc64(1'000'000'000);
-
-    auto& [a_s1, a_n1] = a_spec;
-
-    auto const& [a_s2, a_n2] = a_add;
-
-    dango_assert(a_n1 < c_billion);
-    dango_assert(a_n2 < c_billion);
-
-    a_s1 += a_s2;
-    a_n1 += a_n2;
-
-    auto const a_overflow = tc64(a_n1 >= c_billion);
-
-    a_s1 += a_overflow;
-    a_n1 -= a_overflow * c_billion;
-
-    dango_assert(a_n1 < c_billion);
-  }
-
-  auto
-  tick_count_help
-  (dango::tick_count_type* const a_suspend_bias)noexcept->dango::tick_count_type
-  {
-    using tc64 = dango::tick_count_type;
-
-    static dango::spin_mutex s_lock{ };
-    static time_spec s_current{ tc64(0), tc64(0) };
-    static auto s_init_bias = tc64(0);
-    static auto s_prev_count = dango::detail::perf_count_suspend_bias(s_init_bias);
-
-    auto const a_freq = dango::detail::perf_freq();
-
-    tc64 a_sec;
-    tc64 a_nsec;
-    tc64 a_bias;
-
-    dango_crit(s_lock)
-    {
-      auto const a_count = dango::detail::perf_count_suspend_bias(a_bias);
-      auto const a_count_delta = a_count - s_prev_count;
-
-      s_prev_count = a_count;
-
-      auto const a_delta = time_spec_from_perf(a_count_delta, a_freq);
-
-      time_spec_add(s_current, a_delta);
-
-      a_sec = s_current.first();
-      a_nsec = s_current.second();
-    }
-
-    dango_assert(a_bias >= s_init_bias);
-
-    if(a_suspend_bias)
-    {
-      (*a_suspend_bias) = (a_bias - s_init_bias) / tc64(10'000);
-    }
-
-    return (a_sec * tc64(1'000)) + (a_nsec / tc64(1'000'000));
-  }
-}
 
 #endif // _WIN32
 

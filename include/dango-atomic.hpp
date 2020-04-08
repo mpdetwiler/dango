@@ -5,7 +5,7 @@ namespace
 dango
 {
   enum class
-  mem_order:
+  memory_order:
   dango::builtin::sint
   {
     relaxed = __ATOMIC_RELAXED,
@@ -14,28 +14,38 @@ dango
     acq_rel = __ATOMIC_ACQ_REL,
     seq_cst = __ATOMIC_SEQ_CST
   };
+
+  namespace
+  mem_order
+  {
+    inline constexpr auto const relaxed = dango::memory_order::relaxed;
+    inline constexpr auto const acquire = dango::memory_order::acquire;
+    inline constexpr auto const release = dango::memory_order::release;
+    inline constexpr auto const acq_rel = dango::memory_order::acq_rel;
+    inline constexpr auto const seq_cst = dango::memory_order::seq_cst;
+  }
 }
 
 namespace
 dango::detail
 {
-  constexpr auto is_valid_mem_order(dango::mem_order)noexcept->bool;
+  constexpr auto is_valid_mem_order(dango::memory_order)noexcept->bool;
 }
 
 constexpr auto
 dango::
 detail::
 is_valid_mem_order
-(dango::mem_order const a_order)noexcept->bool
+(dango::memory_order const a_order)noexcept->bool
 {
   switch(a_order)
   {
     default: return false;
-    case dango::mem_order::relaxed: break;
-    case dango::mem_order::acquire: break;
-    case dango::mem_order::release: break;
-    case dango::mem_order::acq_rel: break;
-    case dango::mem_order::seq_cst: break;
+    case dango::memory_order::relaxed: break;
+    case dango::memory_order::acquire: break;
+    case dango::memory_order::release: break;
+    case dango::memory_order::acq_rel: break;
+    case dango::memory_order::seq_cst: break;
   }
 
   return true;
@@ -93,7 +103,7 @@ namespace
 dango
 {
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, dango::is_atomic tp_type>
+  <dango::memory_order tp_order = dango::memory_order::seq_cst, dango::is_atomic tp_type>
   auto
   atomic_load(tp_type const* const a_addr)noexcept->dango::remove_volatile<tp_type>
   {
@@ -101,9 +111,9 @@ dango
 
     static_assert
     (
-      tp_order == dango::mem_order::relaxed ||
-      tp_order == dango::mem_order::acquire ||
-      tp_order == dango::mem_order::seq_cst
+      tp_order == dango::memory_order::relaxed ||
+      tp_order == dango::memory_order::acquire ||
+      tp_order == dango::memory_order::seq_cst
     );
 
     dango::remove_volatile<tp_type> a_ret;
@@ -114,7 +124,7 @@ dango
   }
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, dango::is_atomic tp_type, typename tp_arg>
+  <dango::memory_order tp_order = dango::memory_order::seq_cst, dango::is_atomic tp_type, typename tp_arg>
   requires
   (
     !dango::is_const<tp_type> &&
@@ -130,9 +140,9 @@ dango
 
     static_assert
     (
-      tp_order == dango::mem_order::relaxed ||
-      tp_order == dango::mem_order::release ||
-      tp_order == dango::mem_order::seq_cst
+      tp_order == dango::memory_order::relaxed ||
+      tp_order == dango::memory_order::release ||
+      tp_order == dango::memory_order::seq_cst
     );
 
     dango::remove_volatile<tp_type> a_new_value{ dango::forward<tp_arg>(a_arg) };
@@ -141,7 +151,7 @@ dango
   }
 
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst, dango::is_atomic tp_type, typename tp_arg>
+  <dango::memory_order tp_order = dango::memory_order::seq_cst, dango::is_atomic tp_type, typename tp_arg>
   requires
   (
     !dango::is_const<tp_type> &&
@@ -167,8 +177,8 @@ dango
 
   template
   <
-    dango::mem_order tp_success = dango::mem_order::seq_cst,
-    dango::mem_order tp_failure = dango::mem_order::seq_cst,
+    dango::memory_order tp_success = dango::memory_order::seq_cst,
+    dango::memory_order tp_failure = dango::memory_order::seq_cst,
     bool tp_weak = false,
     dango::is_atomic tp_type,
     typename tp_expected_type,
@@ -191,9 +201,9 @@ dango
 
     static_assert
     (
-      tp_failure == dango::mem_order::relaxed ||
-      tp_failure == dango::mem_order::acquire ||
-      tp_failure == dango::mem_order::seq_cst
+      tp_failure == dango::memory_order::relaxed ||
+      tp_failure == dango::memory_order::acquire ||
+      tp_failure == dango::memory_order::seq_cst
     );
 
     dango::remove_volatile<tp_type> a_new_value{ dango::forward<tp_arg>(a_arg) };
@@ -215,7 +225,7 @@ dango
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst, dango::is_atomic tp_type, typename tp_arg> \
+<dango::memory_order tp_order = dango::memory_order::seq_cst, dango::is_atomic tp_type, typename tp_arg> \
 requires \
 ( \
   !dango::is_const<tp_type> && dango::is_int<tp_type> && \
@@ -252,7 +262,7 @@ dango
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst, dango::is_atomic tp_type> \
+<dango::memory_order tp_order = dango::memory_order::seq_cst, dango::is_atomic tp_type> \
 requires(!dango::is_const<tp_type> && dango::is_object_ptr<tp_type>) \
 auto \
 atomic_##name \
@@ -334,21 +344,21 @@ public:
   explicit constexpr atomic(value_type)noexcept;
   ~atomic()noexcept = default;
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
+  <dango::memory_order tp_order = dango::memory_order::seq_cst>
   auto load()const noexcept->value_type;
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
+  <dango::memory_order tp_order = dango::memory_order::seq_cst>
   void store(value_type)noexcept;
   template
-  <dango::mem_order tp_order = dango::mem_order::seq_cst>
+  <dango::memory_order tp_order = dango::memory_order::seq_cst>
   auto exchange(value_type)noexcept->value_type;
   template
-  <dango::mem_order tp_success = dango::mem_order::seq_cst, dango::mem_order tp_failure = dango::mem_order::seq_cst>
+  <dango::memory_order tp_success = dango::memory_order::seq_cst, dango::memory_order tp_failure = dango::memory_order::seq_cst>
   auto compare_exchange(value_type&, value_type)noexcept->bool;
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst> \
+<dango::memory_order tp_order = dango::memory_order::seq_cst> \
 requires(dango::is_int<value_type>) \
 auto name(value_type const a_data)noexcept->value_type \
 { \
@@ -371,7 +381,7 @@ auto name(value_type const a_data)noexcept->value_type \
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
 template \
-<dango::mem_order tp_order = dango::mem_order::seq_cst> \
+<dango::memory_order tp_order = dango::memory_order::seq_cst> \
 requires(dango::is_object_ptr<value_type>) \
 auto name(dango::ssize const a_data)noexcept->value_type \
 { \
@@ -408,7 +418,7 @@ m_data{ a_data }
 template
 <dango::atomic_constraint_spec tp_type>
 template
-<dango::mem_order tp_order>
+<dango::memory_order tp_order>
 auto
 dango::
 atomic<tp_type>::
@@ -421,7 +431,7 @@ load
 template
 <dango::atomic_constraint_spec tp_type>
 template
-<dango::mem_order tp_order>
+<dango::memory_order tp_order>
 void
 dango::
 atomic<tp_type>::
@@ -434,7 +444,7 @@ store
 template
 <dango::atomic_constraint_spec tp_type>
 template
-<dango::mem_order tp_order>
+<dango::memory_order tp_order>
 auto
 dango::
 atomic<tp_type>::
@@ -447,7 +457,7 @@ exchange
 template
 <dango::atomic_constraint_spec tp_type>
 template
-<dango::mem_order tp_success, dango::mem_order tp_failure>
+<dango::memory_order tp_success, dango::memory_order tp_failure>
 auto
 dango::
 atomic<tp_type>::

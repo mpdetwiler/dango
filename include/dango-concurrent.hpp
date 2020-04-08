@@ -2079,8 +2079,8 @@ thread::
 create
 (bool const a_daemon, tp_func&& a_thread_func, tp_args&&... a_args)noexcept(false)->dango::thread
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
-  constexpr auto const release = dango::mem_order::release;
+  using dango::mem_order::acquire;
+  using dango::mem_order::release;
 
   using run_type = runnable<dango::decay<tp_func>, dango::decay<tp_args>...>;
 
@@ -2260,7 +2260,7 @@ cond_var_registry_thread::
 ~cond_var_registry_thread
 ()noexcept
 {
-  constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
+  static constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
 
   c_registry.notify_exit();
 
@@ -2372,7 +2372,7 @@ windows_timer_res_daemon::
 ~windows_timer_res_daemon
 ()noexcept
 {
-  constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
+  static constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
 
   c_manager.notify_exit();
 

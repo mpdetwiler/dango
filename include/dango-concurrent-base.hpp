@@ -102,7 +102,7 @@ exec_once::
 try_acquire
 ()noexcept->bool
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
+  using dango::mem_order::acquire;
 
   if(dango::likely(m_state.load<acquire>() == state::EXECUTED))
   {
@@ -141,7 +141,7 @@ exec_once::
 release
 (bool const a_success)noexcept
 {
-  constexpr auto const release = dango::mem_order::release;
+  using dango::mem_order::release;
 
   m_state.store<release>(a_success ? state::EXECUTED : state::INITIAL);
 }
@@ -220,7 +220,7 @@ exec_once::
 has_executed
 ()const noexcept->bool
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
+  using dango::mem_order::acquire;
 
   auto a_count = detail::c_spin_count_init;
 
@@ -251,7 +251,7 @@ exec_once::
 reset
 ()noexcept
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
+  using dango::mem_order::acquire;
 
   if(m_state.load<acquire>() == state::INITIAL)
   {
@@ -362,7 +362,7 @@ spin_mutex::
 acquire
 ()noexcept->spin_mutex*
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
+  using dango::mem_order::acquire;
 
   auto a_count = detail::c_spin_count_init;
 
@@ -383,7 +383,7 @@ spin_mutex::
 try_acquire
 ()noexcept->spin_mutex*
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
+  using dango::mem_order::acquire;
 
   if(m_locked.load<acquire>())
   {

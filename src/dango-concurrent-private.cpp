@@ -42,8 +42,8 @@ create_thread
 )
 noexcept->bool
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
-  constexpr auto const release = dango::mem_order::release;
+  using dango::mem_order::acquire;
+  using dango::mem_order::release;
 
   dango::atomic<bool> a_starting{ true };
 
@@ -195,7 +195,7 @@ detail::
 futex_wake_requeue
 (dango::detail::futex_type* const a_futex, dango::detail::futex_type* const a_dest)noexcept
 {
-  constexpr auto const c_all = dango::uptr(dango::integer::MAX_VAL<linux_int>);
+  static constexpr auto const c_all = dango::uptr(dango::integer::MAX_VAL<linux_int>);
 
   sys_futex
   (
@@ -244,8 +244,8 @@ namespace
   {
     using tc64 = dango::tick_count_type;
 
-    constexpr auto const c_mul = tc64(1'000);
-    constexpr auto const c_div = tc64(1'000'000);
+    static constexpr auto const c_mul = tc64(1'000);
+    static constexpr auto const c_div = tc64(1'000'000);
 
     ::timespec a_spec;
 
@@ -321,8 +321,8 @@ create_thread
 )
 noexcept->bool
 {
-  constexpr auto const acquire = dango::mem_order::acquire;
-  constexpr auto const release = dango::mem_order::release;
+  using dango::mem_order::acquire;
+  using dango::mem_order::release;
 
   dango::atomic<bool> a_starting{ true };
 
@@ -391,7 +391,7 @@ detail::
 perf_freq
 ()noexcept->dango::tick_count_type
 {
-  constexpr auto const c_impl =
+  static constexpr auto const c_impl =
   []()noexcept->dango::tick_count_type
   {
     LARGE_INTEGER a_result;
@@ -526,7 +526,7 @@ condition_variable_wait
 
   dango_assert(a_interval >= tc64(0));
 
-  constexpr auto const c_max_interval = tc64(DWORD(INFINITE) - DWORD(1));
+  static constexpr auto const c_max_interval = tc64(DWORD(INFINITE) - DWORD(1));
 
   auto const a_spec = dango::min(a_interval, c_max_interval);
 
