@@ -17,7 +17,7 @@ namespace
 
   auto tick_count_help(clockid_t)noexcept->dango::tick_count_type;
 
-  using linux_int = dango::shared::futex_type;
+  using linux_int = dango::detail::futex_type;
 
   auto
   sys_futex
@@ -34,10 +34,10 @@ namespace
 
 auto
 dango::
-shared::
+detail::
 create_thread
 (
-  shared::thread_func_type const a_thread_func,
+  dango::detail::thread_func_type const a_thread_func,
   void* const a_thread_data
 )
 noexcept->bool
@@ -82,11 +82,11 @@ noexcept->bool
     dango_assert(a_result == 0);
   }
 
-  auto a_count = detail::c_spin_count_init;
+  auto a_count = dango::detail::c_spin_count_init;
 
   while(a_starting.load<acquire>())
   {
-    detail::spin_yield(a_count);
+    dango::detail::spin_yield(a_count);
   }
 
   return true;
@@ -102,7 +102,7 @@ thread_yield
 
 auto
 dango::
-shared::
+detail::
 tick_count_monotonic
 ()noexcept->dango::tick_count_type
 {
@@ -111,7 +111,7 @@ tick_count_monotonic
 
 auto
 dango::
-shared::
+detail::
 tick_count_boottime
 ()noexcept->dango::tick_count_type
 {
@@ -120,9 +120,9 @@ tick_count_boottime
 
 void
 dango::
-shared::
+detail::
 futex_wait
-(shared::futex_type* const a_futex, shared::futex_type const a_expected)noexcept
+(dango::detail::futex_type* const a_futex, dango::detail::futex_type const a_expected)noexcept
 {
   sys_futex
   (
@@ -137,11 +137,11 @@ futex_wait
 
 void
 dango::
-shared::
+detail::
 futex_wait
 (
-  shared::futex_type* const a_futex,
-  shared::futex_type const a_expected,
+  dango::detail::futex_type* const a_futex,
+  dango::detail::futex_type const a_expected,
   dango::tick_count_type const a_interval
 )
 noexcept
@@ -174,9 +174,9 @@ noexcept
 
 void
 dango::
-shared::
+detail::
 futex_wake
-(shared::futex_type* const a_futex)noexcept
+(dango::detail::futex_type* const a_futex)noexcept
 {
   sys_futex
   (
@@ -191,9 +191,9 @@ futex_wake
 
 void
 dango::
-shared::
+detail::
 futex_wake_requeue
-(shared::futex_type* const a_futex, shared::futex_type* const a_dest)noexcept
+(dango::detail::futex_type* const a_futex, dango::detail::futex_type* const a_dest)noexcept
 {
   constexpr auto const c_all = dango::uptr(dango::integer::MAX_VAL<linux_int>);
 
@@ -295,10 +295,10 @@ namespace
 #include <windows.h>
 #include <process.h>
 
-static_assert(sizeof(dango::shared::srw_lock_storage) == sizeof(::SRWLOCK));
-static_assert(alignof(dango::shared::srw_lock_storage) == alignof(::SRWLOCK));
-static_assert(sizeof(dango::shared::condition_variable_storage) == sizeof(::CONDITION_VARIABLE));
-static_assert(alignof(dango::shared::condition_variable_storage) == alignof(::CONDITION_VARIABLE));
+static_assert(sizeof(dango::detail::srw_lock_storage) == sizeof(::SRWLOCK));
+static_assert(alignof(dango::detail::srw_lock_storage) == alignof(::SRWLOCK));
+static_assert(sizeof(dango::detail::condition_variable_storage) == sizeof(::CONDITION_VARIABLE));
+static_assert(alignof(dango::detail::condition_variable_storage) == alignof(::CONDITION_VARIABLE));
 
 namespace
 {
@@ -313,10 +313,10 @@ namespace
 
 auto
 dango::
-shared::
+detail::
 create_thread
 (
-  shared::thread_func_type const a_thread_func,
+  dango::detail::thread_func_type const a_thread_func,
   void* const a_thread_data
 )
 noexcept->bool
@@ -367,11 +367,11 @@ noexcept->bool
     dango_assert(a_close);
   }
 
-  auto a_count = detail::c_spin_count_init;
+  auto a_count = dango::detail::c_spin_count_init;
 
   while(a_starting.load<acquire>())
   {
-    detail::spin_yield(a_count);
+    dango::detail::spin_yield(a_count);
   }
 
   return true;
@@ -387,7 +387,7 @@ thread_yield
 
 auto
 dango::
-shared::
+detail::
 perf_freq
 ()noexcept->dango::tick_count_type
 {
@@ -408,7 +408,7 @@ perf_freq
 
 auto
 dango::
-shared::
+detail::
 perf_count_suspend_bias
 (dango::tick_count_type& a_suspend_bias)noexcept->dango::tick_count_type
 {
@@ -434,7 +434,7 @@ perf_count_suspend_bias
 
 void
 dango::
-shared::
+detail::
 srw_lock_init
 (void* const a_storage)noexcept
 {
@@ -445,7 +445,7 @@ srw_lock_init
 
 void
 dango::
-shared::
+detail::
 srw_lock_acquire
 (void* const a_storage)noexcept
 {
@@ -454,7 +454,7 @@ srw_lock_acquire
 
 auto
 dango::
-shared::
+detail::
 srw_lock_try_acquire
 (void* const a_storage)noexcept->bool
 {
@@ -465,7 +465,7 @@ srw_lock_try_acquire
 
 void
 dango::
-shared::
+detail::
 srw_lock_release
 (void* const a_storage)noexcept
 {
@@ -474,7 +474,7 @@ srw_lock_release
 
 void
 dango::
-shared::
+detail::
 condition_variable_init
 (void* const a_storage)noexcept
 {
@@ -485,7 +485,7 @@ condition_variable_init
 
 void
 dango::
-shared::
+detail::
 condition_variable_wake
 (void* const a_storage)noexcept
 {
@@ -494,7 +494,7 @@ condition_variable_wake
 
 void
 dango::
-shared::
+detail::
 condition_variable_wake_all
 (void* const a_storage)noexcept
 {
@@ -503,7 +503,7 @@ condition_variable_wake_all
 
 void
 dango::
-shared::
+detail::
 condition_variable_wait
 (void* const a_storage, void* const a_lock_storage)noexcept
 {
@@ -518,7 +518,7 @@ condition_variable_wait
 
 void
 dango::
-shared::
+detail::
 condition_variable_wait
 (void* const a_storage, void* const a_lock_storage, dango::tick_count_type const a_interval)noexcept
 {
@@ -543,7 +543,7 @@ condition_variable_wait
 
 void
 dango::
-shared::
+detail::
 time_begin_period
 ()noexcept
 {
@@ -561,7 +561,7 @@ time_begin_period
 
 void
 dango::
-shared::
+detail::
 time_end_period
 ()noexcept
 {
@@ -644,3 +644,4 @@ namespace
 }
 
 #endif // _WIN32
+
