@@ -2225,6 +2225,8 @@ public:
 
 /*** cond_var_registry_thread ***/
 
+#include <cstdio>
+
 class
 dango::
 detail::
@@ -2250,7 +2252,7 @@ cond_var_registry_thread
 ()noexcept:
 m_thread{ start_thread() }
 {
-
+  fprintf(stderr, "cond_var_registry_thread::cond_var_registry_thread(): thread_ID=%p\n", reinterpret_cast<void*>(dango::uptr(m_thread.get_ID())));
 }
 
 inline
@@ -2260,17 +2262,24 @@ cond_var_registry_thread::
 ~cond_var_registry_thread
 ()noexcept
 {
-  static constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
+  auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
 
-  c_registry.notify_exit();
+  fprintf(stderr, "cond_var_registry_thread::~cond_var_registry_thread(): registry=%p\n", static_cast<void*>(&a_registry));
+
+  a_registry.notify_exit();
+
+  fprintf(stderr, "cond_var_registry_thread::~cond_var_registry_thread(): joining\n");
 
   m_thread.join();
+
+  fprintf(stderr, "cond_var_registry_thread::~cond_var_registry_thread(): exiting\n");
 }
 
 namespace
 dango::detail
 {
   DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread)
+  //DANGO_DEFINE_GLOBAL_INLINE(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
 }
 
 #ifdef _WIN32
@@ -2372,9 +2381,9 @@ windows_timer_res_daemon::
 ~windows_timer_res_daemon
 ()noexcept
 {
-  static constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
+  auto& a_manager = dango::detail::windows_timer_res_access::s_manager;
 
-  c_manager.notify_exit();
+  a_manager.notify_exit();
 
   m_thread.join();
 }
@@ -2382,7 +2391,8 @@ windows_timer_res_daemon::
 namespace
 dango::detail
 {
-  DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon)
+  //DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon)
+  DANGO_DEFINE_GLOBAL_INLINE(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
 }
 
 #endif // _WIN32

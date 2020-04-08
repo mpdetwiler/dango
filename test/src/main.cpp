@@ -159,7 +159,7 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
-  dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);
+  /*dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);
   dango_assert(dango::str_size(dango::char_as_bchar("hello")) == 5);
 
   fprintf(stderr, "%s\n", concept_test<bool const&>::value);
@@ -254,9 +254,20 @@ main
 
   fprintf(stderr, "main joining\n");
 
-  dango::thread::main_join();
+  dango::thread::main_join();*/
 
-  fprintf(stderr, "main main exiting\n");
+  dango_access_global(dango::detail::s_cond_var_registry_thread, a_registry_thread)
+  {
+
+  }
+
+  dango_access_global(test::s_global_printer, a_global_printer)
+  {
+    a_global_printer->print();
+  }
+
+
+  fprintf(stderr, "main exiting\n");
 
   return 0;
 }

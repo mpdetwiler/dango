@@ -37,20 +37,54 @@ dango::detail
   auto perf_freq()noexcept->dango::tick_count_type;
   auto perf_count_suspend_bias(dango::tick_count_type&)noexcept->dango::tick_count_type;
 
-  using srw_lock_storage = dango::aligned_storage<sizeof(void*), alignof(void*)>;
+  class
+  srw_lock_storage
+  final
+  {
+  public:
+    constexpr srw_lock_storage()noexcept = default;
+    constexpr ~srw_lock_storage()noexcept = default;
 
-  void srw_lock_init(void*)noexcept;
-  void srw_lock_acquire(void*)noexcept;
-  auto srw_lock_try_acquire(void*)noexcept->bool;
-  void srw_lock_release(void*)noexcept;
+    constexpr auto get()const noexcept->void*{ return m_storage.get(); }
 
-  using condition_variable_storage = dango::aligned_storage<sizeof(void*), alignof(void*)>;
+    template
+    <dango::is_object tp_type>
+    constexpr auto launder_get()const noexcept->tp_type*{ return m_storage.launder_get<tp_type>(); }
+  private:
+    dango::aligned_storage<sizeof(void*), alignof(void*)> m_storage;
+  public:
+    DANGO_IMMOBILE(srw_lock_storage)
+  };
 
-  void condition_variable_init(void*)noexcept;
-  void condition_variable_wake(void*)noexcept;
-  void condition_variable_wake_all(void*)noexcept;
-  void condition_variable_wait(void*, void*)noexcept;
-  void condition_variable_wait(void*, void*, dango::tick_count_type)noexcept;
+  void srw_lock_init(dango::detail::srw_lock_storage*)noexcept;
+  void srw_lock_acquire(dango::detail::srw_lock_storage*)noexcept;
+  auto srw_lock_try_acquire(dango::detail::srw_lock_storage*)noexcept->bool;
+  void srw_lock_release(dango::detail::srw_lock_storage*)noexcept;
+
+  class
+  condition_variable_storage
+  final
+  {
+  public:
+    constexpr condition_variable_storage()noexcept = default;
+    constexpr ~condition_variable_storage()noexcept = default;
+
+    constexpr auto get()const noexcept->void*{ return m_storage.get(); }
+
+    template
+    <dango::is_object tp_type>
+    constexpr auto launder_get()const noexcept->tp_type*{ return m_storage.launder_get<tp_type>(); }
+  private:
+    dango::aligned_storage<sizeof(void*), alignof(void*)> m_storage;
+  public:
+    DANGO_IMMOBILE(condition_variable_storage)
+  };
+
+  void condition_variable_init(dango::detail::condition_variable_storage*)noexcept;
+  void condition_variable_wake(dango::detail::condition_variable_storage*)noexcept;
+  void condition_variable_wake_all(dango::detail::condition_variable_storage*)noexcept;
+  void condition_variable_wait(dango::detail::condition_variable_storage*, dango::detail::srw_lock_storage*)noexcept;
+  void condition_variable_wait(dango::detail::condition_variable_storage*, dango::detail::srw_lock_storage*, dango::tick_count_type)noexcept;
 
   void time_begin_period()noexcept;
   void time_end_period()noexcept;

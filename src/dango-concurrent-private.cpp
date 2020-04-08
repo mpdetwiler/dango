@@ -294,6 +294,7 @@ namespace
 
 #include <windows.h>
 #include <process.h>
+#include <cstdio>
 
 static_assert(sizeof(dango::detail::srw_lock_storage) == sizeof(::SRWLOCK));
 static_assert(alignof(dango::detail::srw_lock_storage) == alignof(::SRWLOCK));
@@ -432,33 +433,47 @@ perf_count_suspend_bias
   return a_count;
 }
 
+/*****************************/
+
 void
 dango::
 detail::
 srw_lock_init
-(void* const a_storage)noexcept
+(dango::detail::srw_lock_storage* const a_storage)noexcept
 {
-  auto const a_lock = dango::placement_new_trivial<::SRWLOCK>(a_storage);
+  fprintf(stderr, "srw_lock_init\n");
 
-  ::InitializeSRWLock(a_lock);
+  using type = ::SRWLOCK;
+
+  dango::placement_new_trivial<type>(a_storage->get());
+
+  ::InitializeSRWLock(a_storage->launder_get<type>());
 }
 
 void
 dango::
 detail::
 srw_lock_acquire
-(void* const a_storage)noexcept
+(dango::detail::srw_lock_storage* const a_storage)noexcept
 {
-  ::AcquireSRWLockExclusive(static_cast<::SRWLOCK*>(a_storage));
+  fprintf(stderr, "srw_lock_acquire\n");
+
+  using type = ::SRWLOCK;
+
+  ::AcquireSRWLockExclusive(a_storage->launder_get<type>());
 }
 
 auto
 dango::
 detail::
 srw_lock_try_acquire
-(void* const a_storage)noexcept->bool
+(dango::detail::srw_lock_storage* const a_storage)noexcept->bool
 {
-  auto const a_result = ::TryAcquireSRWLockExclusive(static_cast<::SRWLOCK*>(a_storage));
+  fprintf(stderr, "srw_lock_try_acquire\n");
+
+  using type = ::SRWLOCK;
+
+  auto const a_result = ::TryAcquireSRWLockExclusive(a_storage->launder_get<type>());
 
   return bool(a_result);
 }
@@ -467,50 +482,73 @@ void
 dango::
 detail::
 srw_lock_release
-(void* const a_storage)noexcept
+(dango::detail::srw_lock_storage* const a_storage)noexcept
 {
-  ::ReleaseSRWLockExclusive(static_cast<::SRWLOCK*>(a_storage));
+  fprintf(stderr, "srw_lock_release\n");
+
+  using type = ::SRWLOCK;
+
+  ::ReleaseSRWLockExclusive(a_storage->launder_get<type>());
 }
+
+/*****************************/
 
 void
 dango::
 detail::
 condition_variable_init
-(void* const a_storage)noexcept
+(dango::detail::condition_variable_storage* const a_storage)noexcept
 {
-  auto const a_cond = dango::placement_new_trivial<::CONDITION_VARIABLE>(a_storage);
+  fprintf(stderr, "condition_variable_init\n");
 
-  ::InitializeConditionVariable(a_cond);
+  using type = ::CONDITION_VARIABLE;
+
+  dango::placement_new_trivial<type>(a_storage);
+
+  ::InitializeConditionVariable(a_storage->launder_get<type>());
 }
 
 void
 dango::
 detail::
 condition_variable_wake
-(void* const a_storage)noexcept
+(dango::detail::condition_variable_storage* const a_storage)noexcept
 {
-  ::WakeConditionVariable(static_cast<::CONDITION_VARIABLE*>(a_storage));
+  fprintf(stderr, "condition_variable_wake\n");
+
+  using type = ::CONDITION_VARIABLE;
+
+  ::WakeConditionVariable(a_storage->launder_get<type>());
 }
 
 void
 dango::
 detail::
 condition_variable_wake_all
-(void* const a_storage)noexcept
+(dango::detail::condition_variable_storage* const a_storage)noexcept
 {
-  ::WakeAllConditionVariable(static_cast<::CONDITION_VARIABLE*>(a_storage));
+  fprintf(stderr, "condition_variable_wake_all\n");
+
+  using type = ::CONDITION_VARIABLE;
+
+  ::WakeAllConditionVariable(a_storage->launder_get<type>());
 }
 
 void
 dango::
 detail::
 condition_variable_wait
-(void* const a_storage, void* const a_lock_storage)noexcept
+(dango::detail::condition_variable_storage* const a_storage, dango::detail::srw_lock_storage* const a_lock_storage)noexcept
 {
+  fprintf(stderr, "condition_variable_wait\n");
+
+  using type = ::CONDITION_VARIABLE;
+  using lock_type = ::SRWLOCK;
+
   ::SleepConditionVariableSRW
   (
-    static_cast<::CONDITION_VARIABLE*>(a_storage),
-    static_cast<::SRWLOCK*>(a_lock_storage),
+    a_storage->launder_get<type>(),
+    a_lock_storage->launder_get<lock_type>(),
     DWORD(INFINITE),
     ULONG(0)
   );
@@ -520,8 +558,13 @@ void
 dango::
 detail::
 condition_variable_wait
-(void* const a_storage, void* const a_lock_storage, dango::tick_count_type const a_interval)noexcept
+(dango::detail::condition_variable_storage* const a_storage, dango::detail::srw_lock_storage* const a_lock_storage, dango::tick_count_type const a_interval)noexcept
 {
+  fprintf(stderr, "condition_variable_wait_timed\n");
+
+  using type = ::CONDITION_VARIABLE;
+  using lock_type = ::SRWLOCK;
+
   using tc64 = dango::tick_count_type;
 
   dango_assert(a_interval >= tc64(0));
@@ -534,12 +577,14 @@ condition_variable_wait
 
   ::SleepConditionVariableSRW
   (
-    static_cast<::CONDITION_VARIABLE*>(a_storage),
-    static_cast<::SRWLOCK*>(a_lock_storage),
+    a_storage->launder_get<type>(),
+    a_lock_storage->launder_get<lock_type>(),
     DWORD(a_spec),
     ULONG(0)
   );
 }
+
+/*****************************/
 
 void
 dango::

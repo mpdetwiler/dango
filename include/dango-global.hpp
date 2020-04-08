@@ -227,7 +227,7 @@ decrement
 
 #ifndef DANGO_BUILDING_SHARED_LIB
 #define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static name##_strong_type const name##_strong{ };
-#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline name##_weak_type const name##_weak{ name() }; }
+#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline dango::byte const name##_byte{ (static_cast<void>(name()), dango::byte{ }) }; }
 #else
 #define DANGO_GLOBAL_DEFINE_STATIC_INC(name)
 #define DANGO_GLOBAL_DEFINE_INLINE_INC(name)
@@ -247,10 +247,13 @@ namespace name##_namespace \
   using name##_weak_type = name##_storage_type::weak_incrementer<name##_storage>; \
   DANGO_GLOBAL_DEFINE_STATIC_INC(name) \
 } \
-[[nodiscard]] DANGO_EXPORT auto \
-name(DANGO_SRC_LOC_ARG_DEFAULT())noexcept->name##_namespace::name##_weak_type; \
+[[nodiscard]] inline auto \
+name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
+{ \
+  static name##_namespace::name##_strong_type const name##_strong_func{ }; \
+  return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
+} \
 DANGO_GLOBAL_DEFINE_INLINE_INC(name)
-
 
 #define DANGO_DEFINE_GLOBAL_EXTERN(type_name, name, ...) \
 namespace name##_namespace \
@@ -260,12 +263,6 @@ namespace name##_namespace \
   { try{ return name##_return_type __VA_ARGS__ ; }catch(...) \
     { dango_unreachable_terminate_msg(u8"constructor of extern global \"name\" threw exception"); } } \
   constinit name##_storage_type name##_storage{ }; \
-} \
-auto \
-name(DANGO_SRC_LOC_ARG(a_loc))noexcept->name##_namespace::name##_weak_type \
-{ \
-  static name##_namespace::name##_strong_type const name##_strong_func{ }; \
-  return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; \
 }
 
 /*** inline globals ***/

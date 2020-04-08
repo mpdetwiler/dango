@@ -149,7 +149,7 @@ regist
     return;
   }
 
-  dango_crit_full(m_cond, a_crit)
+  dango_crit(m_cond)
   {
     if(a_cond->m_ref_count++ != dango::usize(0))
     {
@@ -179,7 +179,7 @@ unregist
     return;
   }
 
-  dango_crit_full(m_cond, a_crit)
+  dango_crit(m_cond)
   {
     if(--a_cond->m_ref_count != dango::usize(0))
     {
@@ -202,12 +202,16 @@ cond_var_registry::
 notify_exit
 ()noexcept
 {
-  dango_crit_full(m_cond, a_crit)
+  fprintf(stderr, "notify_exit\n");
+
+  dango_crit(m_cond)
   {
     m_alive = false;
 
     if(m_waiting)
     {
+      fprintf(stderr, "notify_exit: m_waiting=true\n");
+
       m_cond.notify();
     }
   }
@@ -220,6 +224,8 @@ cond_var_registry::
 thread_func
 ()noexcept
 {
+  fprintf(stderr, "cond_var_registry::thread_func: ID=%p\n", reinterpret_cast<void*>(dango::uptr(dango::thread::self_ID())));
+
   do
   {
     if(wait_empty())
@@ -234,6 +240,8 @@ thread_func
     while(poll_bias(a_bias, a_timeout));
   }
   while(true);
+
+  fprintf(stderr, "cond_var_registry::thread_func: exiting\n");
 }
 
 void
@@ -279,7 +287,11 @@ wait_empty
 
       m_waiting = true;
 
+      fprintf(stderr, "wait_empty: sleeping...\n");
+
       a_crit.wait();
+
+      fprintf(stderr, "wait_empty: awakened\n");
 
       m_waiting = false;
     }
@@ -390,6 +402,12 @@ pop_internal
 
 /*** cond_var_registry_thread ***/
 
+namespace
+dango::detail
+{
+  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
+}
+
 auto
 dango::
 detail::
@@ -397,22 +415,18 @@ cond_var_registry_thread::
 start_thread
 ()noexcept->dango::thread
 {
-  static constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
+  auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
+
+  fprintf(stderr, "cond_var_registry_thread::start_thread(): registry=%p\n", static_cast<void*>(&a_registry));
 
   try
   {
-    return dango::thread::create_daemon([]()noexcept->void{ c_registry.thread_func(); });
+    return dango::thread::create_daemon([]()noexcept->void{ a_registry.thread_func(); });
   }
   catch(...)
   {
     dango_unreachable_terminate_msg(u8"cond_var watcher-thread creation failed");
   }
-}
-
-namespace
-dango::detail
-{
-  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
 }
 
 #include "dango-concurrent-private.hpp"
@@ -715,13 +729,13 @@ wait
     return;
   }
 
-  static constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
+  auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
 
-  c_registry.regist(this, a_timeout);
+  a_registry.regist(this, a_timeout);
 
   get()->wait(a_lock->get(), a_rem);
 
-  c_registry.unregist(this, a_timeout);
+  a_registry.unregist(this, a_timeout);
 }
 
 void
@@ -1354,19 +1368,19 @@ wait
     return;
   }
 
-  static constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
+  auto& a_manager = dango::detail::windows_timer_res_access::s_manager;
 
-  static constexpr auto& c_registry = dango::detail::cond_var_registry_access::s_registry;
+  auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
 
-  c_manager.activate(a_timeout);
+  a_manager.activate(a_timeout);
 
-  c_registry.regist(this, a_timeout);
+  a_registry.regist(this, a_timeout);
 
   get()->wait(a_lock->get(), a_rem);
 
-  c_registry.unregist(this, a_timeout);
+  a_registry.unregist(this, a_timeout);
 
-  c_manager.deactivate(a_timeout);
+  a_manager.deactivate(a_timeout);
 }
 
 void
@@ -1836,6 +1850,12 @@ timed_wait
 
 /*** windows_timer_res_daemon ***/
 
+namespace
+dango::detail
+{
+  //DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
+}
+
 auto
 dango::
 detail::
@@ -1843,24 +1863,17 @@ windows_timer_res_daemon::
 start_thread
 ()noexcept->dango::thread
 {
-  static constexpr auto& c_manager = dango::detail::windows_timer_res_access::s_manager;
+  auto& a_manager = dango::detail::windows_timer_res_access::s_manager;
 
   try
   {
-    return dango::thread::create_daemon([]()noexcept->void{ c_manager.thread_func(); });
+    return dango::thread::create_daemon([]()noexcept->void{ a_manager.thread_func(); });
   }
   catch(...)
   {
     dango_unreachable_terminate_msg(u8"windows timer-res manager thread creation failed");
   }
 }
-
-namespace
-dango::detail
-{
-  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
-}
-
 
 #endif // _WIN32
 
