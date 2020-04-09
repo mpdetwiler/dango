@@ -1059,17 +1059,23 @@ namespace
   tick_count_suspend_bias_help
   ()noexcept->dango::tick_count_pair
   {
+    static auto const s_init = dango::detail::perf_count_suspend_bias();
+
     using tc64 = dango::tick_count_type;
 
     auto const a_freq = dango::detail::perf_freq();
 
-    auto a_result = dango::detail::perf_count_suspend_bias();
+    auto a_current = dango::detail::perf_count_suspend_bias();
 
-    a_result.first() = (a_result.first() * tc64(1'000)) / a_freq;
+    a_current.first() -= dango::min(s_init.first(), a_current.first());
+    a_current.first() = (a_current.first() * tc64(1'000)) / a_freq;
 
-    a_result.second() /= tc64(10'000);
+    a_current.second() -= dango::min(s_init.second(), a_current.second());
+    a_current.second() /= tc64(10'000);
 
-    return a_result;
+    a_current.first() = dango::max(tc64(0), a_current.first() - a_current.second());
+
+    return a_current;
   }
 }
 
