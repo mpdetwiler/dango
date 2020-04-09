@@ -244,8 +244,8 @@ namespace
   {
     using tc64 = dango::tick_count_type;
 
-    static constexpr auto const c_mul = tc64(1'000);
-    static constexpr auto const c_div = tc64(1'000'000);
+    static constexpr auto const c_mul = tc64(10'000);
+    static constexpr auto const c_div = tc64(100'000);
 
     ::timespec a_spec;
 

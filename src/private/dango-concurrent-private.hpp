@@ -42,7 +42,7 @@ dango::detail
   final
   {
   public:
-    constexpr srw_lock_storage()noexcept = default;
+    explicit constexpr srw_lock_storage()noexcept = default;
     constexpr ~srw_lock_storage()noexcept = default;
 
     constexpr auto get()const noexcept->void*{ return m_storage.get(); }
@@ -66,7 +66,7 @@ dango::detail
   final
   {
   public:
-    constexpr condition_variable_storage()noexcept = default;
+    explicit constexpr condition_variable_storage()noexcept = default;
     constexpr ~condition_variable_storage()noexcept = default;
 
     constexpr auto get()const noexcept->void*{ return m_storage.get(); }

@@ -1,65 +1,45 @@
 #ifndef DANGO_CONCURRENT_HPP_INCLUDED
 #define DANGO_CONCURRENT_HPP_INCLUDED
 
-/*** get_tick_count ***/
+/*** tick_count ***/
 
 namespace
 dango
 {
   using tick_count_type = dango::slong;
+  using tick_count_pair = dango::pair<dango::tick_count_type, dango::tick_count_type>;
 
-  auto get_tick_count()noexcept->dango::tick_count_type;
-  auto get_tick_count_sa()noexcept->dango::tick_count_type;
-  auto get_suspend_bias()noexcept->dango::tick_count_type;
-}
+  DANGO_EXPORT auto tick_count_suspend_bias()noexcept->dango::tick_count_pair;
 
-namespace
-dango::detail
-{
-  DANGO_EXPORT auto tick_count()noexcept->dango::tick_count_type;
-  DANGO_EXPORT auto tick_count_sa()noexcept->dango::tick_count_type;
-  DANGO_EXPORT auto suspend_bias()noexcept->dango::tick_count_type;
-
-  using tick_count_tuple =
-    dango::tuple<dango::tick_count_type, dango::tick_count_type, dango::tick_count_type>;
-
-  DANGO_EXPORT auto init_tick_count()noexcept->detail::tick_count_tuple const&;
+  auto tick_count()noexcept->dango::tick_count_type;
+  auto tick_count_suspend_aware()noexcept->dango::tick_count_type;
+  auto suspend_bias()noexcept->dango::tick_count_type;
 }
 
 inline auto
 dango::
-get_tick_count
+tick_count
 ()noexcept->dango::tick_count_type
 {
-  auto const a_init = detail::init_tick_count().first();
-
-  auto const a_count = detail::tick_count();
-
-  return a_count - a_init;
+  return dango::tick_count_suspend_bias().first();
 }
 
 inline auto
 dango::
-get_tick_count_sa
+tick_count_suspend_aware
 ()noexcept->dango::tick_count_type
 {
-  auto const a_init = detail::init_tick_count().second();
+  auto const a_pair = dango::tick_count_suspend_bias();
 
-  auto const a_count = detail::tick_count_sa();
-
-  return a_count - a_init;
+  return a_pair.first() + a_pair.second();
 }
 
 inline auto
 dango::
-get_suspend_bias
+suspend_bias
 ()noexcept->dango::tick_count_type
 {
-  auto const a_init = detail::init_tick_count().third();
-
-  auto const a_count = detail::suspend_bias();
-
-  return a_count - a_init;
+  return dango::tick_count_suspend_bias().second();
 }
 
 /*** timeout ***/
@@ -187,7 +167,7 @@ dango::timeout
 private:
   using super_type = dango::timeout;
 protected:
-  static auto get_tc()noexcept->value_type{ return dango::get_tick_count(); }
+  static auto get_tc()noexcept->value_type{ return dango::tick_count(); }
 public:
   static auto make(value_type)noexcept->timeout_impl;
   static auto make_rel(value_type)noexcept->timeout_impl;
@@ -357,7 +337,7 @@ dango::timeout
 private:
   using super_type = dango::timeout;
 protected:
-  static auto get_tc()noexcept->value_type{ return dango::get_tick_count_sa(); }
+  static auto get_tc()noexcept->value_type{ return dango::tick_count_suspend_aware(); }
 public:
   static auto make(value_type)noexcept->timeout_impl_sa;
   static auto make_rel(value_type)noexcept->timeout_impl_sa;
@@ -2160,6 +2140,22 @@ thread_start_address
 
   a_func();
 }
+
+/*** init things before main ***/
+
+#ifndef DANGO_BUILDING_SHARED_LIB
+namespace
+dango::detail
+{
+  inline dango::byte const
+  s_concurrent_init_byte
+  {(
+    static_cast<void>(dango::tick_count_suspend_bias()),
+    static_cast<void>(dango::thread::self()),
+    dango::byte{ }
+  )};
+}
+#endif
 
 /*** cond_var_registry ***/
 

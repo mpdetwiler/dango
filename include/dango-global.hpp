@@ -41,8 +41,8 @@ public:
 public:
   explicit constexpr global_storage()noexcept;
   ~global_storage()noexcept = default;
-  constexpr auto get()const noexcept->tp_type*;
 private:
+  auto get()const noexcept->tp_type*;
   void increment()noexcept;
   auto try_increment()noexcept->bool;
   void decrement()noexcept;
@@ -70,7 +70,7 @@ strong_incrementer
 final
 {
 public:
-  strong_incrementer()noexcept{ tp_storage.increment(); }
+  explicit strong_incrementer()noexcept{ tp_storage.increment(); }
   ~strong_incrementer()noexcept{ tp_storage.decrement(); }
 public:
   DANGO_IMMOBILE(strong_incrementer)
@@ -90,7 +90,7 @@ weak_incrementer
 final
 {
 public:
-  weak_incrementer(DANGO_SRC_LOC_ARG(a_loc))noexcept
+  explicit weak_incrementer(DANGO_SRC_LOC_ARG(a_loc))noexcept
   {
     if(tp_storage.try_increment())
     {
@@ -102,9 +102,9 @@ public:
 
   ~weak_incrementer()noexcept{ tp_storage.decrement(); }
 public:
-  constexpr auto get()const noexcept->tp_type*{ return tp_storage.get(); }
-  constexpr auto operator -> ()const noexcept->tp_type*{ return tp_storage.get(); }
-  constexpr auto operator * ()const noexcept->tp_type&{ return *tp_storage.get(); }
+  auto get()const noexcept->tp_type*{ return tp_storage.get(); }
+  auto operator -> ()const noexcept->tp_type*{ return tp_storage.get(); }
+  auto operator * ()const noexcept->tp_type&{ return *tp_storage.get(); }
 public:
   DANGO_IMMOBILE(weak_incrementer)
 };
@@ -130,7 +130,7 @@ m_ref_count{ dango::usize(0) }
 
 template
 <dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
-constexpr auto
+auto
 dango::
 detail::
 global_storage<tp_type, tp_construct>::
