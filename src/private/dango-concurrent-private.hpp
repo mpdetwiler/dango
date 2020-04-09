@@ -35,7 +35,7 @@ namespace
 dango::detail
 {
   auto perf_freq()noexcept->dango::tick_count_type;
-  auto perf_count_suspend_bias(dango::tick_count_type&)noexcept->dango::tick_count_type;
+  auto perf_count_suspend_bias()noexcept->dango::tick_count_pair;
 
   class
   srw_lock_storage

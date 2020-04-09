@@ -1,5 +1,39 @@
 #include "dango.hpp"
 
+/*** tick_count ***/
+
+namespace
+{
+  auto tick_count_suspend_bias_help()noexcept->dango::tick_count_pair;
+}
+
+auto
+dango::
+tick_count_suspend_bias
+()noexcept->dango::tick_count_pair
+{
+  static constinit dango::spin_mutex s_lock{ };
+  static auto s_last = tick_count_suspend_bias_help();
+  static auto const s_init = s_last;
+
+  auto a_current =  tick_count_suspend_bias_help();
+
+  dango_crit(s_lock)
+  {
+    a_current.first() = dango::max(s_last.first(), a_current.first());
+
+    a_current.second() = dango::max(s_last.second(), a_current.second());
+
+    s_last = a_current;
+  }
+
+  a_current.first() -= dango::min(s_init.first(), a_current.first());
+
+  a_current.second() -= dango::min(s_init.second(), a_current.second());
+
+  return a_current;
+}
+
 /*** thread ***/
 
 constinit
@@ -395,38 +429,39 @@ noexcept(false)
 
 #ifdef __linux__
 
-/*** tick_count ***/
+/*** tick_count_suspend_bias_help ***/
 
 namespace
 {
-  auto tick_count_suspend_bias_help()noexcept->dango::tick_count_pair;
-}
-
-auto
-dango::
-tick_count_suspend_bias
-()noexcept->dango::tick_count_pair
-{
-  static constinit dango::spin_mutex s_lock{ };
-  static auto s_last = tick_count_suspend_bias_help();
-  static auto const s_init = s_last;
-
-  auto a_current =  tick_count_suspend_bias_help();
-
-  dango_crit(s_lock)
+  auto
+  tick_count_suspend_bias_help
+  ()noexcept->dango::tick_count_pair
   {
-    a_current.first() = dango::max(s_last.first(), a_current.first());
+    using tc64 = dango::tick_count_type;
 
-    a_current.second() = dango::max(s_last.second(), a_current.second());
+    static constexpr auto const c_div = tc64(10);
 
-    s_last = a_current;
+    tc64 a_mono;
+    tc64 a_boot;
+
+    {
+      tc64 a_temp;
+
+      do
+      {
+        a_boot = dango::detail::tick_count_boottime();
+
+        a_mono = dango::detail::tick_count_monotonic();
+
+        a_temp = dango::detail::tick_count_boottime();
+      }
+      while(a_boot != a_temp);
+    }
+
+    auto const a_bias = dango::max(tc64(0), a_boot - a_mono);
+
+    return dango::tick_count_pair{ (a_mono / c_div) , (a_bias / c_div) };
   }
-
-  a_current.first() -= dango::min(s_init.first(), a_current.first());
-
-  a_current.second() -= dango::min(s_init.second(), a_current.second());
-
-  return a_current;
 }
 
 /*** mutex_base ***/
@@ -986,37 +1021,6 @@ decrement
 
 namespace
 {
-  auto
-  tick_count_suspend_bias_help
-  ()noexcept->dango::tick_count_pair
-  {
-    using tc64 = dango::tick_count_type;
-
-    static constexpr auto const c_div = tc64(10);
-
-    tc64 x0;
-    tc64 y0;
-
-    {
-      tc64 x1;
-      tc64 y1;
-
-      do
-      {
-        x0 = dango::detail::tick_count_monotonic();
-        y0 = dango::detail::tick_count_boottime();
-
-        x1 = dango::detail::tick_count_monotonic();
-        y1 = dango::detail::tick_count_boottime();
-      }
-      while((x0 != x1) || (y0 != y1));
-    }
-
-    auto const a_bias = dango::max(tc64(0), y0 - x0);
-
-    return dango::tick_count_pair{ (x0 / c_div) , (a_bias / c_div) };
-  }
-
 #ifndef DANGO_NO_MULTICORE
   auto
   spin_relax
@@ -1047,51 +1051,26 @@ namespace
 
 #ifdef _WIN32
 
-/*** tick_count ***/
+/*** tick_count_suspend_bias_help ***/
 
 namespace
 {
-  using time_spec = dango::pair<dango::tick_count_type, dango::tick_count_type>;
+  auto
+  tick_count_suspend_bias_help
+  ()noexcept->dango::tick_count_pair
+  {
+    using tc64 = dango::tick_count_type;
 
-  auto time_spec_from_perf(dango::tick_count_type, dango::tick_count_type)noexcept->time_spec;
-  void time_spec_add(time_spec&, time_spec const&)noexcept;
-  auto tick_count_help(dango::tick_count_type*)noexcept->dango::tick_count_type;
-}
+    auto const a_freq = dango::detail::perf_freq();
 
-auto
-dango::
-detail::
-tick_count
-()noexcept->dango::tick_count_type
-{
-  dango::tick_count_type a_bias;
+    auto a_result = dango::detail::perf_count_suspend_bias();
 
-  auto const a_count = tick_count_help(&a_bias);
+    a_result.first() = (a_result.first() * tc64(1'000)) / a_freq;
 
-  return a_count - a_bias;
-}
+    a_result.second() /= tc64(10'000);
 
-
-auto
-dango::
-detail::
-tick_count_sa
-()noexcept->dango::tick_count_type
-{
-  return tick_count_help(dango::null);
-}
-
-auto
-dango::
-detail::
-suspend_bias
-()noexcept->dango::tick_count_type
-{
-  dango::tick_count_type a_bias;
-
-  tick_count_help(&a_bias);
-
-  return a_bias;
+    return a_result;
+  }
 }
 
 /*** mutex_base ***/
@@ -1453,93 +1432,6 @@ wait
   dango_assert(a_mutex != dango::null);
 
   dango::detail::condition_variable_wait(&m_cond, a_mutex->lock_ptr(), a_interval);
-}
-
-/*** static ***/
-
-namespace
-{
-  auto
-  time_spec_from_perf
-  (dango::tick_count_type const a_count, dango::tick_count_type const a_freq)noexcept->time_spec
-  {
-    using tc64 = dango::tick_count_type;
-
-    static constexpr auto const c_billion = tc64(1'000'000'000);
-
-    auto const a_div = a_count / a_freq;
-    auto const a_mod = a_count % a_freq;
-
-    return time_spec{ a_div, (a_mod * c_billion) / a_freq };
-  }
-
-  void
-  time_spec_add
-  (time_spec& a_spec, time_spec const& a_add)noexcept
-  {
-    using tc64 = dango::tick_count_type;
-
-    static constexpr auto const c_billion = tc64(1'000'000'000);
-
-    auto& [a_s1, a_n1] = a_spec;
-
-    auto const& [a_s2, a_n2] = a_add;
-
-    dango_assert(a_n1 < c_billion);
-    dango_assert(a_n2 < c_billion);
-
-    a_s1 += a_s2;
-    a_n1 += a_n2;
-
-    auto const a_overflow = tc64(a_n1 >= c_billion);
-
-    a_s1 += a_overflow;
-    a_n1 -= a_overflow * c_billion;
-
-    dango_assert(a_n1 < c_billion);
-  }
-
-  auto
-  tick_count_help
-  (dango::tick_count_type* const a_suspend_bias)noexcept->dango::tick_count_type
-  {
-    using tc64 = dango::tick_count_type;
-
-    static dango::spin_mutex s_lock{ };
-    static time_spec s_current{ tc64(0), tc64(0) };
-    static auto s_init_bias = tc64(0);
-    static auto s_prev_count = dango::detail::perf_count_suspend_bias(s_init_bias);
-
-    auto const a_freq = dango::detail::perf_freq();
-
-    tc64 a_sec;
-    tc64 a_nsec;
-    tc64 a_bias;
-
-    dango_crit(s_lock)
-    {
-      auto const a_count = dango::detail::perf_count_suspend_bias(a_bias);
-      auto const a_count_delta = a_count - s_prev_count;
-
-      s_prev_count = a_count;
-
-      auto const a_delta = time_spec_from_perf(a_count_delta, a_freq);
-
-      time_spec_add(s_current, a_delta);
-
-      a_sec = s_current.first();
-      a_nsec = s_current.second();
-    }
-
-    dango_assert(a_bias >= s_init_bias);
-
-    if(a_suspend_bias)
-    {
-      (*a_suspend_bias) = (a_bias - s_init_bias) / tc64(10'000);
-    }
-
-    return (a_sec * tc64(1'000)) + (a_nsec / tc64(1'000'000));
-  }
 }
 
 /*** windows_timer_res_manager ***/

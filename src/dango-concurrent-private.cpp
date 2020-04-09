@@ -410,26 +410,31 @@ auto
 dango::
 detail::
 perf_count_suspend_bias
-(dango::tick_count_type& a_suspend_bias)noexcept->dango::tick_count_type
+()noexcept->dango::tick_count_pair
 {
   using tc64 = dango::tick_count_type;
 
   static auto& s_bias_ref =
-    *reinterpret_cast<ULONGLONG const volatile*>(dango::uptr(0x7FFE0000 + 0x3B0));
+    *reinterpret_cast<ULONGLONG const volatile*>(dango::uptr(0x7F'FE'00'00u + 0x00'00'03'B0u));
 
-  tc64 a_bias;
   tc64 a_count;
+  tc64 a_bias;
 
-  do
   {
-    a_bias = tc64(s_bias_ref);
-    a_count = perf_count();
+    tc64 a_temp;
+
+    do
+    {
+      a_bias = tc64(s_bias_ref);
+
+      a_count = perf_count();
+
+      a_temp = tc64(s_bias_ref);
+    }
+    while(a_bias != a_temp);
   }
-  while(a_bias != tc64(s_bias_ref));
 
-  a_suspend_bias = a_bias;
-
-  return a_count;
+  return dango::tick_count_pair{ a_count, a_bias };
 }
 
 /*****************************/
