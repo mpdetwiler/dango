@@ -159,21 +159,21 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
-  fprintf(stderr, "tick_count()=%llu\n", dango::builtin::ulonglong(dango::tick_count()));
-  fprintf(stderr, "tick_count_suspend_aware()=%llu\n", dango::builtin::ulonglong(dango::tick_count_suspend_aware()));
-  fprintf(stderr, "suspend_bias()=%llu\n", dango::builtin::ulonglong(dango::suspend_bias()));
+  auto a_timeout = dango::make_timeout_rel_hr(1'000);
 
-  dango::thread::sleep_rel_hr(1000);
+  for(auto a_i = uint(0); a_i < uint(10); ++a_i)
+  {
+    auto const a_tc = dango::tick_count_suspend_bias();
 
-  fprintf(stderr, "tick_count()=%llu\n", dango::builtin::ulonglong(dango::tick_count()));
-  fprintf(stderr, "tick_count_suspend_aware()=%llu\n", dango::builtin::ulonglong(dango::tick_count_suspend_aware()));
-  fprintf(stderr, "suspend_bias()=%llu\n", dango::builtin::ulonglong(dango::suspend_bias()));
+    fprintf(stderr, "tick_count()=%llu\n", dango::builtin::ulonglong(a_tc.first()));
+    fprintf(stderr, "tick_count_suspend_aware()=%llu\n", dango::builtin::ulonglong(a_tc.first() + a_tc.second()));
+    fprintf(stderr, "suspend_bias()=%llu\n\n", dango::builtin::ulonglong(a_tc.second()));
 
-  dango::thread::sleep_rel_hr(1000);
+    dango::thread::sleep(a_timeout);
 
-  fprintf(stderr, "tick_count()=%llu\n", dango::builtin::ulonglong(dango::tick_count()));
-  fprintf(stderr, "tick_count_suspend_aware()=%llu\n", dango::builtin::ulonglong(dango::tick_count_suspend_aware()));
-  fprintf(stderr, "suspend_bias()=%llu\n", dango::builtin::ulonglong(dango::suspend_bias()));
+    a_timeout.add(1'000);
+  }
+
 
   /*dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);
   dango_assert(dango::str_size(dango::char_as_bchar("hello")) == 5);
