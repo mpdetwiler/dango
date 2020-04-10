@@ -452,7 +452,7 @@ ptr_as_uint
   }
   else
   {
-    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void*>(nullptr)));
+    return ret_type(0);
   }
 }
 
@@ -469,7 +469,7 @@ ptr_as_sint
   }
   else
   {
-    return DANGO_MAGIC_CONST_FOLD(reinterpret_cast<ret_type>(static_cast<void*>(nullptr)));
+    return ret_type(0);
   }
 }
 
@@ -491,6 +491,13 @@ dango
   <dango::usize tp_size, dango::usize tp_align = alignof(dango::max_align_type)>
   requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
   class aligned_storage;
+
+  template
+  <typename... tp_types>
+  requires(( ... && dango::is_object<tp_types>))
+  using aligned_union =
+    dango::aligned_storage
+    <dango::max(dango::usize(1), sizeof(tp_types)...), dango::max(dango::usize(1), alignof(tp_types)...)>;
 }
 
 template

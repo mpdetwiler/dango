@@ -139,7 +139,7 @@ regist
     return;
   }
 
-  dango_crit(m_cond)
+  dango_crit_full(m_cond, a_crit)
   {
     if(a_cond->m_ref_count++ != dango::usize(0))
     {
@@ -150,7 +150,7 @@ regist
 
     if(m_waiting)
     {
-      m_cond.notify();
+      a_crit.notify();
     }
   }
 }
@@ -169,7 +169,7 @@ unregist
     return;
   }
 
-  dango_crit(m_cond)
+  dango_crit_full(m_cond, a_crit)
   {
     if(--a_cond->m_ref_count != dango::usize(0))
     {
@@ -180,7 +180,7 @@ unregist
 
     if(m_waiting)
     {
-      m_cond.notify();
+      a_crit.notify();
     }
   }
 }
@@ -192,13 +192,13 @@ cond_var_registry::
 notify_exit
 ()noexcept
 {
-  dango_crit(m_cond)
+  dango_crit_full(m_cond, a_crit)
   {
     m_alive = false;
 
     if(m_waiting)
     {
-      m_cond.notify();
+      a_crit.notify();
     }
   }
 }
@@ -1491,7 +1491,7 @@ activate
     return;
   }
 
-  dango_crit(m_cond)
+  dango_crit_full(m_cond, a_crit)
   {
     if(m_count++ != dango::usize(0))
     {
@@ -1517,7 +1517,7 @@ activate
 
     if(m_waiting)
     {
-      m_cond.notify();
+      a_crit.notify();
     }
   }
 }
@@ -1534,7 +1534,7 @@ deactivate
     return;
   }
 
-  dango_crit(m_cond)
+  dango_crit_full(m_cond, a_crit)
   {
     dango_assert(m_timer_state == timer_state::ACTIVATED);
 
@@ -1556,7 +1556,7 @@ deactivate
 
     if(m_waiting)
     {
-      m_cond.notify();
+      a_crit.notify();
     }
   }
 }
@@ -1568,7 +1568,7 @@ windows_timer_res_manager::
 notify_exit
 ()noexcept
 {
-  dango_crit(m_cond)
+  dango_crit_full(m_cond, a_crit)
   {
     dango_assert(m_alive);
 
@@ -1583,7 +1583,7 @@ notify_exit
 
     if(m_waiting)
     {
-      m_cond.notify();
+      a_crit.notify();
     }
   }
 }

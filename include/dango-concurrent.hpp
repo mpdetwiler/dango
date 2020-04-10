@@ -790,6 +790,7 @@ public dango::intrusive_list_elem<cond_var_base>
 private:
   using super_type = dango::intrusive_list_elem<cond_var_base>;
   class cond_var_impl;
+public:
   class locker;
   class try_locker;
 protected:
@@ -797,6 +798,7 @@ protected:
 protected:
   constexpr cond_var_base()noexcept;
   ~cond_var_base()noexcept = default;
+protected:
   auto lock(mutex_type*)noexcept->locker;
   auto try_lock(mutex_type*)noexcept->try_locker;
 protected:
@@ -819,6 +821,13 @@ public:
   DANGO_IMMOBILE(cond_var_base)
 };
 
+namespace
+dango
+{
+  using cond_var_locker = dango::detail::cond_var_base::locker;
+  using cond_var_try_locker = dango::detail::cond_var_base::try_locker;
+}
+
 class
 dango::
 detail::
@@ -826,12 +835,17 @@ cond_var_base::
 locker
 final
 {
-public:
+  friend auto dango::detail::cond_var_base::lock(mutex_type*)noexcept->locker;
+private:
   locker(mutex_type* const a_lock, cond_var_base* const a_cond)noexcept:
   m_lock{ a_lock->acquire() },
   m_cond{ a_cond }
   { }
+public:
   ~locker()noexcept{ m_lock->release(); }
+public:
+  void notify()const noexcept{ m_cond->notify(); }
+  void notify_all()const noexcept{ m_cond->notify_all(); }
   void wait()const noexcept{ m_cond->wait(m_lock); }
   void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(m_lock, a_timeout); }
 private:
@@ -849,13 +863,18 @@ cond_var_base::
 try_locker
 final
 {
-public:
+  friend auto dango::detail::cond_var_base::try_lock(mutex_type*)noexcept->try_locker;
+private:
   try_locker(mutex_type* const a_lock, cond_var_base* const a_cond)noexcept:
   m_lock{ a_lock->try_acquire() },
   m_cond{ a_cond }
   { }
+public:
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
+public:
   explicit operator bool()const{ return m_lock != dango::null; }
+  void notify()const noexcept{ m_cond->notify(); }
+  void notify_all()const noexcept{ m_cond->notify_all(); }
   void wait()const noexcept{ m_cond->wait(m_lock); }
   void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(m_lock, a_timeout); }
 private:
@@ -1165,10 +1184,9 @@ dango
   class thread;
 
   enum class
-  thread_ID:
-  dango::uptr
+  thread_ID:dango::uptr
   {
-    null_ID = dango::ptr_as_uint(dango::null)
+    null = dango::ptr_as_uint(dango::null)
   };
 }
 
@@ -1299,21 +1317,23 @@ public:
 public:
   explicit constexpr control_block(bool, dango::thread_ID)noexcept;
   ~control_block()noexcept = default;
+public:
   void increment()noexcept;
   auto decrement()noexcept->bool;
   void wait()noexcept;
   void wait(dango::timeout const&)noexcept;
   void notify_all()noexcept;
+  auto get_ID()const noexcept->dango::thread_ID;
   auto is_alive()const noexcept->bool;
   constexpr auto is_daemon()const noexcept->bool;
-  constexpr auto get_ID()const noexcept->dango::thread_ID;
+private:
+  auto non_null_ID()const noexcept->bool{ return m_thread_ID != dango::thread_ID::null; }
 private:
   dango::atomic<dango::usize> m_ref_count;
   bool const m_daemon;
-  dango::thread_ID const m_thread_ID;
   mutable dango::mutex m_mutex;
   mutable dango::cond_var_mutex m_cond;
-  bool m_alive;
+  dango::thread_ID m_thread_ID;
   dango::usize m_waiter_count;
 public:
   DANGO_DELETE_DEFAULT(control_block)
@@ -1349,10 +1369,9 @@ control_block
 super_type{ },
 m_ref_count{ dango::usize(1) },
 m_daemon{ a_daemon },
-m_thread_ID{ a_thread_ID },
 m_mutex{ },
 m_cond{ m_mutex },
-m_alive{ true },
+m_thread_ID{ a_thread_ID },
 m_waiter_count{ dango::usize(0) }
 {
 
@@ -1389,7 +1408,7 @@ wait
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(m_alive)
+    while(non_null_ID())
     {
       ++m_waiter_count;
 
@@ -1409,7 +1428,7 @@ wait
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(m_alive && !a_timeout.has_expired())
+    while(non_null_ID() && !a_timeout.has_expired())
     {
       ++m_waiter_count;
 
@@ -1429,12 +1448,25 @@ notify_all
 {
   dango_crit_full(m_cond, a_crit)
   {
-    m_alive = false;
+    m_thread_ID = dango::thread_ID::null;
 
     if(m_waiter_count != dango::usize(0))
     {
-      m_cond.notify_all();
+      a_crit.notify_all();
     }
+  }
+}
+
+inline auto
+dango::
+thread::
+control_block::
+get_ID
+()const noexcept->dango::thread_ID
+{
+  dango_crit(m_mutex)
+  {
+    return m_thread_ID;
   }
 }
 
@@ -1447,7 +1479,7 @@ is_alive
 {
   dango_crit(m_mutex)
   {
-    return m_alive;
+    return non_null_ID();
   }
 }
 
@@ -1459,16 +1491,6 @@ is_daemon
 ()const noexcept->bool
 {
   return m_daemon;
-}
-
-constexpr auto
-dango::
-thread::
-control_block::
-get_ID
-()const noexcept->dango::thread_ID
-{
-  return m_thread_ID;
 }
 
 /*** registry ***/

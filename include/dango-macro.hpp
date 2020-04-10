@@ -103,9 +103,5 @@ final
   DANGO_UNINSTANTIABLE(parenth_type_help)
 };
 
-/*** DANGO_MAGIC_CONST_FOLD ***/
-
-#define DANGO_MAGIC_CONST_FOLD(...) (__builtin_constant_p((__VA_ARGS__))?(__VA_ARGS__):(__VA_ARGS__))
-
 #endif // DANGO_MACRO_HPP_INCLUDED
 
