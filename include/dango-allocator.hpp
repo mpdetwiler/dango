@@ -599,10 +599,6 @@ private:
   class node;
   template
   <dango::usize tp_size>
-  requires(tp_size != dango::usize(0))
-  class node<tp_size>;
-  template
-  <dango::usize tp_size>
   requires(tp_size == dango::usize(0))
   class node<tp_size>;
 private:
@@ -715,11 +711,10 @@ decrement
 
 template
 <dango::usize tp_size>
-requires(tp_size != dango::usize(0))
 class
 dango::
 allocator_tree::
-node<tp_size>
+node
 final:
 public dango::allocator_tree::node_base
 {

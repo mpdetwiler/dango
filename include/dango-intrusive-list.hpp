@@ -41,7 +41,7 @@ intrusive_list_elem
 {
   template
   <dango::intrusive_list_constraint_spec>
-  friend class dango::intrusive_list;
+  friend class intrusive_list;
 private:
   using elem_type = intrusive_list_elem;
 private:
