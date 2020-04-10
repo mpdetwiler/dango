@@ -405,6 +405,20 @@ start_thread
   }
 }
 
+void
+dango::
+detail::
+cond_var_registry_thread::
+stop_thread
+(dango::thread const& a_thread)noexcept
+{
+  auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
+
+  a_registry.notify_exit();
+
+  a_thread.join();
+}
+
 #include "dango-concurrent-private.hpp"
 
 /*** thread ***/
@@ -1701,6 +1715,20 @@ start_thread
   {
     dango_unreachable_terminate_msg(u8"windows timer-res manager thread creation failed");
   }
+}
+
+void
+dango::
+detail::
+windows_timer_res_daemon::
+stop_thread
+(dango::thread const& a_thread)noexcept
+{
+  auto& a_manager = dango::detail::windows_timer_res_access::s_manager;
+
+  a_manager.notify_exit();
+
+  a_thread.join();
 }
 
 #endif // _WIN32

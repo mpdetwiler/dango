@@ -2192,21 +2192,21 @@ private:
   using cond_type = dango::detail::cond_var_base;
   using list_type = dango::intrusive_list<cond_type>;
 private:
-  DANGO_EXPORT static void remove(cond_type*)noexcept;
-  DANGO_EXPORT static auto bias_okay(dango::tick_count_type&)noexcept->bool;
+  static void remove(cond_type*)noexcept;
+  static auto bias_okay(dango::tick_count_type&)noexcept->bool;
 public:
-  DANGO_EXPORT void regist(cond_type*, dango::timeout const&)noexcept;
-  DANGO_EXPORT void unregist(cond_type*, dango::timeout const&)noexcept;
-  DANGO_EXPORT void notify_exit()noexcept;
-  DANGO_EXPORT void thread_func()noexcept;
+  void regist(cond_type*, dango::timeout const&)noexcept;
+  void unregist(cond_type*, dango::timeout const&)noexcept;
+  void notify_exit()noexcept;
+  void thread_func()noexcept;
 private:
   constexpr cond_var_registry()noexcept;
   ~cond_var_registry()noexcept = default;
 private:
-  DANGO_EXPORT void add(cond_type*)noexcept;
-  DANGO_EXPORT auto wait_empty()noexcept->bool;
-  DANGO_EXPORT auto poll_bias(dango::tick_count_type&, dango::timeout&)noexcept->bool;
-  DANGO_EXPORT auto pop_internal()noexcept->bool;
+  void add(cond_type*)noexcept;
+  auto wait_empty()noexcept->bool;
+  auto poll_bias(dango::tick_count_type&, dango::timeout&)noexcept->bool;
+  auto pop_internal()noexcept->bool;
 private:
   dango::static_mutex m_mutex;
   dango::static_cond_var_mutex m_cond;
@@ -2229,6 +2229,7 @@ final
 {
 private:
   DANGO_EXPORT static auto start_thread()noexcept->dango::thread;
+  DANGO_EXPORT static void stop_thread(dango::thread const&)noexcept;
 public:
   cond_var_registry_thread()noexcept;
   ~cond_var_registry_thread()noexcept;
@@ -2256,11 +2257,7 @@ cond_var_registry_thread::
 ~cond_var_registry_thread
 ()noexcept
 {
-  auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
-
-  a_registry.notify_exit();
-
-  m_thread.join();
+  stop_thread(m_thread);
 }
 
 namespace
@@ -2310,16 +2307,16 @@ private:
     ACTIVATED, DEACTIVATING, DEACTIVATED
   };
 public:
-  DANGO_EXPORT void activate(dango::timeout const&)noexcept;
-  DANGO_EXPORT void deactivate(dango::timeout const&)noexcept;
-  DANGO_EXPORT void notify_exit()noexcept;
-  DANGO_EXPORT void thread_func()noexcept;
+  void activate(dango::timeout const&)noexcept;
+  void deactivate(dango::timeout const&)noexcept;
+  void notify_exit()noexcept;
+  void thread_func()noexcept;
 private:
   constexpr windows_timer_res_manager()noexcept;
   ~windows_timer_res_manager()noexcept = default;
 private:
-  DANGO_EXPORT auto wait()noexcept->bool;
-  DANGO_EXPORT auto timed_wait(dango::timeout const&)noexcept->bool;
+  auto wait()noexcept->bool;
+  auto timed_wait(dango::timeout const&)noexcept->bool;
 private:
   dango::static_mutex m_mutex;
   dango::static_cond_var_mutex m_cond;
@@ -2341,6 +2338,7 @@ final
 {
 private:
   DANGO_EXPORT static auto start_thread()noexcept->dango::thread;
+  DANGO_EXPORT static void stop_thread(dango::thread const&)noexcept;
 public:
   windows_timer_res_daemon()noexcept;
   ~windows_timer_res_daemon()noexcept;
@@ -2368,11 +2366,7 @@ windows_timer_res_daemon::
 ~windows_timer_res_daemon
 ()noexcept
 {
-  auto& a_manager = dango::detail::windows_timer_res_access::s_manager;
-
-  a_manager.notify_exit();
-
-  m_thread.join();
+  stop_thread(m_thread);
 }
 
 namespace
