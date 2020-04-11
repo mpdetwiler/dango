@@ -159,7 +159,7 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
-  auto a_timeout = dango::make_timeout_rel_hr(1'000);
+  auto a_timeout = dango::timeout::make_rel(1'000, dango::timeout_flags::HIGH_RES);
 
   for(auto a_i = uint(0); a_i < uint(10); ++a_i)
   {

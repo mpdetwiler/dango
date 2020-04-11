@@ -219,7 +219,7 @@ thread_func
 
     auto a_bias = dango::suspend_bias();
 
-    auto a_timeout = dango::make_timeout_rel(dango::tick_count_type(0));
+    auto a_timeout = dango::timeout::make_rel(dango::tick_count_type(0));
 
     while(poll_bias(a_bias, a_timeout));
   }
@@ -1486,7 +1486,7 @@ windows_timer_res_manager::
 activate
 (dango::timeout const& a_timeout)noexcept
 {
-  if(!a_timeout.requires_high_resolution())
+  if(!a_timeout.is_high_res())
   {
     return;
   }
@@ -1529,7 +1529,7 @@ windows_timer_res_manager::
 deactivate
 (dango::timeout const& a_timeout)noexcept
 {
-  if(!a_timeout.requires_high_resolution())
+  if(!a_timeout.is_high_res())
   {
     return;
   }
@@ -1603,7 +1603,7 @@ thread_func
     }
 
     auto const a_timeout =
-      dango::make_timeout_rel(dango::tick_count_type(60'000));
+      dango::timeout::make_rel(dango::tick_count_type(60'000));
 
     if(timed_wait(a_timeout))
     {
