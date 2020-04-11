@@ -282,6 +282,22 @@ reset
   while(true);
 }
 
+/*** crit_section ***/
+
+namespace
+dango
+{
+  class
+  crit_section
+  {
+  protected:
+    explicit constexpr crit_section()noexcept = default;
+    ~crit_section()noexcept = default;
+  public:
+    DANGO_IMMOBILE(crit_section)
+  };
+}
+
 /*** spin_mutex ***/
 
 namespace
@@ -295,12 +311,13 @@ dango::
 spin_mutex
 final
 {
-private:
+public:
   class locker;
   class try_locker;
 public:
   constexpr spin_mutex()noexcept;
   ~spin_mutex()noexcept = default;
+public:
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
 private:
@@ -313,14 +330,30 @@ public:
   DANGO_IMMOBILE(spin_mutex)
 };
 
+namespace
+dango
+{
+  using spin_mutex_locker = dango::spin_mutex::locker;
+  using spin_mutex_try_locker = dango::spin_mutex::try_locker;
+}
+
 class
 dango::
 spin_mutex::
 locker
-final
+final:
+public dango::crit_section
 {
+  friend auto dango::spin_mutex::lock()noexcept->locker;
+private:
+  using super_type = dango::crit_section;
+private:
+  explicit
+  locker(spin_mutex* const a_lock)noexcept:
+  super_type{ },
+  m_lock{ a_lock->acquire() }
+  { }
 public:
-  locker(spin_mutex* const a_lock)noexcept:m_lock{ a_lock->acquire() }{ }
   ~locker()noexcept{ m_lock->release(); }
 private:
   spin_mutex* const m_lock;
@@ -333,11 +366,21 @@ class
 dango::
 spin_mutex::
 try_locker
-final
+final:
+public dango::crit_section
 {
+  friend auto dango::spin_mutex::try_lock()noexcept->try_locker;
+private:
+  using super_type = dango::crit_section;
+private:
+  explicit
+  try_locker(spin_mutex* const a_lock)noexcept:
+  super_type{ },
+  m_lock{ a_lock->try_acquire() }
+  { }
 public:
-  try_locker(spin_mutex* const a_lock)noexcept:m_lock{ a_lock->try_acquire() }{ }
   ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
+public:
   explicit operator bool()const{ return m_lock != dango::null; }
 private:
   spin_mutex* const m_lock;
