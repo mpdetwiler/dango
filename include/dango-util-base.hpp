@@ -66,6 +66,102 @@ in_constexpr_context
   return __builtin_is_constant_evaluated();
 }
 
+/*** arithmetic min max ***/
+
+namespace
+dango
+{
+  constexpr void min()noexcept{ }
+
+  template
+  <dango::is_arithmetic_include_ptr tp_arg>
+  constexpr auto
+  min
+  (tp_arg const a_arg)noexcept->tp_arg
+  {
+    return a_arg;
+  }
+
+  template
+  <dango::is_arithmetic_include_ptr tp_arg>
+  constexpr auto
+  min
+  (tp_arg const a_arg1, tp_arg const a_arg2)noexcept->tp_arg
+  {
+    return a_arg1 < a_arg2 ? a_arg1 : a_arg2;
+  }
+
+  template
+  <dango::is_arithmetic_include_ptr tp_arg, typename... tp_args>
+  requires(((sizeof...(tp_args) >= dango::usize(2)) && ... && dango::is_same<tp_args, tp_arg>))
+  constexpr auto
+  min
+  (tp_arg const a_arg, tp_args... a_args)noexcept->tp_arg
+  {
+    return dango::min(a_arg, dango::min(a_args...));
+  }
+}
+
+namespace
+dango
+{
+  constexpr void max()noexcept{ }
+
+  template
+  <dango::is_arithmetic_include_ptr tp_arg>
+  constexpr auto
+  max
+  (tp_arg const a_arg)noexcept->tp_arg
+  {
+    return a_arg;
+  }
+
+  template
+  <dango::is_arithmetic_include_ptr tp_arg>
+  constexpr auto
+  max
+  (tp_arg const a_arg1, tp_arg const a_arg2)noexcept->tp_arg
+  {
+    return a_arg1 > a_arg2 ? a_arg1 : a_arg2;
+  }
+
+  template
+  <dango::is_arithmetic_include_ptr tp_arg, typename... tp_args>
+  requires(((sizeof...(tp_args) >= dango::usize(2)) && ... && dango::is_same<tp_args, tp_arg>))
+  constexpr auto
+  max
+  (tp_arg const a_arg, tp_args... a_args)noexcept->tp_arg
+  {
+    return dango::max(a_arg, dango::max(a_args...));
+  }
+}
+
+/*** scalar swap ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_lhs, typename tp_rhs>
+  requires
+  (
+    dango::is_scalar<tp_lhs> && dango::is_scalar<tp_rhs> &&
+    !dango::is_const<tp_lhs> && !dango::is_const<tp_rhs> &&
+    dango::is_assignable<tp_lhs&, tp_rhs&&> &&
+    dango::is_assignable<tp_rhs&, dango::remove_volatile<tp_lhs>&&>
+  )
+  constexpr void
+  swap
+  (tp_lhs& a_lhs, tp_rhs& a_rhs)noexcept
+  {
+    dango::remove_volatile<tp_lhs> a_temp{ dango::move(a_lhs) };
+
+    a_lhs = dango::move(a_rhs);
+
+    a_rhs = dango::move(a_temp);
+  }
+}
+
 /*** integer_seq ***/
 
 namespace
@@ -210,32 +306,6 @@ dango
   }
 }
 
-/*** swap ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type1, typename tp_type2>
-  requires
-  (
-    !dango::is_const<tp_type1> &&
-    !dango::is_const<tp_type2> &&
-    dango::is_same_ignore_cv<tp_type1, tp_type2> &&
-    dango::is_scalar<tp_type1>
-  )
-  constexpr void
-  swap
-  (tp_type1& a_arg1, tp_type2& a_arg2)noexcept
-  {
-    dango::remove_volatile<tp_type1> a_temp{ dango::move(a_arg1) };
-
-    a_arg1 = dango::move(a_arg2);
-
-    a_arg2 = dango::move(a_temp);
-  }
-}
-
 /*** is_pow_two ***/
 
 namespace
@@ -253,92 +323,6 @@ dango
     }
 
     return tp_int(a_arg & (a_arg - tp_int(1))) == tp_int(0);
-  }
-}
-
-/*** min ***/
-
-namespace
-dango
-{
-  constexpr void min()noexcept{ }
-
-  template
-  <typename tp_type>
-  requires(dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>)
-  constexpr auto
-  min
-  (tp_type const a_arg)noexcept->tp_type
-  {
-    return a_arg;
-  }
-
-  template
-  <typename tp_type>
-  requires(dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>)
-  constexpr auto
-  min
-  (tp_type const a_arg1, tp_type const a_arg2)noexcept->tp_type
-  {
-    return a_arg1 < a_arg2 ? a_arg1 : a_arg2;
-  }
-
-  template
-  <typename tp_type, typename... tp_types>
-  requires
-  (
-    (sizeof...(tp_types) >= dango::usize(2)) &&
-    (dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>) &&
-    ( ... && dango::is_same<tp_types, tp_type>)
-  )
-  constexpr auto
-  min
-  (tp_type const a_arg, tp_types... a_args)noexcept->tp_type
-  {
-    return dango::min(a_arg, dango::min(a_args...));
-  }
-}
-
-/*** max ***/
-
-namespace
-dango
-{
-  constexpr void max()noexcept{ }
-
-  template
-  <typename tp_type>
-  requires(dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>)
-  constexpr auto
-  max
-  (tp_type const a_arg)noexcept->tp_type
-  {
-    return a_arg;
-  }
-
-  template
-  <typename tp_type>
-  requires(dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>)
-  constexpr auto
-  max
-  (tp_type const a_arg1, tp_type const a_arg2)noexcept->tp_type
-  {
-    return a_arg1 > a_arg2 ? a_arg1 : a_arg2;
-  }
-
-  template
-  <typename tp_type, typename... tp_types>
-  requires
-  (
-    (sizeof...(tp_types) >= dango::usize(2)) &&
-    (dango::is_arithmetic_exclude_bool<tp_type> || dango::is_object_ptr<tp_type>) &&
-    ( ... && dango::is_same<tp_types, tp_type>)
-  )
-  constexpr auto
-  max
-  (tp_type const a_arg, tp_types... a_args)noexcept->tp_type
-  {
-    return dango::max(a_arg, dango::max(a_args...));
   }
 }
 
@@ -470,6 +454,37 @@ ptr_as_sint
   else
   {
     return ret_type(0);
+  }
+}
+
+/*** volatile_load volatile_store ***/
+
+namespace
+dango
+{
+  template
+  <dango::is_scalar tp_type>
+  constexpr auto
+  volatile_load
+  (tp_type const volatile* const a_addr)noexcept->tp_type
+  {
+    return *a_addr;
+  }
+
+  template
+  <dango::is_scalar tp_type, typename tp_arg>
+  requires
+  (
+    !dango::is_const<tp_type> &&
+    dango::is_brace_constructible<tp_type, tp_arg> &&
+    dango::is_convertible<tp_arg, tp_type>
+  )
+  constexpr void
+  volatile_store
+  (tp_type volatile* const a_addr, tp_arg&& a_arg)
+  noexcept(dango::is_noexcept_brace_constructible<tp_type, tp_arg>)
+  {
+    *a_addr = tp_type{ dango::forward<tp_arg>(a_arg) };
   }
 }
 

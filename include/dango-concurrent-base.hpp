@@ -16,10 +16,10 @@ if constexpr(auto const local_name = (cond).lock(mutex); true)
 dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
 
 #define dango_try_crit_full(lockable, local_name) \
-if(auto const local_name = (lockable).try_lock())
+if(auto const local_name = (lockable).try_lock(); local_name)
 
 #define dango_try_crit_cond(cond, mutex, local_name) \
-if(auto const local_name = (cond).try_lock(mutex))
+if(auto const local_name = (cond).try_lock(mutex); local_name)
 
 /*** thread_yield ***/
 
@@ -58,9 +58,9 @@ private:
     EXECUTED, EXECUTING, INITIAL
   };
 public:
-  constexpr exec_once()noexcept;
+  explicit constexpr exec_once()noexcept;
   ~exec_once()noexcept = default;
-
+public:
   template
   <typename tp_func, typename... tp_args>
   requires(dango::is_callable_ret<void, tp_func, tp_args...>)
@@ -74,7 +74,7 @@ public:
   auto exec
   (tp_func&&, tp_args&&...)
   noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool;
-
+public:
   auto has_executed()const noexcept->bool;
   void reset()noexcept;
 private:
@@ -315,7 +315,7 @@ public:
   class locker;
   class try_locker;
 public:
-  constexpr spin_mutex()noexcept;
+  explicit constexpr spin_mutex()noexcept;
   ~spin_mutex()noexcept = default;
 public:
   [[nodiscard]] auto lock()noexcept->locker;

@@ -153,6 +153,8 @@ struct printer
   printer()noexcept{ fprintf(stderr, "printer::printer()\n"); }
   ~printer()noexcept{ fprintf(stderr, "printer::~printer()\n"); }
   void print()noexcept{ fprintf(stderr, "printer::print()\n"); }
+  auto dango_operator_equals(printer const&)const noexcept->bool{ return true; }
+  auto dango_operator_compare(printer const&)const noexcept->dango::compare_val{ return dango::compare_val(0); }
 };
 
 auto
@@ -174,6 +176,17 @@ main
     a_timeout.add(1'000);
   }
 
+  {
+    printer a_printer{ };
+
+    dango_assert(a_printer == a_printer);
+    dango_assert(!(a_printer != a_printer));
+    dango_assert(dango::comparison::is_equal(dango::compare(a_printer, a_printer)));
+    dango_assert(dango::comparison::is_equal(a_printer <=> a_printer));
+
+    static_assert(noexcept(dango::min(a_printer, a_printer, a_printer, a_printer)));
+    dango::min(4, 4, 4, 4);
+  }
 
   /*dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);
   dango_assert(dango::str_size(dango::char_as_bchar("hello")) == 5);

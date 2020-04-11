@@ -285,37 +285,6 @@ dango
 
 #undef DANGO_ATOMIC_DEFINE_FETCH
 
-/*** volatile_load volatile_store ***/
-
-namespace
-dango
-{
-  template
-  <dango::is_scalar tp_type>
-  constexpr auto
-  volatile_load
-  (tp_type const volatile* const a_addr)noexcept->tp_type
-  {
-    return *a_addr;
-  }
-
-  template
-  <dango::is_scalar tp_type, typename tp_arg>
-  requires
-  (
-    !dango::is_const<tp_type> &&
-    dango::is_brace_constructible<tp_type, tp_arg> &&
-    dango::is_convertible<tp_arg, tp_type>
-  )
-  constexpr void
-  volatile_store
-  (tp_type volatile* const a_addr, tp_arg&& a_arg)
-  noexcept(dango::is_noexcept_brace_constructible<tp_type, tp_arg>)
-  {
-    *a_addr = tp_type{ dango::forward<tp_arg>(a_arg) };
-  }
-}
-
 /*** atomic ***/
 
 namespace

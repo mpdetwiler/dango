@@ -1446,6 +1446,17 @@ dango
     dango::is_arithmetic_exclude_bool<tp_type> || dango::is_bool<tp_type>;
 }
 
+/*** is_arithmetic_include_ptr ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_arithmetic_include_ptr =
+    dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>;
+}
+
 /*** is_fundamnetal ***/
 
 namespace
