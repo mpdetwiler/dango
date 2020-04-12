@@ -18,14 +18,24 @@ dango::detail
   template
   <typename tp_type, typename tp_pack>
   struct tuple_pack_prepend_help;
-
   template
   <typename tp_type, typename... tp_pack>
   struct tuple_pack_prepend_help<tp_type, dango::detail::tuple_pack<tp_pack...>>;
 
   template
   <typename tp_type, typename tp_pack>
+  struct tuple_pack_append_help;
+  template
+  <typename tp_type, typename... tp_pack>
+  struct tuple_pack_append_help<tp_type, dango::detail::tuple_pack<tp_pack...>>;
+
+  template
+  <typename tp_type, typename tp_pack>
   using tuple_pack_prepend = typename dango::detail::tuple_pack_prepend_help<tp_type, tp_pack>::type;
+
+  template
+  <typename tp_type, typename tp_pack>
+  using tuple_pack_append = typename dango::detail::tuple_pack_append_help<tp_type, tp_pack>::type;
 }
 
 template
@@ -41,47 +51,154 @@ final
   DANGO_UNINSTANTIABLE(tuple_pack_prepend_help)
 };
 
+template
+<typename tp_type, typename... tp_pack>
+struct
+dango::
+detail::
+tuple_pack_append_help<tp_type, dango::detail::tuple_pack<tp_pack...>>
+final
+{
+  using type = dango::detail::tuple_pack<tp_pack..., tp_type>;
+
+  DANGO_UNINSTANTIABLE(tuple_pack_append_help)
+};
+
 namespace
 dango::detail
 {
   template
-  <typename tp_pack, typename tp_first, typename... tp_next>
+  <typename tp_pack, typename... tp_next>
   struct tuple_pack_reverse_help;
 
   template
-  <typename tp_pack, typename tp_first>
-  struct tuple_pack_reverse_help<tp_pack, tp_first>;
+  <typename... tp_pack, typename tp_first, typename... tp_next>
+  struct tuple_pack_reverse_help<dango::detail::tuple_pack<tp_pack...>, tp_first, tp_next...>;
+  template
+  <typename... tp_pack, typename tp_first>
+  struct tuple_pack_reverse_help<dango::detail::tuple_pack<tp_pack...>, tp_first>;
 
   template
   <typename... tp_types>
-  using tuple_pack_reverse = typename dango::detail::tuple_pack_reverse_help<dango::detail::tuple_pack<>, tp_types...>::type;
+  using tuple_pack_reverse =
+    typename dango::detail::tuple_pack_reverse_help<dango::detail::tuple_pack<>, tp_types...>::type;
 }
 
 template
-<typename tp_pack, typename tp_first, typename... tp_next>
+<typename... tp_pack, typename tp_first, typename... tp_next>
 struct
 dango::
 detail::
 tuple_pack_reverse_help
+<dango::detail::tuple_pack<tp_pack...>, tp_first, tp_next...>
 final
 {
-  using type = typename dango::detail::tuple_pack_reverse_help<dango::detail::tuple_pack_prepend<tp_first, tp_pack>, tp_next...>::type;
+  using pack_type = dango::detail::tuple_pack<tp_pack...>;
+
+  using type =
+    typename dango::detail::tuple_pack_reverse_help<dango::detail::tuple_pack_prepend<tp_first, pack_type>, tp_next...>::type;
 
   DANGO_UNINSTANTIABLE(tuple_pack_reverse_help)
 };
 
 template
-<typename tp_pack, typename tp_first>
+<typename... tp_pack, typename tp_first>
 struct
 dango::
 detail::
-tuple_pack_reverse_help<tp_pack, tp_first>
+tuple_pack_reverse_help
+<dango::detail::tuple_pack<tp_pack...>, tp_first>
 final
 {
-  using type = dango::detail::tuple_pack_prepend<tp_first, tp_pack>;
+  using pack_type = dango::detail::tuple_pack<tp_pack...>;
+
+  using type = dango::detail::tuple_pack_prepend<tp_first, pack_type>;
 
   DANGO_UNINSTANTIABLE(tuple_pack_reverse_help)
 };
+
+/*** tuple_pack_min ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_out1, typename tp_pack1, typename tp_out2, typename tp_pack2>
+  struct tuple_pack_min_help;
+
+  template
+  <typename... tp_out1, typename tp_first1, typename... tp_next1, typename... tp_out2, typename tp_first2, typename... tp_next2>
+  struct
+  tuple_pack_min_help
+  <dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1, tp_next1...>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2, tp_next2...>>;
+
+  template
+  <typename... tp_out1, typename tp_first1, typename... tp_out2, typename tp_first2, typename... tp_next2>
+  struct
+  tuple_pack_min_help
+  <dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2, tp_next2...>>;
+
+  template
+  <typename... tp_out1, typename tp_first1, typename... tp_next1, typename... tp_out2, typename tp_first2>
+  struct
+  tuple_pack_min_help
+  <dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1, tp_next1...>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2>>;
+
+  template
+  <typename... tp_out1, typename tp_first1, typename... tp_out2, typename tp_first2>
+  struct
+  tuple_pack_min_help
+  <dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2>>;
+}
+
+template
+<typename... tp_out1, typename tp_first1, typename... tp_next1, typename... tp_out2, typename tp_first2, typename... tp_next2>
+struct
+dango::
+detail::
+tuple_pack_min_help
+<dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1, tp_next1...>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2, tp_next2...>>
+final
+{
+  DANGO_UNINSTANTIABLE(tuple_pack_min_help)
+};
+
+template
+<typename... tp_out1, typename tp_first1, typename... tp_out2, typename tp_first2, typename... tp_next2>
+struct
+dango::
+detail::
+tuple_pack_min_help
+<dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2, tp_next2...>>
+final
+{
+  DANGO_UNINSTANTIABLE(tuple_pack_min_help)
+};
+
+template
+<typename... tp_out1, typename tp_first1, typename... tp_next1, typename... tp_out2, typename tp_first2>
+struct
+dango::
+detail::
+tuple_pack_min_help
+<dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1, tp_next1...>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2>>
+final
+{
+  DANGO_UNINSTANTIABLE(tuple_pack_min_help)
+};
+
+template
+<typename... tp_out1, typename tp_first1, typename... tp_out2, typename tp_first2>
+struct
+dango::
+detail::
+tuple_pack_min_help
+<dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2>>
+final
+{
+  DANGO_UNINSTANTIABLE(tuple_pack_min_help)
+};
+
 
 /*** tuple constraint ***/
 
@@ -867,7 +984,7 @@ private:
   template
   <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
   static constexpr auto
-  construct
+  construct_help
   (dango::index_seq<tp_indices...> const, tuple<tp_args...> const& a_tup)
   noexcept(tp_noexcept)->storage_type
   {
@@ -877,7 +994,7 @@ private:
   template
   <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
   static constexpr auto
-  construct
+  construct_help
   (dango::index_seq<tp_indices...> const, tuple<tp_args...>&& a_tup)
   noexcept(tp_noexcept)->storage_type
   {
@@ -906,7 +1023,7 @@ public:
   tuple
   (dango::tuple<tp_args...> const& a_tup)
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)):
-  m_storage{ construct<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup) }
+  m_storage{ construct_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup) }
   {
 
   }
@@ -928,7 +1045,7 @@ public:
   tuple
   (dango::tuple<tp_args...> const& a_tup)
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)):
-  m_storage{ construct<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup) }
+  m_storage{ construct_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup) }
   {
 
   }
@@ -947,7 +1064,7 @@ public:
   tuple
   (dango::tuple<tp_args...> const& a_tup)
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)):
-  m_storage{ construct<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup) }
+  m_storage{ construct_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup) }
   {
 
   }
@@ -968,7 +1085,7 @@ public:
   tuple
   (dango::tuple<tp_args...> const& a_tup)
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)):
-  m_storage{ construct<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup) }
+  m_storage{ construct_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup) }
   {
 
   }
@@ -990,7 +1107,7 @@ public:
   tuple
   (dango::tuple<tp_args...>&& a_tup)
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)):
-  m_storage{ construct<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup)) }
+  m_storage{ construct_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup)) }
   {
 
   }
@@ -1012,7 +1129,7 @@ public:
   tuple
   (dango::tuple<tp_args...>&& a_tup)
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)):
-  m_storage{ construct<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup)) }
+  m_storage{ construct_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup)) }
   {
 
   }
@@ -1031,7 +1148,7 @@ public:
   tuple
   (dango::tuple<tp_args...>&& a_tup)
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)):
-  m_storage{ construct<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup)) }
+  m_storage{ construct_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup)) }
   {
 
   }
@@ -1052,7 +1169,7 @@ public:
   tuple
   (dango::tuple<tp_args...>&& a_tup)
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)):
-  m_storage{ construct<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup)) }
+  m_storage{ construct_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup)) }
   {
 
   }
@@ -1066,11 +1183,11 @@ private:
   template
   <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
   constexpr auto
-  assign
+  assign_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)
   noexcept(tp_noexcept)->tuple&
   {
-    [[maybe_unused]] dango::ubyte const a_temp[] = { (static_cast<void>(get<tp_indices>() = a_tup.template get<tp_indices>()), dango::ubyte(0))... };
+    ( ... , static_cast<void>(get<tp_indices>() = a_tup.template get<tp_indices>()));
 
     return *this;
   }
@@ -1078,11 +1195,11 @@ private:
   template
   <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
   constexpr auto
-  assign
+  assign_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_tup)
   noexcept(tp_noexcept)->tuple&
   {
-    [[maybe_unused]] dango::ubyte const a_temp[] = { (static_cast<void>(get<tp_indices>() = dango::move(a_tup).template get<tp_indices>()), dango::ubyte(0))... };
+    ( ... , static_cast<void>(get<tp_indices>() = dango::move(a_tup).template get<tp_indices>()));
 
     return *this;
   }
@@ -1108,7 +1225,7 @@ public:
   (dango::tuple<tp_args...> const& a_tup)&
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->tuple&
   {
-    return assign<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
+    return assign_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
   }
 
   template
@@ -1125,7 +1242,7 @@ public:
   (dango::tuple<tp_args...>&& a_tup)&
   noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&))->tuple&
   {
-    return assign<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup));
+    return assign_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup));
   }
 
 #undef DANGO_TUPLE_LONG_NOEXCEPT_SPEC
@@ -1226,6 +1343,103 @@ public:
   }
 
 #undef DANGO_TUPLE_LONG_NOEXCEPT_SPEC
+
+private:
+
+/*** dango_operator_equals ***/
+
+  template
+  <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
+  constexpr auto
+  equals_help
+  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)const noexcept(tp_noexcept)->bool
+  {
+    return ( ... && (get<tp_indices>() == a_tup.template get<tp_indices>()));
+  }
+
+public:
+
+#define DANGO_TUPLE_LONG_NOEXCEPT_SPEC(cvref) \
+  ( ... && dango::is_noexcept_equatable<dango::tuple_get_type<dango::tuple_model cvref, tp_types>, dango::tuple_get_type<dango::tuple_model cvref, tp_args>>)
+
+  template
+  <typename... tp_args>
+  requires
+  (
+    (sizeof...(tp_args) == sizeof...(tp_types)) &&
+    ( ... && dango::is_equatable<dango::tuple_get_type<dango::tuple_model const&, tp_types>, dango::tuple_get_type<dango::tuple_model const&, tp_args>>)
+  )
+  constexpr auto
+  dango_operator_equals
+  (dango::tuple<tp_args...> const& a_tup)const
+  noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->bool
+  {
+    return equals_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
+  }
+
+#undef DANGO_TUPLE_LONG_NOEXCEPT_SPEC
+
+  template
+  <typename... tp_args>
+  requires(sizeof...(tp_args) != sizeof...(tp_types))
+  constexpr auto
+  dango_operator_equals
+  (dango::tuple<tp_args...> const&)const noexcept->bool
+  {
+    return false;
+  }
+
+private:
+
+/*** dango_operator_compare ***/
+
+  template
+  <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
+  constexpr auto
+  compare_help
+  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)const noexcept(tp_noexcept)->dango::compare_val
+  {
+    static_assert(sizeof...(tp_indices) != dango::usize(0));
+
+    dango::compare_val a_ret;
+
+    [[maybe_unused]] bool const a_temp = ( ... && dango::comparison::is_equal(a_ret = dango::compare(get<tp_indices>(), a_tup.template get<tp_indices>())));
+
+    return a_ret;
+  }
+
+public:
+
+#define DANGO_TUPLE_LONG_NOEXCEPT_SPEC(cvref) \
+  ( ... && dango::is_noexcept_comparable<dango::tuple_get_type<dango::tuple_model cvref, tp_types>, dango::tuple_get_type<dango::tuple_model cvref, tp_args>>)
+
+  template
+  <typename... tp_args>
+  requires
+  (
+    (sizeof...(tp_args) != dango::usize(0)) &&
+    (sizeof...(tp_args) == sizeof...(tp_types)) &&
+    ( ... && dango::is_comparable<dango::tuple_get_type<dango::tuple_model const&, tp_types>, dango::tuple_get_type<dango::tuple_model const&, tp_args>>)
+  )
+  constexpr auto
+  dango_operator_compare
+  (dango::tuple<tp_args...> const& a_tup)const
+  noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->bool
+  {
+    return compare_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
+  }
+
+#undef DANGO_TUPLE_LONG_NOEXCEPT_SPEC
+
+  template
+  <typename... tp_args>
+  requires(sizeof...(tp_args) == dango::usize(0))
+  constexpr auto
+  dango_operator_compare
+  (dango::tuple<tp_args...> const&)const noexcept->dango::compare_val
+  {
+    return dango::compare_val{ dango::ssize(1) };
+  }
 
 private:
   storage_type m_storage;
