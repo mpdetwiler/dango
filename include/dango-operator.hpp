@@ -78,7 +78,7 @@ dango
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<dango::is_class tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator ==
@@ -88,7 +88,7 @@ operator ==
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, dango::is_class tp_rhs>
 requires(!dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_equals<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator ==
@@ -98,7 +98,7 @@ operator ==
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<dango::is_class tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator !=
@@ -108,7 +108,7 @@ operator !=
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, dango::is_class tp_rhs>
 requires(!dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_equals<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator !=
@@ -137,7 +137,7 @@ dango
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<dango::is_class tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator <
@@ -147,7 +147,7 @@ operator <
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, dango::is_class tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator <
@@ -157,7 +157,7 @@ operator <
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<dango::is_class tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator <=
@@ -167,7 +167,7 @@ operator <=
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, dango::is_class tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator <=
@@ -177,7 +177,7 @@ operator <=
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<dango::is_class tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator >
@@ -187,7 +187,7 @@ operator >
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, dango::is_class tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator >
@@ -197,7 +197,7 @@ operator >
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<dango::is_class tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator >=
@@ -207,7 +207,7 @@ operator >=
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, dango::is_class tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator >=
@@ -217,7 +217,7 @@ operator >=
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<dango::is_class tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator <=>
@@ -227,7 +227,7 @@ operator <=>
 }
 
 template
-<dango::is_class tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, dango::is_class tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator <=>
@@ -240,7 +240,7 @@ namespace
 dango
 {
   template
-  <dango::is_class tp_lhs, dango::is_class tp_rhs>
+  <dango::is_class tp_lhs, typename tp_rhs>
   requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
   constexpr auto
   compare
@@ -250,7 +250,7 @@ dango
   }
 
   template
-  <dango::is_class tp_lhs, dango::is_class tp_rhs>
+  <typename tp_lhs, dango::is_class tp_rhs>
   requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   compare
@@ -283,7 +283,7 @@ namespace
 dango
 {
   template
-  <dango::is_class tp_lhs, dango::is_class tp_rhs>
+  <dango::is_class tp_lhs, typename tp_rhs>
   requires(dango::has_dango_operator_swap<tp_lhs&, tp_rhs&>)
   constexpr void
   swap
@@ -293,7 +293,7 @@ dango
   }
 
   template
-  <dango::is_class tp_lhs, dango::is_class tp_rhs>
+  <typename tp_lhs, dango::is_class tp_rhs>
   requires(!dango::has_dango_operator_swap<tp_lhs&, tp_rhs&> && dango::has_dango_operator_swap<tp_rhs&, tp_lhs&>)
   constexpr void
   swap
@@ -399,7 +399,7 @@ dango
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     {
       { dango::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>;
-      { dango::swap(dango::forward<tp_lhs>(a_rhs), dango::forward<tp_rhs>(a_lhs)) }->dango::is_convertible_ret<void>;
+      { dango::swap(dango::forward<tp_rhs>(a_rhs), dango::forward<tp_lhs>(a_lhs)) }->dango::is_convertible_ret<void>;
     };
 
   template
@@ -409,7 +409,7 @@ dango
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     {
       { dango::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>;
-      { dango::swap(dango::forward<tp_lhs>(a_rhs), dango::forward<tp_rhs>(a_lhs)) }noexcept->dango::is_noexcept_convertible_ret<void>;
+      { dango::swap(dango::forward<tp_rhs>(a_rhs), dango::forward<tp_lhs>(a_lhs)) }noexcept->dango::is_noexcept_convertible_ret<void>;
     };
 }
 
@@ -438,9 +438,10 @@ namespace
 dango
 {
   template
-  <dango::is_class tp_lhs, dango::is_class tp_rhs>
+  <typename tp_lhs, typename tp_rhs>
   requires
   (
+    (dango::is_class<tp_lhs> || dango::is_class<tp_rhs>) &&
     !dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> &&
     !dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&> &&
     dango::is_comparable<tp_lhs const&, tp_rhs const&>

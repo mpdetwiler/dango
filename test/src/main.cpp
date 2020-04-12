@@ -161,7 +161,7 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
-  auto a_timeout = dango::timeout::make_rel(1'000, dango::timeout_flags::HIGH_RES);
+  /*auto a_timeout = dango::timeout::make_rel(1'000, dango::timeout_flags::HIGH_RES);
 
   for(auto a_i = uint(0); a_i < uint(10); ++a_i)
   {
@@ -174,18 +174,34 @@ main
     dango::thread::sleep(a_timeout);
 
     a_timeout.add(1'000);
-  }
+  }*/
 
   {
-    printer a_printer{ };
+    dango::tuple<bchar, bchar, bchar> a_t1{ u8'a', u8'b', u8'c' };
+    dango::tuple<bchar, bchar, bchar, bchar> a_t2{ u8'a', u8'b', u8'c', u8'd' };
+    dango::tuple<bchar, bchar, bchar, bchar> a_t3{ u8'b', u8'b', u8'c', u8'd' };
 
-    dango_assert(a_printer == a_printer);
-    dango_assert(!(a_printer != a_printer));
-    dango_assert(dango::comparison::is_equal(dango::compare(a_printer, a_printer)));
-    dango_assert(dango::comparison::is_equal(a_printer <=> a_printer));
+    dango_assert(!(a_t1 == a_t2));
+    dango_assert(  a_t1 != a_t2);
+    dango_assert(  a_t1 <  a_t2);
+    dango_assert(  a_t1 <= a_t2);
+    dango_assert(  a_t2 >  a_t1);
+    dango_assert(  a_t2 >= a_t1);
+    dango_assert(dango::comparison::is_less(a_t1 <=> a_t2));
+    dango_assert(dango::comparison::is_greater(a_t2 <=> a_t1));
+    dango_assert(dango::comparison::is_less(dango::compare(a_t1, a_t2)));
+    dango_assert(dango::comparison::is_greater(dango::compare(a_t2, a_t1)));
 
-    static_assert(noexcept(dango::min(a_printer, a_printer, a_printer, a_printer)));
-    dango::min(4, 4, 4, 4);
+    dango_assert(!(a_t2 == a_t3));
+    dango_assert(  a_t2 != a_t3);
+    dango_assert(  a_t2 <  a_t3);
+    dango_assert(  a_t2 <= a_t3);
+    dango_assert(  a_t3 >  a_t2);
+    dango_assert(  a_t3 >= a_t2);
+    dango_assert(dango::comparison::is_less(a_t2 <=> a_t3));
+    dango_assert(dango::comparison::is_greater(a_t3 <=> a_t2));
+    dango_assert(dango::comparison::is_less(dango::compare(a_t2, a_t3)));
+    dango_assert(dango::comparison::is_greater(dango::compare(a_t3, a_t2)));
   }
 
   /*dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);

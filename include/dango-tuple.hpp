@@ -75,8 +75,8 @@ dango::detail
   <typename... tp_pack, typename tp_first, typename... tp_next>
   struct tuple_pack_reverse_help<dango::detail::tuple_pack<tp_pack...>, tp_first, tp_next...>;
   template
-  <typename... tp_pack, typename tp_first>
-  struct tuple_pack_reverse_help<dango::detail::tuple_pack<tp_pack...>, tp_first>;
+  <typename... tp_pack>
+  struct tuple_pack_reverse_help<dango::detail::tuple_pack<tp_pack...>>;
 
   template
   <typename... tp_types>
@@ -102,103 +102,99 @@ final
 };
 
 template
-<typename... tp_pack, typename tp_first>
+<typename... tp_pack>
 struct
 dango::
 detail::
 tuple_pack_reverse_help
-<dango::detail::tuple_pack<tp_pack...>, tp_first>
+<dango::detail::tuple_pack<tp_pack...>>
 final
 {
   using pack_type = dango::detail::tuple_pack<tp_pack...>;
 
-  using type = dango::detail::tuple_pack_prepend<tp_first, pack_type>;
+  using type = pack_type;
 
   DANGO_UNINSTANTIABLE(tuple_pack_reverse_help)
 };
-
-/*** tuple_pack_min ***/
 
 namespace
 dango::detail
 {
   template
-  <typename tp_out1, typename tp_pack1, typename tp_out2, typename tp_pack2>
-  struct tuple_pack_min_help;
+  <typename tp_pack, dango::usize tp_size, typename... tp_types>
+  struct tuple_pack_clamp_help;
 
   template
-  <typename... tp_out1, typename tp_first1, typename... tp_next1, typename... tp_out2, typename tp_first2, typename... tp_next2>
+  <typename... tp_pack, dango::usize tp_size, typename tp_first, typename... tp_next>
   struct
-  tuple_pack_min_help
-  <dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1, tp_next1...>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2, tp_next2...>>;
+  tuple_pack_clamp_help
+  <dango::detail::tuple_pack<tp_pack...>, tp_size, tp_first, tp_next...>;
+  template
+  <typename... tp_pack, typename tp_first, typename... tp_next>
+  struct
+  tuple_pack_clamp_help
+  <dango::detail::tuple_pack<tp_pack...>, dango::usize(0), tp_first, tp_next...>;
+  template
+  <typename... tp_pack>
+  struct
+  tuple_pack_clamp_help
+  <dango::detail::tuple_pack<tp_pack...>, dango::usize(0)>;
 
   template
-  <typename... tp_out1, typename tp_first1, typename... tp_out2, typename tp_first2, typename... tp_next2>
-  struct
-  tuple_pack_min_help
-  <dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2, tp_next2...>>;
-
-  template
-  <typename... tp_out1, typename tp_first1, typename... tp_next1, typename... tp_out2, typename tp_first2>
-  struct
-  tuple_pack_min_help
-  <dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1, tp_next1...>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2>>;
-
-  template
-  <typename... tp_out1, typename tp_first1, typename... tp_out2, typename tp_first2>
-  struct
-  tuple_pack_min_help
-  <dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2>>;
+  <dango::usize tp_size, typename... tp_types>
+  requires(tp_size <= sizeof...(tp_types))
+  using tuple_pack_clamp =
+    typename dango::detail::tuple_pack_clamp_help<dango::detail::tuple_pack<>, tp_size, tp_types...>::type;
 }
 
 template
-<typename... tp_out1, typename tp_first1, typename... tp_next1, typename... tp_out2, typename tp_first2, typename... tp_next2>
+<typename... tp_pack, dango::usize tp_size, typename tp_first, typename... tp_next>
 struct
 dango::
 detail::
-tuple_pack_min_help
-<dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1, tp_next1...>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2, tp_next2...>>
+tuple_pack_clamp_help
+<dango::detail::tuple_pack<tp_pack...>, tp_size, tp_first, tp_next...>
 final
 {
-  DANGO_UNINSTANTIABLE(tuple_pack_min_help)
+  using pack_type = dango::detail::tuple_pack<tp_pack...>;
+
+  using type =
+    typename dango::detail::tuple_pack_clamp_help<dango::detail::tuple_pack_append<tp_first, pack_type>, tp_size - dango::usize(1), tp_next...>::type;
+
+  DANGO_UNINSTANTIABLE(tuple_pack_clamp_help)
 };
 
 template
-<typename... tp_out1, typename tp_first1, typename... tp_out2, typename tp_first2, typename... tp_next2>
+<typename... tp_pack, typename tp_first, typename... tp_next>
 struct
 dango::
 detail::
-tuple_pack_min_help
-<dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2, tp_next2...>>
+tuple_pack_clamp_help
+<dango::detail::tuple_pack<tp_pack...>, dango::usize(0), tp_first, tp_next...>
 final
 {
-  DANGO_UNINSTANTIABLE(tuple_pack_min_help)
+  using pack_type = dango::detail::tuple_pack<tp_pack...>;
+
+  using type = pack_type;
+
+  DANGO_UNINSTANTIABLE(tuple_pack_clamp_help)
 };
 
 template
-<typename... tp_out1, typename tp_first1, typename... tp_next1, typename... tp_out2, typename tp_first2>
+<typename... tp_pack>
 struct
 dango::
 detail::
-tuple_pack_min_help
-<dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1, tp_next1...>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2>>
+tuple_pack_clamp_help
+<dango::detail::tuple_pack<tp_pack...>, dango::usize(0)>
 final
 {
-  DANGO_UNINSTANTIABLE(tuple_pack_min_help)
-};
+  using pack_type = dango::detail::tuple_pack<tp_pack...>;
 
-template
-<typename... tp_out1, typename tp_first1, typename... tp_out2, typename tp_first2>
-struct
-dango::
-detail::
-tuple_pack_min_help
-<dango::detail::tuple_pack<tp_out1...>, dango::detail::tuple_pack<tp_first1>, dango::detail::tuple_pack<tp_out2...>, dango::detail::tuple_pack<tp_first2>>
-final
-{
-  DANGO_UNINSTANTIABLE(tuple_pack_min_help)
-};
+  using type = pack_type;
 
+  DANGO_UNINSTANTIABLE(tuple_pack_clamp_help)
+};
 
 /*** tuple constraint ***/
 
@@ -210,6 +206,44 @@ dango
   concept tuple_constraint_spec =
     ( ... && (dango::is_ref<tp_types> || dango::is_object_exclude_array<tp_types>)) &&
     ( ... && dango::is_noexcept_destructible<tp_types>);
+}
+
+namespace
+dango
+{
+  template
+  <typename... tp_types>
+  requires(dango::tuple_constraint_spec<tp_types...>)
+  class tuple;
+
+  template<>
+  class tuple<>;
+
+  template
+  <typename tp_first, typename tp_second>
+  using pair = dango::tuple<tp_first, tp_second>;
+}
+
+/*** is_tuple ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  inline constexpr bool const is_tuple_help = false;
+
+  template
+  <typename... tp_types>
+  inline constexpr bool const is_tuple_help<dango::tuple<tp_types...>> = true;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_tuple = dango::detail::is_tuple_help<dango::remove_cv<tp_type>>;
 }
 
 /*** tuple_get_type ***/
@@ -328,6 +362,8 @@ dango
     typename dango::detail::tuple_get_type_help<tp_model, tp_type>::type;
 }
 
+/*** init tags ***/
+
 namespace
 dango
 {
@@ -349,6 +385,8 @@ dango
 
   inline constexpr dango::skip_init_tag const skip_init{ };
 }
+
+/*** tuple_is_constructible tuple_is_convertible ***/
 
 namespace
 dango::detail
@@ -432,6 +470,72 @@ dango::detail
   concept tuple_is_convertible =
     dango::tuple_constraint_spec<tp_type> && dango::detail::tuple_is_convertible_help<tp_arg, tp_type>;
 }
+
+/*** tuple_is_comparable ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_pack1, typename tp_pack2>
+  inline constexpr bool const tuple_is_comparable_help = false;
+  template
+  <typename... tp_pack1, typename... tp_pack2>
+  inline constexpr bool const
+  tuple_is_comparable_help
+  <dango::detail::tuple_pack<tp_pack1...>, dango::detail::tuple_pack<tp_pack2...>> =
+    ( ... && dango::is_comparable<tp_pack1, tp_pack2>);
+
+  template
+  <typename tp_pack1, typename tp_pack2>
+  inline constexpr bool const tuple_is_noexcept_comparable_help = false;
+  template
+  <typename... tp_pack1, typename... tp_pack2>
+  inline constexpr bool const
+  tuple_is_noexcept_comparable_help
+  <dango::detail::tuple_pack<tp_pack1...>, dango::detail::tuple_pack<tp_pack2...>> =
+    ( ... && dango::is_noexcept_comparable<tp_pack1, tp_pack2>);
+
+  template
+  <typename tp_pack1, typename tp_pack2>
+  struct tuple_is_comparable_struct;
+  template
+  <typename... tp_pack1, typename... tp_pack2>
+  struct
+  tuple_is_comparable_struct
+  <dango::detail::tuple_pack<tp_pack1...>, dango::detail::tuple_pack<tp_pack2...>>;
+
+  template
+  <typename tp_pack1, typename tp_pack2>
+  concept tuple_is_comparable =
+    dango::detail::tuple_is_comparable_struct<tp_pack1, tp_pack2>::value1;
+
+  template
+  <typename tp_pack1, typename tp_pack2>
+  concept tuple_is_noexcept_comparable =
+    dango::detail::tuple_is_comparable_struct<tp_pack1, tp_pack2>::value2;
+}
+
+template
+<typename... tp_pack1, typename... tp_pack2>
+struct
+dango::
+detail::
+tuple_is_comparable_struct
+<dango::detail::tuple_pack<tp_pack1...>, dango::detail::tuple_pack<tp_pack2...>>
+final
+{
+  static inline constexpr dango::usize const c_size = dango::min(sizeof...(tp_pack1), sizeof...(tp_pack2));
+
+  using type1 = dango::detail::tuple_pack_clamp<c_size, tp_pack1...>;
+  using type2 = dango::detail::tuple_pack_clamp<c_size, tp_pack2...>;
+
+  static inline constexpr bool const value1 = dango::detail::tuple_is_comparable_help<type1, type2>;
+  static inline constexpr bool const value2 = dango::detail::tuple_is_noexcept_comparable_help<type1, type2>;
+
+  DANGO_UNINSTANTIABLE(tuple_is_comparable_struct)
+};
+
 
 /*** tuple_storage ***/
 
@@ -813,22 +917,6 @@ final
 };
 
 /*** tuple ***/
-
-namespace
-dango
-{
-  template
-  <typename... tp_types>
-  requires(dango::tuple_constraint_spec<tp_types...>)
-  class tuple;
-
-  template<>
-  class tuple<>;
-
-  template
-  <typename tp_first, typename tp_second>
-  using pair = dango::tuple<tp_first, tp_second>;
-}
 
 template
 <typename... tp_types>
@@ -1423,10 +1511,40 @@ public:
   )
   constexpr auto
   dango_operator_compare
-  (dango::tuple<tp_args...> const& a_tup)const
-  noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->bool
+  (dango::tuple<tp_args...> const& a_tup)const noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->dango::compare_val
   {
     return compare_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
+  }
+
+#undef DANGO_TUPLE_LONG_NOEXCEPT_SPEC
+
+#define DANGO_TUPLE_LONG_NOEXCEPT_SPEC(cvref) \
+  dango::detail::tuple_is_noexcept_comparable \
+  <dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model cvref, tp_types>...>, dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model cvref, tp_args>...>>
+
+  template
+  <typename... tp_args>
+  requires
+  (
+    (sizeof...(tp_args) != dango::usize(0)) &&
+    (sizeof...(tp_args) != sizeof...(tp_types)) &&
+    dango::detail::tuple_is_comparable
+    <dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model const&, tp_types>...>, dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model const&, tp_args>...>>
+  )
+  constexpr auto
+  dango_operator_compare
+  (dango::tuple<tp_args...> const& a_tup)const noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->dango::compare_val
+  {
+    constexpr auto const c_size = dango::min(sizeof...(tp_args), sizeof...(tp_types));
+
+    auto const a_ret = compare_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<c_size>{ }, a_tup);
+
+    if(dango::comparison::is_equal(a_ret))
+    {
+      return dango::compare(sizeof...(tp_types), sizeof...(tp_args));
+    }
+
+    return a_ret;
   }
 
 #undef DANGO_TUPLE_LONG_NOEXCEPT_SPEC
@@ -1471,28 +1589,6 @@ public:
     return dango::forward<tp_func>(a_func)();
   }
 };
-
-/*** is_tuple ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  inline constexpr bool const is_tuple_help = false;
-
-  template
-  <typename... tp_types>
-  inline constexpr bool const is_tuple_help<dango::tuple<tp_types...>> = true;
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  concept is_tuple = dango::detail::is_tuple_help<dango::remove_cv<tp_type>>;
-}
 
 /*** tuple_get ***/
 
