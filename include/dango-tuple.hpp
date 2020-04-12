@@ -1275,7 +1275,7 @@ private:
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)
   noexcept(tp_noexcept)->tuple&
   {
-    ( ... , static_cast<void>(get<tp_indices>() = a_tup.template get<tp_indices>()));
+    ( ... , void(get<tp_indices>() = a_tup.template get<tp_indices>()));
 
     return *this;
   }
@@ -1287,7 +1287,7 @@ private:
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_tup)
   noexcept(tp_noexcept)->tuple&
   {
-    ( ... , static_cast<void>(get<tp_indices>() = dango::move(a_tup).template get<tp_indices>()));
+    ( ... , void(get<tp_indices>() = dango::move(a_tup).template get<tp_indices>()));
 
     return *this;
   }
@@ -1459,8 +1459,7 @@ public:
   )
   constexpr auto
   dango_operator_equals
-  (dango::tuple<tp_args...> const& a_tup)const
-  noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->bool
+  (dango::tuple<tp_args...> const& a_tup)const noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->bool
   {
     return equals_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
   }
@@ -1558,6 +1557,40 @@ public:
   {
     return dango::compare_val{ dango::ssize(1) };
   }
+
+private:
+
+/*** dango_operator_swap ***/
+
+  template
+  <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
+  constexpr void
+  swap_help
+  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>& a_tup)noexcept(tp_noexcept)
+  {
+    ( ... , void(dango::swap(get<tp_indices>(), a_tup.template get<tp_indices>())));
+  }
+
+public:
+
+#define DANGO_TUPLE_LONG_NOEXCEPT_SPEC(cvref) \
+  ( ... && dango::is_noexcept_swappable<dango::tuple_get_type<dango::tuple_model cvref, tp_types>, dango::tuple_get_type<dango::tuple_model cvref, tp_args>>)
+
+  template
+  <typename... tp_args>
+  requires
+  (
+    (sizeof...(tp_args) == sizeof...(tp_types)) &&
+    ( ... && dango::is_swappable<dango::tuple_get_type<dango::tuple_model&, tp_types>, dango::tuple_get_type<dango::tuple_model&, tp_args>>)
+  )
+  constexpr void
+  dango_operator_swap
+  (dango::tuple<tp_args...>& a_tup)noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&))
+  {
+    swap_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
+  }
+
+#undef DANGO_TUPLE_LONG_NOEXCEPT_SPEC
 
 private:
   storage_type m_storage;

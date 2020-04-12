@@ -228,7 +228,7 @@ decrement
 #ifndef DANGO_BUILDING_SHARED_LIB
 
 #define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static name##_strong_type const name##_strong{ };
-#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline dango::byte const name##_byte{ (static_cast<void>(name()), dango::byte{ }) }; }
+#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline dango::byte const name##_byte{ (void(name()), dango::byte{ }) }; }
 #define DANGO_GLOBAL_DEFINE_ACCESS(name) \
 [[nodiscard]] inline auto \
 name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \

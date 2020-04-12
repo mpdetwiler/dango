@@ -1974,8 +1974,8 @@ dango::detail
   inline dango::byte const
   s_concurrent_init_byte
   {(
-    static_cast<void>(dango::tick_count_suspend_bias()),
-    static_cast<void>(dango::thread::self()),
+    void(dango::tick_count_suspend_bias()),
+    void(dango::thread::self()),
     dango::byte{ }
   )};
 }

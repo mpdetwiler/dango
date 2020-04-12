@@ -486,9 +486,7 @@ public:
   {
     auto_ptr a_temp{ dango::null };
 
-    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+    dango::swap(m_data, a_temp.m_data);
 
     return *this;
   }
@@ -507,9 +505,7 @@ public:
   {
     auto_ptr a_temp{ a_ptr };
 
-    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+    dango::swap(m_data, a_temp.m_data);
 
     return *this;
   }
@@ -521,9 +517,7 @@ public:
   {
     auto_ptr a_temp{ dango::move(a_ptr) };
 
-    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+    dango::swap(m_data, a_temp.m_data);
 
     return *this;
   }
@@ -543,9 +537,7 @@ public:
   {
     auto_ptr a_temp{ dango::move(a_ptr) };
 
-    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+    dango::swap(m_data, a_temp.m_data);
 
     return *this;
   }
@@ -582,9 +574,7 @@ public:
   {
     auto_ptr a_temp{ dango::null };
 
-    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+    dango::swap(m_data, a_temp.m_data);
   }
 
   template
@@ -595,9 +585,7 @@ public:
   {
     auto_ptr a_temp{ a_ptr };
 
-    dango::swap(dango::tuple_get<size_type(0)>(m_data), dango::tuple_get<size_type(0)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(1)>(m_data), dango::tuple_get<size_type(1)>(a_temp.m_data));
-    dango::swap(dango::tuple_get<size_type(2)>(m_data), dango::tuple_get<size_type(2)>(a_temp.m_data));
+    dango::swap(m_data, a_temp.m_data);
   }
 
   constexpr auto

@@ -187,7 +187,7 @@ noexcept
 #define dango_assert_noassume_msg(cond, msg) dango_assert_msg(cond, msg)
 #define dango_assert_noassume_msg_loc(cond, msg, loc) dango_assert_msg_loc(cond, msg, loc)
 #else
-#define dango_assert_noassume(cond) static_cast<void>(noexcept(bool(cond)))
+#define dango_assert_noassume(cond) void(noexcept(bool(cond)))
 #define dango_assert_noassume_loc(cond, loc) dango_assert_noassume(cond)
 #define dango_assert_noassume_msg(cond, msg) dango_assert_noassume(cond)
 #define dango_assert_noassume_msg_loc(cond, msg, loc) dango_assert_noassume(cond)

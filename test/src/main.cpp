@@ -202,6 +202,11 @@ main
     dango_assert(dango::comparison::is_greater(a_t3 <=> a_t2));
     dango_assert(dango::comparison::is_less(dango::compare(a_t2, a_t3)));
     dango_assert(dango::comparison::is_greater(dango::compare(a_t3, a_t2)));
+
+    dango_assert(dango::min(a_t2, a_t2, a_t3, a_t2) == a_t2);
+    dango_assert(dango::max(a_t3, a_t2, a_t3, a_t2) == a_t3);
+
+    dango::swap(a_t2, a_t3);
   }
 
   /*dango_assert(dango::str_size(dango::bchar_as_char(u8"hello")) == 5);
