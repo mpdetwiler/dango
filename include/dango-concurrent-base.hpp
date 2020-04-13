@@ -499,5 +499,62 @@ spin_yield
 }
 #endif
 
+/*** is_all_decay_constructible is_decay_construct_correct_order is_all_decay_copy_constructible ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename... tp_args>
+  constexpr auto
+  is_decay_construct_correct_order_help()noexcept->bool
+  {
+    constexpr bool const a_field[sizeof...(tp_args)] =
+    {
+      (!dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args> || dango::is_lvalue_ref<tp_args> || dango::is_trivial_constructible<dango::decay<tp_args>, tp_args>)...
+    };
+
+    auto a_true_allowed = true;
+
+    for(auto const a_val: a_field)
+    {
+      if(a_val)
+      {
+        if(a_true_allowed)
+        {
+          continue;
+        }
+        else
+        {
+          return false;
+        }
+      }
+
+      a_true_allowed = false;
+    }
+
+    return true;
+  }
+}
+
+namespace
+dango
+{
+  template
+  <typename... tp_args>
+  concept is_all_decay_constructible =
+    ( ... && dango::is_constructible<dango::decay<tp_args>, tp_args>);
+
+  template
+  <typename... tp_args>
+  concept is_decay_construct_correct_order =
+    dango::detail::is_decay_construct_correct_order_help<tp_args...>();
+
+  template
+  <typename... tp_args>
+  concept is_all_decay_copy_constructible =
+    ( ... && dango::is_constructible<dango::decay<tp_args>, tp_args const&>);
+}
+
 #endif // DANGO_CONCURRENT_BASE_HPP_INCLUDED
 

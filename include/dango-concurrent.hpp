@@ -1069,8 +1069,8 @@ public:
   requires
   (
     (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-    dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
-    dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
+    dango::is_all_decay_constructible<tp_func, tp_args...> &&
+    (dango::is_decay_construct_correct_order<tp_func, tp_args...> || dango::is_all_decay_copy_constructible<tp_func, tp_args...>) &&
     dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
   )
   static auto
@@ -1081,8 +1081,8 @@ public:
   requires
   (
     (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-    dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
-    dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
+    dango::is_all_decay_constructible<tp_func, tp_args...> &&
+    (dango::is_decay_construct_correct_order<tp_func, tp_args...> || dango::is_all_decay_copy_constructible<tp_func, tp_args...>) &&
     dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
   )
   static auto
@@ -1096,8 +1096,8 @@ public:
   requires
   (
     (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-    dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
-    dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
+    dango::is_all_decay_constructible<tp_func, tp_args...> &&
+    (dango::is_decay_construct_correct_order<tp_func, tp_args...> || dango::is_all_decay_copy_constructible<tp_func, tp_args...>) &&
     dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
   )
   static auto
@@ -1873,8 +1873,8 @@ template
 requires
 (
   (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
-  dango::is_brace_constructible<dango::decay<tp_func>, tp_func> &&
-  dango::is_brace_constructible<dango::tuple<dango::decay<tp_args>...>, tp_args...> &&
+  dango::is_all_decay_constructible<tp_func, tp_args...> &&
+  (dango::is_decay_construct_correct_order<tp_func, tp_args...> || dango::is_all_decay_copy_constructible<tp_func, tp_args...>) &&
   dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
 )
 auto
@@ -1886,9 +1886,20 @@ create
   using dango::mem_order::acquire;
   using dango::mem_order::release;
 
-  using run_type = runnable<dango::decay<tp_func>, dango::decay<tp_args>...>;
+  using runnable_type = runnable<dango::decay<tp_func>, dango::decay<tp_args>...>;
 
-  auto const a_runnable = new run_type{ dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)... };
+  runnable_type* a_runnable;
+
+  if constexpr(dango::is_decay_construct_correct_order<tp_func, tp_args...>)
+  {
+    a_runnable =
+      new runnable_type{ dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)... };
+  }
+  else
+  {
+    a_runnable =
+      new runnable_type{ dango::forward<tp_func const&>(a_thread_func), dango::forward<tp_args const&>(a_args)... };
+  }
 
   auto a_guard =
   dango::make_guard
