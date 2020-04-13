@@ -181,6 +181,8 @@ main
     dango::tuple<bchar, bchar, bchar, bchar> a_t2{ u8'a', u8'b', u8'c', u8'd' };
     dango::tuple<bchar, bchar, bchar, bchar> a_t3{ u8'b', u8'b', u8'c', u8'd' };
 
+    dango_assert(dango::comparison::is_less(a_t1.dango_operator_compare(a_t2)));
+
     dango_assert(!(a_t1 == a_t2));
     dango_assert(  a_t1 != a_t2);
     dango_assert(  a_t1 <  a_t2);
