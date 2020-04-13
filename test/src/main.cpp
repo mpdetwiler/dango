@@ -177,6 +177,16 @@ main
   }*/
 
   {
+    dango::tuple<> const a_empty{ };
+
+    dango::swap(a_empty, a_empty);
+
+    dango_assert(a_empty == a_empty);
+    dango_assert(a_empty <= a_empty);
+    dango_assert(a_empty >= a_empty);
+  }
+
+  {
     dango::tuple<bchar, bchar, bchar> a_t1{ u8'a', u8'b', u8'c' };
     dango::tuple<bchar, bchar, bchar, bchar> a_t2{ u8'a', u8'b', u8'c', u8'd' };
     dango::tuple<bchar, bchar, bchar, bchar> a_t3{ u8'b', u8'b', u8'c', u8'd' };

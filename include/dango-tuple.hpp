@@ -1576,11 +1576,9 @@ private:
   <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
   constexpr void
   swap_help
-  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>& a_tup)noexcept(tp_noexcept)
+  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>& a_tup)& noexcept(tp_noexcept)
   {
-    using dango::swap;
-
-    ( ... , void(swap(get<tp_indices>(), a_tup.template get<tp_indices>())));
+    ( ... , (dango::swap(get<tp_indices>(), a_tup.template get<tp_indices>())));
   }
 
 public:
@@ -1597,7 +1595,7 @@ public:
   )
   constexpr void
   dango_operator_swap
-  (dango::tuple<tp_args...>& a_tup)noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&))
+  (dango::tuple<tp_args...>& a_tup)& noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&))
   {
     swap_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
   }
@@ -1633,6 +1631,40 @@ public:
   {
     return dango::forward<tp_func>(a_func)();
   }
+
+  template
+  <typename... tp_args>
+  constexpr auto
+  dango_operator_equals
+  (dango::tuple<tp_args...> const&)const noexcept->bool
+  {
+    if constexpr(sizeof...(tp_args) == dango::usize(0))
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  template
+  <typename... tp_args>
+  constexpr auto
+  dango_operator_compare
+  (dango::tuple<tp_args...> const&)const noexcept->dango::compare_val
+  {
+    if constexpr(sizeof...(tp_args) == dango::usize(0))
+    {
+      return dango::compare_val{ dango::ssize(0) };
+    }
+    else
+    {
+      return dango::compare_val{ dango::ssize(-1) };
+    }
+  }
+
+  constexpr void dango_operator_swap(dango::tuple<> const&)const& noexcept{ }
 };
 
 /*** tuple_get ***/

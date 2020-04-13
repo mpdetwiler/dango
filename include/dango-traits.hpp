@@ -1298,12 +1298,23 @@ dango
 /*** is_func ***/
 
 namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_func =
+    !dango::is_ref<tp_type> && dango::is_same<tp_type const volatile, dango::remove_cv<tp_type>>;
+}
+
+/*** is_unqualified_func ***/
+
+namespace
 dango::detail
 {
   template
   <typename tp_type>
-  inline constexpr bool const is_func_help =
-    !dango::is_ref<tp_type> && dango::is_same<tp_type const volatile, dango::remove_cv<tp_type>>;
+  concept is_unqualified_func_help =
+    requires{ { dango::declval<tp_type&>() }noexcept; };
 }
 
 namespace
@@ -1311,7 +1322,19 @@ dango
 {
   template
   <typename tp_type>
-  concept is_func = dango::detail::is_func_help<tp_type>;
+  concept is_unqualified_func =
+    dango::is_func<tp_type> && dango::detail::is_unqualified_func_help<tp_type>;
+}
+
+/*** is_qualified_func ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_qualified_func =
+    dango::is_func<tp_type> && !dango::detail::is_unqualified_func_help<tp_type>;
 }
 
 /*** is_ptr ***/
@@ -1527,7 +1550,7 @@ dango
   template
   <typename tp_type>
   concept is_referenceable =
-    dango::is_func<tp_type> || dango::is_object<tp_type>;
+    dango::is_object<tp_type> || dango::is_unqualified_func<tp_type>;
 }
 
 /*** is_const ***/
