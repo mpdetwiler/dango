@@ -1281,8 +1281,7 @@ private:
   <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
   constexpr auto
   assign_help
-  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)
-  noexcept(tp_noexcept)->tuple&
+  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)& noexcept(tp_noexcept)->tuple&
   {
     ( ... , void(get<tp_indices>() = a_tup.template get<tp_indices>()));
 
@@ -1293,8 +1292,7 @@ private:
   <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
   constexpr auto
   assign_help
-  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_tup)
-  noexcept(tp_noexcept)->tuple&
+  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_tup)& noexcept(tp_noexcept)->tuple&
   {
     ( ... , void(get<tp_indices>() = dango::move(a_tup).template get<tp_indices>()));
 
@@ -1315,12 +1313,12 @@ public:
     (sizeof...(tp_args) == sizeof...(tp_types)) &&
     !( ... && dango::is_same<tp_args, tp_types>) &&
     ( ... && !dango::is_ref<tp_types>) &&
-    ( ... && dango::is_assignable<dango::tuple_get_type<dango::tuple_model&, tp_types>, dango::tuple_get_type<dango::tuple_model const&, tp_args>>)
+    ( ... && dango::is_assignable<dango::tuple_get_type<dango::tuple_model&, tp_types>, dango::tuple_get_type<dango::tuple_model const&, tp_args>>) &&
+    ( ... && dango::is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>)
   )
   constexpr auto
   operator =
-  (dango::tuple<tp_args...> const& a_tup)&
-  noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->tuple&
+  (dango::tuple<tp_args...> const& a_tup)& noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->tuple&
   {
     return assign_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
   }
@@ -1332,12 +1330,12 @@ public:
     (sizeof...(tp_args) == sizeof...(tp_types)) &&
     !( ... && dango::is_same<tp_args, tp_types>) &&
     ( ... && !dango::is_ref<tp_types>) &&
-    ( ... && dango::is_assignable<dango::tuple_get_type<dango::tuple_model&, tp_types>, dango::tuple_get_type<dango::tuple_model&&, tp_args>>)
+    ( ... && dango::is_assignable<dango::tuple_get_type<dango::tuple_model&, tp_types>, dango::tuple_get_type<dango::tuple_model&&, tp_args>>) &&
+    ( ... && dango::is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>)
   )
   constexpr auto
   operator =
-  (dango::tuple<tp_args...>&& a_tup)&
-  noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&))->tuple&
+  (dango::tuple<tp_args...>&& a_tup)& noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&))->tuple&
   {
     return assign_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(&&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup));
   }
