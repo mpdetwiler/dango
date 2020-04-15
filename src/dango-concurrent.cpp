@@ -623,7 +623,7 @@ public:
   void wait(mutex_ptr)noexcept;
   void wait(mutex_ptr, dango::tick_count_type)noexcept;
 private:
-  void increment(mutex_ptr)noexcept;
+  auto increment(mutex_ptr)noexcept->seq_type;
   void decrement(mutex_ptr)noexcept;
 private:
   seq_type m_seq;
@@ -905,11 +905,13 @@ notify
     {
       return;
     }
+
+    dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
+
+    dango_assert(m_mutex != dango::null);
+
+    dango::detail::futex_wake(&m_seq);
   }
-
-  dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
-
-  dango::detail::futex_wake(&m_seq);
 }
 
 void
@@ -922,8 +924,6 @@ notify_all
 {
   using dango::mem_order::relaxed;
 
-  mutex_ptr a_mutex;
-
   dango_crit(m_lock)
   {
     if(m_wait_count == dango::usize(0))
@@ -931,14 +931,12 @@ notify_all
       return;
     }
 
-    a_mutex = m_mutex;
+    dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
+
+    dango_assert(m_mutex != dango::null);
+
+    dango::detail::futex_wake_requeue(&m_seq, m_mutex->futex_address());
   }
-
-  dango_assert(a_mutex != dango::null);
-
-  dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
-
-  dango::detail::futex_wake_requeue(&m_seq, a_mutex->futex_address());
 }
 
 void
@@ -949,13 +947,9 @@ cond_var_impl::
 wait
 (mutex_ptr const a_mutex)noexcept
 {
-  using dango::mem_order::relaxed;
-
   dango_assert(a_mutex != dango::null);
 
-  auto const a_seq = dango::atomic_load<relaxed>(&m_seq);
-
-  increment(a_mutex);
+  auto const a_seq = increment(a_mutex);
 
   a_mutex->unlock();
 
@@ -974,13 +968,9 @@ cond_var_impl::
 wait
 (mutex_ptr const a_mutex, dango::tick_count_type const a_interval)noexcept
 {
-  using dango::mem_order::relaxed;
-
   dango_assert(a_mutex != dango::null);
 
-  auto const a_seq = dango::atomic_load<relaxed>(&m_seq);
-
-  increment(a_mutex);
+  auto const a_seq = increment(a_mutex);
 
   a_mutex->unlock();
 
@@ -991,24 +981,26 @@ wait
   decrement(a_mutex);
 }
 
-void
+auto
 dango::
 detail::
 cond_var_base::
 cond_var_impl::
 increment
-(mutex_ptr const a_mutex)noexcept
+(mutex_ptr const a_mutex)noexcept->seq_type
 {
+  using dango::mem_order::relaxed;
+
   dango_crit(m_lock)
   {
     if(m_wait_count++ == dango::usize(0))
     {
-      dango_assert(m_mutex == dango::null);
-
       m_mutex = a_mutex;
     }
 
     dango_assert(m_mutex == a_mutex);
+
+    return dango::atomic_load<relaxed>(&m_seq);
   }
 }
 
