@@ -16,20 +16,20 @@ tick_count_suspend_bias
   static auto s_last = tick_count_suspend_bias_help();
   static auto const s_init = s_last;
 
-  auto a_current =  tick_count_suspend_bias_help();
+  dango::tick_count_pair a_current;
+
+  auto& [a_tick, a_bias] = a_current;
 
   dango_crit(s_lock)
   {
-    a_current.first() = dango::max(s_last.first(), a_current.first());
-
-    a_current.second() = dango::max(s_last.second(), a_current.second());
-
+    a_current = tick_count_suspend_bias_help();
+    a_tick = dango::max(a_tick, s_last.first());
+    a_bias = dango::max(a_bias, s_last.second());
     s_last = a_current;
   }
 
-  a_current.first() -= dango::min(s_init.first(), a_current.first());
-
-  a_current.second() -= dango::min(s_init.second(), a_current.second());
+  a_tick -= dango::min(a_tick, s_init.first());
+  a_bias -= dango::min(a_bias, s_init.second());
 
   return a_current;
 }
@@ -372,7 +372,7 @@ pop_internal
 
     add(a_cond);
 
-    a_cond->notify_all();
+    a_cond->unlocked_notify_all();
   }
 
   return true;
@@ -503,6 +503,7 @@ public:
   m_state{ state::UNLOCKED }
   { }
   ~mutex_impl()noexcept = default;
+public:
   void lock()noexcept;
   auto try_lock()noexcept->bool;
   void relock()noexcept;
@@ -612,24 +613,16 @@ private:
 public:
   explicit constexpr
   cond_var_impl()noexcept:
-  m_seq{ seq_type(0) },
-  m_lock{ },
-  m_mutex{ dango::null },
-  m_wait_count{ dango::usize(0) }
+  m_seq{ seq_type(0) }
   { }
   ~cond_var_impl()noexcept = default;
-  void notify()noexcept;
-  void notify_all()noexcept;
+public:
+  void notify(dango::spin_mutex_locker const&, mutex_ptr)noexcept;
+  void notify_all(dango::spin_mutex_locker const&, mutex_ptr)noexcept;
   void wait(mutex_ptr)noexcept;
   void wait(mutex_ptr, dango::tick_count_type)noexcept;
 private:
-  auto increment(mutex_ptr)noexcept->seq_type;
-  void decrement(mutex_ptr)noexcept;
-private:
   seq_type m_seq;
-  dango::spin_mutex m_lock;
-  mutex_ptr m_mutex;
-  dango::usize m_wait_count;
 public:
   DANGO_IMMOBILE(cond_var_impl)
 };
@@ -678,14 +671,40 @@ void
 dango::
 detail::
 cond_var_base::
-wait
-(mutex_type* const a_lock)noexcept
+increment
+(mutex_type* const a_mutex)noexcept
 {
-  dango_assert(a_lock != dango::null);
+  dango_assert(a_mutex != dango::null);
 
-  dango_assert_noassume(m_init.has_executed());
+  dango_crit(m_lock)
+  {
+    if(m_wait_count++ == dango::usize(0))
+    {
+      m_current_mutex = a_mutex;
+    }
 
-  get()->wait(a_lock->get());
+    dango_assert(m_current_mutex == a_mutex);
+  }
+}
+
+void
+dango::
+detail::
+cond_var_base::
+decrement
+(mutex_type* const a_mutex)noexcept
+{
+  dango_assert(a_mutex != dango::null);
+
+  dango_crit(m_lock)
+  {
+    dango_assert(m_current_mutex == a_mutex);
+
+    if(--m_wait_count == dango::usize(0))
+    {
+      m_current_mutex = dango::null;
+    }
+  }
 }
 
 void
@@ -693,9 +712,27 @@ dango::
 detail::
 cond_var_base::
 wait
-(mutex_type* const a_lock, dango::timeout const& a_timeout)noexcept
+(mutex_type* const a_mutex)noexcept
 {
-  dango_assert(a_lock != dango::null);
+  dango_assert(a_mutex != dango::null);
+
+  dango_assert_noassume(m_init.has_executed());
+
+  increment(a_mutex);
+
+  get()->wait(a_mutex->get());
+
+  decrement(a_mutex);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+wait
+(mutex_type* const a_mutex, dango::timeout const& a_timeout)noexcept
+{
+  dango_assert(a_mutex != dango::null);
 
   dango_assert_noassume(m_init.has_executed());
 
@@ -708,11 +745,15 @@ wait
 
   auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
 
+  increment(a_mutex);
+
   a_registry.regist(this, a_timeout);
 
-  get()->wait(a_lock->get(), a_rem);
+  get()->wait(a_mutex->get(), a_rem);
 
   a_registry.unregist(this, a_timeout);
+
+  decrement(a_mutex);
 }
 
 void
@@ -722,9 +763,17 @@ cond_var_base::
 notify
 ()noexcept
 {
-  init();
+  dango_crit_full(m_lock, a_crit)
+  {
+    if(m_wait_count == dango::usize(0))
+    {
+      return;
+    }
 
-  get()->notify();
+    dango_assert(m_current_mutex != dango::null);
+
+    get()->notify(a_crit, m_current_mutex->get());
+  }
 }
 
 void
@@ -734,9 +783,72 @@ cond_var_base::
 notify_all
 ()noexcept
 {
-  init();
+  dango_crit_full(m_lock, a_crit)
+  {
+    if(m_wait_count == dango::usize(0))
+    {
+      return;
+    }
 
-  get()->notify_all();
+    dango_assert(m_current_mutex != dango::null);
+
+    get()->notify_all(a_crit, m_current_mutex->get());
+  }
+}
+
+void
+dango::
+detail::
+cond_var_base::
+unlocked_notify
+(bool const a_only_one)noexcept
+{
+  mutex_type* a_mutex;
+
+  do
+  {
+    dango_crit(m_lock)
+    {
+      if(m_wait_count == dango::usize(0))
+      {
+        return;
+      }
+
+      a_mutex = m_current_mutex;
+    }
+
+    dango_assert(a_mutex != dango::null);
+
+    dango_crit(*a_mutex)
+    {
+      dango_crit_full(m_lock, a_crit)
+      {
+        if(m_wait_count == dango::usize(0))
+        {
+          return;
+        }
+
+        dango_assert(m_current_mutex != dango::null);
+
+        if(m_current_mutex != a_mutex)
+        {
+          continue;
+        }
+
+        if(a_only_one)
+        {
+          get()->notify(a_crit, a_mutex->get());
+        }
+        else
+        {
+          get()->notify_all(a_crit, a_mutex->get());
+        }
+
+        return;
+      }
+    }
+  }
+  while(true);
 }
 
 /*** mutex_impl ***/
@@ -895,23 +1007,13 @@ detail::
 cond_var_base::
 cond_var_impl::
 notify
-()noexcept
+(dango::spin_mutex_locker const&, mutex_ptr const)noexcept
 {
   using dango::mem_order::relaxed;
 
-  dango_crit(m_lock)
-  {
-    if(m_wait_count == dango::usize(0))
-    {
-      return;
-    }
+  dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
 
-    dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
-
-    dango_assert(m_mutex != dango::null);
-
-    dango::detail::futex_wake(&m_seq);
-  }
+  dango::detail::futex_wake(&m_seq);
 }
 
 void
@@ -920,23 +1022,13 @@ detail::
 cond_var_base::
 cond_var_impl::
 notify_all
-()noexcept
+(dango::spin_mutex_locker const&, mutex_ptr const a_mutex)noexcept
 {
   using dango::mem_order::relaxed;
 
-  dango_crit(m_lock)
-  {
-    if(m_wait_count == dango::usize(0))
-    {
-      return;
-    }
+  dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
 
-    dango::atomic_add_fetch<relaxed>(&m_seq, seq_type(1));
-
-    dango_assert(m_mutex != dango::null);
-
-    dango::detail::futex_wake_requeue(&m_seq, m_mutex->futex_address());
-  }
+  dango::detail::futex_wake_requeue(&m_seq, a_mutex->futex_address());
 }
 
 void
@@ -949,15 +1041,14 @@ wait
 {
   dango_assert(a_mutex != dango::null);
 
-  auto const a_seq = increment(a_mutex);
+  auto const a_seq =
+    dango::atomic_load<dango::mem_order::relaxed>(&m_seq);
 
   a_mutex->unlock();
 
   dango::detail::futex_wait(&m_seq, a_seq);
 
   a_mutex->relock();
-
-  decrement(a_mutex);
 }
 
 void
@@ -970,57 +1061,14 @@ wait
 {
   dango_assert(a_mutex != dango::null);
 
-  auto const a_seq = increment(a_mutex);
+  auto const a_seq =
+    dango::atomic_load<dango::mem_order::relaxed>(&m_seq);
 
   a_mutex->unlock();
 
   dango::detail::futex_wait(&m_seq, a_seq, a_interval);
 
   a_mutex->relock();
-
-  decrement(a_mutex);
-}
-
-auto
-dango::
-detail::
-cond_var_base::
-cond_var_impl::
-increment
-(mutex_ptr const a_mutex)noexcept->seq_type
-{
-  using dango::mem_order::relaxed;
-
-  dango_crit(m_lock)
-  {
-    if(m_wait_count++ == dango::usize(0))
-    {
-      m_mutex = a_mutex;
-    }
-
-    dango_assert(m_mutex == a_mutex);
-
-    return dango::atomic_load<relaxed>(&m_seq);
-  }
-}
-
-void
-dango::
-detail::
-cond_var_base::
-cond_var_impl::
-decrement
-(mutex_ptr const a_mutex)noexcept
-{
-  dango_crit(m_lock)
-  {
-    dango_assert(m_mutex == a_mutex);
-
-    if(--m_wait_count == dango::usize(0))
-    {
-      m_mutex = dango::null;
-    }
-  }
 }
 
 /*** static ***/
@@ -1065,21 +1113,16 @@ namespace
   tick_count_suspend_bias_help
   ()noexcept->dango::tick_count_pair
   {
-    static auto const s_init = dango::detail::perf_count_suspend_bias();
-
     using tc64 = dango::tick_count_type;
 
     auto const a_freq = dango::detail::perf_freq();
 
     auto a_current = dango::detail::perf_count_suspend_bias();
 
-    a_current.first() -= dango::min(s_init.first(), a_current.first());
-    a_current.first() = (a_current.first() * tc64(1'000)) / a_freq;
+    auto& [a_perf, a_bias] = a_current;
 
-    a_current.second() -= dango::min(s_init.second(), a_current.second());
-    a_current.second() /= tc64(10'000);
-
-    a_current.first() = dango::max(tc64(0), a_current.first() - a_current.second());
+    a_perf = (a_perf * tc64(1'000)) / a_freq;
+    a_bias /= tc64(10'000);
 
     return a_current;
   }
@@ -1099,6 +1142,7 @@ private:
 public:
   explicit mutex_impl()noexcept;
   ~mutex_impl()noexcept = default;
+public:
   void lock()noexcept;
   auto try_lock()noexcept->bool;
   void unlock()noexcept;
@@ -1207,8 +1251,9 @@ private:
 public:
   explicit cond_var_impl()noexcept;
   ~cond_var_impl()noexcept = default;
-  void notify()noexcept;
-  void notify_all()noexcept;
+public:
+  void notify(dango::spin_mutex_locker const&, mutex_ptr)noexcept;
+  void notify_all(dango::spin_mutex_locker const&, mutex_ptr)noexcept;
   void wait(mutex_ptr)noexcept;
   void wait(mutex_ptr, dango::tick_count_type)noexcept;
 private:
@@ -1261,14 +1306,40 @@ void
 dango::
 detail::
 cond_var_base::
-wait
-(mutex_type* const a_lock)noexcept
+increment
+(mutex_type* const a_mutex)noexcept
 {
-  dango_assert(a_lock != dango::null);
+  dango_assert(a_mutex != dango::null);
 
-  dango_assert_noassume(m_init.has_executed());
+  dango_crit(m_lock)
+  {
+    if(m_wait_count++ == dango::usize(0))
+    {
+      m_current_mutex = a_mutex;
+    }
 
-  get()->wait(a_lock->get());
+    dango_assert(m_current_mutex == a_mutex);
+  }
+}
+
+void
+dango::
+detail::
+cond_var_base::
+decrement
+(mutex_type* const a_mutex)noexcept
+{
+  dango_assert(a_mutex != dango::null);
+
+  dango_crit(m_lock)
+  {
+    dango_assert(m_current_mutex == a_mutex);
+
+    if(--m_wait_count == dango::usize(0))
+    {
+      m_current_mutex = dango::null;
+    }
+  }
 }
 
 void
@@ -1276,9 +1347,27 @@ dango::
 detail::
 cond_var_base::
 wait
-(mutex_type* const a_lock, dango::timeout const& a_timeout)noexcept
+(mutex_type* const a_mutex)noexcept
 {
-  dango_assert(a_lock != dango::null);
+  dango_assert(a_mutex != dango::null);
+
+  dango_assert_noassume(m_init.has_executed());
+
+  increment(a_mutex);
+
+  get()->wait(a_mutex->get());
+
+  decrement(a_mutex);
+}
+
+void
+dango::
+detail::
+cond_var_base::
+wait
+(mutex_type* const a_mutex, dango::timeout const& a_timeout)noexcept
+{
+  dango_assert(a_mutex != dango::null);
 
   dango_assert_noassume(m_init.has_executed());
 
@@ -1293,15 +1382,19 @@ wait
 
   auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
 
+  increment(a_mutex);
+
   a_manager.activate(a_timeout);
 
   a_registry.regist(this, a_timeout);
 
-  get()->wait(a_lock->get(), a_rem);
+  get()->wait(a_mutex->get(), a_rem);
 
   a_registry.unregist(this, a_timeout);
 
   a_manager.deactivate(a_timeout);
+
+  decrement(a_mutex);
 }
 
 void
@@ -1311,9 +1404,17 @@ cond_var_base::
 notify
 ()noexcept
 {
-  init();
+  dango_crit_full(m_lock, a_crit)
+  {
+    if(m_wait_count == dango::usize(0))
+    {
+      return;
+    }
 
-  get()->notify();
+    dango_assert(m_current_mutex != dango::null);
+
+    get()->notify(a_crit, m_current_mutex->get());
+  }
 }
 
 void
@@ -1323,9 +1424,72 @@ cond_var_base::
 notify_all
 ()noexcept
 {
-  init();
+  dango_crit_full(m_lock, a_crit)
+  {
+    if(m_wait_count == dango::usize(0))
+    {
+      return;
+    }
 
-  get()->notify_all();
+    dango_assert(m_current_mutex != dango::null);
+
+    get()->notify_all(a_crit, m_current_mutex->get());
+  }
+}
+
+void
+dango::
+detail::
+cond_var_base::
+unlocked_notify
+(bool const a_only_one)noexcept
+{
+  mutex_type* a_mutex;
+
+  do
+  {
+    dango_crit(m_lock)
+    {
+      if(m_wait_count == dango::usize(0))
+      {
+        return;
+      }
+
+      a_mutex = m_current_mutex;
+    }
+
+    dango_assert(a_mutex != dango::null);
+
+    dango_crit(*a_mutex)
+    {
+      dango_crit_full(m_lock, a_crit)
+      {
+        if(m_wait_count == dango::usize(0))
+        {
+          return;
+        }
+
+        dango_assert(m_current_mutex != dango::null);
+
+        if(m_current_mutex != a_mutex)
+        {
+          continue;
+        }
+
+        if(a_only_one)
+        {
+          get()->notify(a_crit, a_mutex->get());
+        }
+        else
+        {
+          get()->notify_all(a_crit, a_mutex->get());
+        }
+
+        return;
+      }
+    }
+  }
+  while(true);
 }
 
 /*** mutex_impl ***/
@@ -1404,7 +1568,7 @@ detail::
 cond_var_base::
 cond_var_impl::
 notify
-()noexcept
+(dango::spin_mutex_try_locker const&, mutex_ptr const)noexcept
 {
   dango::detail::condition_variable_wake(&m_cond);
 }
@@ -1415,7 +1579,7 @@ detail::
 cond_var_base::
 cond_var_impl::
 notify_all
-()noexcept
+(dango::spin_mutex_try_locker const&, mutex_ptr const)noexcept
 {
   dango::detail::condition_variable_wake_all(&m_cond);
 }

@@ -378,7 +378,7 @@ namespace
 dango::detail
 {
   using primitive_storage =
-    dango::aligned_storage<dango::usize(24), alignof(void*)>;
+    dango::aligned_storage<dango::usize(8), alignof(void*)>;
 
   class mutex_base;
   class cond_var_base;
@@ -404,8 +404,8 @@ public:
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
 private:
-  auto get()noexcept->mutex_impl*;
   void init()noexcept;
+  auto get()noexcept->mutex_impl*;
 private:
   DANGO_EXPORT void initialize()noexcept;
   DANGO_EXPORT auto acquire()noexcept->mutex_base*;
@@ -413,7 +413,7 @@ private:
   DANGO_EXPORT void release()noexcept;
 private:
   dango::exec_once m_init;
-  detail::primitive_storage m_storage;
+  dango::detail::primitive_storage m_storage;
 public:
   DANGO_IMMOBILE(mutex_base)
 };
@@ -635,19 +635,27 @@ protected:
 protected:
   DANGO_EXPORT void destroy()noexcept;
 public:
-  DANGO_EXPORT void notify()noexcept;
-  DANGO_EXPORT void notify_all()noexcept;
+  void unlocked_notify()noexcept{ unlocked_notify(true); }
+  void unlocked_notify_all()noexcept{ unlocked_notify(false); }
 private:
-  auto get()noexcept->cond_var_impl*;
   void init()noexcept;
+  auto get()noexcept->cond_var_impl*;
+  void increment(mutex_type*)noexcept;
+  void decrement(mutex_type*)noexcept;
 private:
   DANGO_EXPORT void initialize()noexcept;
   DANGO_EXPORT void wait(mutex_type*)noexcept;
   DANGO_EXPORT void wait(mutex_type*, dango::timeout const&)noexcept;
+  DANGO_EXPORT void notify()noexcept;
+  DANGO_EXPORT void notify_all()noexcept;
+  DANGO_EXPORT void unlocked_notify(bool)noexcept;
 private:
-  dango::usize m_ref_count;
   dango::exec_once m_init;
-  detail::primitive_storage m_storage;
+  dango::spin_mutex m_lock;
+  dango::usize m_ref_count;
+  dango::usize m_wait_count;
+  mutex_type* m_current_mutex;
+  dango::detail::primitive_storage m_storage;
 public:
   DANGO_IMMOBILE(cond_var_base)
 };
@@ -728,8 +736,11 @@ cond_var_base::
 cond_var_base
 ()noexcept:
 super_type{ },
-m_ref_count{ dango::usize(0) },
 m_init{ },
+m_lock{ },
+m_ref_count{ dango::usize(0) },
+m_wait_count{ dango::usize(0) },
+m_current_mutex{ dango::null },
 m_storage{ }
 {
 
