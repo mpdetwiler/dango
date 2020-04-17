@@ -635,8 +635,8 @@ protected:
 protected:
   DANGO_EXPORT void destroy()noexcept;
 public:
-  void unlocked_notify()noexcept{ unlocked_notify(true); }
-  void unlocked_notify_all()noexcept{ unlocked_notify(false); }
+  void unlocked_notify()noexcept{ init(); unlocked_notify(true); }
+  void unlocked_notify_all()noexcept{ init(); unlocked_notify(false); }
 private:
   void init()noexcept;
   auto get()noexcept->cond_var_impl*;

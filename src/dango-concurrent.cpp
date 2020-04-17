@@ -763,6 +763,8 @@ cond_var_base::
 notify
 ()noexcept
 {
+  dango_assert_noassume(m_init.has_executed());
+
   dango_crit_full(m_lock, a_crit)
   {
     if(m_wait_count == dango::usize(0))
@@ -783,6 +785,8 @@ cond_var_base::
 notify_all
 ()noexcept
 {
+  dango_assert_noassume(m_init.has_executed());
+
   dango_crit_full(m_lock, a_crit)
   {
     if(m_wait_count == dango::usize(0))
@@ -803,6 +807,8 @@ cond_var_base::
 unlocked_notify
 (bool const a_only_one)noexcept
 {
+  dango_assert_noassume(m_init.has_executed());
+
   mutex_type* a_mutex;
 
   do
@@ -1404,6 +1410,8 @@ cond_var_base::
 notify
 ()noexcept
 {
+  dango_assert_noassume(m_init.has_executed());
+
   dango_crit_full(m_lock, a_crit)
   {
     if(m_wait_count == dango::usize(0))
@@ -1424,6 +1432,8 @@ cond_var_base::
 notify_all
 ()noexcept
 {
+  dango_assert_noassume(m_init.has_executed());
+
   dango_crit_full(m_lock, a_crit)
   {
     if(m_wait_count == dango::usize(0))
@@ -1444,6 +1454,8 @@ cond_var_base::
 unlocked_notify
 (bool const a_only_one)noexcept
 {
+  dango_assert_noassume(m_init.has_executed());
+
   mutex_type* a_mutex;
 
   do
@@ -1568,7 +1580,7 @@ detail::
 cond_var_base::
 cond_var_impl::
 notify
-(dango::spin_mutex_try_locker const&, mutex_ptr const)noexcept
+(dango::spin_mutex_locker const&, mutex_ptr const)noexcept
 {
   dango::detail::condition_variable_wake(&m_cond);
 }
@@ -1579,7 +1591,7 @@ detail::
 cond_var_base::
 cond_var_impl::
 notify_all
-(dango::spin_mutex_try_locker const&, mutex_ptr const)noexcept
+(dango::spin_mutex_locker const&, mutex_ptr const)noexcept
 {
   dango::detail::condition_variable_wake_all(&m_cond);
 }
