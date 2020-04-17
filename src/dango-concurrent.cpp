@@ -372,7 +372,7 @@ pop_internal
 
     add(a_cond);
 
-    a_cond->unlocked_notify_all();
+    a_cond->notify_all();
   }
 
   return true;
@@ -1384,21 +1384,21 @@ wait
     return;
   }
 
-  auto& a_manager = dango::detail::windows_timer_res_access::s_manager;
-
   auto& a_registry = dango::detail::cond_var_registry_access::s_registry;
+
+  auto& a_manager = dango::detail::windows_timer_res_access::s_manager;
 
   increment(a_mutex);
 
-  a_manager.activate(a_timeout);
-
   a_registry.regist(this, a_timeout);
+
+  a_manager.activate(a_timeout);
 
   get()->wait(a_mutex->get(), a_rem);
 
-  a_registry.unregist(this, a_timeout);
-
   a_manager.deactivate(a_timeout);
+
+  a_registry.unregist(this, a_timeout);
 
   decrement(a_mutex);
 }

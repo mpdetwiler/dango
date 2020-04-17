@@ -378,7 +378,7 @@ namespace
 dango::detail
 {
   using primitive_storage =
-    dango::aligned_storage<dango::usize(8), alignof(void*)>;
+    dango::aligned_storage<dango::usize(32), alignof(void*)>;
 
   class mutex_base;
   class cond_var_base;
@@ -602,6 +602,9 @@ super_type{ }
 
 }
 
+static_assert(sizeof(dango::mutex) == dango::usize(1) * sizeof(dango::cache_align_type));
+static_assert(sizeof(dango::static_mutex) == dango::usize(1) * sizeof(dango::cache_align_type));
+
 /*** cond_var_base ***/
 
 namespace
@@ -635,8 +638,8 @@ protected:
 protected:
   DANGO_EXPORT void destroy()noexcept;
 public:
-  void unlocked_notify()noexcept{ init(); unlocked_notify(true); }
-  void unlocked_notify_all()noexcept{ init(); unlocked_notify(false); }
+  //void unlocked_notify()noexcept{ init(); unlocked_notify(true); }
+  //void unlocked_notify_all()noexcept{ init(); unlocked_notify(false); }
 private:
   void init()noexcept;
   auto get()noexcept->cond_var_impl*;
@@ -650,9 +653,10 @@ private:
   DANGO_EXPORT void notify_all()noexcept;
   DANGO_EXPORT void unlocked_notify(bool)noexcept;
 private:
+  dango::usize m_ref_count;
+  alignas(dango::cache_align_type)
   dango::exec_once m_init;
   dango::spin_mutex m_lock;
-  dango::usize m_ref_count;
   dango::usize m_wait_count;
   mutex_type* m_current_mutex;
   dango::detail::primitive_storage m_storage;
@@ -736,9 +740,9 @@ cond_var_base::
 cond_var_base
 ()noexcept:
 super_type{ },
+m_ref_count{ dango::usize(0) },
 m_init{ },
 m_lock{ },
-m_ref_count{ dango::usize(0) },
 m_wait_count{ dango::usize(0) },
 m_current_mutex{ dango::null },
 m_storage{ }
@@ -1022,6 +1026,11 @@ try_lock
 {
   return super_type::try_lock(m_lock);
 }
+
+static_assert(sizeof(dango::cond_var) == dango::usize(2) * sizeof(dango::cache_align_type));
+static_assert(sizeof(dango::static_cond_var) == dango::usize(2) * sizeof(dango::cache_align_type));
+static_assert(sizeof(dango::cond_var_mutex) == dango::usize(2) * sizeof(dango::cache_align_type));
+static_assert(sizeof(dango::static_cond_var_mutex) == dango::usize(2) * sizeof(dango::cache_align_type));
 
 /*** thread ***/
 
