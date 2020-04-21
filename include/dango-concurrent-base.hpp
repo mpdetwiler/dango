@@ -553,7 +553,7 @@ dango
   template
   <typename... tp_args>
   concept is_all_decay_copy_constructible =
-    ( ... && dango::is_constructible<dango::decay<tp_args>, tp_args const&>);
+    ( ... && dango::is_constructible<dango::decay<tp_args>, dango::remove_cvref<tp_args> const&>);
 }
 
 #endif // DANGO_CONCURRENT_BASE_HPP_INCLUDED

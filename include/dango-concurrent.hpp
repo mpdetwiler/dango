@@ -1918,7 +1918,7 @@ create
   else
   {
     a_runnable =
-      new runnable_type{ dango::forward<tp_func const&>(a_thread_func), dango::forward<tp_args const&>(a_args)... };
+      new runnable_type{ dango::forward<dango::remove_cvref<tp_func> const&>(a_thread_func), dango::forward<dango::remove_cvref<tp_args> const&>(a_args)... };
   }
 
   auto a_guard =
@@ -1959,14 +1959,14 @@ create
     a_runnable->run();
   };
 
-  start_thread(thread_start_address<decltype(a_func)>, &a_func);
+  start_thread(&thread_start_address<decltype(a_func)>, &a_func);
 
   {
-    auto a_count = detail::c_spin_count_init;
+    auto a_count = dango::detail::c_spin_count_init;
 
     while(a_starting.load<acquire>())
     {
-      detail::spin_yield(a_count);
+      dango::detail::spin_yield(a_count);
     }
   }
 
