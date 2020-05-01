@@ -1240,6 +1240,17 @@ dango
   concept is_class = bool(__is_class(tp_type));
 }
 
+/*** is_class_or_union ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_class_or_union =
+    dango::is_class<tp_type> || dango::is_union<tp_type>;
+}
+
 /*** is_lvalue_ref ***/
 
 namespace
@@ -1516,9 +1527,7 @@ dango
   template
   <typename tp_type>
   concept is_object_exclude_array =
-    dango::is_scalar<tp_type> ||
-    dango::is_union<tp_type> ||
-    dango::is_class<tp_type>;
+    dango::is_scalar<tp_type> || dango::is_class_or_union<tp_type>;
 }
 
 /*** is_object ***/
@@ -1595,6 +1604,22 @@ dango
   template
   <typename tp_type>
   concept is_volatile = dango::detail::is_volatile_help<tp_type>;
+}
+
+/*** is_const_or_volatile is_const_and_volatile ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_const_or_volatile =
+    dango::is_const<tp_type> || dango::is_volatile<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_const_and_volatile =
+    dango::is_const<tp_type> && dango::is_volatile<tp_type>;
 }
 
 /*** is_trivial ***/
@@ -1756,16 +1781,6 @@ dango::detail
   <dango::is_array_ct_bound tp_type>
   inline constexpr bool const is_trivial_destructible_help<tp_type> =
     dango::detail::is_trivial_destructible_help<dango::remove_all_array<tp_type>>;
-
-  template
-  <typename tp_type>
-  inline constexpr bool const is_virtual_destructible_help = bool(__has_virtual_destructor(tp_type));
-  template
-  <dango::is_ref tp_type>
-  inline constexpr bool const is_virtual_destructible_help<tp_type> = false;
-  template
-  <dango::is_array tp_type>
-  inline constexpr bool const is_virtual_destructible_help<tp_type> = false;
 }
 
 namespace
@@ -1789,7 +1804,7 @@ dango
   template
   <typename tp_type>
   concept is_virtual_destructible =
-    dango::is_destructible<tp_type> && dango::detail::is_virtual_destructible_help<dango::remove_cv<tp_type>>;
+    dango::is_class<tp_type> && dango::is_destructible<tp_type> && bool(__has_virtual_destructor(tp_type));
 }
 
 /*** is_convertible is_noexcept_convertible is_convertible_ret is_noexcept_convertible_ret ***/
