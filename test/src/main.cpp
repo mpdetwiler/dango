@@ -10,7 +10,7 @@ static_assert(dango::is_nullable<dango::thread>);
 
 struct has_const{ int const m_int = 5; };
 
-static_assert(!dango::is_copy_constructible<dango::auto_ptr<int> const>);
+/*static_assert(!dango::is_copy_constructible<dango::auto_ptr<int> const>);
 static_assert(!dango::is_move_constructible<dango::auto_ptr<int> const>);
 static_assert(!dango::is_copy_constructible<dango::tuple<dango::auto_ptr<int>> const>);
 static_assert(!dango::is_move_constructible<dango::tuple<dango::auto_ptr<int>> const>);
@@ -18,7 +18,7 @@ static_assert(!dango::is_move_constructible<dango::tuple<dango::auto_ptr<int>> c
 static_assert(!dango::is_copy_constructible<dango::auto_ptr<int>>);
 static_assert(dango::is_move_constructible<dango::auto_ptr<int>>);
 static_assert(!dango::is_copy_constructible<dango::tuple<dango::auto_ptr<int>>>);
-static_assert(dango::is_move_constructible<dango::tuple<dango::auto_ptr<int>>>);
+static_assert(dango::is_move_constructible<dango::tuple<dango::auto_ptr<int>>>);*/
 
 struct test_base{ virtual ~test_base()noexcept = default; };
 
@@ -29,7 +29,7 @@ static_assert(dango::is_brace_constructible<void*, int* const&>);
 static_assert(dango::is_constructible<test_base*, test_derived* const&>);
 static_assert(dango::is_brace_constructible<test_base*, test_derived* const&>);
 static_assert(dango::is_constructible<test_base&, test_derived&>);
-static_assert(dango::is_brace_constructible<test_base&, test_derived&>);
+//static_assert(dango::is_brace_constructible<test_base&, test_derived&>);
 static_assert(!dango::is_constructible<test_derived&, test_base&>);
 static_assert(!dango::is_brace_constructible<test_derived&, test_base&>);
 
@@ -269,7 +269,7 @@ main
     a_tree2.get_child(0).get_allocator();
 
   }
-
+*/
   {
     dango::tuple<slong, ushort, sshort, float> a_tup{ 5, 5, 5, 5 };
 
@@ -293,7 +293,7 @@ main
 
     a_tup = dango::move(a_tup);
   }
-
+/*
   {
     dango::atomic<dango::ssize*> a_atomic{ null };
 

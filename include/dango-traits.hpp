@@ -1719,65 +1719,53 @@ dango::detail
   <typename tp_type>
   inline constexpr bool const is_destructible_help = requires{ dango::declval<tp_type&>().~tp_type(); };
   template
-  <typename tp_type>
-  inline constexpr bool const is_destructible_help<tp_type&> = true;
+  <dango::is_ref tp_type>
+  inline constexpr bool const is_destructible_help<tp_type> = true;
   template
-  <typename tp_type>
-  inline constexpr bool const is_destructible_help<tp_type&&> = true;
+  <dango::is_array_rt_bound tp_type>
+  inline constexpr bool const is_destructible_help<tp_type> = false;
   template
-  <typename tp_type>
-  inline constexpr bool const is_destructible_help<tp_type[]> = false;
-  template
-  <typename tp_type, dango::usize tp_size>
-  inline constexpr bool const is_destructible_help<tp_type[tp_size]> = dango::detail::is_destructible_help<tp_type>;
+  <dango::is_array_ct_bound tp_type>
+  inline constexpr bool const is_destructible_help<tp_type> =
+    dango::detail::is_destructible_help<dango::remove_all_array<tp_type>>;
 
   template
   <typename tp_type>
   inline constexpr bool const is_noexcept_destructible_help = requires{ { dango::declval<tp_type&>().~tp_type() }noexcept; };
   template
-  <typename tp_type>
-  inline constexpr bool const is_noexcept_destructible_help<tp_type&> = true;
+  <dango::is_ref tp_type>
+  inline constexpr bool const is_noexcept_destructible_help<tp_type> = true;
   template
-  <typename tp_type>
-  inline constexpr bool const is_noexcept_destructible_help<tp_type&&> = true;
+  <dango::is_array_rt_bound tp_type>
+  inline constexpr bool const is_noexcept_destructible_help<tp_type> = false;
   template
-  <typename tp_type>
-  inline constexpr bool const is_noexcept_destructible_help<tp_type[]> = false;
-  template
-  <typename tp_type, dango::usize tp_size>
-  inline constexpr bool const is_noexcept_destructible_help<tp_type[tp_size]> = dango::detail::is_noexcept_destructible_help<tp_type>;
+  <dango::is_array_ct_bound tp_type>
+  inline constexpr bool const is_noexcept_destructible_help<tp_type> =
+    dango::detail::is_noexcept_destructible_help<dango::remove_all_array<tp_type>>;
 
   template
   <typename tp_type>
   inline constexpr bool const is_trivial_destructible_help = bool(__has_trivial_destructor(tp_type));
   template
-  <typename tp_type>
-  inline constexpr bool const is_trivial_destructible_help<tp_type&> = true;
+  <dango::is_ref tp_type>
+  inline constexpr bool const is_trivial_destructible_help<tp_type> = true;
   template
-  <typename tp_type>
-  inline constexpr bool const is_trivial_destructible_help<tp_type&&> = true;
+  <dango::is_array_rt_bound tp_type>
+  inline constexpr bool const is_trivial_destructible_help<tp_type> = false;
   template
-  <typename tp_type>
-  inline constexpr bool const is_trivial_destructible_help<tp_type[]> = false;
-  template
-  <typename tp_type, dango::usize tp_size>
-  inline constexpr bool const is_trivial_destructible_help<tp_type[tp_size]> = dango::detail::is_trivial_destructible_help<tp_type>;
+  <dango::is_array_ct_bound tp_type>
+  inline constexpr bool const is_trivial_destructible_help<tp_type> =
+    dango::detail::is_trivial_destructible_help<dango::remove_all_array<tp_type>>;
 
   template
   <typename tp_type>
   inline constexpr bool const is_virtual_destructible_help = bool(__has_virtual_destructor(tp_type));
   template
-  <typename tp_type>
-  inline constexpr bool const is_virtual_destructible_help<tp_type&> = false;
+  <dango::is_ref tp_type>
+  inline constexpr bool const is_virtual_destructible_help<tp_type> = false;
   template
-  <typename tp_type>
-  inline constexpr bool const is_virtual_destructible_help<tp_type&&> = false;
-  template
-  <typename tp_type>
-  inline constexpr bool const is_virtual_destructible_help<tp_type[]> = false;
-  template
-  <typename tp_type, dango::usize tp_size>
-  inline constexpr bool const is_virtual_destructible_help<tp_type[tp_size]> = false;
+  <dango::is_array tp_type>
+  inline constexpr bool const is_virtual_destructible_help<tp_type> = false;
 }
 
 namespace
@@ -1786,7 +1774,7 @@ dango
   template
   <typename tp_type>
   concept is_destructible =
-    !dango::is_void<tp_type> && dango::detail::is_destructible_help<dango::remove_cv<tp_type>>;
+    (dango::is_object<tp_type> || dango::is_ref<tp_type>) && dango::detail::is_destructible_help<dango::remove_cv<tp_type>>;
 
   template
   <typename tp_type>
@@ -1911,68 +1899,31 @@ dango
 /*** is_constructible is_trivial_constructible is_noexcept_constructible ***/
 
 namespace
-dango::detail
-{
-  template
-  <typename tp_type, typename... tp_args>
-  inline constexpr bool const is_constructible_help = bool(__is_constructible(tp_type, tp_args...));
-  template
-  <typename tp_type>
-  inline constexpr bool const is_constructible_help<tp_type[]> = false;
-  template
-  <typename tp_type, dango::usize tp_size>
-  inline constexpr bool const is_constructible_help<tp_type[tp_size]> =
-    dango::detail::is_constructible_help<tp_type>;
-
-  template
-  <typename tp_type, typename... tp_args>
-  inline constexpr bool const is_noexcept_constructible_help = requires{ { tp_type(dango::declval<tp_args>()...) }noexcept; };
-  template
-  <typename tp_type>
-  inline constexpr bool const is_noexcept_constructible_help<tp_type[]> = false;
-  template
-  <typename tp_type, dango::usize tp_size>
-  inline constexpr bool const is_noexcept_constructible_help<tp_type[tp_size]> =
-    dango::detail::is_noexcept_constructible_help<tp_type>;
-
-  template
-  <typename tp_type, typename... tp_args>
-  inline constexpr bool const is_trivial_constructible_help = bool(__is_constructible(tp_type, tp_args...));
-  template
-  <typename tp_type>
-  inline constexpr bool const is_trivial_constructible_help<tp_type[]> = false;
-  template
-  <typename tp_type, dango::usize tp_size>
-  inline constexpr bool const is_trivial_constructible_help<tp_type[tp_size]> =
-    dango::detail::is_trivial_constructible_help<tp_type>;
-}
-
-namespace
 dango
 {
   template
   <typename tp_type, typename... tp_args>
   concept is_constructible =
-    dango::is_destructible<tp_type> && dango::detail::is_constructible_help<tp_type, tp_args...>;
+    dango::is_destructible<tp_type> && bool(__is_constructible(tp_type, tp_args...));
 
   template
   <typename tp_type, typename... tp_args>
   concept is_noexcept_constructible =
     dango::is_constructible<tp_type, tp_args...> &&
     dango::is_noexcept_destructible<tp_type> &&
-    dango::detail::is_noexcept_constructible_help<tp_type, tp_args...>;
+    requires{ { tp_type(dango::declval<tp_args>()...) }noexcept; };
 
   template
   <typename tp_type, typename... tp_args>
   concept is_trivial_constructible =
     dango::is_noexcept_constructible<tp_type, tp_args...> &&
     dango::is_trivial_destructible<tp_type> &&
-    dango::detail::is_trivial_constructible_help<tp_type, tp_args...>;
+    bool(__is_trivially_constructible(tp_type, tp_args...));
 
   template
   <typename tp_type, typename... tp_args>
   concept is_brace_constructible =
-    dango::is_destructible<tp_type> && requires{ tp_type{ dango::declval<tp_args>()... }; };
+    dango::is_destructible<tp_type> && requires{ { tp_type{ dango::declval<tp_args>()... } }; };
 
   template
   <typename tp_type, typename... tp_args>

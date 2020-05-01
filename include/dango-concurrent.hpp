@@ -1042,7 +1042,7 @@ dango
   enum class
   thread_ID:dango::uptr
   {
-    null = dango::ptr_as_uint(dango::null)
+    none = dango::ptr_as_uint(dango::null)
   };
 }
 
@@ -1146,7 +1146,7 @@ public:
   void join()const noexcept;
   void join(dango::timeout const&)const noexcept;
   constexpr auto is_daemon()const noexcept->bool;
-  constexpr auto get_ID()const noexcept->dango::thread_ID;
+  auto get_ID()const noexcept->dango::thread_ID;
   constexpr auto dango_operator_is_null()const noexcept->bool;
   constexpr auto dango_operator_equals(dango::null_tag)const noexcept = delete;
   constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
@@ -1181,7 +1181,7 @@ public:
   auto get_ID()const noexcept->dango::thread_ID;
   auto is_alive()const noexcept->bool;
 private:
-  auto non_null_ID(dango::crit_section const&)const noexcept->bool{ return m_thread_ID != dango::thread_ID::null; }
+  auto non_null_ID(dango::crit_section const&)const noexcept->bool{ return m_thread_ID != dango::thread_ID::none; }
 private:
   dango::atomic<dango::usize> m_ref_count;
   bool const m_daemon;
@@ -1302,7 +1302,7 @@ notify_all
 {
   dango_crit_full(m_cond, a_crit)
   {
-    m_thread_ID = dango::thread_ID::null;
+    m_thread_ID = dango::thread_ID::none;
 
     if(m_waiter_count != dango::usize(0))
     {
@@ -1859,7 +1859,7 @@ is_daemon
   return m_control->is_daemon();
 }
 
-constexpr auto
+inline auto
 dango::
 thread::
 get_ID
