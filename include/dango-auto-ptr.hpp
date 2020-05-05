@@ -141,8 +141,8 @@ dango
     dango::auto_ptr_config_argument<dango::auto_ptr_default_config, tp_type>;
 }
 
-static_assert(dango::is_auto_ptr_config<dango::auto_ptr_config_default_argument<void const>>);
-static_assert(dango::is_auto_ptr_config<dango::auto_ptr_config_default_argument<bool const>>);
+//static_assert(dango::is_auto_ptr_config<dango::auto_ptr_config_default_argument<void const>>);
+//static_assert(dango::is_auto_ptr_config<dango::auto_ptr_config_default_argument<bool const>>);
 
 /*** auto_ptr ***/
 

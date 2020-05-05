@@ -9,6 +9,7 @@ dango
   template
   <typename tp_type>
   concept has_dango_operator_is_null =
+    dango::is_class_or_union<dango::remove_ref<tp_type>> &&
     requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_is_null() }->dango::is_convertible_ret<bool>; };
 
   template
@@ -19,7 +20,7 @@ dango
 }
 
 template
-<dango::is_class tp_type>
+<typename tp_type>
 requires(dango::has_dango_operator_is_null<tp_type const&>)
 constexpr auto
 operator ==
@@ -29,7 +30,7 @@ operator ==
 }
 
 template
-<dango::is_class tp_type>
+<typename tp_type>
 requires(dango::has_dango_operator_is_null<tp_type const&>)
 constexpr auto
 operator ==
@@ -39,7 +40,7 @@ operator ==
 }
 
 template
-<dango::is_class tp_type>
+<typename tp_type>
 requires(dango::has_dango_operator_is_null<tp_type const&>)
 constexpr auto
 operator !=
@@ -49,7 +50,7 @@ operator !=
 }
 
 template
-<dango::is_class tp_type>
+<typename tp_type>
 requires(dango::has_dango_operator_is_null<tp_type const&>)
 constexpr auto
 operator !=
@@ -66,6 +67,7 @@ dango
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_dango_operator_equals =
+    dango::is_class_or_union<dango::remove_ref<tp_lhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     { { dango::forward<tp_lhs>(a_lhs).dango_operator_equals(dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<bool>; };
 
@@ -78,7 +80,7 @@ dango
 }
 
 template
-<dango::is_class tp_lhs, typename tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator ==
@@ -88,7 +90,7 @@ operator ==
 }
 
 template
-<typename tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(!dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_equals<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator ==
@@ -98,7 +100,7 @@ operator ==
 }
 
 template
-<dango::is_class tp_lhs, typename tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator !=
@@ -108,7 +110,7 @@ operator !=
 }
 
 template
-<typename tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(!dango::has_dango_operator_equals<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_equals<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator !=
@@ -125,6 +127,7 @@ dango
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_dango_operator_compare =
+    dango::is_class_or_union<dango::remove_ref<tp_lhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     { { dango::forward<tp_lhs>(a_lhs).dango_operator_compare(dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<dango::compare_val>; };
 
@@ -137,7 +140,7 @@ dango
 }
 
 template
-<dango::is_class tp_lhs, typename tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator <
@@ -147,7 +150,7 @@ operator <
 }
 
 template
-<typename tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator <
@@ -157,7 +160,7 @@ operator <
 }
 
 template
-<dango::is_class tp_lhs, typename tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator <=
@@ -167,7 +170,7 @@ operator <=
 }
 
 template
-<typename tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator <=
@@ -177,7 +180,7 @@ operator <=
 }
 
 template
-<dango::is_class tp_lhs, typename tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator >
@@ -187,7 +190,7 @@ operator >
 }
 
 template
-<typename tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator >
@@ -197,7 +200,7 @@ operator >
 }
 
 template
-<dango::is_class tp_lhs, typename tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator >=
@@ -207,7 +210,7 @@ operator >=
 }
 
 template
-<typename tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator >=
@@ -217,7 +220,7 @@ operator >=
 }
 
 template
-<dango::is_class tp_lhs, typename tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
 constexpr auto
 operator <=>
@@ -227,7 +230,7 @@ operator <=>
 }
 
 template
-<typename tp_lhs, dango::is_class tp_rhs>
+<typename tp_lhs, typename tp_rhs>
 requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
 constexpr auto
 operator <=>
@@ -240,7 +243,7 @@ namespace
 dango
 {
   template
-  <dango::is_class tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs>
   requires(dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&>)
   constexpr auto
   compare
@@ -250,7 +253,7 @@ dango
   }
 
   template
-  <typename tp_lhs, dango::is_class tp_rhs>
+  <typename tp_lhs, typename tp_rhs>
   requires(!dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> && dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   compare
@@ -268,6 +271,7 @@ dango
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_dango_operator_swap =
+    dango::is_class_or_union<dango::remove_ref<tp_lhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     { { dango::forward<tp_lhs>(a_lhs).dango_operator_swap(dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
 
@@ -283,7 +287,7 @@ namespace
 dango
 {
   template
-  <dango::is_class tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs>
   requires(dango::has_dango_operator_swap<tp_lhs&, tp_rhs&>)
   constexpr void
   swap
@@ -293,7 +297,7 @@ dango
   }
 
   template
-  <typename tp_lhs, dango::is_class tp_rhs>
+  <typename tp_lhs, typename tp_rhs>
   requires(!dango::has_dango_operator_swap<tp_lhs&, tp_rhs&> && dango::has_dango_operator_swap<tp_rhs&, tp_lhs&>)
   constexpr void
   swap
@@ -457,7 +461,7 @@ dango
   <typename tp_lhs, typename tp_rhs>
   requires
   (
-    (dango::is_class<tp_lhs> || dango::is_class<tp_rhs>) &&
+    (dango::is_class_or_union<tp_lhs> || dango::is_class_or_union<tp_rhs>) &&
     !dango::has_dango_operator_compare<tp_lhs const&, tp_rhs const&> &&
     !dango::has_dango_operator_compare<tp_rhs const&, tp_lhs const&> &&
     dango::is_comparable<tp_lhs const&, tp_rhs const&>
@@ -551,7 +555,7 @@ dango
   <typename tp_arg>
   requires
   (
-    dango::is_class<dango::remove_ref<tp_arg>> &&
+    dango::is_class_or_union<dango::remove_ref<tp_arg>> &&
     dango::is_comparable<tp_arg, tp_arg> &&
     dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>
   )
@@ -567,7 +571,7 @@ dango
   <typename tp_arg, typename tp_same>
   requires
   (
-    dango::is_class<dango::remove_ref<tp_arg>> && dango::is_same_ignore_cvref<tp_same, tp_arg> &&
+    dango::is_class_or_union<dango::remove_ref<tp_arg>> && dango::is_same_ignore_cvref<tp_arg, tp_same> &&
     dango::is_comparable<tp_arg, tp_same> &&
     dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg> &&
     dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_same>
@@ -599,7 +603,7 @@ dango
   requires
   (
     (sizeof...(tp_args) >= dango::usize(2)) &&
-    (dango::is_class<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
+    (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_arg, tp_args>) &&
     requires{ { dango::min(dango::declval<tp_arg>(), dango::min(dango::declval<tp_args>()...)) }->dango::is_same<dango::remove_cvref<tp_arg>>; }
   )
   constexpr auto
@@ -613,7 +617,7 @@ template
 requires
 (
   (sizeof...(tp_args) >= dango::usize(2)) &&
-  (dango::is_class<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
+  (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_arg, tp_args>) &&
   requires{ { dango::min(dango::declval<tp_arg>(), dango::min(dango::declval<tp_args>()...)) }->dango::is_same<dango::remove_cvref<tp_arg>>; }
 )
 constexpr auto
@@ -634,7 +638,7 @@ dango
   <typename tp_arg>
   requires
   (
-    dango::is_class<dango::remove_ref<tp_arg>> &&
+    dango::is_class_or_union<dango::remove_ref<tp_arg>> &&
     dango::is_comparable<tp_arg, tp_arg> &&
     dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>
   )
@@ -650,7 +654,7 @@ dango
   <typename tp_arg, typename tp_same>
   requires
   (
-    dango::is_class<dango::remove_ref<tp_arg>> && dango::is_same_ignore_cvref<tp_same, tp_arg> &&
+    dango::is_class_or_union<dango::remove_ref<tp_arg>> && dango::is_same_ignore_cvref<tp_arg, tp_same> &&
     dango::is_comparable<tp_arg, tp_same> &&
     dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg> &&
     dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_same>
@@ -682,7 +686,7 @@ dango
   requires
   (
     (sizeof...(tp_args) >= dango::usize(2)) &&
-    (dango::is_class<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
+    (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_arg, tp_args>) &&
     requires{ { dango::max(dango::declval<tp_arg>(), dango::max(dango::declval<tp_args>()...)) }->dango::is_same<dango::remove_cvref<tp_arg>>; }
   )
   constexpr auto
@@ -696,7 +700,7 @@ template
 requires
 (
   (sizeof...(tp_args) >= dango::usize(2)) &&
-  (dango::is_class<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
+  (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_arg, tp_args>) &&
   requires{ { dango::max(dango::declval<tp_arg>(), dango::max(dango::declval<tp_args>()...)) }->dango::is_same<dango::remove_cvref<tp_arg>>; }
 )
 constexpr auto

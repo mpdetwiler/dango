@@ -1,3 +1,5 @@
+#include <compare>
+
 #include "dango.hpp"
 #include "dango-global-test.hpp"
 
@@ -20,16 +22,21 @@ static_assert(dango::is_move_constructible<dango::auto_ptr<int>>);
 static_assert(!dango::is_copy_constructible<dango::tuple<dango::auto_ptr<int>>>);
 static_assert(dango::is_move_constructible<dango::tuple<dango::auto_ptr<int>>>);*/
 
-struct test_base{ virtual ~test_base()noexcept = default; };
+struct test_base{ explicit constexpr test_base()noexcept = default; virtual ~test_base()noexcept = default; DANGO_IMMOBILE(test_base) };
 
-struct test_derived:test_base{ ~test_derived()noexcept override = default; };
+struct test_derived:public test_base{ explicit constexpr test_derived()noexcept = default; ~test_derived()noexcept override = default; DANGO_IMMOBILE(test_derived) };
 
 static_assert(dango::is_constructible<void*, int* const&>);
 static_assert(dango::is_brace_constructible<void*, int* const&>);
 static_assert(dango::is_constructible<test_base*, test_derived* const&>);
 static_assert(dango::is_brace_constructible<test_base*, test_derived* const&>);
 static_assert(dango::is_constructible<test_base&, test_derived&>);
-//static_assert(dango::is_brace_constructible<test_base&, test_derived&>);
+static_assert(dango::is_destructible<test_base&>);
+static_assert(dango::is_brace_constructible<test_base&, test_derived&>);
+using test_base_r = test_base&;
+using test_base_p = test_base*;
+static_assert(requires{ { test_base_p{ static_cast<test_derived*>(null) } }noexcept->dango::is_same<test_base_p>; });
+//static_assert(requires{ { test_base_r{ *static_cast<test_derived*>(null) } }noexcept->dango::is_same<test_base_r>; });
 static_assert(!dango::is_constructible<test_derived&, test_base&>);
 static_assert(!dango::is_brace_constructible<test_derived&, test_base&>);
 
@@ -161,6 +168,12 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  {
+    test_derived a_test_derived{ };
+
+    void(test_base_r( a_test_derived ));
+  }
+
   /*auto a_timeout = dango::timeout::make_rel(1'000, dango::timeout_flags::HIGH_RES);
 
   for(auto a_i = uint(0); a_i < uint(10); ++a_i)
