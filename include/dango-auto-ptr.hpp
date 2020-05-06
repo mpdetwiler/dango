@@ -39,8 +39,8 @@ dango
   template
   <typename tp_deleter, typename tp_type>
   concept is_auto_ptr_deleter =
-    dango::is_class<tp_deleter> && !dango::is_const<tp_deleter> && !dango::is_volatile<tp_deleter> &&
-    dango::auto_ptr_constraint_spec<tp_type> && !dango::is_const<tp_type> && !dango::is_volatile<tp_type> &&
+    dango::is_class<tp_deleter> && !dango::is_const_or_volatile<tp_deleter> &&
+    dango::auto_ptr_constraint_spec<tp_type> && !dango::is_const_or_volatile<tp_type> &&
     (dango::detail::is_auto_ptr_deleter_void_help<tp_deleter, tp_type> || dango::detail::is_auto_ptr_deleter_object_help<tp_deleter, tp_type>);
 }
 
@@ -50,20 +50,20 @@ dango
   template
   <typename tp_config>
   concept is_auto_ptr_config =
-    dango::is_class<tp_config> && !dango::is_const<tp_config> && !dango::is_volatile<tp_config> &&
+    dango::is_class<tp_config> && !dango::is_const_or_volatile<tp_config> &&
     requires
     {
       typename tp_config::type;
       typename tp_config::deleter;
       requires(dango::auto_ptr_constraint_spec<typename tp_config::type>);
-      requires(!dango::is_const<typename tp_config::type> && !dango::is_volatile<typename tp_config::type>);
+      requires(!dango::is_const_or_volatile<typename tp_config::type>);
       requires(dango::is_auto_ptr_deleter<typename tp_config::deleter, typename tp_config::type>);
-      { tp_config::enable_deep_const }noexcept->dango::is_same<bool const>;
-      { tp_config::enable_move_construct }noexcept->dango::is_same<bool const>;
-      { tp_config::enable_move_assign }noexcept->dango::is_same<bool const>;
-      { tp_config::enable_implicit_conversion }noexcept->dango::is_same<bool const>;
-      { tp_config::conversion_requires_same_deleter }noexcept->dango::is_same<bool const>;
-      { tp_config::differing_deleter_requires_virtual_destruct }noexcept->dango::is_same<bool const>;
+      { dango::constexpr_check<bool, tp_config::enable_deep_const>{ } };
+      { dango::constexpr_check<bool, tp_config::enable_move_construct>{ } };
+      { dango::constexpr_check<bool, tp_config::enable_move_assign>{ } };
+      { dango::constexpr_check<bool, tp_config::enable_implicit_conversion>{ } };
+      { dango::constexpr_check<bool, tp_config::conversion_requires_same_deleter>{ } };
+      { dango::constexpr_check<bool, tp_config::differing_deleter_requires_virtual_destruct>{ } };
       requires(dango::logic_implies(tp_config::enable_move_assign, tp_config::enable_move_construct));
     };
 }
@@ -141,8 +141,8 @@ dango
     dango::auto_ptr_config_argument<dango::auto_ptr_default_config, tp_type>;
 }
 
-//static_assert(dango::is_auto_ptr_config<dango::auto_ptr_config_default_argument<void const>>);
-//static_assert(dango::is_auto_ptr_config<dango::auto_ptr_config_default_argument<bool const>>);
+static_assert(dango::is_auto_ptr_config<dango::auto_ptr_config_default_argument<void const>>);
+static_assert(dango::is_auto_ptr_config<dango::auto_ptr_config_default_argument<bool const>>);
 
 /*** auto_ptr ***/
 

@@ -2200,5 +2200,20 @@ dango
   inline constexpr dango::usize const alignof_with_void<tp_type, tp_default> = tp_default;
 }
 
+/*** constexpr_check ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type, tp_type tp_expr>
+  struct
+  constexpr_check
+  final
+  {
+    DANGO_TAG_TYPE(constexpr_check)
+  };
+}
+
 #endif // DANGO_TRAITS_HPP_INCLUDED
 
