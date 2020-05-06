@@ -1918,7 +1918,7 @@ create
   else
   {
     a_runnable =
-      new runnable_type{ dango::forward<dango::remove_cvref<tp_func> const&>(a_thread_func), dango::forward<dango::remove_cvref<tp_args> const&>(a_args)... };
+      new runnable_type{ dango::forward<dango::remove_ref<tp_func>&>(a_thread_func), dango::forward<dango::remove_ref<tp_args>&>(a_args)... };
   }
 
   auto a_guard =

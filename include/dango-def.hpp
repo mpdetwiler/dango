@@ -26,7 +26,7 @@ dango::builtin
 namespace
 dango
 {
-  using null_tag = decltype(nullptr);
+  using null_tag = std::nullptr_t;
 
   inline constexpr dango::null_tag const null{ };
 
@@ -34,20 +34,20 @@ dango
   using wchar = char16_t;
   using dchar = char32_t;
 
-  using usize = decltype(sizeof(dango::bchar));
-  using ssize = decltype(static_cast<dango::bchar*>(dango::null) - static_cast<dango::bchar*>(dango::null));
+  using usize = std::size_t;
+  using ssize = std::ptrdiff_t;
 
-  using ubyte = __UINT8_TYPE__;
-  using ushort = __UINT16_TYPE__;
-  using uint = __UINT32_TYPE__;
-  using ulong = __UINT64_TYPE__;
-  using uptr = __UINTPTR_TYPE__;
+  using ubyte = std::uint8_t;
+  using ushort = std::uint16_t;
+  using uint = std::uint32_t;
+  using ulong = std::uint64_t;
+  using uptr = std::uintptr_t;
 
-  using sbyte = __INT8_TYPE__;
-  using sshort = __INT16_TYPE__;
-  using sint = __INT32_TYPE__;
-  using slong = __INT64_TYPE__;
-  using sptr = __INTPTR_TYPE__;
+  using sbyte = std::int8_t;
+  using sshort = std::int16_t;
+  using sint = std::int32_t;
+  using slong = std::int64_t;
+  using sptr = std::intptr_t;
 
   using real = long double;
 }
@@ -83,46 +83,12 @@ namespace
 dango::detail
 {
   inline constexpr auto const CACHE_LINE_SIZE = dango::usize(DANGO_CACHE_LINE_SIZE);
-
-  union fundamental_union;
 }
-
-union
-dango::
-detail::
-fundamental_union
-{
-private:
-  bool                          m_00;
-  void*                         m_01;
-  dango::null_tag               m_02;
-  char                          m_03;
-  wchar_t                       m_04;
-  dango::bchar                  m_05;
-  dango::wchar                  m_06;
-  dango::dchar                  m_07;
-  dango::builtin::uchar         m_08;
-  dango::builtin::ushort        m_09;
-  dango::builtin::uint          m_10;
-  dango::builtin::ulong         m_11;
-  dango::builtin::ulonglong     m_12;
-  dango::builtin::schar         m_13;
-  dango::builtin::sshort        m_14;
-  dango::builtin::sint          m_15;
-  dango::builtin::slong         m_16;
-  dango::builtin::slonglong     m_17;
-  float                         m_18;
-  double                        m_19;
-  dango::real                   m_20;
-  void(* m_21)()noexcept;
-  void(fundamental_union::* m_22)()noexcept;
-  char fundamental_union::* m_23;
-};
 
 namespace
 dango
 {
-  struct alignas(dango::detail::fundamental_union)
+  struct alignas(std::max_align_t)
   max_align_type
   {
 

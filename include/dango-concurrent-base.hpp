@@ -505,18 +505,22 @@ namespace
 dango::detail
 {
   template
+  <typename tp_arg>
+  concept is_decay_construct_field_help =
+    !dango::is_noexcept_constructible<dango::decay<tp_arg>, tp_arg> ||
+    dango::is_lvalue_ref<tp_arg> ||
+    dango::is_trivial_constructible<dango::decay<tp_arg>, tp_arg>;
+
+  template
   <typename... tp_args>
   constexpr auto
   is_decay_construct_correct_order_help()noexcept->bool
   {
-    constexpr bool const a_field[sizeof...(tp_args)] =
-    {
-      (!dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args> || dango::is_lvalue_ref<tp_args> || dango::is_trivial_constructible<dango::decay<tp_args>, tp_args>)...
-    };
+    constexpr bool const a_field[sizeof...(tp_args)]{ bool(dango::detail::is_decay_construct_field_help<tp_args>)... };
 
     auto a_true_allowed = true;
 
-    for(auto const a_val: a_field)
+    for(auto const a_val : a_field)
     {
       if(a_val)
       {
@@ -553,7 +557,7 @@ dango
   template
   <typename... tp_args>
   concept is_all_decay_copy_constructible =
-    ( ... && dango::is_constructible<dango::decay<tp_args>, dango::remove_cvref<tp_args> const&>);
+    ( ... && dango::is_constructible<dango::decay<tp_args>, dango::remove_ref<tp_args>&>);
 }
 
 #endif // DANGO_CONCURRENT_BASE_HPP_INCLUDED

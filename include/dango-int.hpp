@@ -6,12 +6,12 @@ dango::detail
 {
   template
   <dango::is_int tp_integer>
-  requires(!dango::is_const<tp_integer> && !dango::is_volatile<tp_integer>)
+  requires(!dango::is_const_or_volatile<tp_integer>)
   inline constexpr auto const max_val_help = tp_integer(0);
 
   template
   <dango::is_int tp_integer>
-  requires(!dango::is_const<tp_integer> && !dango::is_volatile<tp_integer>)
+  requires(!dango::is_const_or_volatile<tp_integer>)
   inline constexpr auto const min_val_help = tp_integer(0);
 
   template<>
@@ -37,35 +37,26 @@ dango::detail
   inline constexpr auto const min_val_help<dango::builtin::ulonglong> = dango::builtin::ulonglong(0);
 
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::schar> = dango::builtin::schar{ __SCHAR_MAX__ };
+  inline constexpr auto const max_val_help<dango::builtin::schar> = dango::builtin::schar{ SCHAR_MAX };
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::sshort> = dango::builtin::sshort{ __SHRT_MAX__ };
+  inline constexpr auto const max_val_help<dango::builtin::sshort> = dango::builtin::sshort{ SHRT_MAX };
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::sint> = dango::builtin::sint{ __INT_MAX__ };
+  inline constexpr auto const max_val_help<dango::builtin::sint> = dango::builtin::sint{ INT_MAX };
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::slong> = dango::builtin::slong{ __LONG_MAX__ };
+  inline constexpr auto const max_val_help<dango::builtin::slong> = dango::builtin::slong{ LONG_MAX };
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::slonglong> = dango::builtin::slonglong{ __LONG_LONG_MAX__ };
+  inline constexpr auto const max_val_help<dango::builtin::slonglong> = dango::builtin::slonglong{ LLONG_MAX };
 
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::schar> =
-    dango::builtin::schar(-detail::max_val_help<dango::builtin::schar> - 1);
-
+  inline constexpr auto const min_val_help<dango::builtin::schar> = dango::builtin::schar{ SCHAR_MIN };
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::sshort> =
-    dango::builtin::sshort(-detail::max_val_help<dango::builtin::sshort> - 1);
-
+  inline constexpr auto const min_val_help<dango::builtin::sshort> = dango::builtin::sshort{ SHRT_MIN };
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::sint> =
-    dango::builtin::sint(-detail::max_val_help<dango::builtin::sint> - 1);
-
+  inline constexpr auto const min_val_help<dango::builtin::sint> = dango::builtin::sint{ INT_MIN };
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::slong> =
-    dango::builtin::slong(-detail::max_val_help<dango::builtin::slong> - 1);
-
+  inline constexpr auto const min_val_help<dango::builtin::slong> = dango::builtin::slong{ LONG_MIN };
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::slonglong> =
-    dango::builtin::slonglong(-detail::max_val_help<dango::builtin::slonglong> - 1);
+  inline constexpr auto const min_val_help<dango::builtin::slonglong> = dango::builtin::slonglong{ LLONG_MIN };
 }
 
 namespace

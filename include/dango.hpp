@@ -1,6 +1,7 @@
 #ifndef DANGO_HPP_INCLUDED
 #define DANGO_HPP_INCLUDED
 
+#include "dango-standard-headers.hpp"
 #include "dango-macro.hpp"
 #include "dango-def.hpp"
 #include "dango-traits.hpp"
