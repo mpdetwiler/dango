@@ -549,6 +549,14 @@ dango
 /*** generic min max ***/
 
 namespace
+dango::detail
+{
+  template
+  <typename... tp_args>
+  struct min_max_help;
+}
+
+namespace
 dango
 {
   template
@@ -606,52 +614,29 @@ dango
     (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_arg, tp_args>) &&
     requires
     {
-      { min(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-      { min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+      { dango::detail::min_max_help<tp_args&&...>::min(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+      { dango::min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
     }
   )
   constexpr auto
   min
-  (tp_arg&&, tp_args&&...)
+  (tp_arg&& a_arg, tp_args&&... a_args)
   noexcept
   (
     requires
     {
-      { min(dango::declval<tp_args>()...) }noexcept;
-      { min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
+      { dango::detail::min_max_help<tp_args&&...>::min(dango::declval<tp_args>()...) }noexcept;
+      { dango::min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
     }
-  )->dango::remove_cvref<tp_arg>;
+  )->dango::remove_cvref<tp_arg>
+  {
+    using ret_type = dango::remove_cvref<tp_arg>;
+
+    return ret_type{ dango::min(dango::forward<tp_arg>(a_arg), dango::detail::min_max_help<tp_args&&...>::min(dango::forward<tp_args>(a_args)...)) };
+  }
 }
 
-template
-<typename tp_arg, typename... tp_args>
-requires
-(
-  (sizeof...(tp_args) >= dango::usize(2)) &&
-  (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_arg, tp_args>) &&
-  requires
-  {
-    { min(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-    { min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-  }
-)
-constexpr auto
-dango::
-min
-(tp_arg&& a_arg, tp_args&&... a_args)
-noexcept
-(
-  requires
-  {
-    { min(dango::declval<tp_args>()...) }noexcept;
-    { min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
-  }
-)->dango::remove_cvref<tp_arg>
-{
-  using ret_type = dango::remove_cvref<tp_arg>;
 
-  return ret_type{ min(dango::forward<tp_arg>(a_arg), min(dango::forward<tp_args>(a_args)...)) };
-}
 
 namespace
 dango
@@ -711,52 +696,52 @@ dango
     (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_arg, tp_args>) &&
     requires
     {
-      { max(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-      { max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+      { dango::detail::min_max_help<tp_args&&...>::max(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+      { dango::max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
     }
   )
   constexpr auto
   max
-  (tp_arg&&, tp_args&&...)
+  (tp_arg&& a_arg, tp_args&&... a_args)
   noexcept
   (
     requires
     {
-      { max(dango::declval<tp_args>()...) }noexcept;
-      { max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
+      { dango::detail::min_max_help<tp_args&&...>::max(dango::declval<tp_args>()...) }noexcept;
+      { dango::max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
     }
-  )->dango::remove_cvref<tp_arg>;
+  )->dango::remove_cvref<tp_arg>
+  {
+    using ret_type = dango::remove_cvref<tp_arg>;
+
+    return ret_type{ dango::max(dango::forward<tp_arg>(a_arg), dango::detail::min_max_help<tp_args&&...>::max(dango::forward<tp_args>(a_args)...)) };
+  }
 }
 
 template
-<typename tp_arg, typename... tp_args>
-requires
-(
-  (sizeof...(tp_args) >= dango::usize(2)) &&
-  (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_arg, tp_args>) &&
-  requires
-  {
-    { max(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-    { max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-  }
-)
-constexpr auto
+<typename... tp_args>
+struct
 dango::
-max
-(tp_arg&& a_arg, tp_args&&... a_args)
-noexcept
-(
-  requires
-  {
-    { max(dango::declval<tp_args>()...) }noexcept;
-    { max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
-  }
-)->dango::remove_cvref<tp_arg>
+detail::
+min_max_help
+final
 {
-  using ret_type = dango::remove_cvref<tp_arg>;
+  static constexpr auto
+  min(tp_args... a_args)noexcept(requires{ { dango::min(dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
+  requires(requires{ { dango::min(dango::declval<tp_args>()...) }; })
+  {
+    return dango::min(dango::forward<tp_args>(a_args)...);
+  }
 
-  return ret_type{ max(dango::forward<tp_arg>(a_arg), max(dango::forward<tp_args>(a_args)...)) };
-}
+  static constexpr auto
+  max(tp_args... a_args)noexcept(requires{ { dango::max(dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
+  requires(requires{ { dango::max(dango::declval<tp_args>()...) }; })
+  {
+    return dango::max(dango::forward<tp_args>(a_args)...);
+  }
+
+  DANGO_UNINSTANTIABLE(min_max_help)
+};
 
 #endif // DANGO_OPERATOR_HPP_INCLUDED
 

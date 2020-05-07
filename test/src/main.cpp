@@ -227,6 +227,9 @@ main
     dango_assert(dango::min(a_t2, a_t2, a_t3, a_t2) == a_t2);
     dango_assert(dango::max(a_t3, a_t2, a_t3, a_t2) == a_t3);
 
+    static_assert(noexcept(dango::min(a_t3, a_t2, a_t3, a_t2) == a_t3));
+    static_assert(noexcept(dango::max(a_t3, a_t2, a_t3, a_t2) == a_t3));
+
     dango::swap(a_t2, a_t3);
   }
 
