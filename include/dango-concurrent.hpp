@@ -1913,7 +1913,7 @@ create
   if constexpr(dango::is_decay_construct_correct_order<tp_func, tp_args...>)
   {
     a_runnable =
-      new runnable_type{ dango::forward<tp_func>(a_thread_func), dango::forward<tp_args>(a_args)... };
+      new runnable_type{ dango::decay_forward<tp_func>(a_thread_func), dango::decay_forward<tp_args>(a_args)... };
   }
   else
   {

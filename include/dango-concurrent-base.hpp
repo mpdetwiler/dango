@@ -507,16 +507,14 @@ dango::detail
   template
   <typename tp_arg>
   concept is_decay_construct_field_help =
-    !dango::is_noexcept_constructible<dango::decay<tp_arg>, tp_arg> ||
-    dango::is_lvalue_ref<tp_arg> ||
-    dango::is_trivial_constructible<dango::decay<tp_arg>, tp_arg>;
+    dango::is_lvalue_ref<tp_arg> || dango::is_trivial_constructible<dango::decay<tp_arg>, tp_arg>;
 
   template
   <typename... tp_args>
   constexpr auto
   is_decay_construct_correct_order_help()noexcept->bool
   {
-    constexpr bool const a_field[sizeof...(tp_args)]{ bool(dango::detail::is_decay_construct_field_help<tp_args>)... };
+    constexpr bool const a_field[] = { true, bool(dango::detail::is_decay_construct_field_help<tp_args>)... };
 
     auto a_true_allowed = true;
 
@@ -528,10 +526,8 @@ dango::detail
         {
           continue;
         }
-        else
-        {
-          return false;
-        }
+
+        return false;
       }
 
       a_true_allowed = false;
@@ -547,17 +543,48 @@ dango
   template
   <typename... tp_args>
   concept is_all_decay_constructible =
-    ( ... && dango::is_constructible<dango::decay<tp_args>, tp_args>);
+    ( ... && dango::is_constructible<dango::decay<tp_args>, dango::conditional<dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>, tp_args, dango::remove_ref<tp_args>&>>);
 
   template
   <typename... tp_args>
   concept is_decay_construct_correct_order =
-    dango::detail::is_decay_construct_correct_order_help<tp_args...>();
+    dango::detail::is_decay_construct_correct_order_help<dango::conditional<dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>, tp_args, dango::remove_ref<tp_args>&>...>();
 
   template
   <typename... tp_args>
   concept is_all_decay_copy_constructible =
     ( ... && dango::is_constructible<dango::decay<tp_args>, dango::remove_ref<tp_args>&>);
+}
+
+/*** decay_forward ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto
+  decay_forward
+  (dango::remove_ref<tp_type>& a_arg)noexcept->decltype(auto)
+  {
+    if constexpr(dango::is_noexcept_constructible<dango::decay<tp_type>, tp_type>)
+    {
+      return dango::forward<tp_type>(a_arg);
+    }
+    else
+    {
+      return a_arg;
+    }
+  }
+
+  template
+  <typename tp_type>
+  constexpr auto
+  decay_forward
+  (dango::remove_ref<tp_type>&& a_arg)noexcept->decltype(auto)
+  {
+    return dango::decay_forward<tp_type>(a_arg);
+  }
 }
 
 #endif // DANGO_CONCURRENT_BASE_HPP_INCLUDED
