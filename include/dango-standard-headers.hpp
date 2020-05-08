@@ -9,6 +9,7 @@
 #include <initializer_list>
 #include <new>
 #include <typeinfo>
+#include <tuple>
 
 #endif // DANGO_STANDARD_HEADERS_HPP_INCLUDED
 
