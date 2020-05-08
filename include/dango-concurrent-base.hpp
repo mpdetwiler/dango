@@ -514,15 +514,26 @@ dango::detail
   constexpr auto
   is_decay_construct_correct_order_help()noexcept->bool
   {
-    constexpr bool const a_field[] = { true, bool(dango::detail::is_decay_construct_field_help<tp_args>)... };
+    constexpr auto const c_size = sizeof...(tp_args) + dango::usize(1);
 
-    auto a_true_allowed = true;
+    constexpr bool const c_throwing_construct[c_size] =
+      { true, (!dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>)... };
 
-    for(auto const a_val : a_field)
+    constexpr bool const c_non_trivial_move_construct[c_size] =
+      { false, (!dango::is_lvalue_ref<tp_args> && !dango::is_trivial_constructible<dango::decay<tp_args>, tp_args>)... };
+
+    auto a_throwing_construct_allowed = true;
+
+    for(auto a_i = dango::usize(0); a_i != c_size; ++a_i)
     {
-      if(a_val)
+      auto const a_throwing_construct = c_throwing_construct[a_i];
+      auto const a_non_trivial_move_construct = c_non_trivial_move_construct[a_i];
+
+      dango_assert(!a_throwing_construct || !a_non_trivial_move_construct);
+
+      if(a_throwing_construct)
       {
-        if(a_true_allowed)
+        if(a_throwing_construct_allowed)
         {
           continue;
         }
@@ -530,7 +541,10 @@ dango::detail
         return false;
       }
 
-      a_true_allowed = false;
+      if(a_non_trivial_move_construct)
+      {
+        a_throwing_construct_allowed = false;
+      }
     }
 
     return true;
