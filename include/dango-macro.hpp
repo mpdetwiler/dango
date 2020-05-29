@@ -31,6 +31,18 @@
 
 #endif
 
+#ifdef __APPLE__
+
+#ifdef DANGO_BUILDING_SHARED_LIB
+#define DANGO_EXPORT [[gnu::visibility("default")]]
+#define DANGO_EXPORT_ONLY DANGO_EXPORT
+#else
+#define DANGO_EXPORT
+#define DANGO_EXPORT_ONLY
+#endif
+
+#endif
+
 #define DANGO_UNCOPYABLE(name) \
 constexpr name(name const&)noexcept = delete; \
 constexpr auto operator = (name const&)& noexcept->name& = delete;
