@@ -377,44 +377,143 @@ m_storage{ }
 namespace
 dango::detail
 {
-  using primitive_storage =
-    dango::aligned_storage<dango::usize(32), alignof(void*)>;
+  class mutex_control;
+  class mutex_control_dynamic;
 
-  class mutex_base;
-  class cond_var_base;
+  using sync_primitive_storage =
+    dango::aligned_storage<sizeof(dango::cache_align_type), dango::usize(1) * alignof(dango::cache_align_type)>;
+
+  class mutex_storage;
 }
+
+class
+dango::
+detail::
+mutex_storage
+final:
+public dango::detail::sync_primitive_storage
+{
+private:
+  using super_type = dango::detail::sync_primitive_storage;
+public:
+  using super_type::super_type;
+};
 
 class alignas(dango::cache_align_type)
 dango::
 detail::
+mutex_control
+{
+public:
+  static auto operator new(dango::usize)noexcept->void* = delete;
+  static void operator delete(void*, dango::usize)noexcept = delete;
+public:
+  explicit constexpr
+  mutex_control()noexcept:
+  m_init{ },
+  m_storage{ }
+  { }
+  ~mutex_control()noexcept = default;
+public:
+  void init()noexcept{ m_init.exec([this]()noexcept->void{ initialize(); }); }
+  virtual void increment()noexcept{ }
+  virtual auto decrement()noexcept->bool{ return false; }
+  auto storage()noexcept->dango::detail::mutex_storage&;
+  DANGO_EXPORT auto acquire()noexcept->mutex_control*;
+  DANGO_EXPORT auto try_acquire()noexcept->mutex_control*;
+  DANGO_EXPORT void release()noexcept;
+protected:
+  DANGO_EXPORT void destroy()noexcept;
+private:
+  DANGO_EXPORT void initialize()noexcept;
+private:
+  dango::exec_once m_init;
+  dango::detail::mutex_storage m_storage;
+public:
+  DANGO_IMMOBILE(mutex_control)
+};
+
+class
+dango::
+detail::
+mutex_control_dynamic
+final:
+public dango::detail::mutex_control
+{
+private:
+  using super_type = dango::detail::mutex_control;
+  using count_type = dango::usize;
+public:
+  static auto
+  operator new(dango::usize const a_size)dango_new_noexcept->void*
+  {
+    return dango::operator_new(a_size, alignof(mutex_control_dynamic));
+  }
+
+  static void
+  operator delete(void* const a_ptr, dango::usize const a_size)noexcept
+  {
+    dango::operator_delete(a_ptr, a_size, alignof(mutex_control_dynamic));
+  }
+public:
+  explicit constexpr
+  mutex_control_dynamic()noexcept:
+  super_type{ },
+  m_ref_count{ count_type(1) }
+  { init(); }
+  ~mutex_control_dynamic()noexcept{ destroy(); }
+public:
+  void increment()noexcept override{ m_ref_count.add_fetch<dango::mem_order::acquire>(count_type(1)); }
+  auto decrement()noexcept->bool override{ return m_ref_count.sub_fetch<dango::mem_order::release>(count_type(1)) == count_type(0); }
+private:
+  dango::atomic<count_type> m_ref_count;
+public:
+  DANGO_IMMOBILE(mutex_control_dynamic)
+};
+
+namespace
+dango::detail
+{
+  class mutex_base;
+  class cond_var_control;
+
+  auto mutex_get_storage(dango::detail::mutex_base const*)noexcept->dango::detail::mutex_storage&;
+}
+
+namespace
+dango
+{
+  class mutex;
+  class static_mutex;
+}
+
+class
+dango::
+detail::
 mutex_base
 {
-  friend dango::detail::cond_var_base;
-private:
-  class mutex_impl;
+  friend auto dango::detail::mutex_get_storage(dango::detail::mutex_base const*)noexcept->dango::detail::mutex_storage&;
 public:
   class locker;
   class try_locker;
 protected:
-  explicit constexpr mutex_base()noexcept;
-  ~mutex_base()noexcept = default;
+  using control_type = dango::detail::mutex_control;
 protected:
-  DANGO_EXPORT void destroy()noexcept;
+  explicit constexpr
+  mutex_base(control_type* const a_control)noexcept:
+  m_control{ a_control }
+  { }
+  ~mutex_base()noexcept = default;
 public:
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
+  auto reference()const noexcept->dango::mutex;
+protected:
+  constexpr auto get_control()const noexcept->control_type*{ return m_control; }
 private:
-  void init()noexcept;
-  auto get()noexcept->mutex_impl*;
-private:
-  DANGO_EXPORT void initialize()noexcept;
-  DANGO_EXPORT auto acquire()noexcept->mutex_base*;
-  DANGO_EXPORT auto try_acquire()noexcept->mutex_base*;
-  DANGO_EXPORT void release()noexcept;
-private:
-  dango::exec_once m_init;
-  dango::detail::primitive_storage m_storage;
+  control_type* const m_control;
 public:
+  DANGO_DELETE_DEFAULT(mutex_base)
   DANGO_IMMOBILE(mutex_base)
 };
 
@@ -437,16 +536,14 @@ private:
   using super_type = dango::crit_section;
 protected:
   explicit
-  locker(mutex_base* const a_lock)noexcept:
+  locker(mutex_base* const a_mutex)noexcept:
   super_type{ },
-  m_lock{ a_lock->acquire() }
+  m_mutex{ (void(a_mutex->get_control()->init()), a_mutex->get_control()->acquire()) }
   { }
 public:
-  ~locker()noexcept{ m_lock->release(); }
-protected:
-  auto lock_ptr()const noexcept->mutex_base*{ return m_lock; }
+  ~locker()noexcept{ m_mutex->release(); }
 private:
-  mutex_base* const m_lock;
+  control_type* const m_mutex;
 public:
   DANGO_DELETE_DEFAULT(locker)
   DANGO_IMMOBILE(locker)
@@ -464,44 +561,20 @@ private:
   using super_type = dango::crit_section;
 protected:
   explicit
-  try_locker(mutex_base* const a_lock)noexcept:
+  try_locker(mutex_base* const a_mutex)noexcept:
   super_type{ },
-  m_lock{ a_lock->try_acquire() }
+  m_mutex{ (void(a_mutex->get_control()->init()), a_mutex->get_control()->try_acquire()) }
   { }
 public:
-  ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
+  ~try_locker()noexcept{ if(m_mutex){ m_mutex->release(); } }
 public:
-  explicit operator bool()const{ return m_lock != dango::null; }
-protected:
-  auto lock_ptr()const noexcept->mutex_base*{ return m_lock; }
+  explicit operator bool()const{ return m_mutex != dango::null; }
 private:
-  mutex_base* const m_lock;
+  control_type* const m_mutex;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
   DANGO_IMMOBILE(try_locker)
 };
-
-constexpr
-dango::
-detail::
-mutex_base::
-mutex_base
-()noexcept:
-m_init{ },
-m_storage{ }
-{
-
-}
-
-inline void
-dango::
-detail::
-mutex_base::
-init
-()noexcept
-{
-  m_init.exec([this]()noexcept->void{ initialize(); });
-}
 
 inline auto
 dango::
@@ -510,8 +583,6 @@ mutex_base::
 lock
 ()noexcept->locker
 {
-  init();
-
   return locker{ this };
 }
 
@@ -522,40 +593,37 @@ mutex_base::
 try_lock
 ()noexcept->try_locker
 {
-  init();
-
   return try_locker{ this };
 }
 
 /*** mutex ***/
 
-namespace
-dango
-{
-  struct mutex;
-}
-
-struct
+class
 dango::
 mutex
 final:
-dango::detail::mutex_base
+public dango::detail::mutex_base
 {
+  friend auto dango::detail::mutex_base::reference()const noexcept->dango::mutex;
 private:
   using super_type = dango::detail::mutex_base;
+  using control_type_dynamic = dango::detail::mutex_control_dynamic;
+  struct increment_tag{ DANGO_TAG_TYPE(increment_tag) };
 public:
-  explicit constexpr mutex()noexcept;
+  explicit mutex()dango_new_noexcept;
   ~mutex()noexcept;
+private:
+  explicit mutex(increment_tag, control_type*)noexcept;
 public:
   DANGO_IMMOBILE(mutex)
 };
 
-constexpr
+inline
 dango::
 mutex::
 mutex
-()noexcept:
-super_type{ }
+()dango_new_noexcept:
+super_type{ new control_type_dynamic{ } }
 {
 
 }
@@ -566,28 +634,50 @@ mutex::
 ~mutex
 ()noexcept
 {
-  destroy();
+  auto const a_control = get_control();
+
+  if(a_control->decrement())
+  {
+    delete static_cast<control_type_dynamic*>(a_control);
+  }
+}
+
+inline
+dango::
+mutex::
+mutex
+(increment_tag const, control_type* const a_control)noexcept:
+super_type{ a_control }
+{
+  a_control->increment();
+}
+
+inline auto
+dango::
+detail::
+mutex_base::
+reference
+()const noexcept->dango::mutex
+{
+  return dango::mutex{ dango::mutex::increment_tag{ }, get_control() };
 }
 
 /*** static_mutex ***/
 
-namespace
-dango
-{
-  struct static_mutex;
-}
-
-struct
+class
 dango::
 static_mutex
 final:
-dango::detail::mutex_base
+public dango::detail::mutex_base
 {
 private:
   using super_type = dango::detail::mutex_base;
+  using control_type_static = control_type;
 public:
   explicit constexpr static_mutex()noexcept;
   ~static_mutex()noexcept = default;
+private:
+  control_type_static m_control_storage;
 public:
   DANGO_IMMOBILE(static_mutex)
 };
@@ -597,15 +687,131 @@ dango::
 static_mutex::
 static_mutex
 ()noexcept:
-super_type{ }
+super_type{ &m_control_storage },
+m_control_storage{ }
 {
 
 }
 
-static_assert(sizeof(dango::mutex) == dango::usize(1) * sizeof(dango::cache_align_type));
-static_assert(sizeof(dango::static_mutex) == dango::usize(1) * sizeof(dango::cache_align_type));
-
 /*** cond_var_base ***/
+
+namespace
+dango::detail
+{
+  class cond_var_control;
+  class cond_var_control_dynamic;
+  class cond_var_storage;
+}
+
+namespace
+dango
+{
+  class cond_var;
+}
+
+class
+dango::
+detail::
+cond_var_storage
+final:
+public dango::detail::sync_primitive_storage
+{
+private:
+  using super_type = dango::detail::sync_primitive_storage;
+public:
+  using super_type::super_type;
+};
+
+class alignas(dango::cache_align_type)
+dango::
+detail::
+cond_var_control:
+public dango::intrusive_list_elem<cond_var_control>
+{
+private:
+  using super_type = dango::intrusive_list_elem<cond_var_control>;
+  class cond_var_impl;
+protected:
+  using mutex_type = dango::detail::mutex_base;
+  using count_type = dango::usize;
+public:
+  static auto operator new(dango::usize)noexcept->void* = delete;
+  static void operator delete(void*, dango::usize)noexcept = delete;
+public:
+  explicit constexpr
+  cond_var_control
+  (mutex_type* const a_mutex)noexcept:
+  super_type{ },
+  m_suspend_aware_count{ count_type(0) },
+  m_init{ },
+  m_mutex{ a_mutex },
+  m_storage{ }
+  { }
+  ~cond_var_control()noexcept = default;
+public:
+  void init()noexcept{ m_init.exec([this]()noexcept->void{ initialize(); }); }
+  virtual void increment()noexcept{ }
+  virtual auto decrement()noexcept->bool{ return false; }
+  auto storage()noexcept->dango::detail::cond_var_storage&;
+  auto mutex_ptr()const noexcept->mutex_type*{ return m_mutex; }
+  DANGO_EXPORT void wait()noexcept;
+  DANGO_EXPORT void wait(dango::timeout const&)noexcept;
+  DANGO_EXPORT void notify()noexcept;
+  DANGO_EXPORT void notify_all()noexcept;
+  auto increment_suspend_aware_count(dango::crit_section const&)noexcept->bool;
+  auto decrement_suspend_aware_count(dango::crit_section const&)noexcept->bool;
+  auto make_reference()noexcept->dango::cond_var;
+protected:
+  DANGO_EXPORT void destroy()noexcept;
+private:
+  DANGO_EXPORT void initialize()noexcept;
+private:
+  count_type m_suspend_aware_count;
+  alignas(dango::cache_align_type) dango::exec_once m_init;
+  mutex_type* const m_mutex;
+  dango::detail::cond_var_storage m_storage;
+public:
+  DANGO_DELETE_DEFAULT(cond_var_control)
+  DANGO_IMMOBILE(cond_var_control)
+};
+
+class
+dango::
+detail::
+cond_var_control_dynamic
+final:
+public dango::detail::cond_var_control
+{
+private:
+  using super_type = dango::detail::cond_var_control;
+public:
+  static auto
+  operator new(dango::usize const a_size)dango_new_noexcept->void*
+  {
+    return dango::operator_new(a_size, alignof(cond_var_control_dynamic));
+  }
+
+  static void
+  operator delete(void* const a_ptr, dango::usize const a_size)noexcept
+  {
+    dango::operator_delete(a_ptr, a_size, alignof(cond_var_control_dynamic));
+  }
+public:
+  explicit constexpr
+  cond_var_control_dynamic
+  (mutex_type* const a_mutex)noexcept:
+  super_type{ a_mutex },
+  m_ref_count{ count_type(1) }
+  { init(); }
+  ~cond_var_control_dynamic()noexcept{ destroy(); }
+public:
+  void increment()noexcept override{ m_ref_count.add_fetch<dango::mem_order::acquire>(count_type(1)); }
+  auto decrement()noexcept->bool override{ return m_ref_count.sub_fetch<dango::mem_order::release>(count_type(1)) == count_type(0); }
+private:
+  dango::atomic<count_type> m_ref_count;
+public:
+  DANGO_IMMOBILE(cond_var_control_dynamic)
+};
 
 namespace
 dango::detail
@@ -614,52 +820,37 @@ dango::detail
   class cond_var_registry;
 }
 
-class alignas(dango::cache_align_type)
+namespace
+dango
+{
+  class static_cond_var;
+}
+
+class
 dango::
 detail::
-cond_var_base:
-public dango::intrusive_list_elem<cond_var_base>
+cond_var_base
 {
-  friend dango::detail::cond_var_registry;
-private:
-  using super_type = dango::intrusive_list_elem<cond_var_base>;
-  class cond_var_impl;
 protected:
+  using control_type = dango::detail::cond_var_control;
   using mutex_type = dango::detail::mutex_base;
 public:
   class locker;
   class try_locker;
 protected:
-  explicit constexpr cond_var_base()noexcept;
+  explicit constexpr
+  cond_var_base(control_type* const a_control)noexcept:
+  m_control{ a_control }
+  { }
   ~cond_var_base()noexcept = default;
-protected:
-  auto lock(mutex_type*)noexcept->locker;
-  auto try_lock(mutex_type*)noexcept->try_locker;
-protected:
-  DANGO_EXPORT void destroy()noexcept;
 public:
-  //void unlocked_notify()noexcept{ init(); unlocked_notify(true); }
-  //void unlocked_notify_all()noexcept{ init(); unlocked_notify(false); }
+  [[nodiscard]] auto lock()noexcept->locker;
+  [[nodiscard]] auto try_lock()noexcept->try_locker;
+  auto reference()const noexcept->dango::cond_var;
+protected:
+  auto get_control()const noexcept->control_type*{ return m_control; }
 private:
-  void init()noexcept;
-  auto get()noexcept->cond_var_impl*;
-  void increment(mutex_type*)noexcept;
-  void decrement(mutex_type*)noexcept;
-private:
-  DANGO_EXPORT void initialize()noexcept;
-  DANGO_EXPORT void wait(mutex_type*)noexcept;
-  DANGO_EXPORT void wait(mutex_type*, dango::timeout const&)noexcept;
-  DANGO_EXPORT void notify()noexcept;
-  DANGO_EXPORT void notify_all()noexcept;
-  DANGO_EXPORT void unlocked_notify(bool)noexcept;
-private:
-  dango::usize m_ref_count;
-  alignas(dango::cache_align_type)
-  dango::exec_once m_init;
-  dango::spin_mutex m_lock;
-  dango::usize m_wait_count;
-  mutex_type* m_current_mutex;
-  dango::detail::primitive_storage m_storage;
+  control_type* const m_control;
 public:
   DANGO_IMMOBILE(cond_var_base)
 };
@@ -679,24 +870,24 @@ locker
 final:
 public dango::mutex_locker
 {
-  friend auto dango::detail::cond_var_base::lock(mutex_type*)noexcept->locker;
+  friend auto dango::detail::cond_var_base::lock()noexcept->locker;
 private:
   using super_type = dango::mutex_locker;
 private:
   explicit
-  locker(mutex_type* const a_lock, cond_var_base* const a_cond)noexcept:
-  super_type{ a_lock },
-  m_cond{ a_cond }
-  { }
+  locker(cond_var_base* const a_cond)noexcept:
+  super_type{ a_cond->get_control()->mutex_ptr() },
+  m_cond{ a_cond->get_control() }
+  { m_cond->init(); }
 public:
   ~locker()noexcept = default;
 public:
   void notify()const noexcept{ m_cond->notify(); }
   void notify_all()const noexcept{ m_cond->notify_all(); }
-  void wait()const noexcept{ m_cond->wait(lock_ptr()); }
-  void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(lock_ptr(), a_timeout); }
+  void wait()const noexcept{ m_cond->wait(); }
+  void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(a_timeout); }
 private:
-  cond_var_base* const m_cond;
+  control_type* const m_cond;
 public:
   DANGO_DELETE_DEFAULT(locker)
   DANGO_IMMOBILE(locker)
@@ -710,68 +901,37 @@ try_locker
 final:
 public dango::mutex_try_locker
 {
-  friend auto dango::detail::cond_var_base::try_lock(mutex_type*)noexcept->try_locker;
+  friend auto dango::detail::cond_var_base::try_lock()noexcept->try_locker;
 private:
   using super_type = dango::mutex_try_locker;
 private:
   explicit
-  try_locker(mutex_type* const a_lock, cond_var_base* const a_cond)noexcept:
-  super_type{ a_lock },
-  m_cond{ a_cond }
-  { }
+  try_locker(cond_var_base* const a_cond)noexcept:
+  super_type{ a_cond->get_control()->mutex_ptr() },
+  m_cond{ a_cond->get_control() }
+  { m_cond->init(); }
 public:
   ~try_locker()noexcept = default;
 public:
   void notify()const noexcept{ m_cond->notify(); }
   void notify_all()const noexcept{ m_cond->notify_all(); }
-  void wait()const noexcept{ m_cond->wait(lock_ptr()); }
-  void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(lock_ptr(), a_timeout); }
+  void wait()const noexcept{ m_cond->wait(); }
+  void wait(dango::timeout const& a_timeout)const noexcept{ m_cond->wait(a_timeout); }
 private:
-  cond_var_base* const m_cond;
+  control_type* const m_cond;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
   DANGO_IMMOBILE(try_locker)
 };
-
-constexpr
-dango::
-detail::
-cond_var_base::
-cond_var_base
-()noexcept:
-super_type{ },
-m_ref_count{ dango::usize(0) },
-m_init{ },
-m_lock{ },
-m_wait_count{ dango::usize(0) },
-m_current_mutex{ dango::null },
-m_storage{ }
-{
-
-}
-
-inline void
-dango::
-detail::
-cond_var_base::
-init
-()noexcept
-{
-  m_init.exec([this]()noexcept->void{ initialize(); });
-}
 
 inline auto
 dango::
 detail::
 cond_var_base::
 lock
-(mutex_type* const a_lock)noexcept->locker
+()noexcept->locker
 {
-  a_lock->init();
-
-  init();
-
-  return locker{ a_lock, this };
+  return locker{ this };
 }
 
 inline auto
@@ -779,46 +939,43 @@ dango::
 detail::
 cond_var_base::
 try_lock
-(mutex_type* const a_lock)noexcept->try_locker
+()noexcept->try_locker
 {
-  a_lock->init();
-
-  init();
-
-  return try_locker{ a_lock, this };
+  return try_locker{ this };
 }
 
 /*** cond_var ***/
 
-namespace
-dango
-{
-  struct cond_var;
-}
-
-struct
+class
 dango::
 cond_var
 final:
-dango::detail::cond_var_base
+public dango::detail::cond_var_base
 {
+  friend auto dango::detail::cond_var_control::make_reference()noexcept->dango::cond_var;
+  friend auto dango::detail::cond_var_base::reference()const noexcept->dango::cond_var;
 private:
   using super_type = dango::detail::cond_var_base;
+  using control_type_dynamic = dango::detail::cond_var_control_dynamic;
+  struct increment_tag{ DANGO_TAG_TYPE(increment_tag) };
 public:
-  explicit constexpr cond_var()noexcept;
+  explicit cond_var(mutex_type&)dango_new_noexcept;
   ~cond_var()noexcept;
-  [[nodiscard]] auto lock(mutex_type&)noexcept->auto;
-  [[nodiscard]] auto try_lock(mutex_type&)noexcept->auto;
+private:
+  explicit cond_var(increment_tag, control_type*)noexcept;
+private:
+  dango::mutex m_mutex;
 public:
+  DANGO_DELETE_DEFAULT(cond_var)
   DANGO_IMMOBILE(cond_var)
 };
 
-constexpr
+inline
 dango::
 cond_var::
-cond_var
-()noexcept:
-super_type{ }
+cond_var(mutex_type& a_mutex)dango_new_noexcept:
+super_type{ new control_type_dynamic{ &a_mutex } },
+m_mutex{ a_mutex.reference() }
 {
 
 }
@@ -829,49 +986,54 @@ cond_var::
 ~cond_var
 ()noexcept
 {
-  destroy();
+  auto const a_control = get_control();
+
+  if(a_control->decrement())
+  {
+    delete static_cast<control_type_dynamic*>(a_control);
+  }
+}
+
+inline
+dango::
+cond_var::
+cond_var(increment_tag const, control_type* const a_control)noexcept:
+super_type{ a_control },
+m_mutex{ a_control->mutex_ptr()->reference() }
+{
+  a_control->increment();
 }
 
 inline auto
 dango::
-cond_var::
-lock
-(mutex_type& a_lock)noexcept->auto
+detail::
+cond_var_base::
+reference
+()const noexcept->dango::cond_var
 {
-  return super_type::lock(&a_lock);
-}
-
-inline auto
-dango::
-cond_var::
-try_lock
-(mutex_type& a_lock)noexcept->auto
-{
-  return super_type::try_lock(&a_lock);
+  return dango::cond_var{ dango::cond_var::increment_tag{ }, m_control };
 }
 
 /*** static_cond_var ***/
 
-namespace
-dango
-{
-  struct static_cond_var;
-}
-
-struct
+class
 dango::
 static_cond_var
 final:
-dango::detail::cond_var_base
+public dango::detail::cond_var_base
 {
 private:
   using super_type = dango::detail::cond_var_base;
+  using control_type_static = dango::detail::cond_var_control;
+  using mutex_type_static = dango::static_mutex;
 public:
-  explicit constexpr static_cond_var()noexcept;
+  explicit constexpr static_cond_var(mutex_type_static&)noexcept;
+  explicit constexpr static_cond_var(mutex_type&)noexcept = delete;
   ~static_cond_var()noexcept = default;
-  [[nodiscard]] auto lock(mutex_type&)noexcept->auto;
-  [[nodiscard]] auto try_lock(mutex_type&)noexcept->auto;
+private:
+  control_type_static m_control_storage;
 public:
+  DANGO_DELETE_DEFAULT(static_cond_var)
   DANGO_IMMOBILE(static_cond_var)
 };
 
@@ -879,158 +1041,12 @@ constexpr
 dango::
 static_cond_var::
 static_cond_var
-()noexcept:
-super_type{ }
+(mutex_type_static& a_mutex)noexcept:
+super_type{ &m_control_storage },
+m_control_storage{ &a_mutex }
 {
 
 }
-
-inline auto
-dango::
-static_cond_var::
-lock
-(mutex_type& a_lock)noexcept->auto
-{
-  return super_type::lock(&a_lock);
-}
-
-inline auto
-dango::
-static_cond_var::
-try_lock
-(mutex_type& a_lock)noexcept->auto
-{
-  return super_type::try_lock(&a_lock);
-}
-
-/*** cond_var_mutex ***/
-
-namespace
-dango
-{
-  struct cond_var_mutex;
-}
-
-struct
-dango::
-cond_var_mutex
-final:
-dango::detail::cond_var_base
-{
-private:
-  using super_type = dango::detail::cond_var_base;
-public:
-  explicit constexpr cond_var_mutex(mutex_type&)noexcept;
-  ~cond_var_mutex()noexcept;
-  [[nodiscard]] auto lock()noexcept->auto;
-  [[nodiscard]] auto try_lock()noexcept->auto;
-private:
-  mutex_type* const m_lock;
-public:
-  DANGO_DELETE_DEFAULT(cond_var_mutex)
-  DANGO_IMMOBILE(cond_var_mutex)
-};
-
-constexpr
-dango::
-cond_var_mutex::
-cond_var_mutex
-(mutex_type& a_lock)noexcept:
-super_type{ },
-m_lock{ &a_lock }
-{
-
-}
-
-inline
-dango::
-cond_var_mutex::
-~cond_var_mutex
-()noexcept
-{
-  destroy();
-}
-
-inline auto
-dango::
-cond_var_mutex::
-lock
-()noexcept->auto
-{
-  return super_type::lock(m_lock);
-}
-
-inline auto
-dango::
-cond_var_mutex::
-try_lock
-()noexcept->auto
-{
-  return super_type::try_lock(m_lock);
-}
-
-/*** static_cond_var_mutex ***/
-
-namespace
-dango
-{
-  struct static_cond_var_mutex;
-}
-
-struct
-dango::
-static_cond_var_mutex
-final:
-dango::detail::cond_var_base
-{
-private:
-  using super_type = dango::detail::cond_var_base;
-  using mutex_type = dango::static_mutex;
-public:
-  explicit constexpr static_cond_var_mutex(mutex_type&)noexcept;
-  ~static_cond_var_mutex()noexcept = default;
-  [[nodiscard]] auto lock()noexcept->auto;
-  [[nodiscard]] auto try_lock()noexcept->auto;
-private:
-  mutex_type* const m_lock;
-public:
-  DANGO_DELETE_DEFAULT(static_cond_var_mutex)
-  DANGO_IMMOBILE(static_cond_var_mutex)
-};
-
-constexpr
-dango::
-static_cond_var_mutex::
-static_cond_var_mutex
-(mutex_type& a_lock)noexcept:
-super_type{ },
-m_lock{ &a_lock }
-{
-
-}
-
-inline auto
-dango::
-static_cond_var_mutex::
-lock
-()noexcept->auto
-{
-  return super_type::lock(m_lock);
-}
-
-inline auto
-dango::
-static_cond_var_mutex::
-try_lock
-()noexcept->auto
-{
-  return super_type::try_lock(m_lock);
-}
-
-static_assert(sizeof(dango::cond_var) == dango::usize(2) * sizeof(dango::cache_align_type));
-static_assert(sizeof(dango::static_cond_var) == dango::usize(2) * sizeof(dango::cache_align_type));
-static_assert(sizeof(dango::cond_var_mutex) == dango::usize(2) * sizeof(dango::cache_align_type));
-static_assert(sizeof(dango::static_cond_var_mutex) == dango::usize(2) * sizeof(dango::cache_align_type));
 
 /*** thread ***/
 
@@ -1040,7 +1056,8 @@ dango
   class thread;
 
   enum class
-  thread_ID:dango::uptr
+  thread_ID:
+  dango::uptr
   {
     none = dango::ptr_as_uint(dango::null)
   };
@@ -1169,7 +1186,7 @@ public:
   static auto operator new(dango::usize)dango_new_noexcept->void*;
   static void operator delete(void*, dango::usize)noexcept;
 public:
-  explicit constexpr control_block(bool, dango::thread_ID)noexcept;
+  explicit control_block(bool, dango::thread_ID)dango_new_noexcept;
   ~control_block()noexcept = default;
 public:
   constexpr auto is_daemon()const noexcept->bool{ return m_daemon; }
@@ -1186,7 +1203,7 @@ private:
   dango::atomic<dango::usize> m_ref_count;
   bool const m_daemon;
   mutable dango::mutex m_mutex;
-  mutable dango::cond_var_mutex m_cond;
+  mutable dango::cond_var m_cond;
   dango::thread_ID m_thread_ID;
   dango::usize m_waiter_count;
 public:
@@ -1214,12 +1231,12 @@ operator delete
   dango::operator_delete(a_ptr, a_size, alignof(control_block));
 }
 
-constexpr
+inline
 dango::
 thread::
 control_block::
 control_block
-(bool const a_daemon, dango::thread_ID const a_thread_ID)noexcept:
+(bool const a_daemon, dango::thread_ID const a_thread_ID)dango_new_noexcept:
 super_type{ },
 m_ref_count{ dango::usize(1) },
 m_daemon{ a_daemon },
@@ -2028,7 +2045,7 @@ detail::
 cond_var_registry_access
 final
 {
-  friend dango::detail::cond_var_base;
+  friend dango::detail::cond_var_control;
   friend dango::detail::cond_var_registry_thread;
 private:
   DANGO_EXPORT_ONLY static dango::detail::cond_var_registry s_registry;
@@ -2044,7 +2061,7 @@ final
 {
   friend dango::detail::cond_var_registry_access;
 private:
-  using cond_type = dango::detail::cond_var_base;
+  using cond_type = dango::detail::cond_var_control;
   using list_type = dango::intrusive_list<cond_type>;
 private:
   static void remove(cond_type*)noexcept;
@@ -2064,7 +2081,7 @@ private:
   auto pop_internal()noexcept->bool;
 private:
   dango::static_mutex m_mutex;
-  dango::static_cond_var_mutex m_cond;
+  dango::static_cond_var m_cond;
   list_type m_list[2];
   list_type* m_external_list;
   list_type* m_internal_list;
@@ -2174,7 +2191,7 @@ private:
   auto timed_wait(dango::timeout const&)noexcept->bool;
 private:
   dango::static_mutex m_mutex;
-  dango::static_cond_var_mutex m_cond;
+  dango::static_cond_var m_cond;
   bool m_alive;
   bool m_waiting;
   timer_state m_timer_state;

@@ -527,11 +527,9 @@ public:
   static inline constexpr dango::usize const c_align = tp_align;
 public:
   explicit constexpr aligned_storage()noexcept = default;
-
   ~aligned_storage()noexcept = default;
-
+public:
   constexpr auto get()const noexcept->void*{ return m_storage; }
-
   template
   <dango::is_object tp_type>
   constexpr auto

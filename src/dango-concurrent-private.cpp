@@ -6,8 +6,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/time.h>
-#include <sys/syscall.h>
-#include <linux/futex.h>
 
 namespace
 {
@@ -16,20 +14,6 @@ namespace
   auto thread_start_address(void*)noexcept->void*;
 
   auto tick_count_help(clockid_t)noexcept->dango::tick_count_type;
-
-  using linux_int = dango::detail::futex_type;
-
-  auto
-  sys_futex
-  (
-    linux_int*,
-    linux_int,
-    linux_int,
-    timespec const*,
-    linux_int*,
-    linux_int
-  )
-  noexcept->linux_int;
 }
 
 auto
@@ -118,23 +102,8 @@ tick_count_boottime
   return tick_count_help(CLOCK_BOOTTIME);
 }
 
-void
-dango::
-detail::
-futex_wait
-(dango::detail::futex_type* const a_futex, dango::detail::futex_type const a_expected)noexcept
-{
-  sys_futex
-  (
-    a_futex,
-    FUTEX_WAIT_PRIVATE,
-    a_expected,
-    dango::null,
-    dango::null,
-    linux_int(0)
-  );
-}
 
+/*
 void
 dango::
 detail::
@@ -170,43 +139,9 @@ noexcept
     dango::null,
     linux_int(0)
   );
-}
+}*/
 
-void
-dango::
-detail::
-futex_wake
-(dango::detail::futex_type* const a_futex)noexcept
-{
-  sys_futex
-  (
-    a_futex,
-    FUTEX_WAKE_PRIVATE,
-    linux_int(1),
-    dango::null,
-    dango::null,
-    linux_int(0)
-  );
-}
 
-void
-dango::
-detail::
-futex_wake_requeue
-(dango::detail::futex_type* const a_futex, dango::detail::futex_type* const a_dest)noexcept
-{
-  static constexpr auto const c_all = dango::uptr(dango::integer::MAX_VAL<linux_int>);
-
-  sys_futex
-  (
-    a_futex,
-    FUTEX_REQUEUE_PRIVATE,
-    linux_int(1),
-    reinterpret_cast<timespec const*>(c_all),
-    a_dest,
-    linux_int(0)
-  );
-}
 
 namespace
 {
@@ -258,33 +193,6 @@ namespace
     auto const a_nsec = tc64(a_spec.tv_nsec);
 
     return (a_sec * c_mul) + (a_nsec / c_div);
-  }
-
-  auto
-  sys_futex
-  (
-    linux_int* const a_addr1,
-    linux_int const a_futex_op,
-    linux_int const a_val1,
-    timespec const* const a_timeout,
-    linux_int* const a_addr2,
-    linux_int const a_val3
-  )
-  noexcept->linux_int
-  {
-    auto const a_result =
-    ::syscall
-    (
-      SYS_futex,
-      a_addr1,
-      a_futex_op,
-      a_val1,
-      a_timeout,
-      a_addr2,
-      a_val3
-    );
-
-    return a_result;
   }
 }
 
@@ -438,7 +346,7 @@ perf_count_suspend_bias
 }
 
 /*****************************/
-
+/*
 template
 <dango::is_object tp_type>
 constexpr auto
@@ -502,9 +410,9 @@ srw_lock_release
 
   ::ReleaseSRWLockExclusive(a_storage->launder_get<type>());
 }
-
+*/
 /*****************************/
-
+/*
 template
 <dango::is_object tp_type>
 constexpr auto
@@ -601,7 +509,7 @@ condition_variable_wait
     ULONG(0)
   );
 }
-
+*/
 /*****************************/
 
 void

@@ -17,21 +17,7 @@
 #define DANGO_EXPORT_ONLY
 #endif
 
-#endif
-
-#ifdef __linux__
-
-#ifdef DANGO_BUILDING_SHARED_LIB
-#define DANGO_EXPORT [[gnu::visibility("default")]]
-#define DANGO_EXPORT_ONLY DANGO_EXPORT
-#else
-#define DANGO_EXPORT
-#define DANGO_EXPORT_ONLY
-#endif
-
-#endif
-
-#ifdef __APPLE__
+#else // __linux__ __APPLE__
 
 #ifdef DANGO_BUILDING_SHARED_LIB
 #define DANGO_EXPORT [[gnu::visibility("default")]]
