@@ -418,10 +418,10 @@ public:
   void init()noexcept{ m_init.exec([this]()noexcept->void{ initialize(); }); }
   virtual void increment()noexcept{ }
   virtual auto decrement()noexcept->bool{ return false; }
-  auto storage()noexcept->dango::detail::mutex_storage&;
   DANGO_EXPORT auto acquire()noexcept->mutex_control*;
   DANGO_EXPORT auto try_acquire()noexcept->mutex_control*;
   DANGO_EXPORT void release()noexcept;
+  auto storage()noexcept->dango::detail::mutex_storage&;
 protected:
   DANGO_EXPORT void destroy()noexcept;
 private:
@@ -477,7 +477,7 @@ dango::detail
   class mutex_base;
   class cond_var_control;
 
-  auto mutex_get_storage(dango::detail::mutex_base const*)noexcept->dango::detail::mutex_storage&;
+  auto mutex_get_storage(dango::detail::mutex_base const&)noexcept->dango::detail::mutex_storage&;
 }
 
 namespace
@@ -492,7 +492,7 @@ dango::
 detail::
 mutex_base
 {
-  friend auto dango::detail::mutex_get_storage(dango::detail::mutex_base const*)noexcept->dango::detail::mutex_storage&;
+  friend auto dango::detail::mutex_get_storage(dango::detail::mutex_base const&)noexcept->dango::detail::mutex_storage&;
 public:
   class locker;
   class try_locker;
@@ -752,12 +752,12 @@ public:
   void init()noexcept{ m_init.exec([this]()noexcept->void{ initialize(); }); }
   virtual void increment()noexcept{ }
   virtual auto decrement()noexcept->bool{ return false; }
-  auto storage()noexcept->dango::detail::cond_var_storage&;
-  auto mutex_ptr()const noexcept->mutex_type*{ return m_mutex; }
+  auto mutex_ref()const noexcept->mutex_type&{ return *m_mutex; }
   DANGO_EXPORT void wait()noexcept;
   DANGO_EXPORT void wait(dango::timeout const&)noexcept;
   DANGO_EXPORT void notify()noexcept;
   DANGO_EXPORT void notify_all()noexcept;
+  auto storage()noexcept->dango::detail::cond_var_storage&;
   auto increment_suspend_aware_count(dango::crit_section const&)noexcept->bool;
   auto decrement_suspend_aware_count(dango::crit_section const&)noexcept->bool;
   auto make_reference()noexcept->dango::cond_var;
@@ -876,7 +876,7 @@ private:
 private:
   explicit
   locker(cond_var_base* const a_cond)noexcept:
-  super_type{ a_cond->get_control()->mutex_ptr() },
+  super_type{ &a_cond->get_control()->mutex_ref() },
   m_cond{ a_cond->get_control() }
   { m_cond->init(); }
 public:
@@ -907,7 +907,7 @@ private:
 private:
   explicit
   try_locker(cond_var_base* const a_cond)noexcept:
-  super_type{ a_cond->get_control()->mutex_ptr() },
+  super_type{ &a_cond->get_control()->mutex_ref() },
   m_cond{ a_cond->get_control() }
   { m_cond->init(); }
 public:
@@ -999,7 +999,7 @@ dango::
 cond_var::
 cond_var(increment_tag const, control_type* const a_control)noexcept:
 super_type{ a_control },
-m_mutex{ a_control->mutex_ptr()->reference() }
+m_mutex{ a_control->mutex_ref().reference() }
 {
   a_control->increment();
 }
@@ -2157,7 +2157,7 @@ windows_timer_res_access
 final
 {
   friend dango::detail::windows_timer_res_daemon;
-  friend dango::detail::cond_var_base;
+  friend dango::detail::cond_var_control;
 private:
   DANGO_EXPORT_ONLY static dango::detail::windows_timer_res_manager s_manager;
 public:

@@ -44,11 +44,13 @@ dango::detail
   auto perf_count_suspend_bias()noexcept->dango::tick_count_pair;
 
   void srw_lock_init(dango::detail::mutex_storage&)noexcept;
+  void srw_lock_destroy(dango::detail::mutex_storage&)noexcept;
   void srw_lock_acquire(dango::detail::mutex_storage&)noexcept;
   auto srw_lock_try_acquire(dango::detail::mutex_storage&)noexcept->bool;
   void srw_lock_release(dango::detail::mutex_storage&)noexcept;
 
   void condition_variable_init(dango::detail::cond_var_storage&)noexcept;
+  void condition_variable_destroy(dango::detail::cond_var_storage&)noexcept;
   void condition_variable_wake(dango::detail::cond_var_storage&)noexcept;
   void condition_variable_wake_all(dango::detail::cond_var_storage&)noexcept;
   void condition_variable_wait(dango::detail::cond_var_storage&, dango::detail::mutex_storage&)noexcept;
