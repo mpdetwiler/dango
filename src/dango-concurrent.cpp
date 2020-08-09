@@ -390,6 +390,8 @@ pop_internal
     a_crit.notify_all();
   }
 
+  dango::destructor(a_cond_ptr);
+
   return true;
 }
 

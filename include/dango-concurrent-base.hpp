@@ -9,17 +9,11 @@ dango_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
 #define dango_crit_full(lockable, local_name) \
 if constexpr(auto const local_name = (lockable).lock(); true)
 
-#define dango_crit_cond(cond, mutex, local_name) \
-if constexpr(auto const local_name = (cond).lock(mutex); true)
-
 #define dango_try_crit(lockable) \
 dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
 
 #define dango_try_crit_full(lockable, local_name) \
 if(auto const local_name = (lockable).try_lock(); local_name)
-
-#define dango_try_crit_cond(cond, mutex, local_name) \
-if(auto const local_name = (cond).try_lock(mutex); local_name)
 
 /*** thread_yield ***/
 
