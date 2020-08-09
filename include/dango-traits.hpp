@@ -1125,24 +1125,20 @@ dango
     dango::is_int<tp_type> || dango::is_float<tp_type>;
 }
 
-/*** is_array is_array_rt_bound is_array_ct_bound ***/
+/*** is_array is_array_unknown_bound is_array_known_bound ***/
 
 namespace
 dango::detail
 {
   template
   <typename tp_type>
-  inline constexpr bool const is_array_rt_bound_help = false;
+  inline constexpr auto const is_array_help = dango::uint(0);
   template
   <typename tp_type>
-  inline constexpr bool const is_array_rt_bound_help<tp_type[]> = true;
-
-  template
-  <typename tp_type>
-  inline constexpr bool const is_array_ct_bound_help = false;
+  inline constexpr auto const is_array_help<tp_type[]> = dango::uint(1);
   template
   <typename tp_type, dango::usize tp_size>
-  inline constexpr bool const is_array_ct_bound_help<tp_type[tp_size]> = true;
+  inline constexpr auto const is_array_help<tp_type[tp_size]> = dango::uint(2);
 }
 
 namespace
@@ -1150,16 +1146,18 @@ dango
 {
   template
   <typename tp_type>
-  concept is_array_rt_bound = dango::detail::is_array_rt_bound_help<tp_type>;
+  concept is_array_unknown_bound =
+    (dango::detail::is_array_help<tp_type> == dango::uint(1));
 
   template
   <typename tp_type>
-  concept is_array_ct_bound = dango::detail::is_array_ct_bound_help<tp_type>;
+  concept is_array_known_bound =
+    (dango::detail::is_array_help<tp_type> == dango::uint(2));
 
   template
   <typename tp_type>
   concept is_array =
-    dango::is_array_rt_bound<tp_type> || dango::is_array_ct_bound<tp_type>;
+    dango::is_array_unknown_bound<tp_type> || dango::is_array_known_bound<tp_type>;
 }
 
 /*** array_rank ***/
@@ -1519,7 +1517,7 @@ dango
     dango::is_null_tag<tp_type>;
 }
 
-/*** is_object_exclude_array ***/
+/*** is_object_exclude_array is_object_or_ref_exclude_array ***/
 
 namespace
 dango
@@ -1528,9 +1526,14 @@ dango
   <typename tp_type>
   concept is_object_exclude_array =
     dango::is_scalar<tp_type> || dango::is_class_or_union<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_object_or_ref_exclude_array =
+    dango::is_object_exclude_array<tp_type> || dango::is_ref<tp_type>;
 }
 
-/*** is_object ***/
+/*** is_object is_object_or_ref ***/
 
 namespace
 dango
@@ -1539,6 +1542,11 @@ dango
   <typename tp_type>
   concept is_object =
     dango::is_object_exclude_array<tp_type> || dango::is_array<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_object_or_ref =
+    dango::is_object<tp_type> || dango::is_ref<tp_type>;
 }
 
 /*** is_compound ***/
@@ -1551,7 +1559,7 @@ dango
   concept is_compound = !dango::is_fundamental<tp_type>;
 }
 
-/*** is_referenceable ***/
+/*** is_referenceable is_referenceable_or_ref ***/
 
 namespace
 dango
@@ -1560,6 +1568,11 @@ dango
   <typename tp_type>
   concept is_referenceable =
     dango::is_object<tp_type> || dango::is_unqualified_func<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_referenceable_or_ref =
+    dango::is_referenceable<tp_type> || dango::is_ref<tp_type>;
 }
 
 /*** is_const ***/
@@ -1747,10 +1760,10 @@ dango::detail
   <dango::is_ref tp_type>
   inline constexpr bool const is_destructible_help<tp_type> = true;
   template
-  <dango::is_array_rt_bound tp_type>
+  <dango::is_array_unknown_bound tp_type>
   inline constexpr bool const is_destructible_help<tp_type> = false;
   template
-  <dango::is_array_ct_bound tp_type>
+  <dango::is_array_known_bound tp_type>
   inline constexpr bool const is_destructible_help<tp_type> =
     dango::detail::is_destructible_help<dango::remove_all_array<tp_type>>;
 
@@ -1761,10 +1774,10 @@ dango::detail
   <dango::is_ref tp_type>
   inline constexpr bool const is_noexcept_destructible_help<tp_type> = true;
   template
-  <dango::is_array_rt_bound tp_type>
+  <dango::is_array_unknown_bound tp_type>
   inline constexpr bool const is_noexcept_destructible_help<tp_type> = false;
   template
-  <dango::is_array_ct_bound tp_type>
+  <dango::is_array_known_bound tp_type>
   inline constexpr bool const is_noexcept_destructible_help<tp_type> =
     dango::detail::is_noexcept_destructible_help<dango::remove_all_array<tp_type>>;
 
@@ -1775,10 +1788,10 @@ dango::detail
   <dango::is_ref tp_type>
   inline constexpr bool const is_trivial_destructible_help<tp_type> = true;
   template
-  <dango::is_array_rt_bound tp_type>
+  <dango::is_array_unknown_bound tp_type>
   inline constexpr bool const is_trivial_destructible_help<tp_type> = false;
   template
-  <dango::is_array_ct_bound tp_type>
+  <dango::is_array_known_bound tp_type>
   inline constexpr bool const is_trivial_destructible_help<tp_type> =
     dango::detail::is_trivial_destructible_help<dango::remove_all_array<tp_type>>;
 }
@@ -1789,7 +1802,7 @@ dango
   template
   <typename tp_type>
   concept is_destructible =
-    (dango::is_object<tp_type> || dango::is_ref<tp_type>) && dango::detail::is_destructible_help<dango::remove_cv<tp_type>>;
+    dango::is_object_or_ref<tp_type> && dango::detail::is_destructible_help<dango::remove_cv<tp_type>>;
 
   template
   <typename tp_type>
@@ -1818,40 +1831,35 @@ dango::detail
 
   template
   <typename tp_type1, typename tp_type2>
-  concept both_void = dango::is_void<tp_type1> && dango::is_void<tp_type2>;
-  template
-  <typename tp_type1, typename tp_type2>
-  concept neither_void = !dango::is_void<tp_type1> && !dango::is_void<tp_type2>;
-
-  template
-  <typename tp_type>
-  concept is_destructible_exclude_array = !dango::is_array<tp_type> && dango::is_destructible<tp_type>;
-  template
-  <typename tp_type>
-  concept is_noexcept_destructible_exclude_array =
-    dango::detail::is_destructible_exclude_array<tp_type> && dango::is_noexcept_destructible<tp_type>;
+  concept is_both_void = dango::is_void<tp_type1> && dango::is_void<tp_type2>;
 
   template
   <typename tp_from, typename tp_to>
   concept is_convertible_help =
-    dango::detail::is_destructible_exclude_array<tp_to> &&
-    requires{ dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()); };
+    dango::is_referenceable_or_ref<tp_from> &&
+    dango::is_object_or_ref_exclude_array<tp_to> &&
+    dango::is_destructible<tp_to> &&
+    requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()) }; };
+
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_help =
-    dango::detail::is_noexcept_destructible_exclude_array<tp_to> &&
+    dango::detail::is_convertible_help<tp_from, tp_to> &&
+    dango::is_noexcept_destructible<tp_to> &&
     requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()) }noexcept; };
 
   template
   <typename tp_from, typename tp_to>
   concept is_convertible_ret_help =
-    (dango::is_same_ignore_cv<tp_from, tp_to> && dango::detail::is_destructible_exclude_array<tp_to>) ||
-    dango::detail::is_convertible_help<tp_from, tp_to>;
+    dango::is_object_exclude_array<tp_from> &&
+    dango::is_object_exclude_array<tp_to> &&
+    dango::is_same_ignore_cv<tp_from, tp_to> &&
+    dango::is_destructible<tp_to>;
+
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_ret_help =
-    (dango::is_same_ignore_cv<tp_from, tp_to> && dango::detail::is_noexcept_destructible_exclude_array<tp_to>) ||
-    dango::detail::is_noexcept_convertible_help<tp_from, tp_to>;
+    dango::detail::is_convertible_ret_help<tp_from, tp_to> && dango::is_noexcept_destructible<tp_to>;
 }
 
 namespace
@@ -1860,26 +1868,22 @@ dango
   template
   <typename tp_from, typename tp_to>
   concept is_convertible =
-    dango::detail::both_void<tp_from, tp_to> ||
-    (dango::detail::neither_void<tp_from, tp_to> && dango::detail::is_convertible_help<tp_from, tp_to>);
+    dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_convertible_help<tp_from, tp_to>;
 
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible =
-    dango::detail::both_void<tp_from, tp_to> ||
-    (dango::detail::neither_void<tp_from, tp_to> && dango::detail::is_noexcept_convertible_help<tp_from, tp_to>);
+    dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_noexcept_convertible_help<tp_from, tp_to>;
 
   template
   <typename tp_from, typename tp_to>
   concept is_convertible_ret =
-    dango::detail::both_void<tp_from, tp_to> ||
-    (dango::detail::neither_void<tp_from, tp_to> && dango::detail::is_convertible_ret_help<tp_from, tp_to>);
+    dango::detail::is_convertible_ret_help<tp_from, tp_to> || dango::is_convertible<tp_from, tp_to>;
 
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_ret =
-    dango::detail::both_void<tp_from, tp_to> ||
-    (dango::detail::neither_void<tp_from, tp_to> && dango::detail::is_noexcept_convertible_ret_help<tp_from, tp_to>);
+    dango::detail::is_noexcept_convertible_ret_help<tp_from, tp_to> || dango::is_noexcept_convertible<tp_from, tp_to>;
 }
 
 /*** is_callable is_noexcept_callable is_callable_ret is_noexcept_callable_ret ***/
