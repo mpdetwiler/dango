@@ -263,50 +263,6 @@ dango
   }
 }
 
-/*** has_dango_operator_swap ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept has_dango_operator_swap =
-    dango::is_class_or_union<dango::remove_ref<tp_lhs>> &&
-    requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs).dango_operator_swap(dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
-
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept has_noexcept_dango_operator_swap =
-    dango::has_dango_operator_swap<tp_lhs, tp_rhs> &&
-    requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs).dango_operator_swap(dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>; };
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_dango_operator_swap<tp_lhs&, tp_rhs&>)
-  constexpr void
-  swap
-  (tp_lhs& a_lhs, tp_rhs& a_rhs)noexcept(dango::has_noexcept_dango_operator_swap<tp_lhs&, tp_rhs&>)
-  {
-    a_lhs.dango_operator_swap(a_rhs);
-  }
-
-  template
-  <typename tp_lhs, typename tp_rhs>
-  requires(!dango::has_dango_operator_swap<tp_lhs&, tp_rhs&> && dango::has_dango_operator_swap<tp_rhs&, tp_lhs&>)
-  constexpr void
-  swap
-  (tp_lhs& a_lhs, tp_rhs& a_rhs)noexcept(dango::has_noexcept_dango_operator_swap<tp_rhs&, tp_lhs&>)
-  {
-    a_rhs.dango_operator_swap(a_lhs);
-  }
-}
-
 /*****************************************************************************************************************************/
 
 /*** is_equatable ***/
@@ -390,47 +346,6 @@ dango
       { dango::forward<tp_lhs>(a_lhs) >  dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
       { dango::forward<tp_lhs>(a_lhs) >= dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
     };
-}
-
-/*** is_swappable ***/
-
-namespace
-dango::detail_with_dango_swap
-{
-  using dango::swap;
-
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept is_swappable_help =
-    requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    {
-      { swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>;
-      { swap(dango::forward<tp_rhs>(a_rhs), dango::forward<tp_lhs>(a_lhs)) }->dango::is_convertible_ret<void>;
-    };
-
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept is_noexcept_swappable_help =
-    requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    {
-      { swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>;
-      { swap(dango::forward<tp_rhs>(a_rhs), dango::forward<tp_lhs>(a_lhs)) }noexcept->dango::is_noexcept_convertible_ret<void>;
-    };
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept is_swappable =
-    dango::detail_with_dango_swap::is_swappable_help<tp_lhs, tp_rhs>;
-
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept is_noexcept_swappable =
-    dango::is_swappable<tp_lhs, tp_rhs> &&
-    dango::detail_with_dango_swap::is_noexcept_swappable_help<tp_lhs, tp_rhs>;
 }
 
 /*****************************************************************************************************************************/

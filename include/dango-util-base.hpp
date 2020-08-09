@@ -1,6 +1,37 @@
 #ifndef DANGO_UTIL_BASE_HPP_INCLUDED
 #define DANGO_UTIL_BASE_HPP_INCLUDED
 
+/*** priority_tag ***/
+
+namespace
+dango
+{
+  template
+  <dango::uint tp_prio>
+  struct priority_tag;
+
+  template<>
+  struct priority_tag<dango::uint(0)>;
+}
+
+template
+<dango::uint tp_prio>
+struct
+dango::
+priority_tag:
+dango::priority_tag<tp_prio - dango::uint(1)>
+{
+  DANGO_TAG_TYPE(priority_tag)
+};
+
+template<>
+struct
+dango::
+priority_tag<dango::uint(0)>
+{
+  DANGO_TAG_TYPE(priority_tag)
+};
+
 /*** move forward ***/
 
 namespace
@@ -51,19 +82,167 @@ forward
   return static_cast<tp_type&&>(a_arg);
 }
 
-/*** in_constexpr_context ***/
+/*** swap ***/
 
-namespace dango
+namespace
+dango
 {
-  constexpr auto in_constexpr_context()noexcept->bool;
+  template
+  <typename tp_lhs, typename tp_rhs>
+  struct operator_swap;
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept has_operator_swap =
+    dango::is_object<dango::remove_ref<tp_lhs>> && dango::is_object<dango::remove_ref<tp_rhs>> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs)
+    { { dango::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept has_noexcept_operator_swap =
+    dango::has_operator_swap<tp_lhs, tp_rhs> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs)
+    { { dango::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>; };
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept has_dango_operator_swap =
+    dango::is_class_or_union<dango::remove_ref<tp_lhs>> && dango::is_object<dango::remove_ref<tp_rhs>> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs)
+    { { dango::forward<tp_lhs>(a_lhs).dango_operator_swap(dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept has_noexcept_dango_operator_swap =
+    dango::has_dango_operator_swap<tp_lhs, tp_rhs> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs)
+    { { dango::forward<tp_lhs>(a_lhs).dango_operator_swap(dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>; };
 }
 
-constexpr auto
-dango::
-in_constexpr_context
-()noexcept->bool
+namespace
+dango::detail
 {
-  return __builtin_is_constant_evaluated();
+  template
+  <typename tp_lhs, typename tp_rhs>
+  requires(dango::has_operator_swap<tp_lhs&, tp_rhs&>)
+  constexpr void
+  swap_help
+  (dango::priority_tag<dango::uint(4)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
+  noexcept(dango::has_noexcept_operator_swap<tp_lhs&, tp_rhs&>)
+  {
+    dango::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(a_lhs, a_rhs);
+  }
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  requires(dango::has_operator_swap<tp_rhs&, tp_lhs&>)
+  constexpr void
+  swap_help
+  (dango::priority_tag<dango::uint(3)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
+  noexcept(dango::has_noexcept_operator_swap<tp_rhs&, tp_lhs&>)
+  {
+    dango::operator_swap<dango::remove_cvref<tp_rhs>, dango::remove_cvref<tp_lhs>>::swap(a_rhs, a_lhs);
+  }
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  requires(dango::has_dango_operator_swap<tp_lhs&, tp_rhs&>)
+  constexpr void
+  swap_help
+  (dango::priority_tag<dango::uint(2)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
+  noexcept(dango::has_noexcept_dango_operator_swap<tp_lhs&, tp_rhs&>)
+  {
+    a_lhs.dango_operator_swap(a_rhs);
+  }
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  requires(dango::has_dango_operator_swap<tp_rhs&, tp_lhs&>)
+  constexpr void
+  swap_help
+  (dango::priority_tag<dango::uint(1)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
+  noexcept(dango::has_noexcept_dango_operator_swap<tp_rhs&, tp_lhs&>)
+  {
+    a_rhs.dango_operator_swap(a_lhs);
+  }
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  requires
+  (
+    !dango::is_const<tp_lhs> && !dango::is_const<tp_rhs> &&
+    dango::is_brace_constructible<dango::remove_volatile<tp_lhs>, tp_lhs&&> &&
+    dango::is_assignable<tp_lhs&, tp_rhs&&> &&
+    dango::is_assignable<tp_rhs&, dango::remove_volatile<tp_lhs>&&>
+  )
+  constexpr void
+  swap_help
+  (dango::priority_tag<dango::uint(0)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
+  noexcept
+  (
+    dango::is_noexcept_brace_constructible<dango::remove_volatile<tp_lhs>, tp_lhs&&> &&
+    dango::is_noexcept_assignable<tp_lhs&, tp_rhs&&> &&
+    dango::is_noexcept_assignable<tp_rhs&, dango::remove_volatile<tp_lhs>&&>
+  )
+  {
+    dango::remove_volatile<tp_lhs> a_temp{ dango::move(a_lhs) };
+
+    a_lhs = dango::move(a_rhs);
+
+    a_rhs = dango::move(a_temp);
+  }
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept is_swappable =
+    dango::is_object<dango::remove_ref<tp_lhs>> && dango::is_object<dango::remove_ref<tp_rhs>> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs)
+    { { dango::detail::swap_help(dango::priority_tag<dango::uint(4)>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept is_noexcept_swappable =
+    dango::is_swappable<tp_lhs, tp_rhs> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs)
+    { { dango::detail::swap_help(dango::priority_tag<dango::uint(4)>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>; };
+
+  inline constexpr auto const swap =
+    []<typename tp_lhs, typename tp_rhs>
+    requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
+    (tp_lhs& a_lhs, tp_rhs& a_rhs)noexcept(dango::is_noexcept_swappable<tp_lhs&, tp_rhs&>)->void
+    {
+      dango::detail::swap_help(dango::priority_tag<dango::uint(4)>{ }, a_lhs, a_rhs);
+    };
+}
+
+/*** swap for arrays of same dim ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_lhs, typename tp_rhs, dango::usize tp_size>
+  requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
+  struct
+  operator_swap<tp_lhs[tp_size], tp_rhs[tp_size]>
+  final
+  {
+    static constexpr void
+    swap(tp_lhs(& a_lhs)[tp_size], tp_rhs(& a_rhs)[tp_size])noexcept(dango::is_noexcept_swappable<tp_lhs&, tp_rhs&>)
+    {
+      for(auto a_i = dango::usize(0); a_i < tp_size; ++a_i)
+      {
+        dango::swap(a_lhs[a_i], a_rhs[a_i]);
+      }
+    }
+
+    DANGO_UNINSTANTIABLE(operator_swap)
+  };
 }
 
 /*** arithmetic min max ***/
@@ -133,32 +312,6 @@ dango
   (tp_arg const a_arg, tp_args... a_args)noexcept->tp_arg
   {
     return dango::max(a_arg, dango::max(a_args...));
-  }
-}
-
-/*** scalar swap ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_lhs, typename tp_rhs>
-  requires
-  (
-    dango::is_scalar<tp_lhs> && dango::is_scalar<tp_rhs> &&
-    !dango::is_const<tp_lhs> && !dango::is_const<tp_rhs> &&
-    dango::is_assignable<tp_lhs&, tp_rhs&&> &&
-    dango::is_assignable<tp_rhs&, dango::remove_volatile<tp_lhs>&&>
-  )
-  constexpr void
-  swap
-  (tp_lhs& a_lhs, tp_rhs& a_rhs)noexcept
-  {
-    dango::remove_volatile<tp_lhs> a_temp{ dango::move(a_lhs) };
-
-    a_lhs = dango::move(a_rhs);
-
-    a_rhs = dango::move(a_temp);
   }
 }
 

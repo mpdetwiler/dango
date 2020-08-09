@@ -2219,5 +2219,20 @@ dango
   };
 }
 
+/*** in_constexpr_context ***/
+
+namespace dango
+{
+  constexpr auto in_constexpr_context()noexcept->bool;
+}
+
+constexpr auto
+dango::
+in_constexpr_context
+()noexcept->bool
+{
+  return __builtin_is_constant_evaluated();
+}
+
 #endif // DANGO_TRAITS_HPP_INCLUDED
 
