@@ -303,7 +303,7 @@ pthread_cond_wait
   auto const a_result =
     ::pthread_cond_timedwait(a_storage.launder_get<type>(), a_lock_storage.launder_get<lock_type>(), &a_spec);
 
-  dango_assert(a_result == 0);
+  dango_assert(a_result == 0 || a_result == ETIMEDOUT);
 }
 
 namespace
