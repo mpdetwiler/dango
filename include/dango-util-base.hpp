@@ -213,8 +213,8 @@ dango
 
   inline constexpr auto const swap =
     []<typename tp_lhs, typename tp_rhs>
-    requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
     (tp_lhs& a_lhs, tp_rhs& a_rhs)noexcept(dango::is_noexcept_swappable<tp_lhs&, tp_rhs&>)->void
+    requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
     {
       dango::detail::swap_help(dango::priority_tag<dango::uint(4)>{ }, a_lhs, a_rhs);
     };
@@ -229,7 +229,8 @@ dango
   <typename tp_lhs, typename tp_rhs, dango::usize tp_size>
   requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
   struct
-  operator_swap<tp_lhs[tp_size], tp_rhs[tp_size]>
+  operator_swap
+  <tp_lhs[tp_size], tp_rhs[tp_size]>
   final
   {
     static constexpr void

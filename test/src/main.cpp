@@ -164,6 +164,17 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  {
+    int volatile int1 = 5;
+    long int2 = 6;
+
+    static_assert(noexcept(dango::swap(int1, int2)));
+
+    dango::swap(int1, int2);
+
+    dango_assert(int1 == 6 && int2 == 5);
+  }
+
   /*auto a_timeout = dango::timeout::make_rel(1'000, dango::timeout_flags::HIGH_RES);
 
   for(auto a_i = uint(0); a_i < uint(10); ++a_i)
