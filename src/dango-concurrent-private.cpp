@@ -7,6 +7,11 @@
 #include <pthread.h>
 #include <sys/time.h>
 
+static_assert(sizeof(dango::detail::mutex_storage) >= sizeof(::pthread_mutex_t));
+static_assert(alignof(dango::detail::mutex_storage) >= alignof(::pthread_mutex_t));
+static_assert(sizeof(dango::detail::cond_var_storage) >= sizeof(::pthread_cond_t));
+static_assert(alignof(dango::detail::cond_var_storage) >= alignof(::pthread_cond_t));
+
 namespace
 {
   template
@@ -102,46 +107,204 @@ tick_count_boottime
   return tick_count_help(CLOCK_BOOTTIME);
 }
 
+/*****************************/
 
-/*
 void
 dango::
 detail::
-futex_wait
-(
-  dango::detail::futex_type* const a_futex,
-  dango::detail::futex_type const a_expected,
-  dango::tick_count_type const a_interval
-)
-noexcept
+pthread_mutex_init
+(dango::detail::mutex_storage& a_storage)noexcept
 {
+  using type = ::pthread_mutex_t;
+
+  auto const a_temp = dango::placement_new_trivial<type>(a_storage.get());
+
+  auto const a_result = ::pthread_mutex_init(a_temp, dango::null);
+
+  dango_assert(a_result == 0);
+}
+
+void
+dango::
+detail::
+pthread_mutex_destroy
+(dango::detail::mutex_storage& a_storage)noexcept
+{
+  using type = ::pthread_mutex_t;
+
+  auto const a_temp = a_storage.launder_get<type>();
+
+  auto const a_result = ::pthread_mutex_destroy(a_temp);
+
+  dango_assert(a_result == 0);
+
+  dango::destructor(a_temp);
+}
+
+void
+dango::
+detail::
+pthread_mutex_lock
+(dango::detail::mutex_storage& a_storage)noexcept
+{
+  using type = ::pthread_mutex_t;
+
+  auto const a_result = ::pthread_mutex_lock(a_storage.launder_get<type>());
+
+  dango_assert(a_result == 0);
+}
+
+auto
+dango::
+detail::
+pthread_mutex_try_lock
+(dango::detail::mutex_storage& a_storage)noexcept->bool
+{
+  using type = ::pthread_mutex_t;
+
+  auto const a_result = ::pthread_mutex_trylock(a_storage.launder_get<type>());
+
+  return a_result == 0;
+}
+
+void
+dango::
+detail::
+pthread_mutex_unlock
+(dango::detail::mutex_storage& a_storage)noexcept
+{
+  using type = ::pthread_mutex_t;
+
+  auto const a_result = ::pthread_mutex_unlock(a_storage.launder_get<type>());
+
+  dango_assert(a_result == 0);
+}
+
+/*****************************/
+
+namespace
+{
+  constexpr auto const c_cond_clock = ::clockid_t(CLOCK_MONOTONIC);
+}
+
+void
+dango::
+detail::
+pthread_cond_init
+(dango::detail::cond_var_storage& a_storage)noexcept
+{
+  using type = ::pthread_cond_t;
+
+  auto const a_temp = dango::placement_new_trivial<type>(a_storage.get());
+
+  ::pthread_condattr_t a_spec;
+
+  auto a_result = ::pthread_condattr_init(&a_spec);
+
+  dango_assert(a_result == 0);
+
+  a_result = ::pthread_condattr_setclock(&a_spec, c_cond_clock);
+
+  dango_assert(a_result == 0);
+
+  a_result = ::pthread_cond_init(a_temp, &a_spec);
+
+  dango_assert(a_result == 0);
+
+  a_result = ::pthread_condattr_destroy(&a_spec);
+
+  dango_assert(a_result == 0);
+}
+
+void
+dango::
+detail::
+pthread_cond_destroy
+(dango::detail::cond_var_storage& a_storage)noexcept
+{
+  using type = ::pthread_cond_t;
+
+  auto const a_temp = a_storage.launder_get<type>();
+
+  auto const a_result = ::pthread_cond_destroy(a_temp);
+
+  dango_assert(a_result == 0);
+
+  dango::destructor(a_temp);
+}
+
+void
+dango::
+detail::
+pthread_cond_signal
+(dango::detail::cond_var_storage& a_storage)noexcept
+{
+  using type = ::pthread_cond_t;
+
+  auto const a_result = ::pthread_cond_signal(a_storage.launder_get<type>());
+
+  dango_assert(a_result == 0);
+}
+
+void
+dango::
+detail::
+pthread_cond_broadcast
+(dango::detail::cond_var_storage& a_storage)noexcept
+{
+  using type = ::pthread_cond_t;
+
+  auto const a_result = ::pthread_cond_broadcast(a_storage.launder_get<type>());
+
+  dango_assert(a_result == 0);
+}
+
+void
+dango::
+detail::
+pthread_cond_wait
+(dango::detail::cond_var_storage& a_storage, dango::detail::mutex_storage& a_lock_storage)noexcept
+{
+  using type = ::pthread_cond_t;
+  using lock_type = ::pthread_mutex_t;
+
+  auto const a_result =
+    ::pthread_cond_wait(a_storage.launder_get<type>(), a_lock_storage.launder_get<lock_type>());
+
+  dango_assert(a_result == 0);
+}
+
+void
+dango::
+detail::
+pthread_cond_wait
+(dango::detail::cond_var_storage& a_storage, dango::detail::mutex_storage& a_lock_storage, dango::tick_count_type const a_interval)noexcept
+{
+  using type = ::pthread_cond_t;
+  using lock_type = ::pthread_mutex_t;
+
   using tc64 = dango::tick_count_type;
 
   dango_assert(a_interval >= tc64(0));
 
   ::timespec a_spec;
 
+  ::clock_gettime(c_cond_clock, &a_spec);
+
   {
     auto const a_sec = a_interval / tc64(1'000);
-    auto const a_mod = a_interval % tc64(1'000);
-    auto const a_nsec = a_mod * tc64(1'000'000);
+    auto const a_nsec = (a_interval % tc64(1'000)) * tc64(1'000'000);
+    auto const a_sum = tc64(a_spec.tv_nsec) + a_nsec;
 
-    a_spec.tv_sec = a_sec;
-    a_spec.tv_nsec = a_nsec;
+    a_spec.tv_sec += a_sec + (a_sum / tc64(1'000'000'000));
+    a_spec.tv_nsec = a_sum % tc64(1'000'000'000);
   }
 
-  sys_futex
-  (
-    a_futex,
-    FUTEX_WAIT_PRIVATE,
-    a_expected,
-    &a_spec,
-    dango::null,
-    linux_int(0)
-  );
-}*/
+  auto const a_result =
+    ::pthread_cond_timedwait(a_storage.launder_get<type>(), a_lock_storage.launder_get<lock_type>(), &a_spec);
 
-
+  dango_assert(a_result == 0);
+}
 
 namespace
 {
