@@ -85,25 +85,29 @@ forward
 /*** swap ***/
 
 namespace
-dango
+dango::custom
 {
   template
   <typename tp_lhs, typename tp_rhs>
   struct operator_swap;
+}
 
+namespace
+dango
+{
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_operator_swap =
     dango::is_object<dango::remove_ref<tp_lhs>> && dango::is_object<dango::remove_ref<tp_rhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
+    { { dango::custom::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_noexcept_operator_swap =
     dango::has_operator_swap<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>; };
+    { { dango::custom::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
@@ -131,7 +135,7 @@ dango::detail
   (dango::priority_tag<dango::uint(4)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
   noexcept(dango::has_noexcept_operator_swap<tp_lhs&, tp_rhs&>)
   {
-    dango::operator_swap<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::swap(a_lhs, a_rhs);
+    dango::custom::operator_swap<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::swap(a_lhs, a_rhs);
   }
 
   template
@@ -142,7 +146,7 @@ dango::detail
   (dango::priority_tag<dango::uint(3)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
   noexcept(dango::has_noexcept_operator_swap<tp_rhs&, tp_lhs&>)
   {
-    dango::operator_swap<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::swap(a_rhs, a_lhs);
+    dango::custom::operator_swap<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::swap(a_rhs, a_lhs);
   }
 
   template
@@ -194,6 +198,8 @@ dango::detail
   }
 }
 
+/*** swap is_swappable is_noexcept_swappable ***/
+
 namespace
 dango
 {
@@ -223,7 +229,7 @@ dango
 /*** swap for arrays of same dim ***/
 
 namespace
-dango
+dango::custom
 {
   template
   <typename tp_lhs, typename tp_rhs, dango::usize tp_size>
@@ -246,54 +252,40 @@ dango
   };
 }
 
-/*** is_equatable ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept is_equatable =
-    dango::is_referenceable<dango::remove_ref<tp_lhs>> && dango::is_referenceable<dango::remove_ref<tp_rhs>> &&
-    requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    {
-      { dango::forward<tp_lhs>(a_lhs) == dango::forward<tp_rhs>(a_rhs) }->dango::is_convertible_ret<bool>;
-      { dango::forward<tp_lhs>(a_lhs) != dango::forward<tp_rhs>(a_rhs) }->dango::is_convertible_ret<bool>;
-    };
-
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept is_noexcept_equatable =
-    dango::is_equatable<tp_lhs, tp_rhs> &&
-    requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    {
-      { dango::forward<tp_lhs>(a_lhs) == dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
-      { dango::forward<tp_lhs>(a_lhs) != dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
-    };
-}
-
 /*** equals ***/
 
 namespace
-dango
+dango::custom
 {
   template
   <typename type>
   struct operator_is_null;
 
   template
+  <typename tp_lhs, typename tp_rhs>
+  struct operator_equals;
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  struct operator_compare;
+}
+
+namespace
+dango
+{
+  template
   <typename tp_type>
   concept has_operator_is_null =
     dango::is_referenceable<dango::remove_ref<tp_type>> &&
     requires(tp_type a_arg)
-    { { dango::operator_is_null<dango::remove_cvref<tp_type>>::is_null(dango::forward<tp_type>(a_arg)) }->dango::is_convertible_ret<bool>; };
+    { { dango::custom::operator_is_null<dango::remove_cvref<tp_type>>::is_null(dango::forward<tp_type>(a_arg)) }->dango::is_convertible_ret<bool>; };
 
   template
   <typename tp_type>
   concept has_noexcept_operator_is_null =
     dango::has_operator_is_null<tp_type> &&
     requires(tp_type a_arg)
-    { { dango::operator_is_null<dango::remove_cvref<tp_type>>::is_null(dango::forward<tp_type>(a_arg)) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
+    { { dango::custom::operator_is_null<dango::remove_cvref<tp_type>>::is_null(dango::forward<tp_type>(a_arg)) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
 
   template
   <typename tp_type>
@@ -309,21 +301,17 @@ dango
 
   template
   <typename tp_lhs, typename tp_rhs>
-  struct operator_equals;
-
-  template
-  <typename tp_lhs, typename tp_rhs>
   concept has_operator_equals =
     dango::is_referenceable<dango::remove_ref<tp_lhs>> && dango::is_referenceable<dango::remove_ref<tp_rhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::operator_equals<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::equals(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<bool>; };
+    { { dango::custom::operator_equals<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::equals(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<bool>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_noexcept_operator_equals =
     dango::has_operator_equals<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::operator_equals<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::equals(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
+    { { dango::custom::operator_equals<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::equals(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
@@ -351,7 +339,7 @@ dango::detail
   (dango::priority_tag<dango::uint(11)> const, tp_lhs const& a_lhs, dango::null_tag const)
   noexcept(dango::has_noexcept_operator_is_null<tp_lhs const&>)->bool
   {
-    return dango::operator_is_null<dango::remove_cv<tp_lhs>>::is_null(a_lhs);
+    return dango::custom::operator_is_null<dango::remove_cv<tp_lhs>>::is_null(a_lhs);
   }
 
   template
@@ -362,7 +350,7 @@ dango::detail
   (dango::priority_tag<dango::uint(10)> const, dango::null_tag const, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_operator_is_null<tp_rhs const&>)->bool
   {
-    return dango::operator_is_null<dango::remove_cv<tp_rhs>>::is_null(a_rhs);
+    return dango::custom::operator_is_null<dango::remove_cv<tp_rhs>>::is_null(a_rhs);
   }
 
   template
@@ -395,7 +383,7 @@ dango::detail
   (dango::priority_tag<dango::uint(7)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_operator_equals<tp_lhs const&, tp_rhs const&>)->bool
   {
-    return dango::operator_equals<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::equals(a_lhs, a_rhs);
+    return dango::custom::operator_equals<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::equals(a_lhs, a_rhs);
   }
 
   template
@@ -406,7 +394,7 @@ dango::detail
   (dango::priority_tag<dango::uint(6)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_operator_equals<tp_rhs const&, tp_lhs const&>)->bool
   {
-    return dango::operator_equals<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::equals(a_rhs, a_lhs);
+    return dango::custom::operator_equals<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::equals(a_rhs, a_lhs);
   }
 
   template
@@ -468,6 +456,32 @@ operator !=
 noexcept(dango::detail::has_noexcept_equals_help<tp_lhs const&, tp_rhs const&>)->bool
 {
   return !dango::detail::equals_help(dango::priority_tag<dango::uint(11)>{ }, a_lhs, a_rhs);
+}
+
+/*** is_equatable ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept is_equatable =
+    dango::is_referenceable<dango::remove_ref<tp_lhs>> && dango::is_referenceable<dango::remove_ref<tp_rhs>> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs)
+    {
+      { dango::forward<tp_lhs>(a_lhs) == dango::forward<tp_rhs>(a_rhs) }->dango::is_convertible_ret<bool>;
+      { dango::forward<tp_lhs>(a_lhs) != dango::forward<tp_rhs>(a_rhs) }->dango::is_convertible_ret<bool>;
+    };
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept is_noexcept_equatable =
+    dango::is_equatable<tp_lhs, tp_rhs> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs)
+    {
+      { dango::forward<tp_lhs>(a_lhs) == dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
+      { dango::forward<tp_lhs>(a_lhs) != dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
+    };
 }
 
 /*** arithmetic min max ***/
