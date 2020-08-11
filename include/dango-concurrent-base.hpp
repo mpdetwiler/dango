@@ -499,11 +499,6 @@ namespace
 dango::detail
 {
   template
-  <typename tp_arg>
-  concept is_decay_construct_field_help =
-    dango::is_lvalue_ref<tp_arg> || dango::is_trivial_constructible<dango::decay<tp_arg>, tp_arg>;
-
-  template
   <typename... tp_args>
   constexpr auto
   is_decay_construct_correct_order_help()noexcept->bool

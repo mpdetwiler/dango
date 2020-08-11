@@ -18,3 +18,6 @@ namespace
 static_assert(sizeof(size_test_struct) == sizeof(size_test_tuple));
 static_assert(alignof(size_test_struct) == alignof(size_test_tuple));
 
+
+static_assert(dango::is_same<decltype(dango::tuple<int, float>{ } <=> dango::tuple<int, float, dango::bchar>{ }), dango::compare_val_partial>);
+static_assert(dango::is_same<decltype(dango::tuple<int, dango::wchar>{ } <=> dango::tuple<int, dango::wchar, dango::bchar>{ }), dango::compare_val>);
