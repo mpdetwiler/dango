@@ -1395,7 +1395,7 @@ private:
 
     dango::compare_val a_ret;
 
-    [[maybe_unused]] bool const a_temp = ( ... && dango::comparison::is_equal(a_ret = dango::compare(get<tp_indices>(), a_tup.template get<tp_indices>())));
+    [[maybe_unused]] bool const a_temp = ( ... && (a_ret = dango::compare(get<tp_indices>(), a_tup.template get<tp_indices>())).is_eq());
 
     return a_ret;
   }
@@ -1443,7 +1443,7 @@ public:
 
     auto const a_ret = compare_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<c_size>{ }, a_tup);
 
-    if(dango::comparison::is_equal(a_ret))
+    if(a_ret.is_eq())
     {
       return dango::compare(sizeof...(tp_types), sizeof...(tp_args));
     }

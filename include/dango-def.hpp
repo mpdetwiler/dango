@@ -101,21 +101,6 @@ dango
   };
 
   enum class [[gnu::may_alias]] byte:dango::ubyte{ };
-
-  enum class compare_val:dango::ssize{ };
-
-  enum class hash_val:dango::usize{ };
-}
-
-namespace
-dango::comparison
-{
-  constexpr auto is_equal(dango::compare_val const a_val)noexcept->bool{ return dango::ssize(a_val) == dango::ssize(0); }
-  constexpr auto is_less(dango::compare_val const a_val)noexcept->bool{ return dango::ssize(a_val) < dango::ssize(0); }
-  constexpr auto is_less_equal(dango::compare_val const a_val)noexcept->bool{ return dango::ssize(a_val) <= dango::ssize(0); }
-  constexpr auto is_greater(dango::compare_val const a_val)noexcept->bool{ return dango::ssize(a_val) > dango::ssize(0); }
-  constexpr auto is_greater_equal(dango::compare_val const a_val)noexcept->bool{ return dango::ssize(a_val) >= dango::ssize(0); }
-  constexpr auto mirror(dango::compare_val const a_val)noexcept->dango::compare_val{ return dango::compare_val{ -dango::ssize(a_val) }; }
 }
 
 #endif // DANGO_DEF_HPP_INCLUDED

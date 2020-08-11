@@ -222,7 +222,7 @@ main
     dango::tuple<bchar, bchar, bchar, bchar> a_t2{ u8'a', u8'b', u8'c', u8'd' };
     dango::tuple<bchar, bchar, bchar, bchar> a_t3{ u8'b', u8'b', u8'c', u8'd' };
 
-    dango_assert(dango::comparison::is_less(a_t1.dango_operator_compare(a_t2)));
+    dango_assert(dango::comparison::is_lt(a_t1.dango_operator_compare(a_t2)));
 
     dango_assert(!(a_t1 == a_t2));
     dango_assert(  a_t1 != a_t2);
@@ -230,10 +230,10 @@ main
     dango_assert(  a_t1 <= a_t2);
     dango_assert(  a_t2 >  a_t1);
     dango_assert(  a_t2 >= a_t1);
-    dango_assert(dango::comparison::is_less(a_t1 <=> a_t2));
-    dango_assert(dango::comparison::is_greater(a_t2 <=> a_t1));
-    dango_assert(dango::comparison::is_less(dango::compare(a_t1, a_t2)));
-    dango_assert(dango::comparison::is_greater(dango::compare(a_t2, a_t1)));
+    dango_assert(dango::comparison::is_lt(a_t1 <=> a_t2));
+    dango_assert(dango::comparison::is_gt(a_t2 <=> a_t1));
+    dango_assert(dango::comparison::is_lt(dango::compare(a_t1, a_t2)));
+    dango_assert(dango::comparison::is_gt(dango::compare(a_t2, a_t1)));
 
     dango_assert(!(a_t2 == a_t3));
     dango_assert(  a_t2 != a_t3);
@@ -241,10 +241,10 @@ main
     dango_assert(  a_t2 <= a_t3);
     dango_assert(  a_t3 >  a_t2);
     dango_assert(  a_t3 >= a_t2);
-    dango_assert(dango::comparison::is_less(a_t2 <=> a_t3));
-    dango_assert(dango::comparison::is_greater(a_t3 <=> a_t2));
-    dango_assert(dango::comparison::is_less(dango::compare(a_t2, a_t3)));
-    dango_assert(dango::comparison::is_greater(dango::compare(a_t3, a_t2)));
+    dango_assert(dango::comparison::is_lt(a_t2 <=> a_t3));
+    dango_assert(dango::comparison::is_gt(a_t3 <=> a_t2));
+    dango_assert(dango::comparison::is_lt(dango::compare(a_t2, a_t3)));
+    dango_assert(dango::comparison::is_gt(dango::compare(a_t3, a_t2)));
 
     dango_assert(dango::min(a_t2, a_t2) == a_t2);
     dango_assert(dango::max(a_t3, a_t2) == a_t3);
