@@ -219,7 +219,8 @@ dango
 
   inline constexpr auto const swap =
     []<typename tp_lhs, typename tp_rhs>
-    (tp_lhs& a_lhs, tp_rhs& a_rhs)noexcept(dango::is_noexcept_swappable<tp_lhs&, tp_rhs&>)->void
+    (tp_lhs& a_lhs, tp_rhs& a_rhs)constexpr
+    noexcept(dango::is_noexcept_swappable<tp_lhs&, tp_rhs&>)->void
     requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
     {
       dango::detail::swap_help(dango::priority_tag<dango::uint(4)>{ }, a_lhs, a_rhs);
@@ -481,6 +482,16 @@ dango
     {
       { dango::forward<tp_lhs>(a_lhs) == dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
       { dango::forward<tp_lhs>(a_lhs) != dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
+    };
+
+
+  inline constexpr auto const equals =
+    []<typename tp_lhs, typename tp_rhs>
+    (tp_lhs const& a_lhs, tp_rhs const& a_rhs)constexpr
+    noexcept(dango::is_noexcept_equatable<tp_lhs const&, tp_rhs const&>)->bool
+    requires(dango::is_equatable<tp_lhs const&, tp_rhs const&>)
+    {
+      return a_lhs == a_rhs;
     };
 }
 

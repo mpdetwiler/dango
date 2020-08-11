@@ -7,7 +7,20 @@
 #include <string>
 #include <memory>
 
+namespace S_ns
+{
+
+struct S
+{
+  DANGO_TAG_TYPE(S)
+  constexpr bool dango_operator_equals(S const&)const noexcept{ return true; }
+  constexpr bool dango_operator_equals(int const& a)const noexcept{ return a == 0; }
+};
+
+}
+
 static_assert(dango::is_nullable<dango::null_tag>);
+static_assert(dango::is_equatable<S_ns::S, int>);
 static_assert(dango::is_nullable<dango::thread>);
 
 struct has_const{ int const m_int = 5; };
@@ -173,6 +186,10 @@ main
     dango::swap(int1, int2);
 
     dango_assert(int1 == 6 && int2 == 5);
+
+    static_assert(S_ns::S{} == S_ns::S{});
+    static_assert(dango::equals(S_ns::S{}, S_ns::S{}));
+    dango_assert(dango::equals(S_ns::S{}, 0));
   }
 
   /*auto a_timeout = dango::timeout::make_rel(1'000, dango::timeout_flags::HIGH_RES);
