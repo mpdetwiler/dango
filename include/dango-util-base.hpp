@@ -122,7 +122,7 @@ protected:
   using category_weak = std::weak_ordering;
   using category_partial = std::partial_ordering;
 private:
-  static inline constexpr super_type const c_map[] =
+  static inline constexpr super_type const c_map[dango::usize(3)] =
   {
     super_type::less,
     super_type::equivalent,
@@ -179,6 +179,7 @@ public:
   template
   <dango::is_sint tp_int>
   constexpr compare_val(tp_int const a_int)noexcept:super_type{ a_int }{ }
+
   constexpr compare_val(category_strong const a_arg)noexcept:super_type{ a_arg }{ }
 
   template
@@ -361,7 +362,8 @@ dango::comparison
 
   template
   <dango::comparison::is_convertible tp_arg>
-  constexpr auto strongest(tp_arg&& a_arg)
+  constexpr auto
+  strongest(tp_arg&& a_arg)
   noexcept(dango::comparison::is_noexcept_convertible<tp_arg>)->auto
   {
     return dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::forward<tp_arg>(a_arg));

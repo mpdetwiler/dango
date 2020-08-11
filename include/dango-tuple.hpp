@@ -1445,13 +1445,13 @@ public:
   {
     constexpr auto const c_size = dango::min(sizeof...(tp_args), sizeof...(tp_types));
 
-    auto const a_ret = compare_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<c_size>{ }, a_tup);
+    auto a_ret = compare_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<c_size>{ }, a_tup);
 
-    using ret_type = dango::remove_cv<decltype(a_ret)>;
+    using ret_type = decltype(a_ret);
 
     if(a_ret.is_eq())
     {
-      return ret_type{ dango::compare(sizeof...(tp_types), sizeof...(tp_args)) };
+      a_ret = ret_type{ dango::compare(sizeof...(tp_types), sizeof...(tp_args)) };
     }
 
     return a_ret;

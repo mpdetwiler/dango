@@ -19,6 +19,8 @@ struct S
 
 }
 
+static_assert(dango::equals(5, 5));
+static_assert(dango::comparison::is_eq(5 <=> 5));
 static_assert(dango::is_nullable<dango::null_tag>);
 static_assert(dango::is_equatable<S_ns::S, int>);
 static_assert(dango::is_nullable<dango::thread>);
