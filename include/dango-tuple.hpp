@@ -1347,7 +1347,7 @@ private:
   equals_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)const noexcept(tp_noexcept)->bool
   {
-    return ( ... && (get<tp_indices>() == a_tup.template get<tp_indices>()));
+    return ( ... && dango::equals(get<tp_indices>(), a_tup.template get<tp_indices>()));
   }
 
 public:
@@ -1389,13 +1389,17 @@ private:
   <bool tp_noexcept, dango::usize... tp_indices, typename... tp_args>
   constexpr auto
   compare_help
-  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)const noexcept(tp_noexcept)->dango::compare_val
+  (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)const noexcept(tp_noexcept)->auto
   {
     static_assert(sizeof...(tp_indices) != dango::usize(0));
 
-    dango::compare_val a_ret;
+    using ret_type =
+      dango::comparison::common_type<decltype(dango::compare(get<tp_indices>(), a_tup.template get<tp_indices>()))...>;
 
-    [[maybe_unused]] bool const a_temp = ( ... && (a_ret = dango::compare(get<tp_indices>(), a_tup.template get<tp_indices>())).is_eq());
+    ret_type a_ret{ };
+
+    [[maybe_unused]] bool const a_temp =
+      ( ... && (a_ret = ret_type{ dango::compare(get<tp_indices>(), a_tup.template get<tp_indices>()) }).is_eq());
 
     return a_ret;
   }
@@ -1415,7 +1419,7 @@ public:
   )
   constexpr auto
   dango_operator_compare
-  (dango::tuple<tp_args...> const& a_tup)const noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->dango::compare_val
+  (dango::tuple<tp_args...> const& a_tup)const noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->auto
   {
     return compare_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
   }
@@ -1437,15 +1441,17 @@ public:
   )
   constexpr auto
   dango_operator_compare
-  (dango::tuple<tp_args...> const& a_tup)const noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->dango::compare_val
+  (dango::tuple<tp_args...> const& a_tup)const noexcept(DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&))->auto
   {
     constexpr auto const c_size = dango::min(sizeof...(tp_args), sizeof...(tp_types));
 
     auto const a_ret = compare_help<DANGO_TUPLE_LONG_NOEXCEPT_SPEC(const&)>(dango::make_index_seq<c_size>{ }, a_tup);
 
+    using ret_type = dango::remove_cv<decltype(a_ret)>;
+
     if(a_ret.is_eq())
     {
-      return dango::compare(sizeof...(tp_types), sizeof...(tp_args));
+      return ret_type{ dango::compare(sizeof...(tp_types), sizeof...(tp_args)) };
     }
 
     return a_ret;
@@ -1461,7 +1467,7 @@ public:
   dango_operator_compare
   (dango::tuple<tp_args...> const&)const noexcept->dango::compare_val
   {
-    return dango::compare_val{ dango::ssize(1) };
+    return dango::compare_val::greater;
   }
 
 private:
@@ -1552,11 +1558,11 @@ public:
   {
     if constexpr(sizeof...(tp_args) == dango::usize(0))
     {
-      return dango::compare_val{ dango::ssize(0) };
+      return dango::compare_val::equal;
     }
     else
     {
-      return dango::compare_val{ dango::ssize(-1) };
+      return dango::compare_val::less;
     }
   }
 

@@ -105,13 +105,6 @@ dango
   class compare_val;
   class compare_val_weak;
   class compare_val_partial;
-
-  template
-  <typename tp_type>
-  concept is_compare_val =
-    dango::is_same_ignore_cv<tp_type, dango::compare_val> ||
-    dango::is_same_ignore_cv<tp_type, dango::compare_val_weak> ||
-    dango::is_same_ignore_cv<tp_type, dango::compare_val_partial>;
 }
 
 template
@@ -218,7 +211,7 @@ public dango::detail::compare_val_base<std::weak_ordering>
 private:
   using super_type = dango::detail::compare_val_base<std::weak_ordering>;
 public:
-  using category_type = std::weak_ordering;
+  using category_type = category_weak;
 public:
   static compare_val_weak const equivalent;
   static compare_val_weak const less;
@@ -261,7 +254,7 @@ public dango::detail::compare_val_base<std::partial_ordering>
 private:
   using super_type = dango::detail::compare_val_base<std::partial_ordering>;
 public:
-  using category_type = std::partial_ordering;
+  using category_type = category_partial;
 public:
   static compare_val_partial const equivalent;
   static compare_val_partial const less;
@@ -333,6 +326,17 @@ operator dango::compare_val_partial
 }
 
 namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_compare_val =
+    dango::is_same_ignore_cv<tp_type, dango::compare_val> ||
+    dango::is_same_ignore_cv<tp_type, dango::compare_val_weak> ||
+    dango::is_same_ignore_cv<tp_type, dango::compare_val_partial>;
+}
+
+namespace
 dango::detail
 {
   constexpr auto strongest_comparison_help(dango::priority_tag<dango::uint(2)> const, dango::compare_val const a_val)noexcept->auto{ return a_val; }
@@ -343,24 +347,41 @@ dango::detail
 namespace
 dango::comparison
 {
+  template
+  <typename tp_type>
+  concept is_convertible =
+    dango::is_object_exclude_array<dango::remove_ref<tp_type>> &&
+    requires{ { dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::declval<tp_type>()) }; };
+
+  template
+  <typename tp_type>
+  concept is_noexcept_convertible =
+    dango::comparison::is_convertible<tp_type> &&
+    requires{ { dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::declval<tp_type>()) }noexcept; };
+
+  template
+  <dango::comparison::is_convertible tp_arg>
+  constexpr auto strongest(tp_arg&& a_arg)
+  noexcept(dango::comparison::is_noexcept_convertible<tp_arg>)->auto
+  {
+    return dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::forward<tp_arg>(a_arg));
+  }
+
+  template
+  <dango::is_compare_val... tp_types>
+  using common_type =
+    decltype(dango::comparison::strongest(dango::declval<std::common_comparison_category_t<typename tp_types::category_type...>>()));
+
   constexpr auto is_eq(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_eq(); }
   constexpr auto is_neq(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_neq(); }
   constexpr auto is_lt(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_lt(); }
   constexpr auto is_lteq(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_lteq(); }
   constexpr auto is_gt(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_gt(); }
   constexpr auto is_gteq(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_gteq(); }
+
   constexpr auto mirror(dango::compare_val const a_val)noexcept->auto{ return a_val.mirror(); }
   constexpr auto mirror(dango::compare_val_weak const a_val)noexcept->auto{ return a_val.mirror(); }
   constexpr auto mirror(dango::compare_val_partial const a_val)noexcept->auto{ return a_val.mirror(); }
-
-  template
-  <typename tp_arg>
-  requires requires{ { dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::declval<tp_arg>()) }; }
-  constexpr auto strongest(tp_arg&& a_arg)
-  noexcept(requires{ { dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::declval<tp_arg>()) }noexcept; })->auto
-  {
-    return dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::forward<tp_arg>(a_arg));
-  }
 }
 
 static_assert(dango::is_convertible<dango::compare_val, std::strong_ordering>);
@@ -658,7 +679,7 @@ dango
     {
       {
         dango::custom::operator_compare<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::compare(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
-      }->dango::is_convertible_ret<dango::compare_val_partial>;
+      }->dango::comparison::is_convertible;
     };
 
   template
@@ -669,7 +690,7 @@ dango
     {
       {
         dango::custom::operator_compare<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::compare(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
-      }noexcept->dango::is_noexcept_convertible_ret<dango::compare_val_partial>;
+      }noexcept->dango::comparison::is_noexcept_convertible;
     };
 
   template
@@ -677,14 +698,14 @@ dango
   concept has_dango_operator_compare =
     dango::is_class_or_union<dango::remove_ref<tp_lhs>> && dango::is_referenceable<dango::remove_ref<tp_rhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs).dango_operator_compare(dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<dango::compare_val_partial>; };
+    { { dango::forward<tp_lhs>(a_lhs).dango_operator_compare(dango::forward<tp_rhs>(a_rhs)) }->dango::comparison::is_convertible; };
 
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_noexcept_dango_operator_compare =
     dango::has_dango_operator_compare<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs).dango_operator_compare(dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<dango::compare_val_partial>; };
+    { { dango::forward<tp_lhs>(a_lhs).dango_operator_compare(dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::comparison::is_noexcept_convertible; };
 }
 
 namespace
@@ -786,9 +807,7 @@ dango::detail
   (dango::priority_tag<dango::uint(3)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_operator_compare<tp_lhs const&, tp_rhs const&>)->bool
   {
-    dango::compare_val_partial const a_ret = dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_lhs, a_rhs);
-
-    return a_ret.is_eq();
+    return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_lhs, a_rhs)).is_eq();
   }
 
   template
@@ -799,9 +818,7 @@ dango::detail
   (dango::priority_tag<dango::uint(2)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_operator_compare<tp_rhs const&, tp_lhs const&>)->bool
   {
-    dango::compare_val_partial const a_ret = dango::custom::operator_compare<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::compare(a_rhs, a_lhs);
-
-    return a_ret.mirror().is_eq();
+    return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_lhs, a_rhs)).mirror().is_eq();
   }
 
   template
@@ -812,9 +829,7 @@ dango::detail
   (dango::priority_tag<dango::uint(1)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_dango_operator_compare<tp_lhs const&, tp_rhs const&>)->bool
   {
-    dango::compare_val_partial const a_ret = a_lhs.dango_operator_compare(a_rhs);
-
-    return a_ret.is_eq();
+    return dango::comparison::strongest(a_lhs.dango_operator_compare(a_rhs)).is_eq();
   }
 
   template
@@ -825,9 +840,7 @@ dango::detail
   (dango::priority_tag<dango::uint(0)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_dango_operator_compare<tp_rhs const&, tp_lhs const&>)->bool
   {
-    dango::compare_val_partial const a_ret = a_rhs.dango_operator_compare(a_lhs);
-
-    return a_ret.mirror().is_eq();
+    return dango::comparison::strongest(a_rhs.dango_operator_compare(a_lhs)).mirror().is_eq();
   }
 
   template
@@ -960,7 +973,7 @@ dango::detail
     {
       {
         dango::detail::compare_help(dango::priority_tag<tp_prio>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
-        }->dango::is_convertible_ret<dango::compare_val_partial>;
+        }->dango::comparison::is_convertible;
     };
 
   template
@@ -971,7 +984,7 @@ dango::detail
     {
       {
         dango::detail::compare_help(dango::priority_tag<tp_prio>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
-      }noexcept->dango::is_noexcept_convertible_ret<dango::compare_val_partial>;
+      }noexcept->dango::comparison::is_noexcept_convertible;
     };
 }
 
@@ -1059,16 +1072,17 @@ dango
   concept is_comparable_spaceship =
     dango::is_comparable<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs) <=>  dango::forward<tp_rhs>(a_rhs) }->dango::is_convertible_ret<dango::compare_val_partial>; };
+    { { dango::forward<tp_lhs>(a_lhs) <=>  dango::forward<tp_rhs>(a_rhs) }->dango::comparison::is_convertible; };
 
   template
   <typename tp_lhs, typename tp_rhs>
   concept is_noexcept_comparable_spaceship =
     dango::is_comparable_spaceship<tp_lhs, tp_rhs> && dango::is_noexcept_comparable<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs) <=>  dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<dango::compare_val_partial>; };
+    { { dango::forward<tp_lhs>(a_lhs) <=>  dango::forward<tp_rhs>(a_rhs) }noexcept->dango::comparison::is_noexcept_convertible; };
 
-  inline constexpr struct
+  inline constexpr
+  struct
   {
     template
     <typename tp_lhs, typename tp_rhs>
