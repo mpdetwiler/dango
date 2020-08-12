@@ -1695,7 +1695,8 @@ dango::detail
   final
   {
     static constexpr auto
-    m(tp_cmp a_cmp, tp_args... a_args)noexcept(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->auto
+    m(tp_cmp a_cmp, tp_args... a_args)
+    noexcept(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->auto
     requires(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
     {
       return dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
@@ -1743,7 +1744,7 @@ dango
     []<typename tp_cmp, typename... tp_args>
     (tp_cmp&& a_cmp, tp_args... a_args)
     noexcept(requires{ { dango::detail::min_max_dispatch<false>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
-    requires requires{ { dango::detail::min_max_dispatch<false>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; }
+    requires(requires{ { dango::detail::min_max_dispatch<false>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
     {
       return dango::detail::min_max_dispatch<false>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
     };
@@ -1752,7 +1753,7 @@ dango
     []<typename... tp_args>
     (tp_args... a_args)
     noexcept(requires{ { dango::detail::min_max_dispatch<false>(dango::compare, dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
-    requires requires{ { dango::detail::min_max_dispatch<false>(dango::compare, dango::declval<tp_args>()...) }; }
+    requires(requires{ { dango::detail::min_max_dispatch<false>(dango::compare, dango::declval<tp_args>()...) }; })
     {
       return dango::detail::min_max_dispatch<false>(dango::compare, dango::forward<tp_args>(a_args)...);
     };
@@ -1761,7 +1762,7 @@ dango
     []<typename tp_cmp, typename... tp_args>
     (tp_cmp&& a_cmp, tp_args... a_args)
     noexcept(requires{ { dango::detail::min_max_dispatch<true>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
-    requires requires{ { dango::detail::min_max_dispatch<true>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; }
+    requires(requires{ { dango::detail::min_max_dispatch<true>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
     {
       return dango::detail::min_max_dispatch<true>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
     };
@@ -1770,7 +1771,7 @@ dango
     []<typename... tp_args>
     (tp_args... a_args)
     noexcept(requires{ { dango::detail::min_max_dispatch<true>(dango::compare, dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
-    requires requires{ { dango::detail::min_max_dispatch<true>(dango::compare, dango::declval<tp_args>()...) }; }
+    requires(requires{ { dango::detail::min_max_dispatch<true>(dango::compare, dango::declval<tp_args>()...) }; })
     {
       return dango::detail::min_max_dispatch<true>(dango::compare, dango::forward<tp_args>(a_args)...);
     };
