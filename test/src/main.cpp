@@ -183,6 +183,8 @@ main
     int volatile int1 = 5;
     long int2 = 6;
 
+    dango_assert(dango::compare(&int1, &int1).is_eq());
+
     static_assert(noexcept(dango::swap(int1, int2)));
 
     dango::swap(int1, int2);

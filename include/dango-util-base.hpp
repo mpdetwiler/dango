@@ -1146,7 +1146,7 @@ dango::detail
   (dango::priority_tag<dango::uint(2)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_operator_compare<tp_rhs const&, tp_lhs const&>)->bool
   {
-    return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_lhs, a_rhs)).mirror().is_eq();
+    return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_lhs, a_rhs)).is_eq();
   }
 
   template
@@ -1168,7 +1168,7 @@ dango::detail
   (dango::priority_tag<dango::uint(0)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_dango_operator_compare<tp_rhs const&, tp_lhs const&>)->bool
   {
-    return dango::comparison::strongest(a_rhs.dango_operator_compare(a_lhs)).mirror().is_eq();
+    return dango::comparison::strongest(a_rhs.dango_operator_compare(a_lhs)).is_eq();
   }
 
   template
@@ -1449,17 +1449,25 @@ dango
   concept is_comparable_spaceship =
     dango::detail::is_comparable_spaceship_help1<tp_lhs, tp_rhs> &&
     dango::detail::is_comparable_spaceship_help2<tp_lhs, tp_rhs>;
+}
 
-  namespace
-  detail
-  {
-    template
-    <typename tp_lhs, typename tp_rhs>
-    concept is_ptr_comparable_help =
-      dango::is_ptr<dango::decay<tp_lhs>> && dango::is_ptr<dango::decay<tp_rhs>> &&
-      dango::is_convertible<tp_lhs, void const volatile*> && dango::is_convertible<tp_rhs, void const volatile*> &&
-      dango::is_comparable_spaceship<dango::decay<tp_lhs> const&, dango::decay<tp_rhs> const&>;
-  }
+namespace
+dango::detail
+{
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept is_ptr_comparable_help =
+    dango::is_ptr<dango::decay<tp_lhs>> && dango::is_ptr<dango::decay<tp_rhs>> &&
+    dango::is_convertible<tp_lhs, void const volatile*> && dango::is_convertible<tp_rhs, void const volatile*> &&
+    dango::is_comparable_spaceship<dango::decay<tp_lhs> const&, dango::decay<tp_rhs> const&>;
+}
+
+namespace
+dango
+{
+#ifdef __clang__
+
+// normal implementation but only clang accepts it in constexpr contexts. GCC <=> is currently bugged in constexpr (GCC 10.2.1)
 
   inline constexpr auto compare =
     []<typename tp_lhs, typename tp_rhs>
@@ -1493,125 +1501,149 @@ dango
         }
       }
     };
+
+#else
+
+// temporary GCC workaround due to bug with <=> in constexpr contexts (workaround is to avoid actually evaluating <=> expressions when in constexpr).
+// this means it will have incorrect behavior at compile time for partially ordered types (float types for example). shouldnt affect strongly orderd types.
+// for weakly ordered types it depends. it will still behave correctly at runtime for all types though. also note: if you have a type whose boolean
+// comparison operators are implemented in terms of <=> (they are defaulted for example) then this workaround will fail probably
+
+  inline constexpr auto compare =
+    []<typename tp_lhs, typename tp_rhs>
+    (tp_lhs const& a_lhs, tp_rhs const& a_rhs)
+    noexcept(dango::is_noexcept_comparable<tp_lhs const&, tp_rhs const&>)->auto
+    requires(dango::is_comparable<tp_lhs const&, tp_rhs const&>)
+    {
+      if constexpr(dango::detail::is_ptr_comparable_help<tp_lhs const&, tp_rhs const&>)
+      {
+        auto const a_lhs_p = static_cast<void const volatile*>(a_lhs);
+        auto const a_rhs_p = static_cast<void const volatile*>(a_rhs);
+
+        if constexpr(dango::in_constexpr_context())
+        {
+          return dango::compare_val{ dango::sint(a_lhs_p > a_rhs_p) - dango::sint(a_lhs_p < a_rhs_p) };
+        }
+        else
+        {
+          return dango::comparison::strongest(dango::ptr_as_uint(a_lhs_p) <=> dango::ptr_as_uint(a_rhs_p));
+        }
+      }
+      else
+      {
+        if constexpr(dango::in_constexpr_context())
+        {
+          if constexpr(dango::is_comparable_spaceship<tp_lhs const&, tp_rhs const&>)
+          {
+            using ret_type = decltype(dango::comparison::strongest(a_lhs <=> a_rhs));
+
+            return ret_type{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
+          }
+          else
+          {
+            return dango::compare_val{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
+          }
+        }
+        else
+        {
+          if constexpr(dango::is_comparable_spaceship<tp_lhs const&, tp_rhs const&>)
+          {
+            return dango::comparison::strongest(a_lhs <=> a_rhs);
+          }
+          else
+          {
+            return dango::compare_val{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
+          }
+        }
+      }
+    };
+
+#endif
+}
+
+/*** is_comparator ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_cmp, typename tp_lhs, typename tp_rhs>
+  concept is_comparator =
+    dango::is_callable<tp_cmp, tp_lhs, tp_rhs> &&
+    requires(tp_cmp a_cmp, tp_lhs a_lhs, tp_rhs a_rhs)
+    { { dango::forward<tp_cmp>(a_cmp)(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::comparison::is_convertible; };
+
+  template
+  <typename tp_cmp, typename tp_lhs, typename tp_rhs>
+  concept is_noexcept_comparator =
+    dango::is_comparator<tp_cmp, tp_lhs, tp_rhs> &&
+    dango::is_noexcept_callable<tp_cmp, tp_lhs, tp_rhs> &&
+    requires(tp_cmp a_cmp, tp_lhs a_lhs, tp_rhs a_rhs)
+    { { dango::forward<tp_cmp>(a_cmp)(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::comparison::is_noexcept_convertible; };
 }
 
 /*** min max ***/
 
 namespace
-dango
-{
-  constexpr void min()noexcept{ }
-
-  template
-  <dango::is_scalar tp_arg>
-  constexpr auto
-  min
-  (tp_arg const a_arg)noexcept->tp_arg
-  {
-    return a_arg;
-  }
-
-  template
-  <dango::is_scalar tp_arg>
-  requires(dango::is_comparable<tp_arg const&, tp_arg const&>)
-  constexpr auto
-  min
-  (tp_arg const a_arg1, tp_arg const a_arg2)noexcept(dango::is_noexcept_comparable<tp_arg const&, tp_arg const&>)->tp_arg
-  {
-    return a_arg1 < a_arg2 ? a_arg1 : a_arg2;
-  }
-
-  template
-  <dango::is_scalar tp_arg, dango::is_same<tp_arg>... tp_args>
-  requires(sizeof...(tp_args) >= dango::usize(2) && dango::is_comparable<tp_arg const&, tp_arg const&>)
-  constexpr auto
-  min
-  (tp_arg const a_arg, tp_args... a_args)noexcept(dango::is_noexcept_comparable<tp_arg const&, tp_arg const&>)->tp_arg
-  {
-    return dango::min(a_arg, dango::min(a_args...));
-  }
-}
-
-namespace
-dango
-{
-  constexpr void max()noexcept{ }
-
-  template
-  <dango::is_scalar tp_arg>
-  constexpr auto
-  max
-  (tp_arg const a_arg)noexcept->tp_arg
-  {
-    return a_arg;
-  }
-
-  template
-  <dango::is_scalar tp_arg>
-  requires(dango::is_comparable<tp_arg const&, tp_arg const&>)
-  constexpr auto
-  max
-  (tp_arg const a_arg1, tp_arg const a_arg2)noexcept(dango::is_noexcept_comparable<tp_arg const&, tp_arg const&>)->tp_arg
-  {
-    return a_arg1 > a_arg2 ? a_arg1 : a_arg2;
-  }
-
-  template
-  <dango::is_scalar tp_arg, dango::is_same<tp_arg>... tp_args>
-  requires(sizeof...(tp_args) >= dango::usize(2) && dango::is_comparable<tp_arg const&, tp_arg const&>)
-  constexpr auto
-  max
-  (tp_arg const a_arg, tp_args... a_args)noexcept(dango::is_noexcept_comparable<tp_arg const&, tp_arg const&>)->tp_arg
-  {
-    return dango::max(a_arg, dango::max(a_args...));
-  }
-}
-
-namespace
 dango::detail
 {
   template
-  <typename... tp_args>
-  struct min_max_help;
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_arg>
-  requires
-  (dango::is_class_or_union<dango::remove_ref<tp_arg>> && dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)
+  <bool tp_op, typename tp_cmp, dango::is_scalar tp_arg>
+  requires(dango::is_comparator<tp_cmp, tp_arg const&, tp_arg const&>)
   constexpr auto
-  min
-  (tp_arg&& a_arg)
-  noexcept(dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)->dango::remove_cvref<tp_arg>
+  min_max_help
+  (tp_cmp&& a_cmp, tp_arg const a_arg1, tp_arg const a_arg2)
+  noexcept(dango::is_noexcept_comparator<tp_cmp, tp_arg const&, tp_arg const&>)->tp_arg
   {
-    return dango::remove_cvref<tp_arg>{ dango::forward<tp_arg>(a_arg) };
+    if constexpr(tp_op)
+    {
+      return dango::comparison::strongest(dango::forward<tp_cmp>(a_cmp)(a_arg1, a_arg2)).is_gt() ? a_arg1 : a_arg2;
+    }
+    else
+    {
+      return dango::comparison::strongest(dango::forward<tp_cmp>(a_cmp)(a_arg1, a_arg2)).is_lt() ? a_arg1 : a_arg2;
+    }
   }
 
   template
-  <typename tp_arg1, typename tp_arg2>
+  <bool tp_op, typename tp_cmp, dango::is_scalar tp_arg, dango::is_same<tp_arg>... tp_args>
+  requires((sizeof...(tp_args) >= dango::usize(2)) && dango::is_comparator<tp_cmp, tp_arg const&, tp_arg const&>)
+  constexpr auto
+  min_max_help
+  (tp_cmp&& a_cmp, tp_arg const a_arg, tp_args const... a_args)
+  noexcept(dango::is_noexcept_comparator<tp_cmp, tp_arg const&, tp_arg const&>)->auto
+  {
+    return dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), a_arg, dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), a_args...));
+  }
+
+  template
+  <bool tp_op, typename tp_cmp, typename tp_arg1, typename tp_arg2>
   requires
   (
     dango::is_class_or_union<dango::remove_ref<tp_arg1>> && dango::is_same_ignore_cvref<tp_arg2, tp_arg1> &&
-    dango::is_comparable<dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg1> const&> &&
+    dango::is_comparator<tp_cmp, dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg2> const&> &&
     dango::is_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
     dango::is_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
   )
   constexpr auto
-  min
-  (tp_arg1&& a_arg1, tp_arg2&& a_arg2)
+  min_max_help
+  (tp_cmp&& a_cmp, tp_arg1&& a_arg1, tp_arg2&& a_arg2)
   noexcept
   (
-    dango::is_noexcept_comparable<dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg1> const&> &&
+    dango::is_noexcept_comparator<tp_cmp, dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg2> const&> &&
     dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
     dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
-  )->dango::remove_cvref<tp_arg1>
+  )->auto
   {
     using ret_type = dango::remove_cvref<tp_arg1>;
 
-    if(dango::compare(a_arg1, a_arg2).is_lt())
+    auto const a_result =
+      dango::comparison::strongest
+      (dango::forward<tp_cmp>(a_cmp)(dango::forward<dango::remove_ref<tp_arg1> const&>(a_arg1), dango::forward<dango::remove_ref<tp_arg2> const&>(a_arg2)));
+
+    bool const a_first = tp_op ? a_result.is_gt() : a_result.is_lt();
+
+    if(a_first)
     {
       return ret_type{ dango::forward<tp_arg1>(a_arg1) };
     }
@@ -1620,129 +1652,129 @@ dango
   }
 
   template
-  <typename tp_arg, typename... tp_args>
+  <bool tp_op, typename tp_cmp, typename... tp_args>
+  struct min_max_deferred;
+
+  template
+  <bool tp_op, typename tp_cmp, typename tp_arg, typename... tp_args>
   requires
   (
     (sizeof...(tp_args) >= dango::usize(2)) &&
     (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
     requires
     {
-      { dango::detail::min_max_help<tp_args&&...>::min(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-      { dango::min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+      { dango::detail::min_max_deferred<tp_op, tp_cmp&&, tp_args&&...>::m(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+      { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
     }
   )
   constexpr auto
-  min
-  (tp_arg&& a_arg, tp_args&&... a_args)
+  min_max_help
+  (tp_cmp&& a_cmp, tp_arg&& a_arg, tp_args&&... a_args)
   noexcept
   (
     requires
     {
-      { dango::detail::min_max_help<tp_args&&...>::min(dango::declval<tp_args>()...) }noexcept;
-      { dango::min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
+      { dango::detail::min_max_deferred<tp_op, tp_cmp&&, tp_args&&...>::m(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept;
+      { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
     }
-  )->dango::remove_cvref<tp_arg>
+  )->auto
   {
-    return dango::min(dango::forward<tp_arg>(a_arg), dango::detail::min_max_help<tp_args&&...>::min(dango::forward<tp_args>(a_args)...));
+    return
+      dango::detail::min_max_help<tp_op>
+      (
+        dango::forward<tp_cmp>(a_cmp),
+        dango::forward<tp_arg>(a_arg),
+        dango::detail::min_max_deferred<tp_op, tp_cmp&&, tp_args&&...>::m(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...)
+      );
   }
-}
 
-namespace
-dango
-{
   template
-  <typename tp_arg>
+  <bool tp_op, typename tp_cmp, typename... tp_args>
+  struct
+  min_max_deferred
+  final
+  {
+    static constexpr auto
+    m(tp_cmp a_cmp, tp_args... a_args)noexcept(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->auto
+    requires(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
+    {
+      return dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
+    }
+
+    DANGO_UNINSTANTIABLE(min_max_deferred)
+  };
+
+  template
+  <bool tp_op, typename tp_cmp, typename... tp_args>
   requires
-  (dango::is_class_or_union<dango::remove_ref<tp_arg>> && dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)
+  (
+    (sizeof...(tp_args) >= dango::usize(2)) &&
+    requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; }
+  )
   constexpr auto
-  max
-  (tp_arg&& a_arg)
-  noexcept(dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)->dango::remove_cvref<tp_arg>
+  min_max_dispatch
+  (tp_cmp&& a_cmp, tp_args&&... a_args)
+  noexcept(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->auto
+  {
+    return dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
+  }
+
+  template
+  <bool tp_op, typename tp_cmp, typename tp_arg>
+  requires(dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)
+  constexpr auto
+  min_max_dispatch
+  (tp_cmp&&, tp_arg&& a_arg)
+  noexcept(dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)->auto
   {
     return dango::remove_cvref<tp_arg>{ dango::forward<tp_arg>(a_arg) };
   }
 
   template
-  <typename tp_arg1, typename tp_arg2>
-  requires
-  (
-    dango::is_class_or_union<dango::remove_ref<tp_arg1>> && dango::is_same_ignore_cvref<tp_arg2, tp_arg1> &&
-    dango::is_comparable<dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg1> const&> &&
-    dango::is_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
-    dango::is_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
-  )
-  constexpr auto
-  max
-  (tp_arg1&& a_arg1, tp_arg2&& a_arg2)
-  noexcept
-  (
-    dango::is_noexcept_comparable<dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg1> const&> &&
-    dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
-    dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
-  )->dango::remove_cvref<tp_arg1>
-  {
-    using ret_type = dango::remove_cvref<tp_arg1>;
-
-    if(dango::compare(a_arg1, a_arg2).is_gt())
-    {
-      return ret_type{ dango::forward<tp_arg1>(a_arg1) };
-    }
-
-    return ret_type{ dango::forward<tp_arg2>(a_arg2) };
-  }
-
-  template
-  <typename tp_arg, typename... tp_args>
-  requires
-  (
-    (sizeof...(tp_args) >= dango::usize(2)) &&
-    (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
-    requires
-    {
-      { dango::detail::min_max_help<tp_args&&...>::max(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-      { dango::max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-    }
-  )
-  constexpr auto
-  max
-  (tp_arg&& a_arg, tp_args&&... a_args)
-  noexcept
-  (
-    requires
-    {
-      { dango::detail::min_max_help<tp_args&&...>::max(dango::declval<tp_args>()...) }noexcept;
-      { dango::max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
-    }
-  )->dango::remove_cvref<tp_arg>
-  {
-    return dango::max(dango::forward<tp_arg>(a_arg), dango::detail::min_max_help<tp_args&&...>::max(dango::forward<tp_args>(a_args)...));
-  }
+  <bool tp_op, typename tp_cmp>
+  constexpr void
+  min_max_dispatch(tp_cmp&&)noexcept{ }
 }
 
-template
-<typename... tp_args>
-struct
-dango::
-detail::
-min_max_help
-final
+namespace
+dango
 {
-  static constexpr auto
-  min(tp_args... a_args)noexcept(requires{ { dango::min(dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
-  requires(requires{ { dango::min(dango::declval<tp_args>()...) }; })
-  {
-    return dango::min(dango::forward<tp_args>(a_args)...);
-  }
+  inline constexpr auto min_c =
+    []<typename tp_cmp, typename... tp_args>
+    (tp_cmp&& a_cmp, tp_args... a_args)
+    noexcept(requires{ { dango::detail::min_max_dispatch<false>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
+    requires requires{ { dango::detail::min_max_dispatch<false>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; }
+    {
+      return dango::detail::min_max_dispatch<false>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
+    };
 
-  static constexpr auto
-  max(tp_args... a_args)noexcept(requires{ { dango::max(dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
-  requires(requires{ { dango::max(dango::declval<tp_args>()...) }; })
-  {
-    return dango::max(dango::forward<tp_args>(a_args)...);
-  }
+  inline constexpr auto min =
+    []<typename... tp_args>
+    (tp_args... a_args)
+    noexcept(requires{ { dango::detail::min_max_dispatch<false>(dango::compare, dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
+    requires requires{ { dango::detail::min_max_dispatch<false>(dango::compare, dango::declval<tp_args>()...) }; }
+    {
+      return dango::detail::min_max_dispatch<false>(dango::compare, dango::forward<tp_args>(a_args)...);
+    };
 
-  DANGO_UNINSTANTIABLE(min_max_help)
-};
+  inline constexpr auto max_c =
+    []<typename tp_cmp, typename... tp_args>
+    (tp_cmp&& a_cmp, tp_args... a_args)
+    noexcept(requires{ { dango::detail::min_max_dispatch<true>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
+    requires requires{ { dango::detail::min_max_dispatch<true>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; }
+    {
+      return dango::detail::min_max_dispatch<true>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
+    };
+
+  inline constexpr auto max =
+    []<typename... tp_args>
+    (tp_args... a_args)
+    noexcept(requires{ { dango::detail::min_max_dispatch<true>(dango::compare, dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
+    requires requires{ { dango::detail::min_max_dispatch<true>(dango::compare, dango::declval<tp_args>()...) }; }
+    {
+      return dango::detail::min_max_dispatch<true>(dango::compare, dango::forward<tp_args>(a_args)...);
+    };
+}
 
 /*** aligned_storage ***/
 
