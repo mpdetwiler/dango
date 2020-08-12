@@ -918,6 +918,34 @@ dango
     };
 }
 
+/*** is_nullable ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_null_equatable =
+    dango::is_equatable<tp_type, dango::null_tag const&> && dango::is_equatable<tp_type, dango::null_tag&&> &&
+    dango::is_equatable<dango::null_tag const&, tp_type> && dango::is_equatable<dango::null_tag&&, tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_noexcept_null_equatable =
+    dango::is_null_equatable<tp_type> &&
+    dango::is_noexcept_equatable<tp_type, dango::null_tag const&> && dango::is_noexcept_equatable<tp_type, dango::null_tag&&> &&
+    dango::is_noexcept_equatable<dango::null_tag const&, tp_type> && dango::is_noexcept_equatable<dango::null_tag&&, tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_nullable =
+    dango::is_object_exclude_array<tp_type> &&
+    dango::is_null_equatable<dango::remove_cv<tp_type> const&> && dango::is_null_equatable<dango::remove_cv<tp_type>&&> &&
+    dango::is_constructible<dango::remove_cv<tp_type>, dango::null_tag const&> && dango::is_constructible<dango::remove_cv<tp_type>, dango::null_tag&&> &&
+    dango::is_convertible<dango::null_tag const&, dango::remove_cv<tp_type>> && dango::is_convertible<dango::null_tag&&, dango::remove_cv<tp_type>> &&
+    dango::is_assignable<dango::remove_cv<tp_type>&, dango::null_tag const&> && dango::is_assignable<dango::remove_cv<tp_type>&, dango::null_tag&&>;
+}
+
 /*** compare ***/
 
 namespace
@@ -1061,6 +1089,7 @@ dango
   <typename tp_lhs, typename tp_rhs>
   concept is_noexcept_comparable =
     dango::is_comparable<tp_lhs, tp_rhs> &&
+    dango::is_noexcept_equatable<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     {
       { dango::forward<tp_lhs>(a_lhs) <  dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
@@ -1068,49 +1097,51 @@ dango
       { dango::forward<tp_lhs>(a_lhs) >  dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
       { dango::forward<tp_lhs>(a_lhs) >= dango::forward<tp_rhs>(a_rhs) }noexcept->dango::is_noexcept_convertible_ret<bool>;
     };
+}
 
+namespace
+dango::detail
+{
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept is_comparable_spaceship_help1 =
+    dango::is_comparable<tp_lhs, tp_rhs> &&
+    requires(tp_lhs a_lhs, tp_rhs a_rhs){ { dango::forward<tp_lhs>(a_lhs) <=> dango::forward<tp_rhs>(a_rhs) }->dango::comparison::is_convertible; };
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept is_comparable_spaceship_help2 =
+    !dango::is_noexcept_comparable<tp_lhs, tp_rhs> ||
+    requires(tp_lhs a_lhs, tp_rhs a_rhs){ { dango::forward<tp_lhs>(a_lhs) <=> dango::forward<tp_rhs>(a_rhs) }noexcept->dango::comparison::is_noexcept_convertible; };
+}
+
+namespace
+dango
+{
   template
   <typename tp_lhs, typename tp_rhs>
   concept is_comparable_spaceship =
-    dango::is_comparable<tp_lhs, tp_rhs> &&
-    requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs) <=>  dango::forward<tp_rhs>(a_rhs) }->dango::comparison::is_convertible; };
+    dango::detail::is_comparable_spaceship_help1<tp_lhs, tp_rhs> &&
+    dango::detail::is_comparable_spaceship_help2<tp_lhs, tp_rhs>;
 
-  template
-  <typename tp_lhs, typename tp_rhs>
-  concept is_noexcept_comparable_spaceship =
-    dango::is_comparable_spaceship<tp_lhs, tp_rhs> && dango::is_noexcept_comparable<tp_lhs, tp_rhs> &&
-    requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs) <=>  dango::forward<tp_rhs>(a_rhs) }noexcept->dango::comparison::is_noexcept_convertible; };
-
-  inline constexpr
-  struct
-  {
-    template
-    <typename tp_lhs, typename tp_rhs>
-    requires(dango::is_comparable<tp_lhs const&, tp_rhs const&>)
-    constexpr auto
-    operator()
-    (tp_lhs const& a_lhs, tp_rhs const& a_rhs)const
+  inline constexpr auto compare =
+    []<typename tp_lhs, typename tp_rhs>
+    (tp_lhs const& a_lhs, tp_rhs const& a_rhs)
     noexcept(dango::is_noexcept_comparable<tp_lhs const&, tp_rhs const&>)->auto
+    requires(dango::is_comparable<tp_lhs const&, tp_rhs const&>)
     {
-      return dango::compare_val{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
-    }
-
-    template
-    <typename tp_lhs, typename tp_rhs>
-    requires(dango::is_comparable_spaceship<tp_lhs const&, tp_rhs const&>)
-    constexpr auto
-    operator()
-    (tp_lhs const& a_lhs, tp_rhs const& a_rhs)const
-    noexcept(dango::is_noexcept_comparable_spaceship<tp_lhs const&, tp_rhs const&>)->auto
-    {
-      return dango::comparison::strongest(a_lhs <=> a_rhs);
-    }
-  } const compare{ };
+      if constexpr(dango::is_comparable_spaceship<tp_lhs const&, tp_rhs const&>)
+      {
+        return dango::comparison::strongest(a_lhs <=> a_rhs);
+      }
+      else
+      {
+        return dango::compare_val{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
+      }
+    };
 }
 
-/*** arithmetic min max ***/
+/*** min max ***/
 
 namespace
 dango
@@ -1118,7 +1149,7 @@ dango
   constexpr void min()noexcept{ }
 
   template
-  <dango::is_arithmetic_include_ptr tp_arg>
+  <dango::is_scalar tp_arg>
   constexpr auto
   min
   (tp_arg const a_arg)noexcept->tp_arg
@@ -1127,20 +1158,21 @@ dango
   }
 
   template
-  <dango::is_arithmetic_include_ptr tp_arg>
+  <dango::is_scalar tp_arg>
+  requires(dango::is_comparable<tp_arg const&, tp_arg const&>)
   constexpr auto
   min
-  (tp_arg const a_arg1, tp_arg const a_arg2)noexcept->tp_arg
+  (tp_arg const a_arg1, tp_arg const a_arg2)noexcept(dango::is_noexcept_comparable<tp_arg const&, tp_arg const&>)->tp_arg
   {
     return a_arg1 < a_arg2 ? a_arg1 : a_arg2;
   }
 
   template
-  <dango::is_arithmetic_include_ptr tp_arg, typename... tp_args>
-  requires(((sizeof...(tp_args) >= dango::usize(2)) && ... && dango::is_same<tp_args, tp_arg>))
+  <dango::is_scalar tp_arg, dango::is_same<tp_arg>... tp_args>
+  requires(sizeof...(tp_args) >= dango::usize(2) && dango::is_comparable<tp_arg const&, tp_arg const&>)
   constexpr auto
   min
-  (tp_arg const a_arg, tp_args... a_args)noexcept->tp_arg
+  (tp_arg const a_arg, tp_args... a_args)noexcept(dango::is_noexcept_comparable<tp_arg const&, tp_arg const&>)->tp_arg
   {
     return dango::min(a_arg, dango::min(a_args...));
   }
@@ -1152,7 +1184,7 @@ dango
   constexpr void max()noexcept{ }
 
   template
-  <dango::is_arithmetic_include_ptr tp_arg>
+  <dango::is_scalar tp_arg>
   constexpr auto
   max
   (tp_arg const a_arg)noexcept->tp_arg
@@ -1161,24 +1193,204 @@ dango
   }
 
   template
-  <dango::is_arithmetic_include_ptr tp_arg>
+  <dango::is_scalar tp_arg>
+  requires(dango::is_comparable<tp_arg const&, tp_arg const&>)
   constexpr auto
   max
-  (tp_arg const a_arg1, tp_arg const a_arg2)noexcept->tp_arg
+  (tp_arg const a_arg1, tp_arg const a_arg2)noexcept(dango::is_noexcept_comparable<tp_arg const&, tp_arg const&>)->tp_arg
   {
     return a_arg1 > a_arg2 ? a_arg1 : a_arg2;
   }
 
   template
-  <dango::is_arithmetic_include_ptr tp_arg, typename... tp_args>
-  requires(((sizeof...(tp_args) >= dango::usize(2)) && ... && dango::is_same<tp_args, tp_arg>))
+  <dango::is_scalar tp_arg, dango::is_same<tp_arg>... tp_args>
+  requires(sizeof...(tp_args) >= dango::usize(2) && dango::is_comparable<tp_arg const&, tp_arg const&>)
   constexpr auto
   max
-  (tp_arg const a_arg, tp_args... a_args)noexcept->tp_arg
+  (tp_arg const a_arg, tp_args... a_args)noexcept(dango::is_noexcept_comparable<tp_arg const&, tp_arg const&>)->tp_arg
   {
     return dango::max(a_arg, dango::max(a_args...));
   }
 }
+
+namespace
+dango::detail
+{
+  template
+  <typename... tp_args>
+  struct min_max_help;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_arg>
+  requires
+  (dango::is_class_or_union<dango::remove_ref<tp_arg>> && dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)
+  constexpr auto
+  min
+  (tp_arg&& a_arg)
+  noexcept(dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)->dango::remove_cvref<tp_arg>
+  {
+    return dango::remove_cvref<tp_arg>{ dango::forward<tp_arg>(a_arg) };
+  }
+
+  template
+  <typename tp_arg1, typename tp_arg2>
+  requires
+  (
+    dango::is_class_or_union<dango::remove_ref<tp_arg1>> && dango::is_same_ignore_cvref<tp_arg2, tp_arg1> &&
+    dango::is_comparable<dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg1> const&> &&
+    dango::is_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
+    dango::is_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
+  )
+  constexpr auto
+  min
+  (tp_arg1&& a_arg1, tp_arg2&& a_arg2)
+  noexcept
+  (
+    dango::is_noexcept_comparable<dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg1> const&> &&
+    dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
+    dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
+  )->dango::remove_cvref<tp_arg1>
+  {
+    using ret_type = dango::remove_cvref<tp_arg1>;
+
+    if(dango::compare(a_arg1, a_arg2).is_lt())
+    {
+      return ret_type{ dango::forward<tp_arg1>(a_arg1) };
+    }
+
+    return ret_type{ dango::forward<tp_arg2>(a_arg2) };
+  }
+
+  template
+  <typename tp_arg, typename... tp_args>
+  requires
+  (
+    (sizeof...(tp_args) >= dango::usize(2)) &&
+    (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
+    requires
+    {
+      { dango::detail::min_max_help<tp_args&&...>::min(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+      { dango::min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+    }
+  )
+  constexpr auto
+  min
+  (tp_arg&& a_arg, tp_args&&... a_args)
+  noexcept
+  (
+    requires
+    {
+      { dango::detail::min_max_help<tp_args&&...>::min(dango::declval<tp_args>()...) }noexcept;
+      { dango::min(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
+    }
+  )->dango::remove_cvref<tp_arg>
+  {
+    return dango::min(dango::forward<tp_arg>(a_arg), dango::detail::min_max_help<tp_args&&...>::min(dango::forward<tp_args>(a_args)...));
+  }
+}
+
+
+
+namespace
+dango
+{
+  template
+  <typename tp_arg>
+  requires
+  (dango::is_class_or_union<dango::remove_ref<tp_arg>> && dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)
+  constexpr auto
+  max
+  (tp_arg&& a_arg)
+  noexcept(dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)->dango::remove_cvref<tp_arg>
+  {
+    return dango::remove_cvref<tp_arg>{ dango::forward<tp_arg>(a_arg) };
+  }
+
+  template
+  <typename tp_arg1, typename tp_arg2>
+  requires
+  (
+    dango::is_class_or_union<dango::remove_ref<tp_arg1>> && dango::is_same_ignore_cvref<tp_arg2, tp_arg1> &&
+    dango::is_comparable<dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg1> const&> &&
+    dango::is_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
+    dango::is_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
+  )
+  constexpr auto
+  max
+  (tp_arg1&& a_arg1, tp_arg2&& a_arg2)
+  noexcept
+  (
+    dango::is_noexcept_comparable<dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg1> const&> &&
+    dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
+    dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
+  )->dango::remove_cvref<tp_arg1>
+  {
+    using ret_type = dango::remove_cvref<tp_arg1>;
+
+    if(dango::compare(a_arg1, a_arg2).is_gt())
+    {
+      return ret_type{ dango::forward<tp_arg1>(a_arg1) };
+    }
+
+    return ret_type{ dango::forward<tp_arg2>(a_arg2) };
+  }
+
+  template
+  <typename tp_arg, typename... tp_args>
+  requires
+  (
+    (sizeof...(tp_args) >= dango::usize(2)) &&
+    (dango::is_class_or_union<dango::remove_ref<tp_arg>> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
+    requires
+    {
+      { dango::detail::min_max_help<tp_args&&...>::max(dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+      { dango::max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
+    }
+  )
+  constexpr auto
+  max
+  (tp_arg&& a_arg, tp_args&&... a_args)
+  noexcept
+  (
+    requires
+    {
+      { dango::detail::min_max_help<tp_args&&...>::max(dango::declval<tp_args>()...) }noexcept;
+      { dango::max(dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
+    }
+  )->dango::remove_cvref<tp_arg>
+  {
+    return dango::max(dango::forward<tp_arg>(a_arg), dango::detail::min_max_help<tp_args&&...>::max(dango::forward<tp_args>(a_args)...));
+  }
+}
+
+template
+<typename... tp_args>
+struct
+dango::
+detail::
+min_max_help
+final
+{
+  static constexpr auto
+  min(tp_args... a_args)noexcept(requires{ { dango::min(dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
+  requires(requires{ { dango::min(dango::declval<tp_args>()...) }; })
+  {
+    return dango::min(dango::forward<tp_args>(a_args)...);
+  }
+
+  static constexpr auto
+  max(tp_args... a_args)noexcept(requires{ { dango::max(dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
+  requires(requires{ { dango::max(dango::declval<tp_args>()...) }; })
+  {
+    return dango::max(dango::forward<tp_args>(a_args)...);
+  }
+
+  DANGO_UNINSTANTIABLE(min_max_help)
+};
 
 /*** integer_seq ***/
 
