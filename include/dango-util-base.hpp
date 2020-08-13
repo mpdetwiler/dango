@@ -790,6 +790,8 @@ dango
 namespace
 dango::detail
 {
+  using swap_help_prio = dango::priority_tag<dango::uint(4)>;
+
   template
   <typename tp_lhs, typename tp_rhs>
   requires(dango::has_operator_swap<tp_lhs&, tp_rhs&>)
@@ -871,14 +873,14 @@ dango
   concept is_swappable =
     dango::is_object<dango::remove_ref<tp_lhs>> && dango::is_object<dango::remove_ref<tp_rhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::detail::swap_help(dango::priority_tag<dango::uint(4)>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
+    { { dango::detail::swap_help(dango::detail::swap_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
   concept is_noexcept_swappable =
     dango::is_swappable<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::detail::swap_help(dango::priority_tag<dango::uint(4)>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>; };
+    { { dango::detail::swap_help(dango::detail::swap_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<void>; };
 
   inline constexpr auto const swap =
     []<typename tp_lhs, typename tp_rhs>
@@ -886,7 +888,7 @@ dango
     noexcept(dango::is_noexcept_swappable<tp_lhs&, tp_rhs&>)->void
     requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
     {
-      dango::detail::swap_help(dango::priority_tag<dango::uint(4)>{ }, a_lhs, a_rhs);
+      dango::detail::swap_help(dango::detail::swap_help_prio{ }, a_lhs, a_rhs);
     };
 }
 
@@ -1039,6 +1041,8 @@ dango
 namespace
 dango::detail
 {
+  using equals_help_prio = dango::priority_tag<dango::uint(11)>;
+
   template
   <typename tp_lhs>
   requires(dango::has_operator_is_null<tp_lhs const&>)
@@ -1172,18 +1176,18 @@ dango::detail
   }
 
   template
-  <typename tp_lhs, typename tp_rhs, dango::uint tp_prio = dango::uint(11)>
+  <typename tp_lhs, typename tp_rhs>
   concept has_equals_help =
     dango::is_referenceable<dango::remove_ref<tp_lhs>> && dango::is_referenceable<dango::remove_ref<tp_rhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::detail::equals_help(dango::priority_tag<tp_prio>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<bool>; };
+    { { dango::detail::equals_help(dango::detail::equals_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<bool>; };
 
   template
-  <typename tp_lhs, typename tp_rhs, dango::uint tp_prio = dango::uint(11)>
+  <typename tp_lhs, typename tp_rhs>
   concept has_noexcept_equals_help =
-    dango::detail::has_equals_help<tp_lhs, tp_rhs, tp_prio> &&
+    dango::detail::has_equals_help<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::detail::equals_help(dango::priority_tag<tp_prio>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
+    { { dango::detail::equals_help(dango::detail::equals_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
 }
 
 template
@@ -1194,7 +1198,7 @@ operator ==
 (tp_lhs const& a_lhs, tp_rhs const& a_rhs)
 noexcept(dango::detail::has_noexcept_equals_help<tp_lhs const&, tp_rhs const&>)->bool
 {
-  return dango::detail::equals_help(dango::priority_tag<dango::uint(11)>{ }, a_lhs, a_rhs);
+  return dango::detail::equals_help(dango::detail::equals_help_prio{ }, a_lhs, a_rhs);
 }
 
 template
@@ -1205,7 +1209,7 @@ operator !=
 (tp_lhs const& a_lhs, tp_rhs const& a_rhs)
 noexcept(dango::detail::has_noexcept_equals_help<tp_lhs const&, tp_rhs const&>)->bool
 {
-  return !dango::detail::equals_help(dango::priority_tag<dango::uint(11)>{ }, a_lhs, a_rhs);
+  return !dango::detail::equals_help(dango::detail::equals_help_prio{ }, a_lhs, a_rhs);
 }
 
 /*** is_equatable ***/
@@ -1277,6 +1281,8 @@ dango
 namespace
 dango::detail
 {
+  using compare_help_prio = dango::priority_tag<dango::uint(3)>;
+
   template
   <typename tp_lhs, typename tp_rhs>
   requires(dango::has_operator_compare<tp_lhs const&, tp_rhs const&>)
@@ -1322,24 +1328,24 @@ dango::detail
   }
 
   template
-  <typename tp_lhs, typename tp_rhs, dango::uint tp_prio = dango::uint(3)>
+  <typename tp_lhs, typename tp_rhs>
   concept has_compare_help =
     dango::is_referenceable<dango::remove_ref<tp_lhs>> && dango::is_referenceable<dango::remove_ref<tp_rhs>> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     {
       {
-        dango::detail::compare_help(dango::priority_tag<tp_prio>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
+        dango::detail::compare_help(dango::detail::compare_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
         }->dango::comparison::is_convertible;
     };
 
   template
-  <typename tp_lhs, typename tp_rhs, dango::uint tp_prio = dango::uint(3)>
+  <typename tp_lhs, typename tp_rhs>
   concept has_noexcept_compare_help =
-    dango::detail::has_compare_help<tp_lhs, tp_rhs, tp_prio> &&
+    dango::detail::has_compare_help<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     {
       {
-        dango::detail::compare_help(dango::priority_tag<tp_prio>{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
+        dango::detail::compare_help(dango::detail::compare_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
       }noexcept->dango::comparison::is_noexcept_convertible;
     };
 }
@@ -1351,7 +1357,7 @@ constexpr auto
 operator <
 (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::detail::has_noexcept_compare_help<tp_lhs const&, tp_rhs const&>)->bool
 {
-  return dango::detail::compare_help(dango::priority_tag<dango::uint(3)>{ }, a_lhs, a_rhs).is_lt();
+  return dango::detail::compare_help(dango::detail::compare_help_prio{ }, a_lhs, a_rhs).is_lt();
 }
 
 template
@@ -1361,7 +1367,7 @@ constexpr auto
 operator <=
 (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::detail::has_noexcept_compare_help<tp_lhs const&, tp_rhs const&>)->bool
 {
-  return dango::detail::compare_help(dango::priority_tag<dango::uint(3)>{ }, a_lhs, a_rhs).is_lteq();
+  return dango::detail::compare_help(dango::detail::compare_help_prio{ }, a_lhs, a_rhs).is_lteq();
 }
 
 template
@@ -1371,7 +1377,7 @@ constexpr auto
 operator >
 (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::detail::has_noexcept_compare_help<tp_lhs const&, tp_rhs const&>)->bool
 {
-  return dango::detail::compare_help(dango::priority_tag<dango::uint(3)>{ }, a_lhs, a_rhs).is_gt();
+  return dango::detail::compare_help(dango::detail::compare_help_prio{ }, a_lhs, a_rhs).is_gt();
 }
 
 template
@@ -1381,7 +1387,7 @@ constexpr auto
 operator >=
 (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::detail::has_noexcept_compare_help<tp_lhs const&, tp_rhs const&>)->bool
 {
-  return dango::detail::compare_help(dango::priority_tag<dango::uint(3)>{ }, a_lhs, a_rhs).is_gteq();
+  return dango::detail::compare_help(dango::detail::compare_help_prio{ }, a_lhs, a_rhs).is_gteq();
 }
 
 template
@@ -1391,7 +1397,7 @@ constexpr auto
 operator <=>
 (tp_lhs const& a_lhs, tp_rhs const& a_rhs)noexcept(dango::detail::has_noexcept_compare_help<tp_lhs const&, tp_rhs const&>)->auto
 {
-  return dango::detail::compare_help(dango::priority_tag<dango::uint(3)>{ }, a_lhs, a_rhs);
+  return dango::detail::compare_help(dango::detail::compare_help_prio{ }, a_lhs, a_rhs);
 }
 
 /*** is_comparable is_comparable_spaceship ***/
@@ -1595,13 +1601,16 @@ dango::detail
   (tp_cmp&& a_cmp, tp_arg const a_arg1, tp_arg const a_arg2)
   noexcept(dango::is_noexcept_comparator<tp_cmp, tp_arg const&, tp_arg const&>)->tp_arg
   {
+    auto const a_result =
+      dango::comparison::strongest(dango::forward<tp_cmp>(a_cmp)(a_arg1, a_arg2));
+
     if constexpr(tp_op)
     {
-      return dango::comparison::strongest(dango::forward<tp_cmp>(a_cmp)(a_arg1, a_arg2)).is_gt() ? a_arg1 : a_arg2;
+      return a_result.is_gt() ? a_arg1 : a_arg2;
     }
     else
     {
-      return dango::comparison::strongest(dango::forward<tp_cmp>(a_cmp)(a_arg1, a_arg2)).is_lt() ? a_arg1 : a_arg2;
+      return a_result.is_lt() ? a_arg1 : a_arg2;
     }
   }
 
@@ -1633,7 +1642,7 @@ dango::detail
     dango::is_noexcept_comparator<tp_cmp, dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg2> const&> &&
     dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg1> &&
     dango::is_noexcept_brace_constructible<dango::remove_cvref<tp_arg1>, tp_arg2>
-  )->auto
+  )->dango::remove_cvref<tp_arg1>
   {
     using ret_type = dango::remove_cvref<tp_arg1>;
 
@@ -1641,14 +1650,14 @@ dango::detail
       dango::comparison::strongest
       (dango::forward<tp_cmp>(a_cmp)(dango::forward<dango::remove_ref<tp_arg1> const&>(a_arg1), dango::forward<dango::remove_ref<tp_arg2> const&>(a_arg2)));
 
-    bool const a_first = tp_op ? a_result.is_gt() : a_result.is_lt();
-
-    if(a_first)
+    if constexpr(tp_op)
     {
-      return ret_type{ dango::forward<tp_arg1>(a_arg1) };
+      return a_result.is_gt() ? ret_type{ dango::forward<tp_arg1>(a_arg1) } : ret_type{ dango::forward<tp_arg2>(a_arg2) };
     }
-
-    return ret_type{ dango::forward<tp_arg2>(a_arg2) };
+    else
+    {
+      return a_result.is_lt() ? ret_type{ dango::forward<tp_arg1>(a_arg1) } : ret_type{ dango::forward<tp_arg2>(a_arg2) };
+    }
   }
 
   template
@@ -1774,6 +1783,108 @@ dango
     requires(requires{ { dango::detail::min_max_dispatch<true>(dango::compare, dango::declval<tp_args>()...) }; })
     {
       return dango::detail::min_max_dispatch<true>(dango::compare, dango::forward<tp_args>(a_args)...);
+    };
+}
+
+static_assert(dango::min(5, 4, 3, 2, 1, 2, 3, 4, 5) == 1);
+static_assert(dango::max(1, 2, 3, 4, 5, 4, 3, 2, 1) == 5);
+
+/*** hash ***/
+
+namespace
+dango::custom
+{
+  template
+  <typename tp_type>
+  struct operator_hash;
+}
+
+namespace
+dango
+{
+  using hash_val = dango::usize;
+
+  template
+  <typename tp_type>
+  concept has_operator_hash =
+    dango::is_object<dango::remove_ref<tp_type>> &&
+    requires(tp_type a_arg)
+    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }->dango::is_convertible_ret<dango::hash_val>; };
+
+  template
+  <typename tp_type>
+  concept has_noexcept_operator_hash =
+    dango::has_operator_hash<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }noexcept->dango::is_noexcept_convertible_ret<dango::hash_val>; };
+
+  template
+  <typename tp_type>
+  concept has_dango_operator_hash =
+    dango::is_class_or_union<dango::remove_ref<tp_type>> &&
+    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }->dango::is_convertible_ret<dango::hash_val>; };
+
+  template
+  <typename tp_type>
+  concept has_noexcept_dango_operator_hash =
+    dango::has_dango_operator_hash<tp_type> &&
+    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }noexcept->dango::is_noexcept_convertible_ret<dango::hash_val>; };
+}
+
+namespace
+dango::detail
+{
+  using hash_help_prio = dango::priority_tag<dango::uint(1)>;
+
+  template
+  <typename tp_type>
+  requires(dango::has_operator_hash<tp_type const&>)
+  constexpr auto
+  hash_help
+  (dango::priority_tag<dango::uint(1)> const, tp_type const& a_arg)
+  noexcept(dango::has_noexcept_operator_hash<tp_type const&>)->dango::hash_val
+  {
+    return dango::custom::operator_hash<dango::remove_cv<tp_type>>::hash(a_arg);
+  }
+
+  template
+  <typename tp_type>
+  requires(dango::has_dango_operator_hash<tp_type const&>)
+  constexpr auto
+  hash_help
+  (dango::priority_tag<dango::uint(0)> const, tp_type const& a_arg)
+  noexcept(dango::has_noexcept_dango_operator_hash<tp_type const&>)->dango::hash_val
+  {
+    return a_arg.dango_operator_hash();
+  }
+}
+
+/*** is_hashable is_noexcept_hashable ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_hashable =
+    dango::is_object<dango::remove_ref<tp_type>> &&
+    requires(tp_type a_arg)
+    { { dango::detail::hash_help(dango::detail::hash_help_prio{ }, dango::forward<tp_type>(a_arg)) }->dango::is_convertible_ret<dango::hash_val>; };
+
+  template
+  <typename tp_type>
+  concept is_noexcept_hashable =
+    dango::is_hashable<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::detail::hash_help(dango::detail::hash_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept->dango::is_noexcept_convertible_ret<dango::hash_val>; };
+
+  inline constexpr auto const hash =
+    []<typename tp_arg>
+    (tp_arg const& a_arg)
+    noexcept(dango::is_noexcept_hashable<tp_arg const&>)->dango::hash_val
+    requires(dango::is_hashable<tp_arg const&>)
+    {
+      return dango::detail::hash_help(dango::detail::hash_help_prio{ }, a_arg);
     };
 }
 

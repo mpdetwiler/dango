@@ -1894,7 +1894,7 @@ dango
   template
   <typename tp_func, typename... tp_args>
   concept is_callable =
-    dango::is_referenceable_or_ref<tp_func> &&
+    dango::is_referenceable<dango::remove_ref<tp_func>> &&
     requires{ dango::declval<tp_func>()(dango::declval<tp_args>()...); };
 
   template
