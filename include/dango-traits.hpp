@@ -1216,6 +1216,12 @@ dango
   template
   <typename tp_type>
   concept is_enum = bool(__is_enum(tp_type));
+
+  template
+  <typename tp_type>
+  concept is_enum_ignore_ref =
+    dango::is_enum<tp_type> ||
+    dango::is_enum<dango::remove_ref<tp_type>>;
 }
 
 /*** is_union ***/
@@ -1226,6 +1232,12 @@ dango
   template
   <typename tp_type>
   concept is_union = bool(__is_union(tp_type));
+
+  template
+  <typename tp_type>
+  concept is_union_ignore_ref =
+    dango::is_union<tp_type> ||
+    dango::is_union<dango::remove_ref<tp_type>>;
 }
 
 /*** is_class ***/
@@ -1236,6 +1248,12 @@ dango
   template
   <typename tp_type>
   concept is_class = bool(__is_class(tp_type));
+
+  template
+  <typename tp_type>
+  concept is_class_ignore_ref =
+    dango::is_class<tp_type> ||
+    dango::is_class<dango::remove_ref<tp_type>>;
 }
 
 /*** is_class_or_union ***/
@@ -1247,6 +1265,29 @@ dango
   <typename tp_type>
   concept is_class_or_union =
     dango::is_class<tp_type> || dango::is_union<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_class_or_union_ignore_ref =
+    dango::is_class_or_union<tp_type> ||
+    dango::is_class_or_union<dango::remove_ref<tp_type>>;
+}
+
+/*** is_user_defined ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_user_defined =
+    dango::is_class_or_union<tp_type> || dango::is_enum<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_user_defined_ignore_ref =
+    dango::is_user_defined<tp_type> ||
+    dango::is_user_defined<dango::remove_ref<tp_type>>;
 }
 
 /*** is_lvalue_ref ***/
@@ -1489,7 +1530,7 @@ dango
     dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>;
 }
 
-/*** is_fundamnetal ***/
+/*** is_fundamnetal is_compound ***/
 
 namespace
 dango
@@ -1500,6 +1541,10 @@ dango
     dango::is_void<tp_type> ||
     dango::is_null_tag<tp_type> ||
     dango::is_arithmetic<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_compound = !dango::is_fundamental<tp_type>;
 }
 
 /*** is_scalar ***/
@@ -1517,7 +1562,7 @@ dango
     dango::is_null_tag<tp_type>;
 }
 
-/*** is_object_exclude_array is_object_or_ref_exclude_array ***/
+/*** is_object_exclude_array ***/
 
 namespace
 dango
@@ -1529,11 +1574,12 @@ dango
 
   template
   <typename tp_type>
-  concept is_object_or_ref_exclude_array =
-    dango::is_object_exclude_array<tp_type> || dango::is_ref<tp_type>;
+  concept is_object_exclude_array_ignore_ref =
+    dango::is_object_exclude_array<tp_type> ||
+    dango::is_object_exclude_array<dango::remove_ref<tp_type>>;
 }
 
-/*** is_object is_object_or_ref ***/
+/*** is_object ***/
 
 namespace
 dango
@@ -1545,21 +1591,12 @@ dango
 
   template
   <typename tp_type>
-  concept is_object_or_ref =
-    dango::is_object<tp_type> || dango::is_ref<tp_type>;
+  concept is_object_ignore_ref =
+    dango::is_object<tp_type> ||
+    dango::is_object<dango::remove_ref<tp_type>>;
 }
 
-/*** is_compound ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  concept is_compound = !dango::is_fundamental<tp_type>;
-}
-
-/*** is_referenceable is_referenceable_or_ref ***/
+/*** is_referenceable ***/
 
 namespace
 dango
@@ -1571,8 +1608,8 @@ dango
 
   template
   <typename tp_type>
-  concept is_referenceable_or_ref =
-    dango::is_referenceable<tp_type> || dango::is_ref<tp_type>;
+  concept is_referenceable_ignore_ref =
+    dango::is_ref<tp_type> || dango::is_referenceable<tp_type>;
 }
 
 /*** is_const ***/
@@ -1802,7 +1839,7 @@ dango
   template
   <typename tp_type>
   concept is_destructible =
-    dango::is_object_or_ref<tp_type> && dango::detail::is_destructible_help<dango::remove_cv<tp_type>>;
+    dango::is_object_ignore_ref<tp_type> && dango::detail::is_destructible_help<dango::remove_cv<tp_type>>;
 
   template
   <typename tp_type>
@@ -1836,8 +1873,8 @@ dango::detail
   template
   <typename tp_from, typename tp_to>
   concept is_convertible_help =
-    dango::is_referenceable_or_ref<tp_from> &&
-    dango::is_object_or_ref_exclude_array<tp_to> &&
+    dango::is_referenceable_ignore_ref<tp_from> &&
+    (dango::is_ref<tp_to> || dango::is_object_exclude_array<tp_to>) &&
     dango::is_destructible<tp_to> &&
     requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()) }; };
 

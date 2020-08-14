@@ -17,6 +17,7 @@ struct S
   constexpr bool dango_operator_equals(int const& a)const noexcept{ return a == 0; }
 };
 
+  DANGO_USING_EQUALITY_OPERATORS
 }
 
 static_assert(dango::equals(5, 5));
@@ -179,6 +180,16 @@ auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  {
+    char x[] = "hello";
+    char y[] = "olleh";
+
+    dango::swap(x, y);
+
+    dango_assert(dango::equals(x, "olleh"));
+    dango_assert(dango::equals(y, "hello"));
+  }
+
   {
     int volatile int1 = 5;
     long int2 = 6;
