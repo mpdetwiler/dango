@@ -1962,6 +1962,50 @@ final
   DANGO_UNINSTANTIABLE(operator_compare)
 };
 
+/*** hash_val ***/
+
+namespace
+dango
+{
+  class hash_val;
+}
+
+class
+dango::
+hash_val
+final
+{
+public:
+  using int_type = dango::usize;
+public:
+  constexpr hash_val(int_type const a_val)noexcept:m_value{ a_val }{ }
+  explicit constexpr hash_val()noexcept = default;
+  constexpr hash_val(hash_val const&)noexcept = default;
+  constexpr hash_val(hash_val&&)noexcept = default;
+  constexpr auto operator = (hash_val const&)& noexcept->hash_val& = default;
+  constexpr auto operator = (hash_val&&)& noexcept->hash_val& = default;
+  explicit constexpr operator int_type()const noexcept{ return m_value; }
+public:
+  constexpr auto as_int()const noexcept->int_type{ return m_value; }
+  constexpr auto as_int_mod(dango::usize const a_mod)const noexcept->int_type;
+private:
+  int_type m_value;
+};
+
+constexpr auto
+dango::
+hash_val::
+as_int_mod
+(dango::usize const a_mod)const noexcept->int_type
+{
+  if(a_mod == int_type(0))
+  {
+    return m_value;
+  }
+
+  return m_value % a_mod;
+}
+
 /*** hash ***/
 
 namespace
@@ -1975,8 +2019,6 @@ dango::custom
 namespace
 dango
 {
-  using hash_val = dango::usize;
-
   template
   <typename tp_type>
   concept has_operator_hash_struct =
@@ -2053,13 +2095,132 @@ dango
 
   inline constexpr auto const hash =
     []<typename tp_arg>
-    (tp_arg const& a_arg)
+    (tp_arg const& a_arg)constexpr
     noexcept(dango::is_noexcept_hashable<tp_arg const&>)->dango::hash_val
     requires(dango::is_hashable<tp_arg const&>)
     {
       return dango::detail::hash_help(dango::detail::hash_help_prio{ }, a_arg);
     };
 }
+
+// TODO placeholder implementations
+
+namespace
+dango::custom
+{
+  template
+  <dango::is_integral tp_type>
+  struct
+  operator_hash<tp_type>;
+
+// GCC (10.2.1) bug with having mutliple constrained partial specializatons of template classes
+// where my_class<T> (just plain T from original decl) is passed results in an error. just going
+// to disable the floating point specialization on GCC for now (who hashes floats anyway) but in the
+// future this is going to be a major issue and i dont want to have to bring back enable_if. this
+// has been a bug since at least june 2017 (GCC 8.0) hopefully they fix it soon
+
+#ifdef __clang__
+  template
+  <dango::is_float tp_type>
+  struct
+  operator_hash<tp_type>;
+#endif
+
+  template
+  <typename tp_type>
+  struct
+  operator_hash<tp_type*>;
+}
+
+template
+<dango::is_integral tp_type>
+struct
+dango::
+custom::
+operator_hash<tp_type>
+final
+{
+  constexpr auto
+  hash
+  (tp_type const a_val)noexcept->dango::hash_val
+  {
+    return dango::usize(a_val);
+  }
+
+  DANGO_UNINSTANTIABLE(operator_hash)
+};
+
+#ifdef __clang__
+template
+<dango::is_float tp_type>
+struct
+dango::
+custom::
+operator_hash<tp_type>
+final
+{
+  constexpr auto
+  hash
+  (float const a_val)noexcept->dango::hash_val
+  {
+    dango::uint a_ret;
+
+    static_assert(sizeof(a_val) == sizeof(a_ret));
+
+    dango::mem_copy(&a_ret, &a_val, sizeof(a_val));
+
+    return dango::usize(a_ret);
+  }
+
+  constexpr auto
+  hash
+  (double const a_val)noexcept->dango::hash_val
+  {
+    dango::ulong a_ret;
+
+    static_assert(sizeof(a_val) == sizeof(a_ret));
+
+    dango::mem_copy(&a_ret, &a_val, sizeof(a_val));
+
+    return dango::usize(a_ret);
+  }
+
+  constexpr auto
+  hash
+  (dango::real const a_real)noexcept->dango::hash_val
+  {
+    auto const a_val = double(a_real);
+
+    dango::ulong a_ret;
+
+    static_assert(sizeof(a_val) == sizeof(a_ret));
+
+    dango::mem_copy(&a_ret, &a_val, sizeof(a_val));
+
+    return dango::usize(a_ret);
+  }
+
+  DANGO_UNINSTANTIABLE(operator_hash)
+};
+#endif
+
+template
+<typename tp_type>
+struct
+dango::
+custom::
+operator_hash<tp_type*>
+final
+{
+  constexpr auto
+  hash
+  (void const volatile* const a_val)noexcept->dango::hash_val
+  {
+    return dango::usize(dango::ptr_as_uint(a_val));
+  }
+
+  DANGO_UNINSTANTIABLE(operator_hash)
+};
 
 /*** aligned_storage ***/
 
