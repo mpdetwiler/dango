@@ -97,7 +97,9 @@ flags = [
   '-Wall',
   '-Wextra',
   '-Wshadow',
-  '-Wfatal-errors'
+  '-Wfatal-errors',
+  '-Wno-gnu-zero-variadic-macro-arguments' if use_clang else '',
+  ''
 ];
 
 import os;

@@ -117,7 +117,7 @@ pthread_mutex_init
 {
   using type = ::pthread_mutex_t;
 
-  auto const a_temp = dango_placement_new(a_storage.get(), type, );
+  auto const a_temp = dango_placement_new(a_storage.get(), type);
 
   auto const a_result = ::pthread_mutex_init(a_temp, dango::null);
 
@@ -195,7 +195,7 @@ pthread_cond_init
 {
   using type = ::pthread_cond_t;
 
-  auto const a_temp = dango_placement_new(a_storage.get(), type, );
+  auto const a_temp = dango_placement_new(a_storage.get(), type);
 
   ::pthread_condattr_t a_spec;
 
@@ -518,7 +518,7 @@ srw_lock_init
 {
   using type = ::SRWLOCK;
 
-  auto const a_temp = dango_placement_new(a_storage.get(), type, );
+  auto const a_temp = dango_placement_new(a_storage.get(), type);
 
   ::InitializeSRWLock(a_temp);
 }
@@ -579,7 +579,7 @@ condition_variable_init
 {
   using type = ::CONDITION_VARIABLE;
 
-  auto const a_temp = dango_placement_new(a_storage.get(), type, );
+  auto const a_temp = dango_placement_new(a_storage.get(), type);
 
   ::InitializeConditionVariable(a_temp);
 }

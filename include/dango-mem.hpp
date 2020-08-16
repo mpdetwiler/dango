@@ -15,9 +15,11 @@ dango
 
 #define dango_new_noexcept noexcept(dango::c_operator_new_noexcept)
 
-#define dango_new_noexcept_and(...) noexcept(dango::c_operator_new_noexcept && bool(__VA_ARGS__))
+#define dango_new_noexcept_and(cond, ...) \
+  noexcept(dango::c_operator_new_noexcept && bool(cond __VA_OPT__(, __VA_ARGS__)))
 
-#define dango_new_noexcept_or(...) noexcept(dango::c_operator_new_noexcept || bool(__VA_ARGS__))
+#define dango_new_noexcept_or(cond, ...) \
+  noexcept(dango::c_operator_new_noexcept || bool(cond __VA_OPT__(, __VA_ARGS__)))
 
 /*** is_aligned ***/
 
@@ -102,7 +104,7 @@ dango
 }
 
 #define dango_placement_new(addr, type, ...) \
-  ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type)) type __VA_ARGS__
+  ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type)) type __VA_OPT__(__VA_ARGS__)
 
 #define dango_placement_new_array(addr, type, count) \
   ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type)) type[dango::usize(count)]

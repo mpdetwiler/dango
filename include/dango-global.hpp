@@ -154,8 +154,7 @@ increment
   (
     [this]()noexcept->void
     {
-      m_ptr =
-        ::new (dango::placement, m_storage.get(), sizeof(tp_type), alignof(tp_type)) tp_type{ tp_construct() };
+      m_ptr = dango_placement_new(m_storage.get(), tp_type, { tp_construct() });
 
       m_ref_count = dango::usize(1);
     }
