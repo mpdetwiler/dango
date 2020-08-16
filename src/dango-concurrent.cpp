@@ -377,7 +377,7 @@ pop_internal
 
     add(a_cond);
 
-    return ::new (dango::placement, a_s.get(), sizeof(cond_ref), alignof(cond_ref)) cond_ref{ a_cond->make_reference() };
+    return dango_placement_new(a_s.get(), cond_ref, { a_cond->make_reference() });
   }();
 
   if(!a_cond_ptr)

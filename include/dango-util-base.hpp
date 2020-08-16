@@ -408,6 +408,27 @@ dango
   }
 }
 
+/*** mem_copy ***/
+
+namespace
+dango
+{
+  constexpr auto mem_copy(void*, void const*, dango::usize)noexcept->void*;
+}
+
+constexpr auto
+dango::
+mem_copy
+(
+  void* const a_dest,
+  void const* const a_source,
+  dango::usize const a_count
+)
+noexcept->void*
+{
+  return __builtin_memcpy(a_dest, a_source, a_count);
+}
+
 /*** compare_val ***/
 
 namespace
@@ -468,6 +489,10 @@ protected:
   compare_val_base(tp_arg const a_arg)noexcept:
   super_type{ a_arg }
   { }
+protected:
+  template
+  <dango::is_sint tp_int = int_type>
+  constexpr auto as_integer()const noexcept->int_type{ return tp_int(*this > 0) - tp_int(*this < 0); }
 public:
   constexpr compare_val_base(compare_val_base const&)noexcept = default;
   constexpr compare_val_base(compare_val_base&&)noexcept = default;
@@ -510,7 +535,7 @@ public:
 
   template
   <dango::is_sint tp_int>
-  explicit constexpr operator tp_int()const noexcept{ return tp_int(*this > 0) - tp_int(*this < 0); }
+  explicit constexpr operator tp_int()const noexcept{ return as_integer<tp_int>(); }
 
   constexpr operator dango::compare_val_weak()const noexcept;
   constexpr operator dango::compare_val_partial()const noexcept;
@@ -520,8 +545,8 @@ public:
   constexpr auto operator = (compare_val_strong const&)& noexcept->compare_val_strong& = default;
   constexpr auto operator = (compare_val_strong&&)& noexcept->compare_val_strong& = default;
 public:
-  constexpr auto as_int()const noexcept->int_type{ return int_type(*this); }
-  constexpr auto mirror()const noexcept->compare_val_strong{ return compare_val_strong{ -(as_int()) }; }
+  constexpr auto as_int()const noexcept->int_type{ return as_integer(); }
+  constexpr auto mirror()const noexcept->compare_val_strong{ return compare_val_strong{ -(as_integer()) }; }
 };
 
 inline constexpr dango::compare_val_strong const dango::compare_val_strong::equal = compare_val_strong{ category_type::equal };
@@ -555,7 +580,7 @@ public:
 
   template
   <dango::is_sint tp_int>
-  explicit constexpr operator tp_int()const noexcept{ return tp_int(*this > 0) - tp_int(*this < 0); }
+  explicit constexpr operator tp_int()const noexcept{ return as_integer<tp_int>(); }
 
   constexpr operator dango::compare_val_partial()const noexcept;
 public:
@@ -564,8 +589,8 @@ public:
   constexpr auto operator = (compare_val_weak const&)& noexcept->compare_val_weak& = default;
   constexpr auto operator = (compare_val_weak&&)& noexcept->compare_val_weak& = default;
 public:
-  constexpr auto as_int()const noexcept->int_type{ return int_type(*this); }
-  constexpr auto mirror()const noexcept->compare_val_weak{ return compare_val_weak{ -(as_int()) }; }
+  constexpr auto as_int()const noexcept->int_type{ return as_integer(); }
+  constexpr auto mirror()const noexcept->compare_val_weak{ return compare_val_weak{ -(as_integer()) }; }
 };
 
 inline constexpr dango::compare_val_weak const dango::compare_val_weak::equivalent = compare_val_weak{ category_type::equivalent };
@@ -622,7 +647,7 @@ mirror
     return unordered;
   }
 
-  return compare_val_partial{ int_type(*this > 0) - int_type(*this < 0) };
+  return compare_val_partial{ -(as_integer()) };
 }
 
 constexpr
@@ -711,39 +736,6 @@ dango::comparison
   constexpr auto mirror(dango::compare_val_weak const a_val)noexcept->auto{ return a_val.mirror(); }
   constexpr auto mirror(dango::compare_val_partial const a_val)noexcept->auto{ return a_val.mirror(); }
 }
-
-static_assert(dango::is_convertible<dango::compare_val_strong, std::strong_ordering>);
-static_assert(dango::is_convertible<dango::compare_val_strong, std::weak_ordering>);
-static_assert(dango::is_convertible<dango::compare_val_strong, std::partial_ordering>);
-static_assert(dango::is_convertible<dango::compare_val_strong, dango::compare_val_strong>);
-static_assert(dango::is_convertible<dango::compare_val_strong, dango::compare_val_weak>);
-static_assert(dango::is_convertible<dango::compare_val_strong, dango::compare_val_partial>);
-
-static_assert(!dango::is_convertible<dango::compare_val_weak, std::strong_ordering>);
-static_assert(dango::is_convertible<dango::compare_val_weak, std::weak_ordering>);
-static_assert(dango::is_convertible<dango::compare_val_weak, std::partial_ordering>);
-static_assert(!dango::is_convertible<dango::compare_val_weak, dango::compare_val_strong>);
-static_assert(dango::is_convertible<dango::compare_val_weak, dango::compare_val_weak>);
-static_assert(dango::is_convertible<dango::compare_val_weak, dango::compare_val_partial>);
-
-static_assert(!dango::is_convertible<dango::compare_val_partial, std::strong_ordering>);
-static_assert(!dango::is_convertible<dango::compare_val_partial, std::weak_ordering>);
-static_assert(dango::is_convertible<dango::compare_val_partial, std::partial_ordering>);
-static_assert(!dango::is_convertible<dango::compare_val_partial, dango::compare_val_strong>);
-static_assert(!dango::is_convertible<dango::compare_val_partial, dango::compare_val_weak>);
-static_assert(dango::is_convertible<dango::compare_val_partial, dango::compare_val_partial>);
-
-static_assert(dango::is_convertible<std::strong_ordering, dango::compare_val_strong>);
-static_assert(dango::is_convertible<std::strong_ordering, dango::compare_val_weak>);
-static_assert(dango::is_convertible<std::strong_ordering, dango::compare_val_partial>);
-
-static_assert(!dango::is_convertible<std::weak_ordering, dango::compare_val_strong>);
-static_assert(dango::is_convertible<std::weak_ordering, dango::compare_val_weak>);
-static_assert(dango::is_convertible<std::weak_ordering, dango::compare_val_partial>);
-
-static_assert(!dango::is_convertible<std::partial_ordering, dango::compare_val_strong>);
-static_assert(!dango::is_convertible<std::partial_ordering, dango::compare_val_weak>);
-static_assert(dango::is_convertible<std::partial_ordering, dango::compare_val_partial>);
 
 namespace
 dango
@@ -1732,7 +1724,7 @@ dango::detail
   // scalar types
 
   template
-  <bool tp_op, typename tp_cmp, dango::is_scalar tp_arg>
+  <bool tp_max, typename tp_cmp, dango::is_scalar tp_arg>
   requires(dango::is_comparator<tp_cmp, tp_arg const&, tp_arg const&>)
   constexpr auto
   min_max_help
@@ -1742,7 +1734,7 @@ dango::detail
     auto const a_result =
       dango::comparison::strongest(dango::forward<tp_cmp>(a_cmp)(a_arg1, a_arg2));
 
-    if constexpr(tp_op)
+    if constexpr(tp_max)
     {
       return a_result.is_gt() ? a_arg1 : a_arg2;
     }
@@ -1753,20 +1745,20 @@ dango::detail
   }
 
   template
-  <bool tp_op, typename tp_cmp, dango::is_scalar tp_arg, dango::is_same<tp_arg>... tp_args>
+  <bool tp_max, typename tp_cmp, dango::is_scalar tp_arg, dango::is_same<tp_arg>... tp_args>
   requires((sizeof...(tp_args) >= dango::usize(2)) && dango::is_comparator<tp_cmp, tp_arg const&, tp_arg const&>)
   constexpr auto
   min_max_help
   (tp_cmp&& a_cmp, tp_arg const a_arg, tp_args const... a_args)
   noexcept(dango::is_noexcept_comparator<tp_cmp, tp_arg const&, tp_arg const&>)->auto
   {
-    return dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), a_arg, dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), a_args...));
+    return dango::detail::min_max_help<tp_max>(dango::forward<tp_cmp>(a_cmp), a_arg, dango::detail::min_max_help<tp_max>(dango::forward<tp_cmp>(a_cmp), a_args...));
   }
 
   // class types
 
   template
-  <bool tp_op, typename tp_cmp, is_class_or_union_ignore_ref tp_arg1, is_same_ignore_cvref<tp_arg1> tp_arg2>
+  <bool tp_max, typename tp_cmp, dango::is_class_or_union_ignore_ref tp_arg1, dango::is_same_ignore_cvref<tp_arg1> tp_arg2>
   requires
   (
     dango::is_comparator<tp_cmp, dango::remove_ref<tp_arg1> const&, dango::remove_ref<tp_arg2> const&> &&
@@ -1789,7 +1781,7 @@ dango::detail
       dango::comparison::strongest
       (dango::forward<tp_cmp>(a_cmp)(dango::forward<dango::remove_ref<tp_arg1> const&>(a_arg1), dango::forward<dango::remove_ref<tp_arg2> const&>(a_arg2)));
 
-    if constexpr(tp_op)
+    if constexpr(tp_max)
     {
       return a_result.is_gt() ? ret_type{ dango::forward<tp_arg1>(a_arg1) } : ret_type{ dango::forward<tp_arg2>(a_arg2) };
     }
@@ -1800,21 +1792,12 @@ dango::detail
   }
 
   template
-  <bool tp_op, typename tp_cmp, typename... tp_args>
+  <bool tp_max, typename tp_cmp, typename... tp_args>
   struct min_max_deferred;
 
   template
-  <bool tp_op, typename tp_cmp, typename tp_arg, typename... tp_args>
-  requires
-  (
-    (sizeof...(tp_args) >= dango::usize(2)) &&
-    (dango::is_class_or_union_ignore_ref<tp_arg> && ... && dango::is_same_ignore_cvref<tp_args, tp_arg>) &&
-    requires
-    {
-      { dango::detail::min_max_deferred<tp_op, tp_cmp&&, tp_args&&...>::m(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-      { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }->dango::is_same<dango::remove_cvref<tp_arg>>;
-    }
-  )
+  <bool tp_max, typename tp_cmp, dango::is_class_or_union_ignore_ref tp_arg, dango::is_same_ignore_cvref<tp_arg>... tp_args>
+  requires(sizeof...(tp_args) >= dango::usize(2))
   constexpr auto
   min_max_help
   (tp_cmp&& a_cmp, tp_arg&& a_arg, tp_args&&... a_args)
@@ -1822,32 +1805,40 @@ dango::detail
   (
     requires
     {
-      { dango::detail::min_max_deferred<tp_op, tp_cmp&&, tp_args&&...>::m(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept;
-      { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
+      { dango::detail::min_max_deferred<tp_max, tp_cmp&&, tp_args&&...>::m(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept;
+      { dango::detail::min_max_help<tp_max>(dango::declval<tp_cmp>(), dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) }noexcept;
     }
   )->auto
+  requires
+  (
+    requires
+    {
+      { dango::detail::min_max_deferred<tp_max, tp_cmp&&, tp_args&&...>::m(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) };
+      { dango::detail::min_max_help<tp_max>(dango::declval<tp_cmp>(), dango::declval<tp_arg>(), dango::declval<dango::remove_cvref<tp_arg>>()) };
+    }
+  )
   {
     return
-      dango::detail::min_max_help<tp_op>
+      dango::detail::min_max_help<tp_max>
       (
         dango::forward<tp_cmp>(a_cmp),
         dango::forward<tp_arg>(a_arg),
-        dango::detail::min_max_deferred<tp_op, tp_cmp&&, tp_args&&...>::m(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...)
+        dango::detail::min_max_deferred<tp_max, tp_cmp&&, tp_args&&...>::m(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...)
       );
   }
 
   template
-  <bool tp_op, typename tp_cmp, typename... tp_args>
+  <bool tp_max, typename tp_cmp, typename... tp_args>
   struct
   min_max_deferred
   final
   {
     static constexpr auto
     m(tp_cmp a_cmp, tp_args... a_args)
-    noexcept(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->auto
-    requires(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
+    noexcept(requires{ { dango::detail::min_max_help<tp_max>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->auto
+    requires(requires{ { dango::detail::min_max_help<tp_max>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
     {
-      return dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
+      return dango::detail::min_max_help<tp_max>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
     }
 
     DANGO_UNINSTANTIABLE(min_max_deferred)
@@ -1856,31 +1847,19 @@ dango::detail
   // dispatchers
 
   template
-  <bool tp_op, typename tp_cmp, typename... tp_args>
-  requires
-  (
-    (sizeof...(tp_args) >= dango::usize(2)) &&
-    requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; }
-  )
+  <bool tp_max, typename tp_cmp, typename... tp_args>
+  requires(sizeof...(tp_args) >= dango::usize(2))
   constexpr auto
   min_max_dispatch
   (tp_cmp&& a_cmp, tp_args&&... a_args)
-  noexcept(requires{ { dango::detail::min_max_help<tp_op>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->auto
+  noexcept(requires{ { dango::detail::min_max_help<tp_max>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->auto
+  requires(requires{ { dango::detail::min_max_help<tp_max>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
   {
-    return dango::detail::min_max_help<tp_op>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
+    return dango::detail::min_max_help<tp_max>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
   }
 
   template
-  <bool tp_op, typename tp_cmp, dango::is_scalar tp_arg>
-  constexpr auto
-  min_max_dispatch
-  (tp_cmp&&, tp_arg const a_arg)noexcept->tp_arg
-  {
-    return a_arg;
-  }
-
-  template
-  <bool tp_op, typename tp_cmp, is_class_or_union_ignore_ref tp_arg>
+  <bool tp_max, typename tp_cmp, typename tp_arg>
   requires(dango::is_brace_constructible<dango::remove_cvref<tp_arg>, tp_arg>)
   constexpr auto
   min_max_dispatch
@@ -1891,7 +1870,7 @@ dango::detail
   }
 
   template
-  <bool tp_op, typename tp_cmp>
+  <bool tp_max, typename tp_cmp>
   constexpr void
   min_max_dispatch(tp_cmp&&)noexcept{ }
 }
@@ -1910,7 +1889,7 @@ dango
 
   inline constexpr auto min =
     []<typename... tp_args>
-    (tp_args... a_args)constexpr
+    (tp_args&&... a_args)constexpr
     noexcept(requires{ { dango::detail::min_max_dispatch<false>(dango::compare, dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
     requires(requires{ { dango::detail::min_max_dispatch<false>(dango::compare, dango::declval<tp_args>()...) }; })
     {
@@ -1928,7 +1907,7 @@ dango
 
   inline constexpr auto max =
     []<typename... tp_args>
-    (tp_args... a_args)constexpr
+    (tp_args&&... a_args)constexpr
     noexcept(requires{ { dango::detail::min_max_dispatch<true>(dango::compare, dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
     requires(requires{ { dango::detail::min_max_dispatch<true>(dango::compare, dango::declval<tp_args>()...) }; })
     {
@@ -2133,19 +2112,6 @@ private:
 public:
   DANGO_IMMOBILE(aligned_storage)
 };
-
-
-static_assert(dango::equals("hello", "hello"));
-static_assert(!dango::equals("hello", "hi"));
-static_assert(dango::compare("hello", "hello") == 0);
-static_assert(dango::compare("hello", "hi") < 0);
-static_assert(dango::compare("hey", "hello") > 0);
-static_assert(dango::min(16.0f) == 16.0f);
-static_assert(dango::max(16.0f) == 16.0f);
-static_assert(dango::min(16.0, 32.0) == 16.0);
-static_assert(dango::max(16.0, 32.0) == 32.0);
-static_assert(dango::min(5, 4, 3, 2, 1, 1, 1, 2, 3, 4, 5) == 1);
-static_assert(dango::max(1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1) == 5);
 
 #endif
 

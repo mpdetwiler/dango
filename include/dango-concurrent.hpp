@@ -275,6 +275,8 @@ private:
   template
   <dango::timeout_flag tp_flags>
   using timeout_type = dango::detail::timeout_impl<tp_flags>;
+private:
+  static auto construct_help(void*, dango::timeout_flag)noexcept->dango::detail::timeout_base*;
 public:
   static auto make(value_type, dango::timeout_flag)noexcept->timeout;
   static auto make_rel(value_type, dango::timeout_flag)noexcept->timeout;
@@ -294,12 +296,58 @@ public:
   void set_rel(value_type const a_rel)noexcept{ m_timeout->set_rel(a_rel); }
   void add(value_type const a_add)noexcept{ m_timeout->add(a_add); }
 private:
-  dango::detail::timeout_base* m_timeout;
   dango::detail::timeout_storage m_storage;
+  dango::detail::timeout_base* const m_timeout;
 public:
   DANGO_DELETE_DEFAULT(timeout)
   DANGO_IMMOBILE(timeout)
 };
+
+inline auto
+dango::
+timeout::
+construct_help
+(void* const a_storage, dango::timeout_flag const a_flags)noexcept->dango::detail::timeout_base*
+{
+  using dango::timeout_flags::DEFAULT;
+  using dango::timeout_flags::HIGH_RES;
+  using dango::timeout_flags::SUSPEND_AWARE;
+
+  switch(a_flags)
+  {
+    case DEFAULT:
+    {
+      using type = timeout_type<DEFAULT>;
+
+      return dango_placement_new(a_storage, type, { });
+    }
+    break;
+    case HIGH_RES:
+    {
+      using type = timeout_type<HIGH_RES>;
+
+      return dango_placement_new(a_storage, type, { });
+    }
+    break;
+    case SUSPEND_AWARE:
+    {
+      using type = timeout_type<SUSPEND_AWARE>;
+
+      return dango_placement_new(a_storage, type, { });
+    }
+    break;
+    case HIGH_RES | SUSPEND_AWARE:
+    {
+      using type = timeout_type<HIGH_RES | SUSPEND_AWARE>;
+
+      return dango_placement_new(a_storage, type, { });
+    }
+    break;
+    default: break;
+  }
+
+  dango_unreachable;
+}
 
 inline auto
 dango::
@@ -324,42 +372,9 @@ dango::
 timeout::
 timeout
 (value_type const a_value, bool const a_rel, dango::timeout_flag const a_flags)noexcept:
-m_timeout{ dango::null },
-m_storage{ }
+m_storage{ },
+m_timeout{ construct_help(m_storage.get(), a_flags) }
 {
-  using dango::timeout_flags::DEFAULT;
-  using dango::timeout_flags::HIGH_RES;
-  using dango::timeout_flags::SUSPEND_AWARE;
-
-  switch(a_flags)
-  {
-    case DEFAULT:
-    {
-      m_timeout =
-        dango::placement_new_brace<timeout_type<DEFAULT>>(m_storage.get());
-    }
-    break;
-    case HIGH_RES:
-    {
-      m_timeout =
-        dango::placement_new_brace<timeout_type<HIGH_RES>>(m_storage.get());
-    }
-    break;
-    case SUSPEND_AWARE:
-    {
-      m_timeout =
-        dango::placement_new_brace<timeout_type<SUSPEND_AWARE>>(m_storage.get());
-    }
-    break;
-    case HIGH_RES | SUSPEND_AWARE:
-    {
-      m_timeout =
-        dango::placement_new_brace<timeout_type<HIGH_RES | SUSPEND_AWARE>>(m_storage.get());
-    }
-    break;
-    default: dango_unreachable;
-  }
-
   dango_assert(m_timeout != dango::null);
 
   if(a_rel)

@@ -1,5 +1,3 @@
-#include <compare>
-
 #include "dango.hpp"
 #include "dango-global-test.hpp"
 
