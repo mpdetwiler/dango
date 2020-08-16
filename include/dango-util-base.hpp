@@ -1880,7 +1880,7 @@ dango
 {
   inline constexpr auto min_c =
     []<typename tp_cmp, typename... tp_args>
-    (tp_cmp&& a_cmp, tp_args... a_args)constexpr
+    (tp_cmp&& a_cmp, tp_args&&... a_args)constexpr
     noexcept(requires{ { dango::detail::min_max_dispatch<false>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
     requires(requires{ { dango::detail::min_max_dispatch<false>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
     {
@@ -1898,7 +1898,7 @@ dango
 
   inline constexpr auto max_c =
     []<typename tp_cmp, typename... tp_args>
-    (tp_cmp&& a_cmp, tp_args... a_args)constexpr
+    (tp_cmp&& a_cmp, tp_args&&... a_args)constexpr
     noexcept(requires{ { dango::detail::min_max_dispatch<true>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }noexcept; })->decltype(auto)
     requires(requires{ { dango::detail::min_max_dispatch<true>(dango::declval<tp_cmp>(), dango::declval<tp_args>()...) }; })
     {
