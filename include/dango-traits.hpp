@@ -2273,5 +2273,24 @@ in_constexpr_context
   return __builtin_is_constant_evaluated();
 }
 
+// workaround for GCC bug 81043
+
+#ifdef DANGO_USING_GCC
+#define DANGO_GCC_BUG_81043_WORKAROUND \
+  , dango::is_same<void> = void
+#define DANGO_GCC_BUG_81043_WORKAROUND_ID(idno, ...) \
+  , dango::detail::spec_id<dango::uint(idno), __VA_ARGS__>
+namespace
+dango::detail
+{
+  template
+  <dango::uint, typename, typename...>
+  using spec_id = void;
+}
+#else
+#define DANGO_GCC_BUG_81043_WORKAROUND
+#define DANGO_GCC_BUG_81043_WORKAROUND_ID(idno, ...)
+#endif
+
 #endif // DANGO_TRAITS_HPP_INCLUDED
 

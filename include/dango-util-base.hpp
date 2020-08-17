@@ -46,14 +46,16 @@ dango
     DANGO_TAG_TYPE(integer_seq)
   };
 
-#ifdef __clang__
-  template
-  <typename tp_int, tp_int tp_len>
-  using make_integer_seq = __make_integer_seq<dango::integer_seq, tp_int, tp_len>;
-#else
+#ifdef DANGO_USING_GCC
   template
   <typename tp_int, tp_int tp_len>
   using make_integer_seq = dango::integer_seq<tp_int, __integer_pack(tp_len)...>;
+#endif
+
+#ifdef DANGO_USING_CLANG
+  template
+  <typename tp_int, tp_int tp_len>
+  using make_integer_seq = __make_integer_seq<dango::integer_seq, tp_int, tp_len>;
 #endif
 
   template
@@ -1630,9 +1632,7 @@ dango
       {
         if constexpr(dango::has_spaceship_op<tp_lhs const&, tp_rhs const&>)
         {
-        #ifdef __clang__
-          return dango::comparison::strongest(a_lhs <=> a_rhs);
-        #else
+        #ifdef DANGO_USING_GCC
           if constexpr(dango::in_constexpr_context())
           {
             using ret_type = decltype(dango::comparison::strongest(a_lhs <=> a_rhs));
@@ -1643,6 +1643,8 @@ dango
           {
             return dango::comparison::strongest(a_lhs <=> a_rhs);
           }
+        #else
+          return dango::comparison::strongest(a_lhs <=> a_rhs);
         #endif
         }
         else
@@ -1680,10 +1682,10 @@ final
   {
     if constexpr(dango::in_constexpr_context())
     {
-    #ifdef __clang__
-      return dango::comparison::strongest(a_lhs <=> a_rhs);
-    #else
+    #ifdef DANGO_USING_GCC
       return dango::compare_val{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
+    #else
+      return dango::comparison::strongest(a_lhs <=> a_rhs);
     #endif
     }
     else
@@ -2012,7 +2014,7 @@ namespace
 dango::custom
 {
   template
-  <typename tp_type>
+  <typename tp_type DANGO_GCC_BUG_81043_WORKAROUND>
   struct operator_hash;
 }
 
@@ -2111,20 +2113,12 @@ dango::custom
   template
   <dango::is_integral tp_type>
   struct
-  operator_hash<tp_type>;
+  operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_type)>;
 
-// GCC (10.2.1) bug with having mutliple constrained partial specializatons of template classes
-// where my_class<T> (just plain T from original decl) is passed results in an error. just going
-// to disable the floating point specialization on GCC for now (who hashes floats anyway) but in the
-// future this is going to be a major issue and i dont want to have to bring back enable_if. this
-// has been a bug since at least june 2017 (GCC 8.0) hopefully they fix it soon
-
-#ifdef __clang__
   template
   <dango::is_float tp_type>
   struct
-  operator_hash<tp_type>;
-#endif
+  operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_type)>;
 
   template
   <typename tp_type>
@@ -2137,7 +2131,7 @@ template
 struct
 dango::
 custom::
-operator_hash<tp_type>
+operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_type)>
 final
 {
   constexpr auto
@@ -2150,13 +2144,12 @@ final
   DANGO_UNINSTANTIABLE(operator_hash)
 };
 
-#ifdef __clang__
 template
 <dango::is_float tp_type>
 struct
 dango::
 custom::
-operator_hash<tp_type>
+operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_type)>
 final
 {
   constexpr auto
@@ -2202,7 +2195,6 @@ final
 
   DANGO_UNINSTANTIABLE(operator_hash)
 };
-#endif
 
 template
 <typename tp_type>

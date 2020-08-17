@@ -1,6 +1,16 @@
 #ifndef DANGO_MACRO_HPP_INCLUDED
 #define DANGO_MACRO_HPP_INCLUDED
 
+#ifndef __GNUG__
+static_assert(false, "dango requires GCC or clang to compile");
+#endif
+
+#ifdef __clang__
+#define DANGO_USING_CLANG
+#else
+#define DANGO_USING_GCC
+#endif
+
 #ifdef DANGO_BUILDING_DANGO
 #ifndef DANGO_BUILDING_SHARED_LIB
 #define DANGO_BUILDING_SHARED_LIB
