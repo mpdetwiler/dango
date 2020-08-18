@@ -457,7 +457,6 @@ public dango::detail::mutex_control
 {
 private:
   using super_type = dango::detail::mutex_control;
-  using count_type = dango::usize;
 public:
   static auto
   operator new(dango::usize const a_size)dango_new_noexcept->void*
@@ -474,14 +473,14 @@ public:
   explicit constexpr
   mutex_control_dynamic()noexcept:
   super_type{ },
-  m_ref_count{ count_type(1) }
+  m_ref_count{ 1 }
   { init(); }
   ~mutex_control_dynamic()noexcept{ destroy(); }
 public:
-  void increment()noexcept override{ m_ref_count.add_fetch<dango::mem_order::acquire>(count_type(1)); }
-  auto decrement()noexcept->bool override{ return m_ref_count.sub_fetch<dango::mem_order::release>(count_type(1)) == count_type(0); }
+  void increment()noexcept override{ m_ref_count.increment(); }
+  auto decrement()noexcept->bool override{ return m_ref_count.decrement(); }
 private:
-  dango::atomic<count_type> m_ref_count;
+  dango::atomic_ref_count m_ref_count;
 public:
   DANGO_IMMOBILE(mutex_control_dynamic)
 };
@@ -745,10 +744,10 @@ public dango::intrusive_list_elem<cond_var_control>
 {
 private:
   using super_type = dango::intrusive_list_elem<cond_var_control>;
+  using count_type = dango::usize;
   class cond_var_impl;
 protected:
   using mutex_type = dango::detail::mutex_base;
-  using count_type = dango::usize;
 public:
   static auto operator new(dango::usize)noexcept->void* = delete;
   static void operator delete(void*, dango::usize)noexcept = delete;
@@ -816,14 +815,14 @@ public:
   cond_var_control_dynamic
   (mutex_type* const a_mutex)noexcept:
   super_type{ a_mutex },
-  m_ref_count{ count_type(1) }
+  m_ref_count{ 1 }
   { init(); }
   ~cond_var_control_dynamic()noexcept{ destroy(); }
 public:
-  void increment()noexcept override{ m_ref_count.add_fetch<dango::mem_order::acquire>(count_type(1)); }
-  auto decrement()noexcept->bool override{ return m_ref_count.sub_fetch<dango::mem_order::release>(count_type(1)) == count_type(0); }
+  void increment()noexcept override{ m_ref_count.increment(); }
+  auto decrement()noexcept->bool override{ return m_ref_count.decrement(); }
 private:
-  dango::atomic<count_type> m_ref_count;
+  dango::atomic_ref_count m_ref_count;
 public:
   DANGO_IMMOBILE(cond_var_control_dynamic)
 };
@@ -1205,8 +1204,8 @@ public:
   ~control_block()noexcept = default;
 public:
   constexpr auto is_daemon()const noexcept->bool{ return m_daemon; }
-  void increment()noexcept;
-  auto decrement()noexcept->bool;
+  void increment()noexcept{ m_ref_count.increment(); }
+  auto decrement()noexcept->bool{ return m_ref_count.decrement(); }
   void wait()noexcept;
   void wait(dango::timeout const&)noexcept;
   void notify_all()noexcept;
@@ -1215,7 +1214,7 @@ public:
 private:
   auto non_null_ID(dango::crit_section const&)const noexcept->bool{ return m_thread_ID != dango::thread_ID::none; }
 private:
-  dango::atomic<dango::usize> m_ref_count;
+  dango::atomic_ref_count m_ref_count;
   bool const m_daemon;
   mutable dango::mutex m_mutex;
   mutable dango::cond_var m_cond;
@@ -1261,28 +1260,6 @@ m_thread_ID{ a_thread_ID },
 m_waiter_count{ dango::usize(0) }
 {
 
-}
-
-inline void
-dango::
-thread::
-control_block::
-increment
-()noexcept
-{
-  auto const a_prev = m_ref_count.fetch_add<dango::mem_order::acquire>(dango::usize(1));
-
-  dango_assert(a_prev != dango::usize(0));
-}
-
-inline auto
-dango::
-thread::
-control_block::
-decrement
-()noexcept->bool
-{
-  return m_ref_count.sub_fetch<dango::mem_order::release>(dango::usize(1)) == dango::usize(0);
 }
 
 inline void
