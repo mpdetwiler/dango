@@ -473,7 +473,7 @@ public:
   explicit constexpr
   mutex_control_dynamic()noexcept:
   super_type{ },
-  m_ref_count{ 1 }
+  m_ref_count{ }
   { init(); }
   ~mutex_control_dynamic()noexcept{ destroy(); }
 public:
@@ -815,7 +815,7 @@ public:
   cond_var_control_dynamic
   (mutex_type* const a_mutex)noexcept:
   super_type{ a_mutex },
-  m_ref_count{ 1 }
+  m_ref_count{ }
   { init(); }
   ~cond_var_control_dynamic()noexcept{ destroy(); }
 public:
@@ -1252,7 +1252,7 @@ control_block::
 control_block
 (bool const a_daemon, dango::thread_ID const a_thread_ID)dango_new_noexcept:
 super_type{ },
-m_ref_count{ dango::usize(1) },
+m_ref_count{ },
 m_daemon{ a_daemon },
 m_mutex{ },
 m_cond{ m_mutex },

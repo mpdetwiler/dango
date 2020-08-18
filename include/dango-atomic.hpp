@@ -436,46 +436,5 @@ compare_exchange
   return dango::atomic_compare_exchange<tp_success, tp_failure>(&m_data, &a_expected, a_data);
 }
 
-/*** atomic_ref_count ***/
-
-namespace
-dango
-{
-  class atomic_ref_count;
-}
-
-class
-dango::
-atomic_ref_count
-final
-{
-public:
-  using count_type = dango::usize;
-public:
-  explicit constexpr
-  atomic_ref_count
-  (count_type const a_init)noexcept:
-  m_count{ a_init }
-  { }
-  ~atomic_ref_count()noexcept = default;
-public:
-  void
-  increment()noexcept
-  {
-    m_count.add_fetch<dango::mem_order::acquire>(count_type(1));
-  }
-
-  [[nodiscard]] auto
-  decrement()noexcept->bool
-  {
-    return m_count.sub_fetch<dango::mem_order::release>(count_type(1)) == count_type(0);
-  }
-private:
-  dango::atomic<count_type> m_count;
-public:
-  DANGO_DELETE_DEFAULT(atomic_ref_count)
-  DANGO_IMMOBILE(atomic_ref_count)
-};
-
 #endif // DANGO_ATOMIC_HPP_INCLUDED
 

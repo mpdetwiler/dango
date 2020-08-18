@@ -493,6 +493,77 @@ spin_yield
 }
 #endif
 
+/*** atomic_ref_count ***/
+
+namespace
+dango
+{
+  class atomic_ref_count;
+}
+
+class
+dango::
+atomic_ref_count
+final
+{
+public:
+  using value_type = dango::usize;
+public:
+  explicit constexpr
+  atomic_ref_count()noexcept:
+#ifndef DANGO_NO_DEBUG
+  m_lock{ },
+#endif
+  m_count{ value_type(1) }
+  { }
+  ~atomic_ref_count()noexcept = default;
+public:
+#ifdef DANGO_NO_DEBUG
+  void
+  increment()noexcept
+  {
+    m_count.add_fetch<dango::mem_order::acquire>(value_type(1));
+  }
+  [[nodiscard]] auto
+  decrement()noexcept->bool
+  {
+    return m_count.sub_fetch<dango::mem_order::release>(value_type(1)) == value_type(0);
+  }
+#else
+  void
+  increment()noexcept
+  {
+    dango_crit(m_lock)
+    {
+      dango_assert(m_count != value_type(0));
+
+      ++m_count;
+    }
+  }
+  [[nodiscard]] auto
+  decrement()noexcept->bool
+  {
+    dango_crit(m_lock)
+    {
+      dango_assert(m_count != value_type(0));
+
+      --m_count;
+
+      return m_count == value_type(0);
+    }
+  }
+#endif
+private:
+#ifdef DANGO_NO_DEBUG
+  dango::atomic<value_type> m_count;
+#else
+  dango::spin_mutex m_lock;
+  value_type m_count;
+#endif
+public:
+  DANGO_IMMOBILE(atomic_ref_count)
+};
+
 /*** is_all_decay_constructible is_decay_construct_correct_order is_all_decay_copy_constructible ***/
 
 namespace
