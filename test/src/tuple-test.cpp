@@ -25,3 +25,36 @@ static_assert(dango::is_same<decltype(dango::tuple<int, dango::wchar>{ } <=> dan
 static_assert(dango::tuple<char8_t, char8_t, char8_t>{ u8'a', u8'b', u8'c' } < dango::tuple<char8_t, char8_t>{ u8'a', u8'c' });
 static_assert(dango::tuple<char8_t, char8_t>{ u8'a', u8'c' } > dango::tuple<char8_t, char8_t, char8_t>{ u8'a', u8'b', u8'c' });
 
+static_assert(dango::tuple<>{ } == dango::tuple<>{ });
+static_assert(dango::tuple<>{ } != dango::tuple<int>{ });
+
+static_assert( dango::is_copy_constructible<dango::tuple<int&, float&, bool&>>);
+static_assert( dango::is_move_constructible<dango::tuple<int&, float&, bool&>>);
+static_assert( dango::is_trivial_copy_constructible<dango::tuple<int&, float&, bool&>>);
+static_assert( dango::is_trivial_move_constructible<dango::tuple<int&, float&, bool&>>);
+static_assert( dango::is_assignable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&>&>);
+
+static_assert( dango::is_swappable<dango::tuple<int, float, bool>&,           dango::tuple<int, float, bool>&>);
+static_assert(!dango::is_swappable<dango::tuple<int, float, bool> const&,     dango::tuple<int, float, bool>&>);
+static_assert(!dango::is_swappable<dango::tuple<int, float, bool>&,           dango::tuple<int, float, bool> const&>);
+static_assert(!dango::is_swappable<dango::tuple<int, float, bool> const&,     dango::tuple<int, float, bool> const&>);
+static_assert(!dango::is_swappable<dango::tuple<int, float, bool>&&,          dango::tuple<int, float, bool>&>);
+static_assert(!dango::is_swappable<dango::tuple<int, float, bool>&,           dango::tuple<int, float, bool>&&>);
+static_assert(!dango::is_swappable<dango::tuple<int, float, bool>&&,          dango::tuple<int, float, bool>&&>);
+
+static_assert(!dango::is_swappable<dango::tuple<int&, float, bool>&,           dango::tuple<int&, float, bool>&>);
+static_assert(!dango::is_swappable<dango::tuple<int&, float, bool> const&,     dango::tuple<int&, float, bool>&>);
+static_assert(!dango::is_swappable<dango::tuple<int&, float, bool>&,           dango::tuple<int&, float, bool> const&>);
+static_assert(!dango::is_swappable<dango::tuple<int&, float, bool> const&,     dango::tuple<int&, float, bool> const&>);
+static_assert(!dango::is_swappable<dango::tuple<int&, float, bool>&&,          dango::tuple<int&, float, bool>&>);
+static_assert(!dango::is_swappable<dango::tuple<int&, float, bool>&,           dango::tuple<int&, float, bool>&&>);
+static_assert(!dango::is_swappable<dango::tuple<int&, float, bool>&&,          dango::tuple<int&, float, bool>&&>);
+
+static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&>&>);
+static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&> const&,  dango::tuple<int&, float&, bool&>&>);
+static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&> const&>);
+static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&> const&,  dango::tuple<int&, float&, bool&> const&>);
+static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&&,       dango::tuple<int&, float&, bool&>&>);
+static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&>&&>);
+static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&&,       dango::tuple<int&, float&, bool&>&&>);
+

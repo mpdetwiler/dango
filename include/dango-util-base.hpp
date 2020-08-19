@@ -725,7 +725,7 @@ dango::comparison
   template
   <dango::is_compare_val... tp_types>
   using common_type =
-    decltype(dango::comparison::strongest(dango::declval<std::common_comparison_category_t<typename tp_types::category_type...>>()));
+    decltype(dango::comparison::strongest(dango::declval<std::common_comparison_category_t<std::strong_ordering, typename tp_types::category_type...>>()));
 
   constexpr auto is_eq(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_eq(); }
   constexpr auto is_neq(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_neq(); }
@@ -794,46 +794,46 @@ dango::detail
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_swap_struct<tp_lhs&, tp_rhs&>)
+  requires(dango::has_operator_swap_struct<tp_lhs, tp_rhs>)
   constexpr void
   swap_help
-  (dango::priority_tag<dango::uint(4)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
-  noexcept(dango::has_noexcept_operator_swap_struct<tp_lhs&, tp_rhs&>)
+  (dango::priority_tag<dango::uint(4)> const, tp_lhs&& a_lhs, tp_rhs&& a_rhs)
+  noexcept(dango::has_noexcept_operator_swap_struct<tp_lhs, tp_rhs>)
   {
-    dango::custom::operator_swap<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::swap(a_lhs, a_rhs);
+    dango::custom::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs));
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_swap_struct<tp_rhs&, tp_lhs&>)
+  requires(dango::has_operator_swap_struct<tp_rhs, tp_lhs>)
   constexpr void
   swap_help
-  (dango::priority_tag<dango::uint(3)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
-  noexcept(dango::has_noexcept_operator_swap_struct<tp_rhs&, tp_lhs&>)
+  (dango::priority_tag<dango::uint(3)> const, tp_lhs&& a_lhs, tp_rhs&& a_rhs)
+  noexcept(dango::has_noexcept_operator_swap_struct<tp_rhs, tp_lhs>)
   {
-    dango::custom::operator_swap<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::swap(a_rhs, a_lhs);
+    dango::custom::operator_swap<dango::remove_cvref<tp_rhs>, dango::remove_cvref<tp_lhs>>::swap(dango::forward<tp_rhs>(a_rhs), dango::forward<tp_lhs>(a_lhs));
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_swap_method<tp_lhs&, tp_rhs&>)
+  requires(dango::has_operator_swap_method<tp_lhs, tp_rhs>)
   constexpr void
   swap_help
-  (dango::priority_tag<dango::uint(2)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
-  noexcept(dango::has_noexcept_operator_swap_method<tp_lhs&, tp_rhs&>)
+  (dango::priority_tag<dango::uint(2)> const, tp_lhs&& a_lhs, tp_rhs&& a_rhs)
+  noexcept(dango::has_noexcept_operator_swap_method<tp_lhs, tp_rhs>)
   {
-    a_lhs.dango_operator_swap(a_rhs);
+    dango::forward<tp_lhs>(a_lhs).dango_operator_swap(dango::forward<tp_rhs>(a_rhs));
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_swap_method<tp_rhs&, tp_lhs&>)
+  requires(dango::has_operator_swap_method<tp_rhs, tp_lhs>)
   constexpr void
   swap_help
-  (dango::priority_tag<dango::uint(1)> const, tp_lhs& a_lhs, tp_rhs& a_rhs)
-  noexcept(dango::has_noexcept_operator_swap_method<tp_rhs&, tp_lhs&>)
+  (dango::priority_tag<dango::uint(1)> const, tp_lhs&& a_lhs, tp_rhs&& a_rhs)
+  noexcept(dango::has_noexcept_operator_swap_method<tp_rhs, tp_lhs>)
   {
-    a_rhs.dango_operator_swap(a_lhs);
+    dango::forward<tp_rhs>(a_rhs).dango_operator_swap(dango::forward<tp_lhs>(a_lhs));
   }
 
   template
@@ -884,11 +884,11 @@ dango
 
   inline constexpr auto const swap =
     []<typename tp_lhs, typename tp_rhs>
-    (tp_lhs& a_lhs, tp_rhs& a_rhs)constexpr
-    noexcept(dango::is_noexcept_swappable<tp_lhs&, tp_rhs&>)->void
-    requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
+    (tp_lhs&& a_lhs, tp_rhs&& a_rhs)constexpr
+    noexcept(dango::is_noexcept_swappable<tp_lhs, tp_rhs>)->void
+    requires(dango::is_swappable<tp_lhs, tp_rhs>)
     {
-      dango::detail::swap_help(dango::detail::swap_help_prio{ }, a_lhs, a_rhs);
+      dango::detail::swap_help(dango::detail::swap_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs));
     };
 }
 

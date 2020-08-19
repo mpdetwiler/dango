@@ -235,7 +235,7 @@ main
     dango::tuple<bchar, bchar, bchar, bchar> a_t2{ u8'a', u8'b', u8'c', u8'd' };
     dango::tuple<bchar, bchar, bchar, bchar> a_t3{ u8'b', u8'b', u8'c', u8'd' };
 
-    dango_assert(dango::comparison::is_lt(a_t1.dango_operator_compare(a_t2)));
+    dango_assert(dango::comparison::is_lt(a_t1 <=> a_t2));
 
     dango_assert(!(a_t1 == a_t2));
     dango_assert(  a_t1 != a_t2);
@@ -330,6 +330,7 @@ main
     static_assert(dango::is_trivial_default_constructible<decltype(a_tup)>);
     static_assert(dango::is_trivial_copy_constructible<decltype(a_tup)>);
     static_assert(dango::is_trivial_move_constructible<decltype(a_tup)>);
+    static_assert(dango::is_trivial_copyable<decltype(a_tup)>);
     static_assert(dango::is_trivial_copy_assignable<decltype(a_tup)>);
     static_assert(dango::is_trivial_move_assignable<decltype(a_tup)>);
     static_assert(dango::is_trivial_destructible<decltype(a_tup)>);
