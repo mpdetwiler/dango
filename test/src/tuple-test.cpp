@@ -98,6 +98,7 @@ tuple_test
     dango_assert(dango_offset(a_s, third)  == dango_offset(a_t, third()));
     dango_assert(dango_offset(a_s, fourth) == dango_offset(a_t, fourth()));
   }
+
 #undef dango_offset
 }
 

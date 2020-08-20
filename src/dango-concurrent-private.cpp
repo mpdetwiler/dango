@@ -71,12 +71,7 @@ noexcept->bool
     dango_assert(a_result == 0);
   }
 
-  auto a_count = dango::detail::c_spin_count_init;
-
-  while(a_starting.load<acquire>())
-  {
-    dango::detail::spin_yield(a_count);
-  }
+  dango::busy_wait_while([&a_starting]()noexcept->bool{ return a_starting.load<acquire>(); }, dango::uint(128));
 
   return true;
 }
@@ -84,9 +79,24 @@ noexcept->bool
 void
 dango::
 thread_yield
-()noexcept
+(dango::uint const a_ms)noexcept
 {
-  ::sched_yield();
+  if(a_ms == dango::uint(0))
+  {
+    ::sched_yield();
+
+    return;
+  }
+
+  auto const a_div = a_ms / dango::uint(1'000);
+  auto const a_mod = a_ms % dango::uint(1'000);
+
+  ::timespec a_spec;
+
+  a_spec.tv_sec = a_div;
+  a_spec.tv_nsec = a_mod * dango::uint(1'000'000);
+
+  ::nanosleep(&a_spec, dango::null);
 }
 
 auto
@@ -438,12 +448,7 @@ noexcept->bool
     dango_assert(a_close);
   }
 
-  auto a_count = dango::detail::c_spin_count_init;
-
-  while(a_starting.load<acquire>())
-  {
-    dango::detail::spin_yield(a_count);
-  }
+  dango::busy_wait_while([&a_starting]()noexcept->bool{ return a_starting.load<acquire>(); }, dango::uint(128));
 
   return true;
 }
@@ -451,9 +456,9 @@ noexcept->bool
 void
 dango::
 thread_yield
-()noexcept
+(dango::uint const a_ms)noexcept
 {
-  ::Sleep(DWORD(0));
+  ::Sleep(DWORD(a_ms));
 }
 
 auto

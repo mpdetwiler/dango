@@ -1678,7 +1678,7 @@ thread::
 yield
 ()noexcept
 {
-  dango::thread_yield();
+  dango::thread_yield(dango::uint(0));
 }
 
 inline auto
@@ -1970,14 +1970,7 @@ create
 
   start_thread(&thread_start_address<decltype(a_func)>, &a_func);
 
-  {
-    auto a_count = dango::detail::c_spin_count_init;
-
-    while(a_starting.load<acquire>())
-    {
-      dango::detail::spin_yield(a_count);
-    }
-  }
+  dango::busy_wait_while([&a_starting]()noexcept->bool{ return a_starting.load<acquire>(); }, dango::uint(128));
 
   a_guard.dismiss();
 

@@ -4,13 +4,13 @@
 /*** dango_crit ***/
 
 #define dango_crit(lockable) \
-dango_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
+dango_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_guard_))
 
 #define dango_crit_full(lockable, local_name) \
 if constexpr(auto const local_name = (lockable).lock(); true)
 
 #define dango_try_crit(lockable) \
-dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_var_))
+dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_guard_))
 
 #define dango_try_crit_full(lockable, local_name) \
 if(auto const local_name = (lockable).try_lock(); local_name)
@@ -20,261 +20,63 @@ if(auto const local_name = (lockable).try_lock(); local_name)
 namespace
 dango
 {
-  DANGO_EXPORT void thread_yield()noexcept;
+  DANGO_EXPORT void thread_yield(dango::uint)noexcept;
 }
 
-/*** exec_once ***/
-
-namespace
-dango::detail
-{
-  void spin_yield(dango::uint&)noexcept;
-
-  inline constexpr auto const c_spin_count_init = dango::uint(128);
-}
+/*** busy_wait_while ***/
 
 namespace
 dango
 {
-  class exec_once;
-}
-
-class
-dango::
-exec_once
-final
-{
-private:
-  enum class
-  state:
-  dango::ubyte
-  {
-    EXECUTED, EXECUTING, INITIAL
-  };
-public:
-  explicit constexpr exec_once()noexcept;
-  ~exec_once()noexcept = default;
-public:
   template
-  <typename tp_func, typename... tp_args>
-  requires(dango::is_callable_ret<void, tp_func, tp_args...>)
-  auto exec
-  (tp_func&&, tp_args&&...)
-  noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool;
-
-  template
-  <typename tp_func, typename... tp_args>
-  requires(dango::is_callable_ret<bool, tp_func, tp_args...>)
-  auto exec
-  (tp_func&&, tp_args&&...)
-  noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool;
-public:
-  auto has_executed()const noexcept->bool;
-  void reset()noexcept;
-private:
-  bool try_acquire()noexcept;
-  void release(bool)noexcept;
-private:
-  dango::atomic<state> m_state;
-public:
-  DANGO_IMMOBILE(exec_once)
-};
-
-constexpr
-dango::
-exec_once::
-exec_once
-()noexcept:
-m_state{ state::INITIAL }
-{
-
+  <typename tp_cond>
+  requires(dango::is_callable_ret<bool, tp_cond>)
+  constexpr void
+  busy_wait_while
+  (tp_cond&&, dango::uint const = dango::uint(16))
+  noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>);
 }
 
-inline auto
-dango::
-exec_once::
-try_acquire
-()noexcept->bool
-{
-  using dango::mem_order::acquire;
-
-  if(dango::likely(m_state.load<acquire>() == state::EXECUTED))
-  {
-    return false;
-  }
-
-  auto a_count = detail::c_spin_count_init;
-
-  do
-  {
-    auto a_expected = state::INITIAL;
-
-    if(m_state.compare_exchange<acquire, acquire>(a_expected, state::EXECUTING))
-    {
-      break;
-    }
-
-    if(a_expected == state::EXECUTED)
-    {
-      return false;
-    }
-
-    while(m_state.load<acquire>() == state::EXECUTING)
-    {
-      detail::spin_yield(a_count);
-    }
-  }
-  while(true);
-
-  return true;
-}
-
-inline void
-dango::
-exec_once::
-release
-(bool const a_success)noexcept
-{
-  using dango::mem_order::release;
-
-  m_state.store<release>(a_success ? state::EXECUTED : state::INITIAL);
-}
-
+#ifndef DANGO_NO_MULTICORE
 template
-<typename tp_func, typename... tp_args>
-requires(dango::is_callable_ret<void, tp_func, tp_args...>)
-auto
+<typename tp_cond>
+requires(dango::is_callable_ret<bool, tp_cond>)
+constexpr void
 dango::
-exec_once::
-exec
-(tp_func&& a_func, tp_args&&... a_args)
-noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool
+busy_wait_while
+(tp_cond&& a_cond, dango::uint const a_count)
+noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
 {
-  if(dango::likely(!try_acquire()))
+  for(auto a_spin = dango::uint(0); dango::forward<tp_cond>(a_cond)(); ++a_spin)
   {
-    return false;
+    if(a_spin < a_count)
+    {
+      __builtin_ia32_pause();
+
+      continue;
+    }
+
+    dango::thread_yield(dango::uint(1));
+
+    a_spin = dango::uint(0);
   }
-
-  if constexpr(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)
-  {
-    dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
-  }
-  else
-  {
-    auto a_guard = dango::make_guard([this]()noexcept->void{ release(false); });
-
-    dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
-
-    a_guard.dismiss();
-  }
-
-  release(true);
-
-  return true;
 }
-
+#else
 template
-<typename tp_func, typename... tp_args>
-requires(dango::is_callable_ret<bool, tp_func, tp_args...>)
-auto
+<typename tp_cond>
+requires(dango::is_callable_ret<bool, tp_cond>)
+constexpr void
 dango::
-exec_once::
-exec
-(tp_func&& a_func, tp_args&&... a_args)
-noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool
+busy_wait_while
+(tp_cond&& a_cond, dango::uint const)
+noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
 {
-  if(dango::likely(!try_acquire()))
+  while(dango::forward<tp_cond>(a_cond)())
   {
-    return false;
+    dango::thread_yield(dango::uint(1));
   }
-
-  bool a_success;
-
-  if constexpr(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)
-  {
-    a_success =  dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
-  }
-  else
-  {
-    auto a_guard = dango::make_guard([this]()noexcept->void{ release(false); });
-
-    a_success =  dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
-
-    a_guard.dismiss();
-  }
-
-  release(a_success);
-
-  return a_success;
 }
-
-inline auto
-dango::
-exec_once::
-has_executed
-()const noexcept->bool
-{
-  using dango::mem_order::acquire;
-
-  auto a_count = detail::c_spin_count_init;
-
-  do
-  {
-    auto const a_state = m_state.load<acquire>();
-
-    if(a_state == state::EXECUTED)
-    {
-      break;
-    }
-
-    if(a_state == state::INITIAL)
-    {
-      return false;
-    }
-
-    detail::spin_yield(a_count);
-  }
-  while(true);
-
-  return true;
-}
-
-inline void
-dango::
-exec_once::
-reset
-()noexcept
-{
-  using dango::mem_order::acquire;
-
-  if(m_state.load<acquire>() == state::INITIAL)
-  {
-    return;
-  }
-
-  auto a_count = detail::c_spin_count_init;
-
-  do
-  {
-    auto a_expected = state::EXECUTED;
-
-    if(m_state.compare_exchange<acquire, acquire>(a_expected, state::INITIAL))
-    {
-      break;
-    }
-
-    if(a_expected == state::INITIAL)
-    {
-      break;
-    }
-
-    while(m_state.load<acquire>() == state::EXECUTING)
-    {
-      detail::spin_yield(a_count);
-    }
-  }
-  while(true);
-}
+#endif
 
 /*** crit_section ***/
 
@@ -305,6 +107,8 @@ dango::
 spin_mutex
 final
 {
+private:
+  using count_type = dango::uint;
 public:
   class locker;
   class try_locker;
@@ -319,7 +123,8 @@ private:
   auto try_acquire()noexcept->spin_mutex*;
   void release()noexcept;
 private:
-  dango::atomic<bool> m_locked;
+  dango::atomic<count_type> m_in;
+  dango::atomic<count_type> m_out;
 public:
   DANGO_IMMOBILE(spin_mutex)
 };
@@ -388,7 +193,8 @@ dango::
 spin_mutex::
 spin_mutex
 ()noexcept:
-m_locked{ false }
+m_in{ count_type(0) },
+m_out{ count_type(0) }
 {
 
 }
@@ -400,16 +206,11 @@ acquire
 ()noexcept->spin_mutex*
 {
   using dango::mem_order::acquire;
+  using dango::mem_order::relaxed;
 
-  auto a_count = detail::c_spin_count_init;
+  auto const a_in = m_in.fetch_add<relaxed>(count_type(1));
 
-  while(m_locked.exchange<acquire>(true))
-  {
-    while(m_locked.load<acquire>())
-    {
-      detail::spin_yield(a_count);
-    }
-  }
+  dango::busy_wait_while([this, a_in]()noexcept->bool{ return m_out.load<acquire>() != a_in; });
 
   return this;
 }
@@ -421,18 +222,23 @@ try_acquire
 ()noexcept->spin_mutex*
 {
   using dango::mem_order::acquire;
+  using dango::mem_order::relaxed;
 
-  if(m_locked.load<acquire>())
+  auto const a_in = m_in.load<relaxed>();
+
+  if(m_out.load<relaxed>() != a_in)
   {
     return dango::null;
   }
 
-  if(m_locked.exchange<acquire>(true))
+  auto a_expected = a_in;
+
+  if(m_in.compare_exchange<acquire, relaxed>(a_expected, a_in + count_type(1)))
   {
-    return dango::null;
+    return this;
   }
 
-  return this;
+  return dango::null;
 }
 
 inline void
@@ -441,7 +247,12 @@ spin_mutex::
 release
 ()noexcept
 {
-  m_locked.store<dango::mem_order::release>(false);
+  using dango::mem_order::release;
+  using dango::mem_order::relaxed;
+
+  auto const a_out = m_out.load<relaxed>();
+
+  m_out.store<release>(a_out + count_type(1));
 }
 
 inline auto
@@ -462,36 +273,133 @@ try_lock
   return try_locker{ this };
 }
 
-/*** spin_yield ***/
+/*** exec_once ***/
 
-#ifndef DANGO_NO_MULTICORE
-inline void
-dango::
-detail::
-spin_yield
-(dango::uint& a_count)noexcept
+namespace
+dango
 {
-  if(a_count != dango::uint(0))
+  class exec_once;
+}
+
+class
+dango::
+exec_once
+final
+{
+public:
+  explicit constexpr exec_once()noexcept;
+  ~exec_once()noexcept = default;
+public:
+  template
+  <typename tp_func, typename... tp_args>
+  requires(dango::is_callable_ret<void, tp_func, tp_args...>)
+  auto exec
+  (tp_func&&, tp_args&&...)
+  noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool;
+
+  template
+  <typename tp_func, typename... tp_args>
+  requires(dango::is_callable_ret<bool, tp_func, tp_args...>)
+  auto exec
+  (tp_func&&, tp_args&&...)
+  noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool;
+public:
+  auto has_executed()const noexcept->bool;
+  void reset()noexcept;
+private:
+  mutable dango::spin_mutex m_lock;
+  bool m_executed;
+public:
+  DANGO_IMMOBILE(exec_once)
+};
+
+constexpr
+dango::
+exec_once::
+exec_once
+()noexcept:
+m_lock{ },
+m_executed{ false }
+{
+
+}
+
+template
+<typename tp_func, typename... tp_args>
+requires(dango::is_callable_ret<void, tp_func, tp_args...>)
+auto
+dango::
+exec_once::
+exec
+(tp_func&& a_func, tp_args&&... a_args)
+noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool
+{
+  dango_crit(m_lock)
   {
-    --a_count;
+    if(dango::likely(m_executed))
+    {
+      return false;
+    }
 
-    __builtin_ia32_pause();
+    dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
 
-    return;
+    m_executed = true;
   }
 
-  dango::thread_yield();
+  return true;
 }
-#else
+
+template
+<typename tp_func, typename... tp_args>
+requires(dango::is_callable_ret<bool, tp_func, tp_args...>)
+auto
+dango::
+exec_once::
+exec
+(tp_func&& a_func, tp_args&&... a_args)
+noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool
+{
+  dango_crit(m_lock)
+  {
+    if(dango::likely(m_executed))
+    {
+      return false;
+    }
+
+    if(!dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...))
+    {
+      return false;
+    }
+
+    m_executed = true;
+  }
+
+  return true;
+}
+
+inline auto
+dango::
+exec_once::
+has_executed
+()const noexcept->bool
+{
+  dango_crit(m_lock)
+  {
+    return m_executed;
+  }
+}
+
 inline void
 dango::
-detail::
-spin_yield
-(dango::uint&)noexcept
+exec_once::
+reset
+()noexcept
 {
-  dango::thread_yield();
+  dango_crit(m_lock)
+  {
+    m_executed = false;
+  }
 }
-#endif
 
 /*** atomic_ref_count ***/
 
