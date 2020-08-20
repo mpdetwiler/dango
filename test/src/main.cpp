@@ -174,10 +174,18 @@ struct printer
   auto dango_operator_compare(printer const&)const noexcept->dango::compare_val{ return dango::compare_val(0); }
 };
 
+namespace
+tuple_test
+{
+  void test();
+}
+
 auto
 main
 ()noexcept(false)->dango::builtin::sint
 {
+  tuple_test::test();
+
   {
     char x[] = "hello";
     char y[] = "olleh";

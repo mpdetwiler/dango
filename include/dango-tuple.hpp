@@ -2026,6 +2026,67 @@ public:
   constexpr void dango_operator_swap(dango::tuple<> const&)const& noexcept{ }
 };
 
+/*** deduction guide and make ***/
+
+namespace
+dango
+{
+  template
+  <typename... tp_args>
+  tuple(tp_args&&...)->tuple<dango::decay<tp_args>...>;
+
+  template
+  <typename... tp_args>
+  requires(( ... && dango::is_constructible<dango::decay<tp_args>, tp_args>))
+  constexpr auto
+  make_tuple
+  (tp_args&&... a_args)
+  noexcept(( ... && dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>))->auto
+  {
+    return dango::tuple<dango::decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
+  }
+
+  template
+  <typename... tp_args>
+  requires((sizeof...(tp_args) == dango::usize(2)) && ( ... && dango::is_constructible<dango::decay<tp_args>, tp_args>))
+  constexpr auto
+  make_pair
+  (tp_args&&... a_args)
+  noexcept(( ... && dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>))->auto
+  {
+    return dango::tuple<dango::decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
+  }
+
+  template
+  <typename... tp_args>
+  requires(( ... && dango::is_lvalue_ref<tp_args>))
+  constexpr auto
+  make_tie
+  (tp_args&&... a_args)noexcept->auto
+  {
+    return dango::tuple<tp_args...>{ a_args... };
+  }
+
+  template
+  <typename... tp_args>
+  requires(( ... && dango::is_lvalue_ref<tp_args>))
+  constexpr auto
+  make_tie_const
+  (tp_args&&... a_args)noexcept->auto
+  {
+    return dango::tuple<dango::remove_ref<tp_args> const&...>{ a_args... };
+  }
+
+  template
+  <typename... tp_args>
+  constexpr auto
+  forward_as_tuple
+  (tp_args&&... a_args)noexcept->auto
+  {
+    return dango::tuple<tp_args&&...>{ dango::forward<tp_args>(a_args)... };
+  }
+}
+
 /*** tuple_get ***/
 
 namespace
