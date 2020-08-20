@@ -101,6 +101,8 @@ dango
   };
 
   enum class [[gnu::may_alias]] byte:dango::ubyte{ };
+
+  void constexpr_unreachable()noexcept;
 }
 
 #endif // DANGO_DEF_HPP_INCLUDED

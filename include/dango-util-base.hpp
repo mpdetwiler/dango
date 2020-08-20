@@ -74,47 +74,105 @@ dango
 {
   template
   <typename tp_type>
-  constexpr auto move(tp_type&&)noexcept->dango::remove_ref<tp_type>&&;
+  constexpr auto move(tp_type&&)noexcept = delete;
 
   template
   <typename tp_type>
-  constexpr auto forward(dango::remove_ref<tp_type>&)noexcept->tp_type&&;
+  requires(dango::is_lvalue_ref<tp_type>)
+  constexpr auto
+  move
+  (tp_type&& a_arg)noexcept->dango::remove_ref<tp_type>&&
+  {
+    return static_cast<dango::remove_ref<tp_type>&&>(a_arg);
+  }
 
   template
   <typename tp_type>
-  constexpr auto forward(dango::remove_ref<tp_type>&&)noexcept->tp_type&&;
+  constexpr auto forward(dango::remove_ref<tp_type>&&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  forward
+  (dango::remove_ref<tp_type>& a_arg)noexcept->tp_type&&
+  {
+    return static_cast<tp_type&&>(a_arg);
+  }
 }
 
-template
-<typename tp_type>
-constexpr auto
-dango::
-move
-(tp_type&& a_arg)noexcept->dango::remove_ref<tp_type>&&
-{
-  using ret_type = dango::remove_ref<tp_type>&&;
+/*** as_const ***/
 
-  return static_cast<ret_type>(a_arg);
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto as_const(tp_type&&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  requires(dango::is_lvalue_ref<tp_type>)
+  constexpr auto
+  as_const
+  (tp_type&& a_arg)noexcept->dango::remove_ref<tp_type> const&
+  {
+    return a_arg;
+  }
 }
 
-template
-<typename tp_type>
-constexpr auto
-dango::
-forward
-(dango::remove_ref<tp_type>& a_arg)noexcept->tp_type&&
-{
-  return static_cast<tp_type&&>(a_arg);
-}
+/*** move_if_noexcept forward_if_noexcept ***/
 
-template
-<typename tp_type>
-constexpr auto
-dango::
-forward
-(dango::remove_ref<tp_type>&& a_arg)noexcept->tp_type&&
+namespace
+dango
 {
-  return static_cast<tp_type&&>(a_arg);
+  template
+  <typename tp_type>
+  constexpr auto move_if_noexcept(tp_type&&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  requires(dango::is_lvalue_ref<tp_type> && dango::is_noexcept_or_copy_constructible<dango::remove_ref<tp_type>&&>)
+  constexpr auto
+  move_if_noexcept
+  (tp_type&& a_arg)noexcept->decltype(auto)
+  {
+    if constexpr(dango::is_noexcept_constructible<dango::decay<tp_type>, dango::remove_ref<tp_type>&&>)
+    {
+      return dango::move(a_arg);
+    }
+    else
+    {
+      return dango::as_const(a_arg);
+    }
+  }
+
+  template
+  <typename tp_type>
+  constexpr auto
+  forward_if_noexcept(dango::remove_ref<tp_type>&&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  requires(!dango::is_noexcept_or_copy_constructible<tp_type>)
+  constexpr auto
+  forward_if_noexcept(dango::remove_ref<tp_type>&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  requires(dango::is_noexcept_or_copy_constructible<tp_type>)
+  constexpr auto
+  forward_if_noexcept
+  (dango::remove_ref<tp_type>& a_arg)noexcept->decltype(auto)
+  {
+    if constexpr(dango::is_noexcept_constructible<dango::decay<tp_type>, tp_type>)
+    {
+      return dango::forward<tp_type>(a_arg);
+    }
+    else
+    {
+      return dango::as_const(a_arg);
+    }
+  }
 }
 
 /*** likely unlikely ***/
@@ -1781,7 +1839,7 @@ dango::detail
 
     auto const a_result =
       dango::comparison::strongest
-      (dango::forward<tp_cmp>(a_cmp)(dango::forward<dango::remove_ref<tp_arg1> const&>(a_arg1), dango::forward<dango::remove_ref<tp_arg2> const&>(a_arg2)));
+      (dango::forward<tp_cmp>(a_cmp)(dango::as_const(a_arg1), dango::as_const(a_arg2)));
 
     if constexpr(tp_max)
     {

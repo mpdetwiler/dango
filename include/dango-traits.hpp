@@ -2101,6 +2101,18 @@ dango
     (dango::is_ref<tp_type> || dango::is_trivial_constructible<tp_type, tp_type&&>);
 }
 
+/*** is_noexcept_or_copy_constructible ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_noexcept_or_copy_constructible =
+    dango::is_noexcept_constructible<dango::decay<tp_type>, tp_type> ||
+    dango::is_constructible<dango::decay<tp_type>, dango::remove_ref<tp_type> const&>;
+}
+
 /*** is_assignable is_trivial_assignable is_noexcept_assignable ***/
 
 namespace
@@ -2161,6 +2173,74 @@ dango
   <typename tp_type>
   concept is_trivial_move_assignable =
     dango::is_noexcept_move_assignable<tp_type> && dango::is_trivial_assignable<tp_type&, tp_type&&>;
+}
+
+/*** in_exception_safe_order ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename... tp_args>
+  constexpr auto
+  in_exception_safe_order_help()noexcept->bool;
+}
+
+template
+<typename... tp_args>
+constexpr auto
+dango::
+detail::
+in_exception_safe_order_help()noexcept->bool
+{
+  constexpr auto const c_size = sizeof...(tp_args) + dango::usize(1);
+
+  constexpr bool const c_throwing_construct[c_size] =
+    { true, (!dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>)... };
+
+  constexpr bool const c_non_trivial_move_construct[c_size] =
+    { false, (!dango::is_lvalue_ref<tp_args> && !dango::is_trivial_constructible<dango::decay<tp_args>, tp_args>)... };
+
+  auto a_throwing_construct_allowed = true;
+
+  for(auto a_i = dango::usize(0); a_i != c_size; ++a_i)
+  {
+    auto const a_throwing_construct = c_throwing_construct[a_i];
+    auto const a_non_trivial_move_construct = c_non_trivial_move_construct[a_i];
+
+    if(a_throwing_construct && a_non_trivial_move_construct)
+    {
+      dango::constexpr_unreachable();
+    }
+
+    if(a_throwing_construct)
+    {
+      if(a_throwing_construct_allowed)
+      {
+        continue;
+      }
+
+      return false;
+    }
+
+    if(a_non_trivial_move_construct)
+    {
+      a_throwing_construct_allowed = false;
+    }
+  }
+
+  return true;
+}
+
+namespace
+dango
+{
+  template
+  <typename... tp_args>
+  concept in_exception_safe_order =
+    ( ... && dango::is_noexcept_or_copy_constructible<tp_args>) &&
+    dango::detail::in_exception_safe_order_help
+    <dango::conditional<dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>, tp_args, dango::remove_ref<tp_args> const&>...>();
 }
 
 /*** underlying_type ***/

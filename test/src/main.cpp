@@ -98,13 +98,6 @@ constexpr auto func_test(int const&)noexcept->bool
   return false;
 }
 
-static_assert(func_test(int_holder{ }.m_int));
-static_assert(func_test(dango::move(int_holder{ }).m_int));
-static_assert(!func_test(int_holder{ }.m_ref));
-static_assert(!func_test(dango::move(int_holder{ }).m_ref));
-static_assert(!func_test(int_holder{ }.m_rref));
-static_assert(!func_test(dango::move(int_holder{ }).m_rref));
-
 template
 <typename tp_type>
 requires(dango::is_same_ignore_cvref<tp_type, bool>)
