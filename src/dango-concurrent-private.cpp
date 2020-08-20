@@ -78,6 +78,7 @@ noexcept->bool
 
 void
 dango::
+detail::
 thread_yield
 (dango::uint const a_ms)noexcept
 {
@@ -455,6 +456,7 @@ noexcept->bool
 
 void
 dango::
+detail::
 thread_yield
 (dango::uint const a_ms)noexcept
 {

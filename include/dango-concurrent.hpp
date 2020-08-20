@@ -1678,7 +1678,7 @@ thread::
 yield
 ()noexcept
 {
-  dango::thread_yield(dango::uint(0));
+  dango::detail::thread_yield(dango::uint(0));
 }
 
 inline auto

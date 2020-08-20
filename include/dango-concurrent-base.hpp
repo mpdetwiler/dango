@@ -15,15 +15,14 @@ dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_guard_))
 #define dango_try_crit_full(lockable, local_name) \
 if(auto const local_name = (lockable).try_lock(); local_name)
 
-/*** thread_yield ***/
+
+/*** busy_wait_while ***/
 
 namespace
-dango
+dango::detail
 {
   DANGO_EXPORT void thread_yield(dango::uint)noexcept;
 }
-
-/*** busy_wait_while ***/
 
 namespace
 dango
@@ -33,7 +32,7 @@ dango
   requires(dango::is_callable_ret<bool, tp_cond>)
   constexpr void
   busy_wait_while
-  (tp_cond&&, dango::uint const = dango::uint(16))
+  (tp_cond&&, dango::uint)
   noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>);
 }
 
@@ -47,6 +46,8 @@ busy_wait_while
 (tp_cond&& a_cond, dango::uint const a_count)
 noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
 {
+  auto a_yields = dango::uint(0);
+
   for(auto a_spin = dango::uint(0); dango::forward<tp_cond>(a_cond)(); ++a_spin)
   {
     if(a_spin < a_count)
@@ -56,9 +57,18 @@ noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
       continue;
     }
 
-    dango::thread_yield(dango::uint(1));
-
     a_spin = dango::uint(0);
+
+    if(a_yields < dango::uint(4))
+    {
+      dango::detail::thread_yield(dango::uint(0));
+
+      ++a_yields;
+
+      continue;
+    }
+
+    dango::detail::thread_yield(dango::uint(1));
   }
 }
 #else
@@ -71,9 +81,20 @@ busy_wait_while
 (tp_cond&& a_cond, dango::uint const)
 noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
 {
+  auto a_yields = dango::uint(0);
+
   while(dango::forward<tp_cond>(a_cond)())
   {
-    dango::thread_yield(dango::uint(1));
+    if(a_yields < dango::uint(4))
+    {
+      dango::detail::thread_yield(dango::uint(0));
+
+      ++a_yields;
+
+      continue;
+    }
+
+    dango::detail::thread_yield(dango::uint(1));
   }
 }
 #endif
@@ -210,7 +231,10 @@ acquire
 
   auto const a_in = m_in.fetch_add<relaxed>(count_type(1));
 
-  dango::busy_wait_while([this, a_in]()noexcept->bool{ return m_out.load<acquire>() != a_in; });
+  auto const a_cond =
+    [this, a_in]()noexcept->bool{ return m_out.load<acquire>() != a_in; };
+
+  dango::busy_wait_while(a_cond, dango::uint(16));
 
   return this;
 }

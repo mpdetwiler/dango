@@ -9,7 +9,7 @@ infinite_loop
 
   do
   {
-    dango::thread_yield(dango::uint(100));
+    dango::detail::thread_yield(dango::uint(1'000));
   }
   while(dango::volatile_load(&a_true));
 
