@@ -15,14 +15,22 @@ dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_guard_))
 #define dango_try_crit_full(lockable, local_name) \
 if(auto const local_name = (lockable).try_lock(); local_name)
 
-
-/*** busy_wait_while ***/
+/*** thread_yeld_soft thread_yield_hard ***/
 
 namespace
 dango::detail
 {
-  DANGO_EXPORT void thread_yield(dango::uint)noexcept;
+  DANGO_EXPORT void thread_sleep(dango::uint)noexcept;
 }
+
+namespace
+dango
+{
+  inline void thread_yield_soft()noexcept{ dango::detail::thread_sleep(dango::uint(0)); }
+  inline void thread_yield_hard()noexcept{ dango::detail::thread_sleep(dango::uint(1)); }
+}
+
+/*** busy_wait_while ***/
 
 namespace
 dango
@@ -30,7 +38,7 @@ dango
   template
   <typename tp_cond>
   requires(dango::is_callable_ret<bool, tp_cond>)
-  constexpr void
+  void
   busy_wait_while
   (tp_cond&&, dango::uint)
   noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>);
@@ -40,13 +48,13 @@ dango
 template
 <typename tp_cond>
 requires(dango::is_callable_ret<bool, tp_cond>)
-constexpr void
+void
 dango::
 busy_wait_while
 (tp_cond&& a_cond, dango::uint const a_count)
 noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
 {
-  auto a_yields = dango::uint(0);
+  auto a_soft_yields = dango::uint(0);
 
   for(auto a_spin = dango::uint(0); dango::forward<tp_cond>(a_cond)(); ++a_spin)
   {
@@ -59,42 +67,42 @@ noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
 
     a_spin = dango::uint(0);
 
-    if(a_yields < dango::uint(4))
+    if(a_soft_yields < dango::uint(4))
     {
-      dango::detail::thread_yield(dango::uint(0));
+      dango::thread_yield_soft();
 
-      ++a_yields;
+      ++a_soft_yields;
 
       continue;
     }
 
-    dango::detail::thread_yield(dango::uint(1));
+    dango::thread_yield_hard();
   }
 }
 #else
 template
 <typename tp_cond>
 requires(dango::is_callable_ret<bool, tp_cond>)
-constexpr void
+void
 dango::
 busy_wait_while
 (tp_cond&& a_cond, dango::uint const)
 noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
 {
-  auto a_yields = dango::uint(0);
+  auto a_soft_yields = dango::uint(0);
 
   while(dango::forward<tp_cond>(a_cond)())
   {
-    if(a_yields < dango::uint(4))
+    if(a_soft_yields < dango::uint(4))
     {
-      dango::detail::thread_yield(dango::uint(0));
+      dango::thread_yield_soft();
 
-      ++a_yields;
+      ++a_soft_yields;
 
       continue;
     }
 
-    dango::detail::thread_yield(dango::uint(1));
+    dango::thread_yield_hard();
   }
 }
 #endif
@@ -248,16 +256,16 @@ try_acquire
   using dango::mem_order::acquire;
   using dango::mem_order::relaxed;
 
-  auto const a_in = m_in.load<relaxed>();
+  auto a_in = m_in.load<relaxed>();
 
   if(m_out.load<relaxed>() != a_in)
   {
     return dango::null;
   }
 
-  auto a_expected = a_in;
+  auto const a_next = a_in + count_type(1);
 
-  if(m_in.compare_exchange<acquire, relaxed>(a_expected, a_in + count_type(1)))
+  if(m_in.compare_exchange<acquire, relaxed>(a_in, a_next))
   {
     return this;
   }
@@ -456,6 +464,7 @@ public:
   {
     m_count.add_fetch<dango::mem_order::acquire>(value_type(1));
   }
+
   [[nodiscard]] auto
   decrement()noexcept->bool
   {
@@ -472,6 +481,7 @@ public:
       ++m_count;
     }
   }
+
   [[nodiscard]] auto
   decrement()noexcept->bool
   {
@@ -494,6 +504,209 @@ private:
 #endif
 public:
   DANGO_IMMOBILE(atomic_ref_count)
+};
+
+/*** atomic_ref_count_ws ***/
+
+namespace
+dango
+{
+  class atomic_ref_count_ws;
+}
+
+class
+dango::
+atomic_ref_count_ws
+final
+{
+public:
+  using value_type = dango::usize;
+public:
+  explicit constexpr
+  atomic_ref_count_ws()noexcept:
+#ifndef DANGO_NO_DEBUG
+  m_lock{ },
+#endif
+  m_wcount{ value_type(1) },
+  m_scount{ value_type(1) }
+  { }
+  ~atomic_ref_count_ws()noexcept = default;
+public:
+#ifdef DANGO_NO_DEBUG
+  void
+  weak_increment()noexcept
+  {
+    m_wcount.add_fetch<dango::mem_order::acquire>(value_type(1));
+  }
+
+  void
+  strong_increment()noexcept
+  {
+    using dango::mem_order::acquire;
+
+    m_wcount.add_fetch<acquire>(value_type(1));
+    m_scount.add_fetch<acquire>(value_type(1));
+  }
+
+  [[nodiscard]] auto
+  try_strong_increment()noexcept->bool
+  {
+    using dango::mem_order::acquire;
+    using dango::mem_order::release;
+    using dango::mem_order::relaxed;
+
+    m_wcount.add_fetch<acquire>(value_type(1));
+
+    auto a_guard =
+      dango::make_guard([this]()noexcept->void{ m_wcount.sub_fetch<release>(value_type(1)); });
+
+    auto a_strong = m_scount.load<relaxed>();
+
+    if(a_strong == value_type(0))
+    {
+      return false;
+    }
+
+    auto const a_cond =
+      [this, &a_strong]()noexcept->bool
+      {
+        auto const a_next = a_strong + value_type(1);
+
+        if(m_scount.compare_exchange<acquire, relaxed, true>(a_strong, a_next))
+        {
+          return false;
+        }
+
+        return a_strong != value_type(0);
+      };
+
+    dango::busy_wait_while(a_cond, dango::uint(16));
+
+    if(a_strong == value_type(0))
+    {
+      return false;
+    }
+
+    a_guard.dismiss();
+
+    return true;
+  }
+
+  [[nodiscard]] auto
+  weak_decrement()noexcept->bool
+  {
+    return m_wcount.sub_fetch<dango::mem_order::release>(value_type(1)) == value_type(0);
+  }
+
+  template
+  <typename tp_func>
+  requires(dango::is_noexcept_callable_ret<void, tp_func>)
+  [[nodiscard]] auto
+  strong_decrement
+  (tp_func&& a_func)noexcept->bool
+  {
+    if(m_scount.sub_fetch<dango::mem_order::release>(value_type(1)) == value_type(0))
+    {
+      dango::forward<tp_func>(a_func)();
+    }
+
+    return weak_decrement();
+  }
+#else
+  void
+  weak_increment()noexcept
+  {
+    dango_crit(m_lock)
+    {
+      dango_assert(m_wcount != value_type(0));
+
+      ++m_wcount;
+    }
+  }
+
+  void
+  strong_increment()noexcept
+  {
+    dango_crit(m_lock)
+    {
+      dango_assert(m_wcount != value_type(0));
+      dango_assert(m_scount != value_type(0));
+
+      ++m_wcount;
+      ++m_scount;
+    }
+  }
+
+  [[nodiscard]] auto
+  try_strong_increment()noexcept->bool
+  {
+    dango_crit(m_lock)
+    {
+      dango_assert(m_wcount != value_type(0));
+
+      if(m_scount == value_type(0))
+      {
+        return false;
+      }
+
+      ++m_wcount;
+      ++m_scount;
+    }
+
+    return true;
+  }
+
+  [[nodiscard]] auto
+  weak_decrement()noexcept->bool
+  {
+    dango_crit(m_lock)
+    {
+      dango_assert(m_wcount != value_type(0));
+
+      --m_wcount;
+
+      return m_wcount == value_type(0);
+    }
+  }
+
+  template
+  <typename tp_func>
+  requires(dango::is_noexcept_callable_ret<void, tp_func>)
+  [[nodiscard]] auto
+  strong_decrement
+  (tp_func&& a_func)noexcept->bool
+  {
+    auto const a_exec =
+      [this]()noexcept->bool
+      {
+        auto const a_guard = m_lock.lock();
+
+        dango_assert(m_scount != value_type(0));
+
+        --m_scount;
+
+        return m_scount == value_type(0);
+      }();
+
+    if(a_exec)
+    {
+      dango::forward<tp_func>(a_func)();
+    }
+
+    return weak_decrement();
+  }
+#endif
+private:
+#ifdef DANGO_NO_DEBUG
+  dango::atomic<value_type> m_wcount;
+  dango::atomic<value_type> m_scount;
+#else
+  dango::spin_mutex m_lock;
+  value_type m_wcount;
+  value_type m_scount;
+#endif
+public:
+  DANGO_IMMOBILE(atomic_ref_count_ws)
 };
 
 #endif // DANGO_CONCURRENT_BASE_HPP_INCLUDED

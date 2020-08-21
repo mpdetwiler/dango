@@ -293,7 +293,7 @@ dango
   template
   <typename tp_type>
   concept atomic_constraint_spec =
-    !dango::is_const<tp_type> && !dango::is_volatile<tp_type> && dango::is_atomic<tp_type>;
+    !dango::is_const_or_volatile<tp_type> && dango::is_atomic<tp_type>;
 
   template
   <dango::atomic_constraint_spec tp_type>
@@ -322,7 +322,7 @@ public:
   <dango::memory_order tp_order = dango::memory_order::seq_cst>
   auto exchange(value_type)noexcept->value_type;
   template
-  <dango::memory_order tp_success = dango::memory_order::seq_cst, dango::memory_order tp_failure = dango::memory_order::seq_cst>
+  <dango::memory_order tp_success = dango::memory_order::seq_cst, dango::memory_order tp_failure = dango::memory_order::seq_cst, bool tp_weak = false>
   auto compare_exchange(value_type&, value_type)noexcept->bool;
 
 #define DANGO_ATOMIC_DEFINE_FETCH(name) \
@@ -426,14 +426,14 @@ exchange
 template
 <dango::atomic_constraint_spec tp_type>
 template
-<dango::memory_order tp_success, dango::memory_order tp_failure>
+<dango::memory_order tp_success, dango::memory_order tp_failure, bool tp_weak>
 auto
 dango::
 atomic<tp_type>::
 compare_exchange
 (value_type& a_expected, value_type const a_data)noexcept->bool
 {
-  return dango::atomic_compare_exchange<tp_success, tp_failure>(&m_data, &a_expected, a_data);
+  return dango::atomic_compare_exchange<tp_success, tp_failure, tp_weak>(&m_data, &a_expected, a_data);
 }
 
 #endif // DANGO_ATOMIC_HPP_INCLUDED

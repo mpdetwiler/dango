@@ -79,7 +79,7 @@ noexcept->bool
 void
 dango::
 detail::
-thread_yield
+thread_sleep
 (dango::uint const a_ms)noexcept
 {
   if(a_ms == dango::uint(0))
@@ -92,12 +92,22 @@ thread_yield
   auto const a_div = a_ms / dango::uint(1'000);
   auto const a_mod = a_ms % dango::uint(1'000);
 
-  ::timespec a_spec;
+  ::timespec a_req;
 
-  a_spec.tv_sec = a_div;
-  a_spec.tv_nsec = a_mod * dango::uint(1'000'000);
+  a_req.tv_sec = a_div;
+  a_req.tv_nsec = a_mod * dango::uint(1'000'000);
 
-  ::nanosleep(&a_spec, dango::null);
+  ::timespec a_rem;
+
+  auto a_req_ptr = &a_req;
+  auto a_rem_ptr = &a_rem;
+
+  while(::clock_nanosleep(CLOCK_MONOTONIC, 0, a_req_ptr, a_rem_ptr))
+  {
+    dango_assert(errno == EINTR);
+
+    dango::swap(a_req_ptr, a_rem_ptr);
+  }
 }
 
 auto
@@ -457,7 +467,7 @@ noexcept->bool
 void
 dango::
 detail::
-thread_yield
+thread_sleep
 (dango::uint const a_ms)noexcept
 {
   ::Sleep(DWORD(a_ms));
