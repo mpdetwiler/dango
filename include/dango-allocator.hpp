@@ -154,6 +154,8 @@ public:
   template
   <typename tp_mr>
   class mem_resource_storage_constinit;
+private:
+  struct privacy_tag{ DANGO_TAG_TYPE(privacy_tag) };
 public:
 #ifndef DANGO_NO_DEBUG
   template
@@ -164,7 +166,7 @@ public:
   (tp_args&&... a_args)
   dango_new_noexcept_and(dango::is_noexcept_brace_constructible<tp_mr, tp_args...>)->mem_resource_storage<tp_mr>
   {
-    return mem_resource_storage<tp_mr>{ dango::forward<tp_args>(a_args)... };
+    return mem_resource_storage<tp_mr>{ privacy_tag{ }, dango::forward<tp_args>(a_args)... };
   }
 #else
   template
@@ -175,7 +177,7 @@ public:
   (tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<tp_mr, tp_args...>)->mem_resource_storage<tp_mr>
   {
-    return mem_resource_storage<tp_mr>{ dango::forward<tp_args>(a_args)... };
+    return mem_resource_storage<tp_mr>{ privacy_tag{ }, dango::forward<tp_args>(a_args)... };
   }
 #endif
   template
@@ -185,7 +187,7 @@ public:
   make_constinit
   (tp_args&&... a_args)noexcept->mem_resource_storage_constinit<tp_mr>
   {
-    return mem_resource_storage_constinit<tp_mr>{ dango::forward<tp_args>(a_args)... };
+    return mem_resource_storage_constinit<tp_mr>{ privacy_tag{ }, dango::forward<tp_args>(a_args)... };
   }
 private:
   class control_base;
@@ -315,11 +317,12 @@ public:
   template
   <typename... tp_args>
   explicit constexpr
-  control(tp_args&&... a_args)
+  control(privacy_tag const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<resource_type, tp_args...>):
   super_type{ &m_resource },
   m_resource{ dango::forward<tp_args>(a_args)... }
   { }
+
   ~control()noexcept = default;
 private:
   resource_type m_resource;
@@ -361,7 +364,7 @@ public:
   template
   <typename... tp_args>
   explicit constexpr
-  control_debug(tp_args&&... a_args)
+  control_debug(privacy_tag const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<resource_type, tp_args...>):
   super_type{ dango::null },
   m_storage{ },
@@ -372,6 +375,7 @@ public:
 
     super_type::set_resource_ptr(a_resource);
   }
+
   ~control_debug()noexcept = default;
 public:
   virtual void weak_increment()noexcept override{ m_count.weak_increment(); }
@@ -419,11 +423,11 @@ public:
   <typename... tp_args>
   explicit
   mem_resource_storage
-  (tp_args&&... a_args)
+  (privacy_tag const, tp_args&&... a_args)
   dango_new_noexcept_and(dango::is_noexcept_brace_constructible<resource_type, tp_args...>):
-  m_control{ new control_type{ dango::forward<tp_args>(a_args)... } }
+  m_control{ new control_type{ privacy_tag{ }, dango::forward<tp_args>(a_args)... } }
   { }
-public:
+
   ~mem_resource_storage()noexcept
   {
     if(m_control->strong_decrement())
@@ -450,25 +454,19 @@ polymorphic_allocator<tp_noexcept>::
 mem_resource_storage
 final
 {
-  template
-  <dango::is_derived_from<dango::mem_resource<tp_noexcept>> tp_tp_mr, typename... tp_args>
-  requires(!dango::is_const_or_volatile<tp_tp_mr> && dango::is_brace_constructible<tp_tp_mr, tp_args...> && dango::is_noexcept_destructible<tp_tp_mr>)
-  friend constexpr auto
-  dango::polymorphic_allocator<tp_noexcept>::make(tp_args&&...)
-  noexcept(dango::is_noexcept_brace_constructible<tp_tp_mr, tp_args...>)->mem_resource_storage<tp_tp_mr>;
 private:
   using resource_type = tp_mr;
   using control_type = control<resource_type>;
-private:
+public:
   template
   <typename... tp_args>
   explicit constexpr
   mem_resource_storage
-  (tp_args&&... a_args)
+  (privacy_tag const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<resource_type, tp_args...>):
-  m_control{ dango::forward<tp_args>(a_args)... }
+  m_control{ privacy_tag{ }, dango::forward<tp_args>(a_args)... }
   { }
-public:
+
   ~mem_resource_storage()noexcept = default;
 public:
   constexpr auto get_ptr()noexcept->dango::mem_resource_ptr<tp_noexcept>;
@@ -490,23 +488,18 @@ polymorphic_allocator<tp_noexcept>::
 mem_resource_storage_constinit
 final
 {
-  template
-  <dango::is_derived_from<dango::mem_resource<tp_noexcept>> tp_tp_mr, typename... tp_args>
-  requires(!dango::is_const_or_volatile<tp_tp_mr> && dango::is_noexcept_brace_constructible<tp_tp_mr, tp_args...> && dango::is_trivial_destructible<tp_tp_mr>)
-  friend constexpr auto
-  dango::polymorphic_allocator<tp_noexcept>::make_constinit(tp_args&&...)noexcept->mem_resource_storage_constinit<tp_tp_mr>;
 private:
   using resource_type = tp_mr;
   using control_type = control<resource_type>;
-private:
+public:
   template
   <typename... tp_args>
   explicit constexpr
   mem_resource_storage_constinit
-  (tp_args&&... a_args)noexcept:
-  m_control{ dango::forward<tp_args>(a_args)... }
+  (privacy_tag const, tp_args&&... a_args)noexcept:
+  m_control{ privacy_tag{ }, dango::forward<tp_args>(a_args)... }
   { }
-public:
+
   ~mem_resource_storage_constinit()noexcept = default;
 public:
   constexpr auto get_ptr()noexcept->dango::mem_resource_ptr<tp_noexcept>;
@@ -516,8 +509,6 @@ public:
   DANGO_DELETE_DEFAULT(mem_resource_storage_constinit)
   DANGO_IMMOBILE(mem_resource_storage_constinit)
 };
-
-
 
 template
 <bool tp_noexcept>
@@ -535,7 +526,42 @@ final
 namespace
 dango
 {
+  class basic_mem_resource;
+}
 
+class
+dango::
+basic_mem_resource:
+public dango::mem_resource<>
+{
+private:
+  using super_type = dango::mem_resource<>;
+public:
+  explicit constexpr basic_mem_resource()noexcept:super_type{ }{ }
+  ~basic_mem_resource()noexcept = default;
+public:
+  auto
+  override_alloc
+  (dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->void* override
+  {
+    return dango::operator_new(a_size, a_align);
+  }
+
+  void
+  override_dealloc
+  (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept override
+  {
+    dango::operator_delete(a_ptr, a_size, a_align);
+  }
+public:
+  DANGO_IMMOBILE(basic_mem_resource)
+};
+
+namespace
+dango
+{
+  inline constinit auto s_default_mem_resource =
+    dango::polymorphic_allocator<>::make_constinit<dango::basic_mem_resource>();
 }
 
 #endif // DANGO_ALLOCATOR_HPP_INCLUDED
