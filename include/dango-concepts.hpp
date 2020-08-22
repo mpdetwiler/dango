@@ -10,10 +10,10 @@ dango
   <typename tp_type>
   concept is_nullable =
     dango::is_object_exclude_array<tp_type> &&
-    dango::is_null_equatable<dango::remove_cv<tp_type> const&> && dango::is_null_equatable<dango::remove_cv<tp_type>&&> &&
-    dango::is_constructible<dango::remove_cv<tp_type>, dango::null_tag const&> && dango::is_constructible<dango::remove_cv<tp_type>, dango::null_tag&&> &&
-    dango::is_convertible<dango::null_tag const&, dango::remove_cv<tp_type>> && dango::is_convertible<dango::null_tag&&, dango::remove_cv<tp_type>> &&
-    dango::is_assignable<dango::remove_cv<tp_type>&, dango::null_tag const&> && dango::is_assignable<dango::remove_cv<tp_type>&, dango::null_tag&&>;
+    dango::is_noexcept_null_equatable<dango::remove_cv<tp_type> const&> && dango::is_noexcept_null_equatable<dango::remove_cv<tp_type>&&> &&
+    dango::is_noexcept_constructible<dango::remove_cv<tp_type>, dango::null_tag const&> && dango::is_noexcept_constructible<dango::remove_cv<tp_type>, dango::null_tag&&> &&
+    dango::is_noexcept_convertible<dango::null_tag const&, dango::remove_cv<tp_type>> && dango::is_noexcept_convertible<dango::null_tag&&, dango::remove_cv<tp_type>> &&
+    dango::is_noexcept_assignable<dango::remove_cv<tp_type>&, dango::null_tag const&> && dango::is_noexcept_assignable<dango::remove_cv<tp_type>&, dango::null_tag&&>;
 }
 
 #endif
