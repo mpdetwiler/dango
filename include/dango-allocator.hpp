@@ -746,7 +746,16 @@ public:
 
   ~mem_resource_guard()noexcept
   {
-    m_control->strong_decrement();
+    auto const a_control = m_control;
+
+    if(a_control->strong_decrement())
+    {
+      auto const a_destroy_func = a_control->get_destroy_func();
+
+      dango_assert(a_destroy_func != dango::null);
+
+      a_destroy_func(a_control);
+    }
   }
 public:
   auto
