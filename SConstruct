@@ -139,8 +139,6 @@ lib_env.Append(RPATH = ['./']);
 lib_env.Append(CXXFLAGS = flags);
 lib_env.Append(LINKFLAGS = flags);
 
-if(compile_test):
-  lib_env.Append(CPPDEFINES = 'DANGO_TESTING_DANGO');
 if(no_debug):
   lib_env.Append(CPPDEFINES = 'DANGO_NO_DEBUG');
 if(no_multicore):
@@ -152,6 +150,7 @@ if(new_noexcept):
 
 if(compile_test):
   test_env = lib_env.Clone();
+  test_env.Append(CPPDEFINES = 'DANGO_ENABLE_UNIT_TESTS');
 
 lib_env.Append(CPPDEFINES = ['DANGO_BUILDING_DANGO']);
 lib_env.Append(CPPPATH = ['src/private/']);

@@ -1990,12 +1990,12 @@ thread_start_address
 namespace
 dango::detail
 {
-  inline dango::byte const
+  inline bool const
   s_concurrent_init_byte
   {(
     void(dango::tick_count_suspend_bias()),
     void(dango::thread::self()),
-    dango::byte{ }
+    false
   )};
 }
 #endif

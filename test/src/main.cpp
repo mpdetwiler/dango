@@ -448,3 +448,9 @@ static_assert(dango::str_size(a_location.file_as_char()) == 17);
 static_assert(dango::assume_aligned<8>(&a_location) == &a_location);
 static_assert(dango::address_of(a_location) == &a_location);
 
+DANGO_UNIT_TEST_BEGIN(unit_test_test)
+{
+  printf("************************ unit_test_test ***************************\n");
+}
+DANGO_UNIT_TEST_END
+

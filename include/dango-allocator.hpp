@@ -517,13 +517,12 @@ public:
   ~mem_resource_storage()noexcept
   {
 #ifndef DANGO_NO_DEBUG
-    if(m_control->strong_decrement())
+    if(!m_control->strong_decrement())
     {
-      delete m_control;
+      return;
     }
-#else
-    delete m_control;
 #endif
+    delete m_control;
   }
 public:
   auto

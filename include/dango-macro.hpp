@@ -111,5 +111,54 @@ final
   DANGO_UNINSTANTIABLE(parenth_type_help)
 };
 
+/*** DANGO_UNIT_TEST_BEGIN DANGO_UNIT_TEST_END ***/
+
+/*  usage:
+
+DANGO_UNIT_TEST_BEGIN(my_test1)
+{
+  testing code goes here
+}
+DANGO_UNIT_TEST_END
+
+namespace my_namespace
+{
+
+DANGO_UNIT_TEST_BEGIN(my_test2)
+{
+  testing code goes here
+}
+DANGO_UNIT_TEST_END
+
+}
+
+- can only be placed at global or namespace scope
+- if DANGO_ENABLE_UNIT_TESTS is defined, a global inline constant boolean variable called s_<my test name>_executor will be introduced into the enclosing scope
+- each unit test will be run at some point before control enters main, in no particular order (google "static initialization order fiasco" for more info on the order)
+- can be placed in a header or source file
+- if you place a unit test in a header file and enclose it in the anon namespace it will be run potentially multiple times, once in every source file that includes the header
+- if DANGO_ENABLE_UNIT_TESTS is not defined, no global variable is introduced. the test body is still parsed and syntax-validated but not executed. zero runtime overhead
+- test body is the body of a function that returns void. if an execption is thrown during execution of a unit test, std::terminate will be called
+
+*/
+
+#ifdef DANGO_ENABLE_UNIT_TESTS
+
+#define DANGO_UNIT_TEST_BEGIN(name) \
+  inline bool const s_##name##_executor = (([]()noexcept->void
+
+#define DANGO_UNIT_TEST_END \
+  ()), false);
+
+#else
+
+#define DANGO_UNIT_TEST_BEGIN(name) \
+  static_assert(true || noexcept([]()noexcept->void
+
+#define DANGO_UNIT_TEST_END \
+  ));
+
+#endif
+
 #endif // DANGO_MACRO_HPP_INCLUDED
 
