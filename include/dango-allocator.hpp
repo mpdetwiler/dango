@@ -789,7 +789,7 @@ operator ->
 
   bool const a_alive = m_control->try_strong_increment();
 
-  dango_assert(a_alive);
+  dango_assert_msg(a_alive, u8"mem_resource_ptr: detected use of already-destroyed memory resource");
 
   return guard_type{ privacy_tag{ }, m_control };
 }
