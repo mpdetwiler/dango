@@ -145,7 +145,7 @@ DANGO_UNIT_TEST_END
 #ifdef DANGO_ENABLE_UNIT_TESTS
 
 #define DANGO_UNIT_TEST_BEGIN(name) \
-  inline bool const s_##name##_executor = (([]()noexcept->void
+  [[maybe_unused]] inline bool const s_##name##_executor = (([]()noexcept->void
 
 #define DANGO_UNIT_TEST_END \
   ()), false);

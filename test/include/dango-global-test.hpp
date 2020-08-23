@@ -12,7 +12,7 @@ test
   {
     global_printer()noexcept;
     ~global_printer()noexcept;
-    void print()const noexcept;
+    void print(char const*)const noexcept;
   };
 
   DANGO_DEFINE_GLOBAL_INLINE(global_printer const, s_global_printer, { })

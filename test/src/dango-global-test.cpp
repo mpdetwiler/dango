@@ -27,7 +27,21 @@ void
 test::
 global_printer::
 print
-()const noexcept
+(char const* const a_str)const noexcept
 {
-  fprintf(stderr, "global_printer::print()\n");
+  fprintf(stderr, "global_printer::print(): %s\n", a_str);
+}
+
+namespace
+{
+
+DANGO_UNIT_TEST_BEGIN(global_access_test)
+{
+  dango_access_global(test::s_global_printer, a_printer)
+  {
+    a_printer->print("global_access_test");
+  }
+}
+DANGO_UNIT_TEST_END
+
 }
