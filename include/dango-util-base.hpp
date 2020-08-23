@@ -263,7 +263,7 @@ dango
     }
     else
     {
-      return static_cast<ret_type>(nullptr);
+      return static_cast<ret_type>(dango::null);
     }
   }
 
@@ -281,7 +281,7 @@ dango
     }
     else
     {
-      return static_cast<ret_type>(nullptr);
+      return static_cast<ret_type>(dango::null);
     }
   }
 }
@@ -1691,19 +1691,14 @@ dango
         if constexpr(dango::has_spaceship_op<tp_lhs const&, tp_rhs const&>)
         {
         #ifdef DANGO_USING_GCC
-          if constexpr(dango::in_constexpr_context())
+          if(dango::in_constexpr_context())
           {
             using ret_type = decltype(dango::comparison::strongest(a_lhs <=> a_rhs));
 
             return ret_type{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
           }
-          else
-          {
-            return dango::comparison::strongest(a_lhs <=> a_rhs);
-          }
-        #else
-          return dango::comparison::strongest(a_lhs <=> a_rhs);
         #endif
+          return dango::comparison::strongest(a_lhs <=> a_rhs);
         }
         else
         {
@@ -1738,7 +1733,7 @@ final
   compare
   (voidp const a_lhs, voidp const a_rhs)noexcept->auto
   {
-    if constexpr(dango::in_constexpr_context())
+    if(dango::in_constexpr_context())
     {
     #ifdef DANGO_USING_GCC
       return dango::compare_val{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
@@ -1746,10 +1741,8 @@ final
       return dango::comparison::strongest(a_lhs <=> a_rhs);
     #endif
     }
-    else
-    {
-      return dango::comparison::strongest(dango::ptr_as_uint(a_lhs) <=> dango::ptr_as_uint(a_rhs));
-    }
+
+    return dango::comparison::strongest(dango::ptr_as_uint(a_lhs) <=> dango::ptr_as_uint(a_rhs));
   }
 
   DANGO_UNINSTANTIABLE(operator_compare)
@@ -2313,13 +2306,13 @@ public:
   explicit constexpr aligned_storage()noexcept = default;
   ~aligned_storage()noexcept = default;
 public:
-  constexpr auto get()const noexcept->void*{ return m_storage; }
+  constexpr auto get()const noexcept->void*{ return bytes; }
   template
   <dango::is_object tp_type>
   constexpr auto
   launder_get()const noexcept->tp_type*{ return dango::launder(static_cast<tp_type*>(get())); }
-private:
-  alignas(c_align) mutable dango::byte m_storage[c_size];
+public:
+  alignas(c_align) mutable dango::byte bytes[c_size];
 public:
   DANGO_IMMOBILE(aligned_storage)
 };

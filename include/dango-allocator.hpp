@@ -10,9 +10,10 @@ dango
   <typename tp_alloc>
   concept is_handle_based_allocator =
     dango::is_class_or_union<tp_alloc> &&
-    requires{ typename tp_alloc::handle_type; } &&
-    dango::is_object_exclude_array<typename tp_alloc::handle_type> &&
-    !dango::is_const_or_volatile<typename tp_alloc::handle_type> &&
+    requires{ typename tp_alloc::handle_type; typename tp_alloc::guard_type; } &&
+    dango::is_object_exclude_array<typename tp_alloc::handle_type> && dango::is_object_exclude_array<typename tp_alloc::guard_type> &&
+    !dango::is_const_or_volatile<typename tp_alloc::handle_type> && !dango::is_const_or_volatile<typename tp_alloc::guard_type> &&
+    dango::is_noexcept_destructible<typename tp_alloc::guard_type> &&
     dango::is_nullable<typename tp_alloc::handle_type> &&
     dango::is_noexcept_copy_constructible<typename tp_alloc::handle_type> &&
     dango::is_noexcept_move_constructible<typename tp_alloc::handle_type> &&
@@ -23,7 +24,9 @@ dango
       typename tp_alloc::handle_type& a_handle_m,
       typename tp_alloc::handle_type const& a_handle_c,
       void const volatile* const a_voidp,
-      dango::usize const a_usize
+      dango::usize const a_usize,
+      typename tp_alloc::guard_type& a_guard_m,
+      typename tp_alloc::guard_type const& a_guard_c
     )
     {
       { a_handle_m->alloc(a_usize, a_usize) }->dango::is_same<void*>;
@@ -34,6 +37,18 @@ dango
       { a_handle_c->dealloc(a_voidp, a_usize, a_usize) }noexcept->dango::is_same<void>;
       { dango::move(a_handle_m)->dealloc(a_voidp, a_usize, a_usize) }noexcept->dango::is_same<void>;
       { dango::move(a_handle_c)->dealloc(a_voidp, a_usize, a_usize) }noexcept->dango::is_same<void>;
+      { tp_alloc::lock(a_handle_m) }->dango::is_same<typename tp_alloc::guard_type>;
+      { tp_alloc::lock(a_handle_c) }->dango::is_same<typename tp_alloc::guard_type>;
+      { tp_alloc::lock(dango::move(a_handle_m)) }->dango::is_same<typename tp_alloc::guard_type>;
+      { tp_alloc::lock(dango::move(a_handle_c)) }->dango::is_same<typename tp_alloc::guard_type>;
+      { a_guard_m->alloc(a_usize, a_usize) }->dango::is_same<void*>;
+      { a_guard_c->alloc(a_usize, a_usize) }->dango::is_same<void*>;
+      { dango::move(a_guard_m)->alloc(a_usize, a_usize) }->dango::is_same<void*>;
+      { dango::move(a_guard_c)->alloc(a_usize, a_usize) }->dango::is_same<void*>;
+      { a_guard_m->dealloc(a_voidp, a_usize, a_usize) }noexcept->dango::is_same<void>;
+      { a_guard_c->dealloc(a_voidp, a_usize, a_usize) }noexcept->dango::is_same<void>;
+      { dango::move(a_guard_m)->dealloc(a_voidp, a_usize, a_usize) }noexcept->dango::is_same<void>;
+      { dango::move(a_guard_c)->dealloc(a_voidp, a_usize, a_usize) }noexcept->dango::is_same<void>;
     };
 
   template
@@ -44,21 +59,30 @@ dango
     (
       typename tp_alloc::handle_type& a_handle_m,
       typename tp_alloc::handle_type const& a_handle_c,
-      void const volatile* const a_voidp,
-      dango::usize const a_usize
+      dango::usize const a_usize,
+      typename tp_alloc::guard_type& a_guard_m,
+      typename tp_alloc::guard_type const& a_guard_c
     )
     {
       { a_handle_m->alloc(a_usize, a_usize) }noexcept->dango::is_same<void*>;
       { a_handle_c->alloc(a_usize, a_usize) }noexcept->dango::is_same<void*>;
       { dango::move(a_handle_m)->alloc(a_usize, a_usize) }noexcept->dango::is_same<void*>;
       { dango::move(a_handle_c)->alloc(a_usize, a_usize) }noexcept->dango::is_same<void*>;
+      { tp_alloc::lock(a_handle_m) }noexcept->dango::is_same<typename tp_alloc::guard_type>;
+      { tp_alloc::lock(a_handle_c) }noexcept->dango::is_same<typename tp_alloc::guard_type>;
+      { tp_alloc::lock(dango::move(a_handle_m)) }noexcept->dango::is_same<typename tp_alloc::guard_type>;
+      { tp_alloc::lock(dango::move(a_handle_c)) }noexcept->dango::is_same<typename tp_alloc::guard_type>;
+      { a_guard_m->alloc(a_usize, a_usize) }noexcept->dango::is_same<void*>;
+      { a_guard_c->alloc(a_usize, a_usize) }noexcept->dango::is_same<void*>;
+      { dango::move(a_guard_m)->alloc(a_usize, a_usize) }noexcept->dango::is_same<void*>;
+      { dango::move(a_guard_c)->alloc(a_usize, a_usize) }noexcept->dango::is_same<void*>;
     };
 
   template
   <typename tp_alloc>
   concept is_nohandle_allocator =
     dango::is_class_or_union<tp_alloc> &&
-    !requires{ typename tp_alloc::handle_type; } &&
+    !requires{ typename tp_alloc::handle_type; } && !requires{ typename tp_alloc::guard_type; } &&
     requires(void const volatile* const a_voidp, dango::usize const a_usize)
     {
       { tp_alloc::alloc(a_usize, a_usize) }->dango::is_same<void*>;
@@ -99,10 +123,23 @@ struct
 dango::
 basic_allocator
 {
+#ifndef DANGO_NO_DEBUG
+private:
+  using count_type = dango::usize;
+  static inline constinit dango::spin_mutex s_lock{ };
+  static inline constinit count_type s_count{ 0 };
+#endif
+public:
   static auto
   alloc
   (dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->void*
   {
+#ifndef DANGO_NO_DEBUG
+    dango_crit(s_lock)
+    {
+      ++s_count;
+    }
+#endif
     return dango::operator_new(a_size, a_align);
   }
 
@@ -110,14 +147,19 @@ basic_allocator
   dealloc
   (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
   {
+#ifndef DANGO_NO_DEBUG
+    dango_crit(s_lock)
+    {
+      dango_assert_msg(s_count != count_type(0), u8"basic_allocator: extra dealloc detected");
+
+      --s_count;
+    }
+#endif
     dango::operator_delete(a_ptr, a_size, a_align);
   }
-
+public:
   DANGO_UNINSTANTIABLE(basic_allocator)
 };
-
-static_assert(dango::is_allocator<dango::basic_allocator>);
-static_assert(dango::is_nohandle_allocator<dango::basic_allocator>);
 
 /*** polymorphic_allocator ***/
 
@@ -134,7 +176,11 @@ dango
 
   template
   <bool tp_noexcept = dango::c_operator_new_noexcept>
-  using mem_resource_ptr = typename dango::polymorphic_allocator<tp_noexcept>::mem_resource_ptr;
+  using mem_resource_ptr = typename dango::polymorphic_allocator<tp_noexcept>::handle_type;
+
+  template
+  <bool tp_noexcept = dango::c_operator_new_noexcept>
+  using mem_resource_guard = typename dango::polymorphic_allocator<tp_noexcept>::guard_type;
 }
 
 template
@@ -148,19 +194,32 @@ public:
   class mem_resource;
   class mem_resource_ptr;
   using handle_type = mem_resource_ptr;
+#ifndef DANGO_NO_DEBUG
+  class mem_resource_guard;
+  using guard_type = mem_resource_guard;
+#else
+  using guard_type = mem_resource*;
+#endif
   template
   <typename tp_mr>
   class mem_resource_storage;
   template
   <typename tp_mr>
-  class mem_resource_storage_constinit;
+  class mem_resource_storage_static;
 private:
   struct privacy_tag{ DANGO_TAG_TYPE(privacy_tag) };
 public:
-#ifndef DANGO_NO_DEBUG
+  static auto lock(handle_type const&)noexcept->guard_type;
+
   template
   <dango::is_derived_from<dango::mem_resource<tp_noexcept>> tp_mr, typename... tp_args>
-  requires(!dango::is_const_or_volatile<tp_mr> && dango::is_brace_constructible<tp_mr, tp_args...> && dango::is_noexcept_destructible<tp_mr>)
+  requires
+  (
+    !dango::is_const_or_volatile<tp_mr> &&
+    dango::is_brace_constructible<tp_mr, tp_args...> &&
+    dango::is_noexcept_destructible<tp_mr> &&
+    dango::is_convertible<tp_mr*, dango::mem_resource<tp_noexcept>*>
+  )
   static auto
   make
   (tp_args&&... a_args)
@@ -168,26 +227,21 @@ public:
   {
     return mem_resource_storage<tp_mr>{ privacy_tag{ }, dango::forward<tp_args>(a_args)... };
   }
-#else
+
   template
   <dango::is_derived_from<dango::mem_resource<tp_noexcept>> tp_mr, typename... tp_args>
-  requires(!dango::is_const_or_volatile<tp_mr> && dango::is_brace_constructible<tp_mr, tp_args...> && dango::is_noexcept_destructible<tp_mr>)
+  requires
+  (
+    !dango::is_const_or_volatile<tp_mr> &&
+    dango::is_noexcept_brace_constructible<tp_mr, tp_args...> &&
+    dango::is_trivial_destructible<tp_mr> &&
+    dango::is_convertible<tp_mr*, dango::mem_resource<tp_noexcept>*>
+  )
   static constexpr auto
-  make
-  (tp_args&&... a_args)
-  noexcept(dango::is_noexcept_brace_constructible<tp_mr, tp_args...>)->mem_resource_storage<tp_mr>
+  make_static
+  (tp_args&&... a_args)noexcept->mem_resource_storage_static<tp_mr>
   {
-    return mem_resource_storage<tp_mr>{ privacy_tag{ }, dango::forward<tp_args>(a_args)... };
-  }
-#endif
-  template
-  <dango::is_derived_from<dango::mem_resource<tp_noexcept>> tp_mr, typename... tp_args>
-  requires(!dango::is_const_or_volatile<tp_mr> && dango::is_noexcept_brace_constructible<tp_mr, tp_args...> && dango::is_trivial_destructible<tp_mr>)
-  static constexpr auto
-  make_constinit
-  (tp_args&&... a_args)noexcept->mem_resource_storage_constinit<tp_mr>
-  {
-    return mem_resource_storage_constinit<tp_mr>{ privacy_tag{ }, dango::forward<tp_args>(a_args)... };
+    return mem_resource_storage_static<tp_mr>{ privacy_tag{ }, dango::forward<tp_args>(a_args)... };
   }
 private:
   class control_base;
@@ -224,7 +278,7 @@ protected:
 #else
   explicit constexpr mem_resource()noexcept{ }
 #endif
-  ~mem_resource()noexcept = default;
+  constexpr ~mem_resource()noexcept = default;
 public:
   auto
   alloc
@@ -272,28 +326,30 @@ dango::
 polymorphic_allocator<tp_noexcept>::
 control_base
 {
+public:
+  using destroy_func = void(*)(control_base*)noexcept;
+public:
+  static auto operator new(dango::usize)noexcept->void* = delete;
+  static void operator delete(void*, dango::usize)noexcept = delete;
 protected:
   explicit constexpr
   control_base(mem_resource* const a_resource)noexcept:
   m_resource{ a_resource }
   { }
-  ~control_base()noexcept = default;
+
+  constexpr ~control_base()noexcept = default;
 public:
-  constexpr auto get_resource_ptr()const noexcept->auto{ return m_resource; }
+  constexpr auto get_resource_ptr()const noexcept->auto{ return dango::launder(m_resource); }
 #ifndef DANGO_NO_DEBUG
-protected:
-  void set_resource_ptr(mem_resource* const a_resource)noexcept{ m_resource = a_resource; }
 public:
   virtual void weak_increment()noexcept{ }
   virtual auto try_strong_increment()noexcept->bool{ return true; }
   virtual auto weak_decrement()noexcept->bool{ return false; }
   virtual auto strong_decrement()noexcept->bool{ return false; }
-private:
-  mem_resource* m_resource;
-#else
+  virtual auto get_destroy_func()const noexcept->destroy_func{ return dango::null; }
+#endif
 private:
   mem_resource* const m_resource;
-#endif
 public:
   DANGO_DELETE_DEFAULT(control_base)
   DANGO_IMMOBILE(control_base)
@@ -323,7 +379,7 @@ public:
   m_resource{ dango::forward<tp_args>(a_args)... }
   { }
 
-  ~control()noexcept = default;
+  constexpr ~control()noexcept = default;
 private:
   resource_type m_resource;
 public:
@@ -347,6 +403,7 @@ private:
   using super_type = control_base;
   using resource_type = tp_mr;
   using storage_type = dango::aligned_union<resource_type, dango::cache_align_type>;
+  using destroy_func = typename super_type::destroy_func;
 public:
   static auto
   operator new
@@ -363,17 +420,14 @@ public:
 public:
   template
   <typename... tp_args>
-  explicit constexpr
+  explicit
   control_debug(privacy_tag const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<resource_type, tp_args...>):
-  super_type{ dango::null },
+  super_type{ reinterpret_cast<resource_type*>(&m_storage.bytes[dango::usize(0)]) },
   m_storage{ },
   m_count{ }
   {
-    auto const a_resource =
-      dango_placement_new(m_storage.get(), resource_type, { dango::forward<tp_args>(a_args)... });
-
-    super_type::set_resource_ptr(a_resource);
+    dango_placement_new(m_storage.get(), resource_type, { dango::forward<tp_args>(a_args)... });
   }
 
   ~control_debug()noexcept = default;
@@ -381,13 +435,31 @@ public:
   virtual void weak_increment()noexcept override{ m_count.weak_increment(); }
   virtual auto try_strong_increment()noexcept->bool override{ return m_count.try_strong_increment(); }
   virtual auto weak_decrement()noexcept->bool override{ return m_count.weak_decrement(); }
+
   virtual auto
   strong_decrement()noexcept->bool override
   {
+    auto const a_resource = m_storage.template launder_get<resource_type>();
+
     auto const a_dispose =
-     [this]()noexcept->void{ dango::destructor(super_type::get_resource_ptr()); };
+      [a_resource]()noexcept->void
+      {
+        a_resource->resource_type::~resource_type();
+      };
 
     return m_count.strong_decrement(a_dispose);
+  }
+
+  virtual auto
+  get_destroy_func()const noexcept->destroy_func override
+  {
+    static constexpr auto const c_destroy =
+      [](control_base* const a_control)noexcept->void
+      {
+        delete static_cast<control_debug*>(a_control);
+      };
+
+    return c_destroy;
   }
 private:
   storage_type m_storage;
@@ -409,12 +481,6 @@ polymorphic_allocator<tp_noexcept>::
 mem_resource_storage
 final
 {
-  template
-  <dango::is_derived_from<dango::mem_resource<tp_noexcept>> tp_tp_mr, typename... tp_args>
-  requires(!dango::is_const_or_volatile<tp_tp_mr> && dango::is_brace_constructible<tp_tp_mr, tp_args...> && dango::is_noexcept_destructible<tp_tp_mr>)
-  friend constexpr auto
-  dango::polymorphic_allocator<tp_noexcept>::make(tp_args&&...)
-  dango_new_noexcept_and(dango::is_noexcept_brace_constructible<tp_tp_mr, tp_args...>)->mem_resource_storage<tp_tp_mr>;
 private:
   using resource_type = tp_mr;
   using control_type = control_debug<resource_type>;
@@ -436,7 +502,11 @@ public:
     }
   }
 public:
-  constexpr auto get_ptr()noexcept->dango::mem_resource_ptr<tp_noexcept>;
+  auto
+  get_ptr()noexcept->dango::mem_resource_ptr<tp_noexcept>
+  {
+    return handle_type{ privacy_tag{ }, m_control };
+  }
 private:
   control_type* const m_control;
 public:
@@ -460,7 +530,7 @@ private:
 public:
   template
   <typename... tp_args>
-  explicit constexpr
+  explicit
   mem_resource_storage
   (privacy_tag const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<resource_type, tp_args...>):
@@ -469,7 +539,11 @@ public:
 
   ~mem_resource_storage()noexcept = default;
 public:
-  constexpr auto get_ptr()noexcept->dango::mem_resource_ptr<tp_noexcept>;
+  auto
+  get_ptr()noexcept->dango::mem_resource_ptr<tp_noexcept>
+  {
+    return handle_type{ privacy_tag{ }, &m_control };
+  }
 private:
   control_type m_control;
 public:
@@ -485,7 +559,7 @@ template
 class
 dango::
 polymorphic_allocator<tp_noexcept>::
-mem_resource_storage_constinit
+mem_resource_storage_static
 final
 {
 private:
@@ -495,19 +569,23 @@ public:
   template
   <typename... tp_args>
   explicit constexpr
-  mem_resource_storage_constinit
+  mem_resource_storage_static
   (privacy_tag const, tp_args&&... a_args)noexcept:
   m_control{ privacy_tag{ }, dango::forward<tp_args>(a_args)... }
   { }
 
-  ~mem_resource_storage_constinit()noexcept = default;
+  constexpr ~mem_resource_storage_static()noexcept = default;
 public:
-  constexpr auto get_ptr()noexcept->dango::mem_resource_ptr<tp_noexcept>;
+  auto
+  get_ptr()noexcept->dango::mem_resource_ptr<tp_noexcept>
+  {
+    return handle_type{ privacy_tag{ }, &m_control };
+  }
 private:
   control_type m_control;
 public:
-  DANGO_DELETE_DEFAULT(mem_resource_storage_constinit)
-  DANGO_IMMOBILE(mem_resource_storage_constinit)
+  DANGO_DELETE_DEFAULT(mem_resource_storage_static)
+  DANGO_IMMOBILE(mem_resource_storage_static)
 };
 
 template
@@ -518,8 +596,229 @@ polymorphic_allocator<tp_noexcept>::
 mem_resource_ptr
 final
 {
+private:
+  using control_type = control_base;
+public:
+  explicit
+  mem_resource_ptr
+  (privacy_tag const, control_type* const a_control)noexcept:
+  m_control{ a_control }
+  {
+    dango_assert(a_control != dango::null);
+#ifndef DANGO_NO_DEBUG
+    a_control->weak_increment();
+#endif
+  }
 
+  explicit constexpr
+  mem_resource_ptr()noexcept:
+  m_control{ dango::null }
+  { }
+
+  constexpr
+  mem_resource_ptr
+  (dango::null_tag const)noexcept:
+  m_control{ dango::null }
+  { }
+
+#ifndef DANGO_NO_DEBUG
+  constexpr
+  mem_resource_ptr
+  (mem_resource_ptr const& a_arg)noexcept:
+  m_control{ a_arg.m_control }
+  {
+    if(m_control)
+    {
+      m_control->weak_increment();
+    }
+  }
+#else
+  constexpr mem_resource_ptr(mem_resource_ptr const&)noexcept = default;
+#endif
+
+  constexpr
+  mem_resource_ptr
+  (mem_resource_ptr&& a_arg)noexcept:
+  m_control{ a_arg.m_control }
+  {
+    a_arg.m_control = dango::null;
+  }
+
+#ifndef DANGO_NO_DEBUG
+  constexpr
+  ~mem_resource_ptr()noexcept
+  {
+    auto const a_control = m_control;
+
+    if(a_control && a_control->weak_decrement())
+    {
+      auto const a_destroy_func = a_control->get_destroy_func();
+
+      dango_assert(a_destroy_func != dango::null);
+
+      a_destroy_func(a_control);
+    }
+  }
+#else
+  constexpr ~mem_resource_ptr()noexcept = default;
+#endif
+
+  constexpr auto
+  operator =
+  (dango::null_tag const)& noexcept->mem_resource_ptr&
+  {
+    mem_resource_ptr a_temp{ dango::null };
+
+    dango::swap(*this, a_temp);
+
+    return *this;
+  }
+
+#ifndef DANGO_NO_DEBUG
+  constexpr auto
+  operator =
+  (mem_resource_ptr const& a_arg)& noexcept->mem_resource_ptr&
+  {
+    mem_resource_ptr a_temp{ a_arg };
+
+    dango::swap(*this, a_temp);
+
+    return *this;
+  }
+#else
+  constexpr auto operator = (mem_resource_ptr const&)& noexcept->mem_resource_ptr& = default;
+#endif
+
+  constexpr auto
+  operator =
+  (mem_resource_ptr&& a_arg)& noexcept->mem_resource_ptr&
+  {
+    mem_resource_ptr a_temp{ dango::move(a_arg) };
+
+    dango::swap(*this, a_temp);
+
+    return *this;
+  }
+
+  explicit constexpr operator bool()const noexcept{ return !dango::is_null(*this); }
+
+  auto operator -> ()const noexcept->dango::mem_resource_guard<tp_noexcept>;
+public:
+  constexpr auto
+  dango_operator_is_null()const noexcept->bool
+  {
+    return dango::is_null(m_control);
+  }
+
+  constexpr auto
+  dango_operator_equals
+  (mem_resource_ptr const& a_arg)const noexcept->bool
+  {
+    return dango::equals(m_control, a_arg.m_control);
+  }
+
+  constexpr auto
+  dango_operator_compare
+  (mem_resource_ptr const& a_arg)const noexcept->auto
+  {
+    return dango::compare(m_control, a_arg.m_control);
+  }
+
+  constexpr auto
+  dango_operator_hash()const noexcept->auto
+  {
+    return dango::hash(m_control);
+  }
+
+  constexpr void
+  dango_operator_swap
+  (mem_resource_ptr& a_arg)& noexcept
+  {
+    dango::swap(m_control, a_arg.m_control);
+  }
+private:
+  control_type* m_control;
 };
+
+#ifndef DANGO_NO_DEBUG
+template
+<bool tp_noexcept>
+class
+dango::
+polymorphic_allocator<tp_noexcept>::
+mem_resource_guard
+final
+{
+public:
+  using control_type = control_base;
+public:
+  explicit
+  mem_resource_guard
+  (privacy_tag const, control_type* const a_control)noexcept:
+  m_control{ a_control }
+  { }
+
+  ~mem_resource_guard()noexcept
+  {
+    m_control->strong_decrement();
+  }
+public:
+  auto
+  operator ->
+  ()const noexcept->dango::mem_resource<tp_noexcept>*
+  {
+    return m_control->get_resource_ptr();
+  }
+private:
+  control_type* const m_control;
+public:
+  DANGO_DELETE_DEFAULT(mem_resource_guard)
+  DANGO_IMMOBILE(mem_resource_guard)
+};
+
+template
+<bool tp_noexcept>
+auto
+dango::
+polymorphic_allocator<tp_noexcept>::
+mem_resource_ptr::
+operator ->
+()const noexcept->dango::mem_resource_guard<tp_noexcept>
+{
+  dango_assert(m_control != dango::null);
+
+  bool const a_alive = m_control->try_strong_increment();
+
+  dango_assert(a_alive);
+
+  return guard_type{ privacy_tag{ }, m_control };
+}
+#else
+template
+<bool tp_noexcept>
+auto
+dango::
+polymorphic_allocator<tp_noexcept>::
+mem_resource_ptr::
+operator ->
+()const noexcept->dango::mem_resource_guard<tp_noexcept>
+{
+  dango_assert(m_control != dango::null);
+
+  return m_control->get_resource_ptr();
+}
+#endif
+
+template
+<bool tp_noexcept>
+auto
+dango::
+polymorphic_allocator<tp_noexcept>::
+lock
+(handle_type const& a_ptr)noexcept->guard_type
+{
+  return a_ptr.operator -> ();
+}
 
 /*** basic_memory_resource ***/
 
@@ -538,7 +837,7 @@ private:
   using super_type = dango::mem_resource<>;
 public:
   explicit constexpr basic_mem_resource()noexcept:super_type{ }{ }
-  ~basic_mem_resource()noexcept = default;
+  constexpr ~basic_mem_resource()noexcept = default;
 public:
   auto
   override_alloc
@@ -560,8 +859,17 @@ public:
 namespace
 dango
 {
-  inline constinit auto s_default_mem_resource =
-    dango::polymorphic_allocator<>::make_constinit<dango::basic_mem_resource>();
+  using default_mem_resource_storage_type =
+    dango::polymorphic_allocator<>::mem_resource_storage_static<dango::basic_mem_resource>;
+
+  DANGO_EXPORT_ONLY extern dango::default_mem_resource_storage_type s_default_mem_resource;
+
+  inline auto
+  default_mem_resource_ptr
+  ()noexcept->auto
+  {
+    return s_default_mem_resource.get_ptr();
+  }
 }
 
 #endif // DANGO_ALLOCATOR_HPP_INCLUDED

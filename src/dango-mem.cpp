@@ -54,3 +54,8 @@ noexcept
   ::operator delete(const_cast<void*>(a_ptr), a_size, a_align);
 }
 
+constinit dango::default_mem_resource_storage_type
+dango::
+s_default_mem_resource =
+  dango::polymorphic_allocator<>::make_static<dango::basic_mem_resource>();
+

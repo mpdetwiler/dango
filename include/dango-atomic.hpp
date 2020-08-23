@@ -30,6 +30,7 @@ namespace
 dango::detail
 {
   constexpr auto is_valid_mem_order(dango::memory_order)noexcept->bool;
+  constexpr auto mem_order_strict_level(dango::memory_order)noexcept->dango::uint;
 }
 
 constexpr auto
@@ -49,6 +50,25 @@ is_valid_mem_order
   }
 
   return true;
+}
+
+constexpr auto
+dango::
+detail::
+mem_order_strict_level
+(dango::memory_order const a_order)noexcept->dango::uint
+{
+  switch(a_order)
+  {
+    default: return dango::uint(-1);
+    case dango::memory_order::relaxed: return dango::uint(0);
+    case dango::memory_order::acquire: break;
+    case dango::memory_order::release: break;
+    case dango::memory_order::acq_rel: break;
+    case dango::memory_order::seq_cst: return dango::uint(2);
+  }
+
+  return dango::uint(1);
 }
 
 namespace
@@ -206,6 +226,8 @@ dango
       tp_failure == dango::memory_order::seq_cst
     );
 
+    static_assert(dango::detail::mem_order_strict_level(tp_failure) <= dango::detail::mem_order_strict_level(tp_success));
+
     dango::remove_volatile<tp_type> a_new_value{ dango::forward<tp_arg>(a_arg) };
 
     bool const a_result =
@@ -311,7 +333,7 @@ public:
   using value_type = tp_type;
 public:
   explicit constexpr atomic(value_type)noexcept;
-  ~atomic()noexcept = default;
+  constexpr ~atomic()noexcept = default;
   template
   <dango::memory_order tp_order = dango::memory_order::seq_cst>
   auto load()const noexcept->value_type;

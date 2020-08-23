@@ -36,9 +36,9 @@ is_aligned
 {
   dango_assert(dango::is_pow_two(a_align));
 
-  if constexpr(dango::in_constexpr_context())
+  if(dango::in_constexpr_context())
   {
-    return a_ptr != nullptr;
+    return a_ptr != dango::null;
   }
   else
   {
@@ -46,7 +46,7 @@ is_aligned
 
     auto const a_mod = a_int % dango::uptr(a_align);
 
-    return (a_ptr != nullptr) && (a_mod == dango::uptr(0));
+    return (a_ptr != dango::null) && (a_mod == dango::uptr(0));
   }
 }
 
@@ -64,7 +64,7 @@ dango
   {
     dango_assert(dango::is_aligned(a_ptr, tp_align));
 
-    if constexpr(dango::in_constexpr_context())
+    if(dango::in_constexpr_context())
     {
       return a_ptr;
     }

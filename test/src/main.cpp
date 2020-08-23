@@ -180,6 +180,48 @@ main
   tuple_test::test();
 
   {
+    auto a_test_resource = dango::polymorphic_allocator<>::make<dango::basic_mem_resource>();
+
+    auto const a_mem_ptr = a_test_resource.get_ptr();
+
+    auto a_mem = a_mem_ptr->alloc(16, 16);
+
+    dango_assert(a_mem != dango::null);
+
+    a_mem_ptr->dealloc(a_mem, 16, 16);
+
+    {
+      auto const a_guard = dango::polymorphic_allocator<>::lock(a_mem_ptr);
+
+      a_mem = a_guard->alloc(64, 64);
+
+      dango_assert(a_mem != dango::null);
+
+      a_guard->dealloc(a_mem, 64, 64);
+    }
+  }
+
+  {
+    auto const a_mem_ptr = dango::default_mem_resource_ptr();
+
+    auto a_mem = a_mem_ptr->alloc(16, 16);
+
+    dango_assert(a_mem != dango::null);
+
+    a_mem_ptr->dealloc(a_mem, 16, 16);
+
+    {
+      auto const a_guard = dango::polymorphic_allocator<>::lock(a_mem_ptr);
+
+      a_mem = a_guard->alloc(64, 64);
+
+      dango_assert(a_mem != dango::null);
+
+      a_guard->dealloc(a_mem, 64, 64);
+    }
+  }
+
+  {
     char x[] = "hello";
     char y[] = "olleh";
 
