@@ -120,9 +120,9 @@ elif(compilation_target == target.win32 or compilation_target == target.win64):
     lib_env = Environment(platform = 'win32', tools = ['mingw', 'g++']);
 elif(compilation_target == target.darwin):
   if(use_clang):
-    lib_env = Environment(platform = 'darwin', tools = ['mingw', 'clangxx']);
+    lib_env = Environment(platform = 'darwin', tools = ['default', 'clangxx']);
   else:
-    lib_env = Environment(platform = 'darwin', tools = ['mingw', 'g++']);
+    lib_env = Environment(platform = 'darwin', tools = ['default', 'g++']);
 
 lib_env.Append(ENV = { 'PATH':os.environ['PATH'] });
 
