@@ -211,10 +211,12 @@ pthread_mutex_unlock
 
 /*****************************/
 
+#ifdef DANGO_PLATFORM_LINUX
 namespace
 {
   constexpr auto const c_cond_clock = ::clockid_t(CLOCK_MONOTONIC);
 }
+#endif
 
 void
 dango::
@@ -226,6 +228,7 @@ pthread_cond_init
 
   auto const a_temp = dango_placement_new(a_storage.get(), type);
 
+#ifdef DANGO_PLATFORM_LINUX
   ::pthread_condattr_t a_spec;
 
   auto a_result = ::pthread_condattr_init(&a_spec);
@@ -243,6 +246,11 @@ pthread_cond_init
   a_result = ::pthread_condattr_destroy(&a_spec);
 
   dango_assert(a_result == 0);
+#else
+  auto const a_result = ::pthread_cond_init(a_temp, dango::null);
+
+  dango_assert(a_result == 0);
+#endif
 }
 
 void
