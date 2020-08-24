@@ -19,7 +19,7 @@ namespace
 
 DANGO_UNIT_TEST_BEGIN(main_test)
 {
-  printf("main_test\n");
+
 }
 DANGO_UNIT_TEST_END
 

@@ -158,13 +158,20 @@ DANGO_UNIT_TEST_END
 
 */
 
+namespace
+dango::detail
+{
+  DANGO_EXPORT void unit_test_exec(char const*, char const*, int, void(*)()noexcept)noexcept;
+}
+
 #ifdef DANGO_ENABLE_UNIT_TESTS
 
 #define DANGO_UNIT_TEST_BEGIN(name) \
-  [[maybe_unused]] inline bool const s_##name##_executor = (([]()noexcept->void
+  [[maybe_unused]] inline bool const s_##name##_executor = \
+  (dango::detail::unit_test_exec(#name, __FILE__, __LINE__, []()noexcept->void
 
 #define DANGO_UNIT_TEST_END \
-  ()), false);
+  ), false);
 
 #else
 

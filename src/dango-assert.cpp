@@ -56,8 +56,7 @@ default_assert_log_handler
   dango::bchar const* const a_expr,
   dango::bchar const* const a_msg,
   dango::source_location const& a_loc
-)
-noexcept
+)noexcept
 {
   fprintf
   (
@@ -94,5 +93,35 @@ terminate
 ()noexcept
 {
   std::terminate();
+}
+
+void
+dango::
+detail::
+unit_test_exec
+(
+  char const* const a_name,
+  char const* const a_file,
+  int const a_line,
+  void(* const a_test)()noexcept
+)noexcept
+{
+  fprintf
+  (
+    stderr,
+    "[unit test begin]: \"%s\" (file=%s line=%u)\n",
+    a_name,
+    a_file,
+    dango::builtin::uint(a_line)
+  );
+
+  a_test();
+
+  fprintf
+  (
+    stderr,
+    "[unit test end]:   \"%s\"\n\n",
+    a_name
+  );
 }
 

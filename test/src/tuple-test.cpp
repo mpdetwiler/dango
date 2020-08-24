@@ -65,8 +65,6 @@ namespace
 
 DANGO_UNIT_TEST_BEGIN(tuple_swap_test)
 {
-  printf("tuple_swap_test\n");
-
   int x = 5, y = 7, z = 9;
   int a = 4, b = 6, c = 8;
 
@@ -90,8 +88,6 @@ DANGO_UNIT_TEST_END
 
 DANGO_UNIT_TEST_BEGIN(tuple_offset_test)
 {
-  printf("tuple_offset_test\n");
-
   size_test_struct a_s;
 
   size_test_tuple a_t;
