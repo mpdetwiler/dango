@@ -229,7 +229,7 @@ decrement
   dango::destructor_as<dango::remove_cv<tp_type>>(a_ptr);
 }
 
-#ifndef DANGO_BUILDING_SHARED_LIB
+#ifndef DANGO_BUILDING_LIB
 
 #define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static name##_strong_type const name##_strong{ };
 #define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline bool const name##_bool{ (void(name()), false) }; }
@@ -245,7 +245,12 @@ name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_ty
 #define DANGO_GLOBAL_DEFINE_INLINE_INC(name)
 #define DANGO_GLOBAL_DEFINE_ACCESS(name)
 
-#endif
+#endif // DANGO_BUILDING_LIB
+
+#define DANGO_GLOBAL_DEFINE_ACCESS_WEAK(name) \
+[[nodiscard]] inline auto \
+name##_weak(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
+{ return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; }
 
 /*** extern globals ***/
 
@@ -262,7 +267,8 @@ namespace name##_namespace \
   DANGO_GLOBAL_DEFINE_STATIC_INC(name) \
 } \
 DANGO_GLOBAL_DEFINE_ACCESS(name) \
-DANGO_GLOBAL_DEFINE_INLINE_INC(name)
+DANGO_GLOBAL_DEFINE_INLINE_INC(name) \
+DANGO_GLOBAL_DEFINE_ACCESS_WEAK(name)
 
 #define DANGO_DEFINE_GLOBAL_EXTERN(type_name, name, ...) \
 namespace name##_namespace \
@@ -276,7 +282,7 @@ namespace name##_namespace \
 
 /*** inline globals ***/
 
-#ifndef DANGO_BUILDING_SHARED_LIB
+#ifndef DANGO_BUILDING_LIB
 
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...) \
 namespace name##_namespace \
@@ -297,8 +303,10 @@ DANGO_GLOBAL_DEFINE_ACCESS(name) \
 DANGO_GLOBAL_DEFINE_INLINE_INC(name)
 
 #else
+
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...)
-#endif
+
+#endif // DANGO_BUILDING_LIB
 
 /*** access ***/
 

@@ -12,8 +12,8 @@ static_assert(false, "dango requires GCC or clang to compile");
 #endif
 
 #ifdef DANGO_BUILDING_DANGO
-#ifndef DANGO_BUILDING_SHARED_LIB
-#define DANGO_BUILDING_SHARED_LIB
+#ifndef DANGO_BUILDING_LIB
+#define DANGO_BUILDING_LIB
 #endif
 #endif
 
@@ -33,7 +33,7 @@ static_assert(false, "dango requires GCC or clang to compile");
 
 #ifdef DANGO_PLATFORM_WINDOWS
 
-#ifdef DANGO_BUILDING_SHARED_LIB
+#ifdef DANGO_BUILDING_LIB
 #define DANGO_EXPORT [[gnu::dllexport]]
 #define DANGO_EXPORT_ONLY DANGO_EXPORT
 #else
@@ -45,7 +45,7 @@ static_assert(false, "dango requires GCC or clang to compile");
 
 #ifdef DANGO_PLATFORM_LINUX_OR_APPLE
 
-#ifdef DANGO_BUILDING_SHARED_LIB
+#ifdef DANGO_BUILDING_LIB
 #define DANGO_EXPORT [[gnu::visibility("default")]]
 #define DANGO_EXPORT_ONLY DANGO_EXPORT
 #else
@@ -166,7 +166,7 @@ dango::detail
 
 #ifdef DANGO_ENABLE_UNIT_TESTS
 
-#ifdef DANGO_BUILDING_SHARED_LIB
+#ifdef DANGO_BUILDING_LIB
 static_assert(false, "unit tests should only be enabled when building executables");
 #endif
 

@@ -1925,17 +1925,17 @@ thread_start_address
 
 /*** init things before main ***/
 
-#ifndef DANGO_BUILDING_SHARED_LIB
+#ifndef DANGO_BUILDING_LIB
 namespace
 dango::detail
 {
   [[maybe_unused]] inline bool const
-  s_concurrent_init_byte
-  {(
+  s_concurrent_init_bool =
+  (
     void(dango::tick_count_suspend_bias()),
     void(dango::thread::self()),
     false
-  )};
+  );
 }
 #endif
 
