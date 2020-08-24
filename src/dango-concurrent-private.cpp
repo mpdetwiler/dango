@@ -211,12 +211,14 @@ pthread_mutex_unlock
 
 /*****************************/
 
-#ifdef DANGO_PLATFORM_LINUX
 namespace
 {
+#ifdef DANGO_PLATFORM_LINUX
   constexpr auto const c_cond_clock = ::clockid_t(CLOCK_MONOTONIC);
-}
+#else
+  constexpr auto const c_cond_clock = ::clockid_t(CLOCK_REALTIME);
 #endif
+}
 
 void
 dango::
