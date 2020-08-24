@@ -406,7 +406,7 @@ namespace
   {
     using tc64 = dango::tick_count_type;
 
-    static auto const s_timebase_info =
+    static constexpr auto const c_get_info =
       []()noexcept->auto
       {
         ::mach_timebase_info_data_t a_result;
@@ -416,7 +416,9 @@ namespace
         dango_assert(a_ret == KERN_SUCCESS);
 
         return a_result;
-      }();
+      };
+
+    static auto const s_timebase_info = c_get_info();
 
     constexpr auto const c_div = tc64(100'000);
 
