@@ -215,8 +215,6 @@ namespace
 {
 #ifdef DANGO_PLATFORM_LINUX
   constexpr auto const c_cond_clock = ::clockid_t(CLOCK_MONOTONIC);
-#else
-  constexpr auto const c_cond_clock = ::clockid_t(CLOCK_REALTIME);
 #endif
 }
 
@@ -328,19 +326,29 @@ pthread_cond_wait
 
   ::timespec a_spec;
 
+#ifdef DANGO_PLATFORM_LINUX
   ::clock_gettime(c_cond_clock, &a_spec);
+#endif
 
   {
     auto const a_sec = a_interval / tc64(1'000);
     auto const a_nsec = (a_interval % tc64(1'000)) * tc64(1'000'000);
+#ifdef DANGO_PLATFORM_LINUX
     auto const a_sum = tc64(a_spec.tv_nsec) + a_nsec;
-
-    a_spec.tv_sec += a_sec + (a_sum / tc64(1'000'000'000));
-    a_spec.tv_nsec = a_sum % tc64(1'000'000'000);
+    a_spec.tv_sec += (a_sec + (a_sum / tc64(1'000'000'000)));
+    a_spec.tv_nsec = (a_sum % tc64(1'000'000'000));
+#else
+    a_spec.tv_sec = a_sec;
+    a_spec.tv_nsec = a_nsec;
+#endif
   }
 
   auto const a_result =
+#ifdef DANGO_PLATFORM_LINUX
     ::pthread_cond_timedwait(a_storage.launder_get<type>(), a_lock_storage.launder_get<lock_type>(), &a_spec);
+#else
+    ::pthread_cond_timedwait_relative_np(a_storage.launder_get<type>(), a_lock_storage.launder_get<lock_type>(), &a_spec);
+#endif
 
   dango_assert(a_result == 0 || a_result == ETIMEDOUT);
 }
