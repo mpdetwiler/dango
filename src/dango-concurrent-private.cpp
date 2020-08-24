@@ -1,6 +1,6 @@
 #include "dango-concurrent-private.hpp"
 
-#ifdef __linux__
+#ifdef DANGO_PLATFORM_LINUX_OR_APPLE
 
 #include <errno.h>
 #include <unistd.h>
@@ -380,9 +380,9 @@ namespace
   }
 }
 
-#endif // __linux__
+#endif // DANGO_PLATFORM_LINUX_OR_APPLE
 
-#ifdef _WIN32
+#ifdef DANGO_PLATFORM_WINDOWS
 
 #include <windows.h>
 #include <process.h>
@@ -784,5 +784,5 @@ namespace
   }
 }
 
-#endif // _WIN32
+#endif // DANGO_PLATFORM_WINDOWS
 

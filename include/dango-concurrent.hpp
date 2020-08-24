@@ -2109,7 +2109,7 @@ dango::detail
   DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread)
 }
 
-#ifdef _WIN32
+#ifdef DANGO_PLATFORM_WINDOWS
 
 /*** windows_timer_res_manager ***/
 
@@ -2218,7 +2218,7 @@ dango::detail
   DANGO_DECLARE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon)
 }
 
-#endif // _WIN32
+#endif // DANGO_PLATFORM_WINDOWS
 
 #endif // DANGO_CONCURRENT_HPP_INCLUDED
 

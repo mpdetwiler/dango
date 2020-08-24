@@ -18,6 +18,20 @@ static_assert(false, "dango requires GCC or clang to compile");
 #endif
 
 #ifdef _WIN32
+#define DANGO_PLATFORM_WINDOWS
+#endif
+
+#ifdef __linux__
+#define DANGO_PLATFORM_LINUX
+#define DANGO_PLATFORM_LINUX_OR_APPLE
+#endif
+
+#ifdef __APPLE__
+#define DANGO_PLATFORM_APPLE
+#define DANGO_PLATFORM_LINUX_OR_APPLE
+#endif
+
+#ifdef DANGO_PLATFORM_WINDOWS
 
 #ifdef DANGO_BUILDING_SHARED_LIB
 #define DANGO_EXPORT [[gnu::dllexport]]
@@ -27,7 +41,9 @@ static_assert(false, "dango requires GCC or clang to compile");
 #define DANGO_EXPORT_ONLY
 #endif
 
-#else // __linux__ __APPLE__
+#endif // DANGO_PLATFORM_WINDOWS
+
+#ifdef DANGO_PLATFORM_LINUX_OR_APPLE
 
 #ifdef DANGO_BUILDING_SHARED_LIB
 #define DANGO_EXPORT [[gnu::visibility("default")]]
@@ -37,7 +53,7 @@ static_assert(false, "dango requires GCC or clang to compile");
 #define DANGO_EXPORT_ONLY
 #endif
 
-#endif
+#endif // DANGO_PLATFORM_LINUX_OR_APPLE
 
 #define DANGO_UNCOPYABLE(name) \
 constexpr name(name const&)noexcept = delete; \

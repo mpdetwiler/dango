@@ -523,7 +523,7 @@ noexcept(false)
   throw u8"thread creation failed"; // TODO
 }
 
-#ifdef __linux__
+#ifdef DANGO_PLATFORM_LINUX_OR_APPLE
 
 /*** tick_count_suspend_bias_help ***/
 
@@ -708,9 +708,9 @@ notify_all
   dango::detail::pthread_cond_broadcast(storage());
 }
 
-#endif // __linux__
+#endif // DANGO_PLATFORM_WINDOWS_OR_APPLE
 
-#ifdef _WIN32
+#ifdef DANGO_PLATFORM_WINDOWS
 
 /*** tick_count_suspend_bias_help ***/
 
@@ -1166,5 +1166,5 @@ stop_thread
   a_thread.join();
 }
 
-#endif // _WIN32
+#endif // DANGO_PLATFORM_WINDOWS
 

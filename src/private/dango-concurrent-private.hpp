@@ -11,7 +11,7 @@ dango::detail
   auto create_thread(dango::detail::thread_func_type, void*)noexcept->bool;
 }
 
-#ifdef __linux__
+#ifdef DANGO_PLATFORM_LINUX_OR_APPLE
 
 namespace
 dango::detail
@@ -33,9 +33,9 @@ dango::detail
   void pthread_cond_wait(dango::detail::cond_var_storage&, dango::detail::mutex_storage&, dango::tick_count_type)noexcept;
 }
 
-#endif // __linux__
+#endif // DANGO_PLATFORM_LINUX_OR_APPLE
 
-#ifdef _WIN32
+#ifdef DANGO_PLATFORM_WINDOWS
 
 namespace
 dango::detail
@@ -60,7 +60,7 @@ dango::detail
   void time_end_period()noexcept;
 }
 
-#endif // _WIN32
+#endif // DANGO_PLATFORM_WINDOWS
 
 #endif // DANGO_SHARED_CONCURRENT_HPP_INCLUDED
 
