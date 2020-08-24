@@ -1,5 +1,5 @@
 # dango
-## UPDATED 01 june 2020
+## UPDATED 24 august 2020
 ### this project is intended to be a C++ general purpose framework and standard library alternatve.
   - heavy WIP, currently not very useful.
 
@@ -9,18 +9,18 @@
   - you will need either GCC 10 or clang 10 to compile (extensive use of C++20 features)
   - you will need the build tool called SCons (which requires python)
   - once you have these installed: `scons --target={linux, win32, win64, darwin}`
-    - linux is the default, darwin is not yet implemented
+    - linux is the default
   - options:
     - `-c` clean
     - `--use-clang` use clang++ instead of g++ to compile
-    - `--test` also compile test program/executable (currently just a scratchpad, full blown testing not yet implemented)
+    - `--test` also compile test program/executable (testing in progress)
       - to run: `./exe_test` or `./exe_test.exe` on windows
     - `--no-debug` disable debug mode
       - affects the behavior of dango_assert and dango_unreachable. if a dango_assert could fail or a dango_unreachable 
         is actually reachable in a debug-mode program, the corresponding non debug-mode program is undefined
       - will affect the presence of various bug detection mechanisms, for example whether or not a container contains 
         a "mod count" for detecting use of invalid iterators
-    - `--no-multicore` affects the behavior of `dango::spin_mutex` and other busy waiting
+    - `--no-multicore` affects the behavior of `dango::spin_mutex` and other busy waiting (see dango::busy_wait_while(...))
       - causes blocked threads to not actually do any spinning in userspace and just yield immediately,
         because spinning in this case is pointless on a single-threaded CPU
     - `--big-cache-lines` compile with the cache line size assumed to 128 bytes instead of the default 64
@@ -52,11 +52,12 @@
         - `dango::is_referenceable<T>`
         - `dango::is_class_or_union<T>`
         - many more
+  - ad-hoc unit tests with DANGO_UNIT_TEST_BEGIN(my_test){  }DANGO_UNIT_TEST_END
   - easy operator customization points
-    - add one or more of these non-static member functions to your class and your class will work with various operators for example
+    - specialize dango::custom::operator_*<T> or write a member function dango_operator_*(...) to get various operators, for example
       - `T::dango_operator_is_null()const noexcept(...)->bool` => equatability with `null` (`nullptr`) for nullable types `T == null`, `null == T`, `T != null`, `null != T`
       - `T::dango_operator_equals(U const&)const noexcept(...)->bool` => T == U, T != U 
-      - `T::dango_operator_compare(U const&)const noexcept(...)->std::strong_ordering` (example return type) => `T > U`, `T >= U`, `T < U`, `T <= U`, `T <=> U`, `dango::compare(T, U)`
+      - `T::dango_operator_compare(U const&)const noexcept(...)->dango::compare_val_strong` (example return type) => `T > U`, `T >= U`, `T < U`, `T <= U`, `T <=> U`, `dango::compare(T, U)`
       - `T::dango_operator_swap(U&)& noexcept(...)->void` => `dango::swap(T, U)`
       - `T::dango_operator_hash()const noexcept->dango::hash_val` => `dango::hash(T)`
       - more to come
@@ -64,10 +65,8 @@
     - standalone atomic functions
     - `dango::atomic<T>`
       - has no operators (dangerous) just named member functions only
-      - T cannot be cv qualified (pointless to have a const or volatile atomic variable)
-      - if the class template `dango::atomic<T>` instantiates then it is lock-free (and always so). currently i dont see the point of atomics that are
-        not lock-free. why would you want to write lock-free style code (very tedious and difficult) if it is just going to use locks under the hood 
-        anyway? just use a lock in that case? i must be missing something
+      - T cannot be cv qualified (use standalone functions for volatile + atomic)
+      - if the class template `dango::atomic<T>` instantiates then it is lock-free (and always so)
   - threading and synchronization library
     - Java inspired daemon and non-daemon threads with the ability to prevent the process from exiting until
       all non-daemon threads have terminated
@@ -76,14 +75,14 @@
       - `exec_once`
       - `mutex`
       - `static_mutex` (static meaning designed to have static storage duration and also should be `constinit`)
-      - `cond_var` `static_cond_var` (condition variable) 
-      - `cond_var_mutex` `static_cond_var_mutex` (condition variable that is bound to a particular mutex at construction time and is stuck to it
+      - `cond_var` `static_cond_var` (condition variable that is bound to a particular mutex at construction time and is stuck to it
         for its entire lifetime (safer))
       - `rw_mutex` `static_rw_mutex` (reader writer lock)
       - `rec_mutex` `static_rec_mutex` (recursive mutex)
       - `monitor` `static_monitor` (a mutex and condition variable constructed together and stuck together for their entire lifetime (safest)
         also recursive, Java inspired)
     - support for waiting on timeouts that are or are not suspend-aware
+    - portably wait on high resolution timeouts (1 ms resolution)
   - container library
     - `intrusive_list<T>` (doubly linked list where T must derive from `intrusive_list_elem<T>`)
     - `auto_ptr<T>`
