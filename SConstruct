@@ -5,6 +5,7 @@ class target(enum.Enum):
   linux = 0
   win32 = 1
   win64 = 2
+  darwin = 3
 
 AddOption(
   '--target',
@@ -117,6 +118,11 @@ elif(compilation_target == target.win32 or compilation_target == target.win64):
     lib_env = Environment(platform = 'win32', tools = ['mingw', 'clangxx']);
   else:
     lib_env = Environment(platform = 'win32', tools = ['mingw', 'g++']);
+elif(compilation_target == target.darwin):
+  if(use_clang):
+    lib_env = Environment(platform = 'darwin', tools = ['mingw', 'clangxx']);
+  else:
+    lib_env = Environment(platform = 'darwin', tools = ['mingw', 'g++']);
 
 lib_env.Append(ENV = { 'PATH':os.environ['PATH'] });
 
@@ -157,9 +163,9 @@ lib_env.Append(CPPPATH = ['src/private/']);
 
 lib_flags = [];
 
-if(compilation_target == target.linux):
+if(compilation_target == target.linux or compilation_target == target.darwin):
   lib_env.Append(LIBS = ['pthread']);
-  lib_flags += ['-fvisibility=hidden']; # SCons automatically adds -fPIC when building shared library
+  lib_flags += ['-fvisibility=hidden'];
 elif(compilation_target == target.win32 or compilation_target == target.win64):
   lib_env.Append(LIBS = ['winmm']);
   lib_env.Append(CPPDEFINES = [('WINVER', '0x0601'), ('_WIN32_WINNT', '0x0601')]);
