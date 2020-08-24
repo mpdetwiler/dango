@@ -412,7 +412,7 @@ namespace
 
         dango_assert(a_ret == KERN_SUCCESS);
 
-        return a_result;
+        return dango::make_pair(a_result.numer, a_result.denom);
       };
 
     static auto const s_timebase_info = c_get_info();
@@ -429,8 +429,8 @@ namespace
       a_result = mach_absolute_time();
     }
 
-    a_result *= tc64(s_timebase_info.numer);
-    a_result /= tc64(s_timebase_info.denom);
+    a_result *= tc64(s_timebase_info.first());
+    a_result /= tc64(s_timebase_info.second());
     a_result /= c_div;
 
     return a_result;
