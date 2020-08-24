@@ -396,7 +396,7 @@ dango::detail
   class mutex_control_dynamic;
 
   using sync_primitive_storage =
-    dango::aligned_storage<sizeof(dango::cache_align_type), dango::usize(1) * alignof(dango::cache_align_type)>;
+    dango::aligned_union<dango::cache_align_type>;
 
   class mutex_storage;
 }
@@ -420,15 +420,14 @@ detail::
 mutex_control
 {
 public:
-  static auto operator new(dango::usize)noexcept->void* = delete;
-  static void operator delete(void*, dango::usize)noexcept = delete;
+  DANGO_DELETE_CLASS_OPERATOR_NEW_DELETE
 public:
   explicit constexpr
   mutex_control()noexcept:
   m_init{ },
   m_storage{ }
   { }
-  ~mutex_control()noexcept = default;
+  constexpr ~mutex_control()noexcept = default;
 public:
   void init()noexcept{ m_init.exec([this]()noexcept->void{ initialize(); }); }
   virtual void increment()noexcept{ }
@@ -458,17 +457,7 @@ public dango::detail::mutex_control
 private:
   using super_type = dango::detail::mutex_control;
 public:
-  static auto
-  operator new(dango::usize const a_size)dango_new_noexcept->void*
-  {
-    return dango::operator_new(a_size, alignof(mutex_control_dynamic));
-  }
-
-  static void
-  operator delete(void* const a_ptr, dango::usize const a_size)noexcept
-  {
-    dango::operator_delete(a_ptr, a_size, alignof(mutex_control_dynamic));
-  }
+  DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(mutex_control_dynamic)
 public:
   explicit constexpr
   mutex_control_dynamic()noexcept:
@@ -517,7 +506,7 @@ protected:
   mutex_base(control_type* const a_control)noexcept:
   m_control{ a_control }
   { }
-  ~mutex_base()noexcept = default;
+  constexpr ~mutex_base()noexcept = default;
 public:
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
@@ -689,7 +678,7 @@ private:
   using control_type_static = control_type;
 public:
   explicit constexpr static_mutex()noexcept;
-  ~static_mutex()noexcept = default;
+  constexpr ~static_mutex()noexcept = default;
 private:
   control_type_static m_control_storage;
 public:
@@ -749,8 +738,7 @@ private:
 protected:
   using mutex_type = dango::detail::mutex_base;
 public:
-  static auto operator new(dango::usize)noexcept->void* = delete;
-  static void operator delete(void*, dango::usize)noexcept = delete;
+  DANGO_DELETE_CLASS_OPERATOR_NEW_DELETE
 public:
   explicit constexpr
   cond_var_control
@@ -761,7 +749,7 @@ public:
   m_mutex{ a_mutex },
   m_storage{ }
   { }
-  ~cond_var_control()noexcept = default;
+  constexpr ~cond_var_control()noexcept = default;
 public:
   void init()noexcept{ m_init.exec([this]()noexcept->void{ initialize(); }); }
   virtual void increment()noexcept{ }
@@ -781,7 +769,9 @@ private:
   DANGO_EXPORT void initialize()noexcept;
 private:
   count_type m_suspend_aware_count;
-  alignas(dango::cache_align_type) dango::exec_once m_init;
+  DANGO_CACHE_LINE_START
+  dango::exec_once m_init;
+  DANGO_CACHE_LINE_START
   mutex_type* const m_mutex;
   dango::detail::cond_var_storage m_storage;
 public:
@@ -799,17 +789,7 @@ public dango::detail::cond_var_control
 private:
   using super_type = dango::detail::cond_var_control;
 public:
-  static auto
-  operator new(dango::usize const a_size)dango_new_noexcept->void*
-  {
-    return dango::operator_new(a_size, alignof(cond_var_control_dynamic));
-  }
-
-  static void
-  operator delete(void* const a_ptr, dango::usize const a_size)noexcept
-  {
-    dango::operator_delete(a_ptr, a_size, alignof(cond_var_control_dynamic));
-  }
+  DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(cond_var_control_dynamic)
 public:
   explicit constexpr
   cond_var_control_dynamic
@@ -856,7 +836,7 @@ protected:
   cond_var_base(control_type* const a_control)noexcept:
   m_control{ a_control }
   { }
-  ~cond_var_base()noexcept = default;
+  constexpr ~cond_var_base()noexcept = default;
 public:
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
@@ -1043,7 +1023,7 @@ private:
 public:
   explicit constexpr static_cond_var(mutex_type_static&)noexcept;
   explicit constexpr static_cond_var(mutex_type&)noexcept = delete;
-  ~static_cond_var()noexcept = default;
+  constexpr ~static_cond_var()noexcept = default;
 private:
   control_type_static m_control_storage;
 public:
@@ -1070,7 +1050,7 @@ dango
   class thread;
 
   enum class
-  thread_ID:
+  thread_id:
   dango::uptr
   {
     none = dango::ptr_as_uint(dango::null)
@@ -1111,7 +1091,7 @@ public:
   static void yield()noexcept;
   static auto self()noexcept->thread const&;
   static auto can_call_self()noexcept->bool;
-  static auto self_ID()noexcept->dango::thread_ID;
+  static auto self_id()noexcept->dango::thread_id;
   static void main_join()noexcept;
   [[nodiscard]] static auto main_join_finally()noexcept;
 
@@ -1164,7 +1144,7 @@ public:
   void join()const noexcept;
   void join(dango::timeout const&)const noexcept;
   constexpr auto is_daemon()const noexcept->bool;
-  auto get_ID()const noexcept->dango::thread_ID;
+  auto get_id()const noexcept->dango::thread_id;
   constexpr auto dango_operator_is_null()const noexcept->bool;
   constexpr auto dango_operator_equals(dango::null_tag)const noexcept = delete;
   constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
@@ -1184,10 +1164,9 @@ public dango::intrusive_list_elem<control_block>
 private:
   using super_type = dango::intrusive_list_elem<control_block>;
 public:
-  static auto operator new(dango::usize)dango_new_noexcept->void*;
-  static void operator delete(void*, dango::usize)noexcept;
+  DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(control_block)
 public:
-  explicit control_block(bool, dango::thread_ID)dango_new_noexcept;
+  explicit control_block(bool, dango::thread_id)dango_new_noexcept;
   ~control_block()noexcept = default;
 public:
   constexpr auto is_daemon()const noexcept->bool{ return m_daemon; }
@@ -1196,54 +1175,38 @@ public:
   void wait()noexcept;
   void wait(dango::timeout const&)noexcept;
   void notify_all()noexcept;
-  auto get_ID()const noexcept->dango::thread_ID;
+  auto get_id()const noexcept->dango::thread_id;
   auto is_alive()const noexcept->bool;
 private:
-  auto non_null_ID(dango::crit_section const&)const noexcept->bool{ return m_thread_ID != dango::thread_ID::none; }
+  auto non_null_id(dango::crit_section const&)const noexcept->bool{ return m_thread_id != dango::thread_id::none; }
 private:
+  DANGO_CACHE_LINE_START
   dango::atomic_ref_count m_ref_count;
+  DANGO_CACHE_LINE_START
   bool const m_daemon;
+  DANGO_CACHE_LINE_START
   mutable dango::mutex m_mutex;
   mutable dango::cond_var m_cond;
-  dango::thread_ID m_thread_ID;
+  DANGO_CACHE_LINE_START
+  dango::thread_id m_thread_id;
   dango::usize m_waiter_count;
 public:
   DANGO_DELETE_DEFAULT(control_block)
   DANGO_IMMOBILE(control_block)
 };
 
-inline auto
-dango::
-thread::
-control_block::
-operator new
-(dango::usize const a_size)dango_new_noexcept->void*
-{
-  return dango::operator_new(a_size, alignof(control_block));
-}
-
-inline void
-dango::
-thread::
-control_block::
-operator delete
-(void* const a_ptr, dango::usize const a_size)noexcept
-{
-  dango::operator_delete(a_ptr, a_size, alignof(control_block));
-}
-
 inline
 dango::
 thread::
 control_block::
 control_block
-(bool const a_daemon, dango::thread_ID const a_thread_ID)dango_new_noexcept:
+(bool const a_daemon, dango::thread_id const a_thread_id)dango_new_noexcept:
 super_type{ },
 m_ref_count{ },
 m_daemon{ a_daemon },
 m_mutex{ },
 m_cond{ m_mutex },
-m_thread_ID{ a_thread_ID },
+m_thread_id{ a_thread_id },
 m_waiter_count{ dango::usize(0) }
 {
 
@@ -1258,7 +1221,7 @@ wait
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(non_null_ID(a_crit))
+    while(non_null_id(a_crit))
     {
       ++m_waiter_count;
 
@@ -1278,7 +1241,7 @@ wait
 {
   dango_crit_full(m_cond, a_crit)
   {
-    while(non_null_ID(a_crit) && !a_timeout.has_expired())
+    while(non_null_id(a_crit) && !a_timeout.has_expired())
     {
       ++m_waiter_count;
 
@@ -1298,7 +1261,7 @@ notify_all
 {
   dango_crit_full(m_cond, a_crit)
   {
-    m_thread_ID = dango::thread_ID::none;
+    m_thread_id = dango::thread_id::none;
 
     if(m_waiter_count != dango::usize(0))
     {
@@ -1311,12 +1274,12 @@ inline auto
 dango::
 thread::
 control_block::
-get_ID
-()const noexcept->dango::thread_ID
+get_id
+()const noexcept->dango::thread_id
 {
   dango_crit(m_mutex)
   {
-    return m_thread_ID;
+    return m_thread_id;
   }
 }
 
@@ -1329,7 +1292,7 @@ is_alive
 {
   dango_crit_full(m_mutex, a_crit)
   {
-    return non_null_ID(a_crit);
+    return non_null_id(a_crit);
   }
 }
 
@@ -1490,19 +1453,7 @@ runnable
 final
 {
 public:
-  static auto
-  operator new
-  (dango::usize const a_size)dango_new_noexcept->void*
-  {
-    return dango::operator_new(a_size, alignof(runnable));
-  }
-
-  static void
-  operator delete
-  (void* const a_ptr, dango::usize const a_size)noexcept
-  {
-    dango::operator_delete(a_ptr, a_size, alignof(runnable));
-  }
+  DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(runnable)
 public:
   template
   <typename tp_tp_func, typename... tp_tp_args>
@@ -1539,19 +1490,7 @@ runnable<tp_func>
 final
 {
 public:
-  static auto
-  operator new
-  (dango::usize const a_size)dango_new_noexcept->void*
-  {
-    return dango::operator_new(a_size, alignof(runnable));
-  }
-
-  static void
-  operator delete
-  (void* const a_ptr, dango::usize const a_size)noexcept
-  {
-    dango::operator_delete(a_ptr, a_size, alignof(runnable));
-  }
+  DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(runnable)
 public:
   template
   <typename tp_tp_func>
@@ -1596,7 +1535,7 @@ new_control_block
 {
   try
   {
-    return new control_block{ a_daemon, thread::self_ID() };
+    return new thread::control_block{ a_daemon, thread::self_id() };
   }
   catch(...)
   {
@@ -1691,14 +1630,14 @@ can_call_self
 inline auto
 dango::
 thread::
-self_ID
-()noexcept->dango::thread_ID
+self_id
+()noexcept->dango::thread_id
 {
   void const* a_result;
 
   thread_self_access_check(false, &a_result);
 
-  return dango::thread_ID{ dango::ptr_as_uint(a_result) };
+  return dango::thread_id{ dango::ptr_as_uint(a_result) };
 }
 
 inline void
@@ -1858,12 +1797,12 @@ is_daemon
 inline auto
 dango::
 thread::
-get_ID
-()const noexcept->dango::thread_ID
+get_id
+()const noexcept->dango::thread_id
 {
   dango_assert(m_control != dango::null);
 
-  return m_control->get_ID();
+  return m_control->get_id();
 }
 
 constexpr auto

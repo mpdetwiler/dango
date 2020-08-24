@@ -333,8 +333,7 @@ public:
   using destroy_func = void(*)(control_base*)noexcept;
 #endif
 public:
-  static auto operator new(dango::usize)noexcept->void* = delete;
-  static void operator delete(void*, dango::usize)noexcept = delete;
+  DANGO_DELETE_CLASS_OPERATOR_NEW_DELETE
 protected:
   explicit constexpr
   control_base(mem_resource* const a_resource)noexcept:
@@ -380,19 +379,7 @@ private:
   static_assert(!dango::is_const_or_volatile<resource_type>);
   static_assert(dango::is_noexcept_destructible<resource_type>);
 public:
-  static auto
-  operator new
-  (dango::usize const a_size)dango_new_noexcept->void*
-  {
-    return dango::operator_new(a_size, alignof(control_dynamic));
-  }
-
-  static void
-  operator delete
-  (void* const a_ptr, dango::usize const a_size)noexcept
-  {
-    dango::operator_delete(a_ptr, a_size, alignof(control_dynamic));
-  }
+  DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(control_dynamic)
 public:
   template
   <typename... tp_args>
@@ -426,7 +413,7 @@ public:
     auto const a_dispose =
       [a_resource]()noexcept->void
       {
-        a_resource->resource_type::~resource_type();
+        dango::destructor_as<resource_type>(a_resource);
       };
 
     return m_count.strong_decrement(a_dispose);
@@ -471,6 +458,8 @@ private:
   using resource_type = tp_mr;
   static_assert(!dango::is_const_or_volatile<resource_type>);
   static_assert(dango::is_trivial_destructible<resource_type>);
+public:
+  DANGO_DELETE_CLASS_OPERATOR_NEW_DELETE
 public:
   template
   <typename... tp_args>

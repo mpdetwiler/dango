@@ -88,6 +88,16 @@ dango
   DANGO_EXPORT void operator_delete(void const volatile*, dango::usize, dango::usize)noexcept;
 }
 
+#define DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(name) \
+  static auto operator new(std::size_t const a_size)dango_new_noexcept->void* \
+  { dango_assert(a_size == sizeof(name)); return dango::operator_new(sizeof(name), alignof(name)); } \
+  static void operator delete(void* const a_ptr)noexcept \
+  { dango::operator_delete(a_ptr, sizeof(name), alignof(name)); }
+
+#define DANGO_DELETE_CLASS_OPERATOR_NEW_DELETE \
+  static auto operator new(std::size_t)noexcept->void* = delete; \
+  static void operator delete(void*)noexcept = delete;
+
 /*** placement new ***/
 
 namespace

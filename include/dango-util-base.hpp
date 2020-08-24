@@ -337,16 +337,17 @@ dango
   }
 }
 
-/*** destructor ***/
+/*** destructor destructor_as ***/
 
 namespace
 dango
 {
   template
-  <dango::is_destructible tp_type>
+  <dango::is_object_exclude_array tp_type>
+  requires(dango::is_destructible<tp_type>)
   constexpr void
   destructor
-  (tp_type const volatile* a_ptr)noexcept(dango::is_noexcept_destructible<tp_type>)
+  (tp_type const volatile* const a_ptr)noexcept(dango::is_noexcept_destructible<tp_type>)
   {
     if(a_ptr)
     {
@@ -354,7 +355,19 @@ dango
     }
   }
 
-  constexpr void destructor(dango::null_tag const)noexcept{ }
+  template
+  <dango::is_object_exclude_array tp_type_as, dango::is_object_exclude_array tp_type>
+  requires(requires{ { dango::declval<tp_type const volatile* const&>()->tp_type_as::~tp_type_as() }; })
+  constexpr void
+  destructor_as
+  (tp_type const volatile* const a_ptr)
+  noexcept(requires{ { dango::declval<tp_type const volatile* const&>()->tp_type_as::~tp_type_as() }noexcept; })
+  {
+    if(a_ptr)
+    {
+      a_ptr->tp_type_as::~tp_type_as();
+    }
+  }
 }
 
 /*** launder ***/

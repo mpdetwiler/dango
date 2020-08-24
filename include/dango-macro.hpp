@@ -166,6 +166,10 @@ dango::detail
 
 #ifdef DANGO_ENABLE_UNIT_TESTS
 
+#ifdef DANGO_BUILDING_SHARED_LIB
+static_assert(false, "unit tests should only be enabled when building executables");
+#endif
+
 #define DANGO_UNIT_TEST_BEGIN(name) \
   [[maybe_unused]] inline bool const s_##name##_executor = \
   (dango::detail::unit_test_exec(#name, __FILE__, __LINE__, []()noexcept->void

@@ -40,7 +40,7 @@ public:
   class weak_incrementer;
 public:
   explicit constexpr global_storage()noexcept;
-  ~global_storage()noexcept = default;
+  constexpr ~global_storage()noexcept = default;
 private:
   auto get()const noexcept->tp_type*;
   void increment()noexcept;
@@ -48,8 +48,9 @@ private:
   void decrement()noexcept;
 private:
   tp_type* m_ptr;
-  dango::aligned_storage<sizeof(tp_type), alignof(tp_type)> m_storage;
+  dango::aligned_union<tp_type, dango::cache_align_type> m_storage;
   dango::exec_once m_init;
+  DANGO_CACHE_LINE_START
   dango::spin_mutex m_lock;
   dango::usize m_ref_count;
 private:
@@ -211,7 +212,11 @@ decrement
 {
   dango_crit(m_lock)
   {
-    if(--m_ref_count != dango::usize(0))
+    dango_assert(m_ref_count != dango::usize(0));
+
+    --m_ref_count;
+
+    if(m_ref_count != dango::usize(0))
     {
       return;
     }
@@ -221,13 +226,13 @@ decrement
 
   m_ptr = dango::null;
 
-  dango::destructor(a_ptr);
+  dango::destructor_as<dango::remove_cv<tp_type>>(a_ptr);
 }
 
 #ifndef DANGO_BUILDING_SHARED_LIB
 
 #define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static name##_strong_type const name##_strong{ };
-#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline dango::byte const name##_byte{ (void(name()), dango::byte{ }) }; }
+#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline bool const name##_bool{ (void(name()), false) }; }
 #define DANGO_GLOBAL_DEFINE_ACCESS(name) \
 [[nodiscard]] inline auto \
 name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
