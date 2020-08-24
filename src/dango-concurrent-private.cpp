@@ -406,9 +406,9 @@ namespace
     static constexpr auto const c_get_info =
       []()noexcept->auto
       {
-        mach_timebase_info_data_t a_result;
+        ::mach_timebase_info_data_t a_result;
 
-        auto const a_ret = mach_timebase_info(&a_result);
+        auto const a_ret = ::mach_timebase_info(&a_result);
 
         dango_assert(a_ret == KERN_SUCCESS);
 
@@ -423,11 +423,11 @@ namespace
 
     if(a_biased)
     {
-      a_result = mach_continuous_time();
+      a_result = ::mach_continuous_time();
     }
     else
     {
-      a_result = mach_absolute_time();
+      a_result = ::mach_absolute_time();
     }
 
     a_result *= tc64(s_timebase_info.first());
