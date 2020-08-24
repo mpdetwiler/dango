@@ -426,6 +426,7 @@ namespace
       a_result = mach_continuous_time();
     }
     else
+    {
       a_result = mach_absolute_time();
     }
 
