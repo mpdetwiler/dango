@@ -411,7 +411,7 @@ namespace
       {
         ::mach_timebase_info_data_t a_result;
 
-        auto const a_ret = ::mach_timebase_info(&a_result)
+        auto const a_ret = ::mach_timebase_info(&a_result);
 
         dango_assert(a_ret == KERN_SUCCESS);
 
