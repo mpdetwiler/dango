@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+*.os
 
 # Precompiled Headers
 *.gch
@@ -33,3 +34,7 @@
 
 # Scons
 *.dblite
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
