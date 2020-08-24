@@ -375,10 +375,10 @@ namespace
     return dango::null;
   }
 
-#ifdef DANGO_PLATFORM_LINUX
   auto
   tick_count_help
   (bool const a_biased)noexcept->dango::tick_count_type
+#ifdef DANGO_PLATFORM_LINUX
   {
     using tc64 = dango::tick_count_type;
 
@@ -400,18 +400,15 @@ namespace
     return (a_sec * c_mul) + (a_nsec / c_div);
   }
 #else
-  auto
-  tick_count_help
-  (bool const a_biased)noexcept->dango::tick_count_type
   {
     using tc64 = dango::tick_count_type;
 
     static constexpr auto const c_get_info =
       []()noexcept->auto
       {
-        ::mach_timebase_info_data_t a_result;
+        mach_timebase_info_data_t a_result;
 
-        auto const a_ret = ::mach_timebase_info(&a_result);
+        auto const a_ret = mach_timebase_info(&a_result);
 
         dango_assert(a_ret == KERN_SUCCESS);
 
@@ -426,10 +423,10 @@ namespace
 
     if(a_biased)
     {
-      a_result = ::mach_continuous_time();
+      a_result = mach_continuous_time();
     }
     else
-      a_result = ::mach_absolute_time();
+      a_result = mach_absolute_time();
     }
 
     a_result *= tc64(s_timebase_info.numer);
