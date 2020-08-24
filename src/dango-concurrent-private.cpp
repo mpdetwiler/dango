@@ -7,6 +7,10 @@
 #include <pthread.h>
 #include <sys/time.h>
 
+#ifdef DANGO_PLATFORM_APPLE
+#include <mach/mach_time.h>
+#endif
+
 static_assert(sizeof(dango::detail::mutex_storage) >= sizeof(::pthread_mutex_t));
 static_assert(alignof(dango::detail::mutex_storage) >= alignof(::pthread_mutex_t));
 static_assert(sizeof(dango::detail::cond_var_storage) >= sizeof(::pthread_cond_t));
@@ -18,7 +22,7 @@ namespace
   <typename tp_func>
   auto thread_start_address(void*)noexcept->void*;
 
-  auto tick_count_help(clockid_t)noexcept->dango::tick_count_type;
+  auto tick_count_help(bool)noexcept->dango::tick_count_type;
 }
 
 auto
@@ -102,7 +106,11 @@ thread_sleep
   auto a_req_ptr = &a_req;
   auto a_rem_ptr = &a_rem;
 
+#ifdef DANGO_PLATFORM_LINUX
   while(::clock_nanosleep(CLOCK_MONOTONIC, 0, a_req_ptr, a_rem_ptr))
+#else
+  while(::nanosleep(a_req_ptr, a_rem_ptr))
+#endif
   {
     dango_assert(errno == EINTR);
 
@@ -116,7 +124,7 @@ detail::
 tick_count_monotonic
 ()noexcept->dango::tick_count_type
 {
-  return tick_count_help(CLOCK_MONOTONIC);
+  return tick_count_help(false);
 }
 
 auto
@@ -125,7 +133,7 @@ detail::
 tick_count_boottime
 ()noexcept->dango::tick_count_type
 {
-  return tick_count_help(CLOCK_BOOTTIME);
+  return tick_count_help(true);
 }
 
 /*****************************/
@@ -357,14 +365,17 @@ namespace
     return dango::null;
   }
 
+#ifdef DANGO_PLATFORM_LINUX
   auto
   tick_count_help
-  (clockid_t const a_clock)noexcept->dango::tick_count_type
+  (bool const a_biased)noexcept->dango::tick_count_type
   {
     using tc64 = dango::tick_count_type;
 
-    static constexpr auto const c_mul = tc64(10'000);
-    static constexpr auto const c_div = tc64(100'000);
+    constexpr auto const c_mul = tc64(10'000);
+    constexpr auto const c_div = tc64(100'000);
+
+    ::clockid_t const a_clock = a_biased ? CLOCK_BOOTTIME : CLOCK_MONOTONIC;
 
     ::timespec a_spec;
 
@@ -378,6 +389,44 @@ namespace
 
     return (a_sec * c_mul) + (a_nsec / c_div);
   }
+#else
+  auto
+  tick_count_help
+  (bool const a_biased)noexcept->dango::tick_count_type
+  {
+    using tc64 = dango::tick_count_type;
+
+    static auto const s_timebase_info =
+      []()noexcept->auto
+      {
+        ::mach_timebase_info_data_t a_result;
+
+        auto const a_ret = ::mach_timebase_info(&a_result)
+
+        dango_assert(a_ret == KERN_SUCCESS);
+
+        return a_result;
+      }();
+
+    constexpr auto const c_div = tc64(100'000);
+
+    tc64 a_result;
+
+    if(a_biased)
+    {
+      a_result = ::mach_continuous_time();
+    }
+    else
+      a_result = ::mach_absolute_time();
+    }
+
+    a_result *= tc64(s_timebase_info.numer);
+    a_result /= tc64(s_timebase_info.denom);
+    a_result /= c_div;
+
+    return a_result;
+  }
+#endif
 }
 
 #endif // DANGO_PLATFORM_LINUX_OR_APPLE
