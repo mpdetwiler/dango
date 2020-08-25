@@ -1,15 +1,14 @@
 #include "dango.hpp"
 #include "dango-global-test.hpp"
-
-#include <cstdio>
+#include "dango-test-print.hpp"
 
 auto
 main
 ()noexcept(false)->int
 {
-  printf("main entered\n");
+  test_print("main entered\n");
 
-  printf("main exiting\n");
+  test_print("main exiting\n");
 
   return 0;
 }

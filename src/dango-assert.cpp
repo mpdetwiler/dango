@@ -33,7 +33,7 @@ assert_fail_once
 
   if(t_recursion)
   {
-    fprintf(stderr, "assertion failure entered recursively\n");
+    std::fprintf(stderr, "assertion failure entered recursively\n");
 
     dango::trap_instruction();
   }
@@ -58,7 +58,7 @@ default_assert_log_handler
   dango::source_location const& a_loc
 )noexcept
 {
-  fprintf
+  std::fprintf
   (
     stderr,
     "%s[%u]: %s: assertion \"%s\" failed%s%s\n",
@@ -103,10 +103,10 @@ unit_test_exec
   char const* const a_name,
   char const* const a_file,
   int const a_line,
-  void(* const a_test)()noexcept
+  void(* const a_test)()noexcept(false)
 )noexcept
 {
-  fprintf
+  std::fprintf
   (
     stderr,
     "[unit test begin]: \"%s\" (file=%s line=%u)\n",
@@ -115,9 +115,23 @@ unit_test_exec
     dango::builtin::uint(a_line)
   );
 
-  a_test();
+  try
+  {
+    a_test();
+  }
+  catch(...)
+  {
+    std::fprintf
+    (
+      stderr,
+      "[unit test fail]:  \"%s\" threw exception\n",
+      a_name
+    );
 
-  fprintf
+    dango::terminate();
+  }
+
+  std::fprintf
   (
     stderr,
     "[unit test end]:   \"%s\"\n\n",

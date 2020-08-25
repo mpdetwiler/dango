@@ -233,11 +233,14 @@ decrement
 
 #define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static name##_strong_type const name##_strong{ };
 #define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline bool const name##_bool{ (void(name()), false) }; }
+
 #define DANGO_GLOBAL_DEFINE_ACCESS(name) \
 [[nodiscard]] inline auto \
 name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
 { static name##_namespace::name##_strong_type const name##_strong_func{ }; \
   return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; }
+
+#define DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
 
 #else
 
@@ -245,12 +248,12 @@ name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_ty
 #define DANGO_GLOBAL_DEFINE_INLINE_INC(name)
 #define DANGO_GLOBAL_DEFINE_ACCESS(name)
 
-#endif // DANGO_BUILDING_LIB
-
-#define DANGO_GLOBAL_DEFINE_ACCESS_WEAK(name) \
+#define DANGO_GLOBAL_DEFINE_ACCESS_LIB(name) \
 [[nodiscard]] inline auto \
-name##_weak(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
+name##_lib(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
 { return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; }
+
+#endif // DANGO_BUILDING_LIB
 
 /*** extern globals ***/
 
@@ -268,7 +271,7 @@ namespace name##_namespace \
 } \
 DANGO_GLOBAL_DEFINE_ACCESS(name) \
 DANGO_GLOBAL_DEFINE_INLINE_INC(name) \
-DANGO_GLOBAL_DEFINE_ACCESS_WEAK(name)
+DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
 
 #define DANGO_DEFINE_GLOBAL_EXTERN(type_name, name, ...) \
 namespace name##_namespace \

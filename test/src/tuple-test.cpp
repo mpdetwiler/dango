@@ -73,13 +73,13 @@ DANGO_UNIT_TEST_BEGIN(tuple_swap_test)
 
   dango::swap(t1, t2);
 
-  dango_assert(x == 4 && y == 6 && z == 8);
-  dango_assert(a == 5 && b == 7 && c == 9);
+  dango_assert_terminate(x == 4 && y == 6 && z == 8);
+  dango_assert_terminate(a == 5 && b == 7 && c == 9);
 
   dango::swap(dango::make_tie(z, y, x), dango::make_tie(a, b, c));
 
-  dango_assert(x == 9 && y == 7 && z == 5);
-  dango_assert(a == 8 && b == 6 && c == 4);
+  dango_assert_terminate(x == 9 && y == 7 && z == 5);
+  dango_assert_terminate(a == 8 && b == 6 && c == 4);
 }
 DANGO_UNIT_TEST_END
 
@@ -92,10 +92,10 @@ DANGO_UNIT_TEST_BEGIN(tuple_offset_test)
 
   size_test_tuple a_t;
 
-  dango_assert(dango_offset(a_s, first)  == dango_offset(a_t, first()));
-  dango_assert(dango_offset(a_s, second) == dango_offset(a_t, second()));
-  dango_assert(dango_offset(a_s, third)  == dango_offset(a_t, third()));
-  dango_assert(dango_offset(a_s, fourth) == dango_offset(a_t, fourth()));
+  dango_assert_terminate(dango_offset(a_s, first)  == dango_offset(a_t, first()));
+  dango_assert_terminate(dango_offset(a_s, second) == dango_offset(a_t, second()));
+  dango_assert_terminate(dango_offset(a_s, third)  == dango_offset(a_t, third()));
+  dango_assert_terminate(dango_offset(a_s, fourth) == dango_offset(a_t, fourth()));
 }
 DANGO_UNIT_TEST_END
 

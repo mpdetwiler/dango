@@ -2298,7 +2298,6 @@ std
   <typename... tp_types>
   struct
   tuple_size<dango::tuple<tp_types...>>
-  final
   {
     static inline constexpr dango::usize const value = sizeof...(tp_types);
 
@@ -2310,7 +2309,6 @@ std
   struct
   tuple_element
   <tp_index, dango::tuple<tp_types...>>
-  final
   {
     using type =
       typename dango::detail::tuple_element_help<tp_index, tp_types...>::type;
@@ -2320,7 +2318,13 @@ std
 
   template
   <dango::usize tp_index>
-  struct tuple_element<tp_index, dango::tuple<>>;
+  struct
+  tuple_element<tp_index, dango::tuple<>>
+  {
+    using type = void;
+
+    DANGO_UNINSTANTIABLE(tuple_element)
+  };
 }
 
 #endif // DANGO_TUPLE_HPP_INCLUDED

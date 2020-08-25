@@ -1,6 +1,5 @@
 #include "dango-global-test.hpp"
-
-#include <cstdio>
+#include "dango-test-print.hpp"
 
 test::
 global_printer::
@@ -12,7 +11,7 @@ global_printer
 
   }
 
-  fprintf(stderr, "global_printer::global_printer()\n");
+  test_print("global_printer::global_printer()\n");
 }
 
 test::
@@ -20,7 +19,7 @@ global_printer::
 ~global_printer
 ()noexcept
 {
-  fprintf(stderr, "global_printer::~global_printer()\n");
+  test_print("global_printer::~global_printer()\n");
 }
 
 void
@@ -29,7 +28,7 @@ global_printer::
 print
 (char const* const a_str)const noexcept
 {
-  fprintf(stderr, "global_printer::print(): %s\n", a_str);
+  test_print("global_printer::print(): %s\n", a_str);
 }
 
 namespace

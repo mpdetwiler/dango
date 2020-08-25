@@ -161,7 +161,7 @@ DANGO_UNIT_TEST_END
 namespace
 dango::detail
 {
-  DANGO_EXPORT void unit_test_exec(char const*, char const*, int, void(*)()noexcept)noexcept;
+  DANGO_EXPORT void unit_test_exec(char const*, char const*, int, void(*)()noexcept(false))noexcept;
 }
 
 #ifdef DANGO_ENABLE_UNIT_TESTS
@@ -171,8 +171,8 @@ static_assert(false, "unit tests should only be enabled when building executable
 #endif
 
 #define DANGO_UNIT_TEST_BEGIN(name) \
-  [[maybe_unused]] inline bool const s_##name##_executor = \
-  (dango::detail::unit_test_exec(#name, __FILE__, __LINE__, []()noexcept->void
+  [[maybe_unused]] inline bool const s_##name##_executor_bool = \
+  (dango::detail::unit_test_exec(#name, __FILE__, __LINE__, []()noexcept(false)->void
 
 #define DANGO_UNIT_TEST_END \
   ), false);
