@@ -44,7 +44,7 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test_mt)
     a_thread =
     dango::thread::create_daemon
     (
-      [a_id, a_tick1, a_bias1]()noexcept->void
+      [a_id, a_tick1 = a_tick1, a_bias1 = a_bias1]()noexcept->void
       {
         auto const [a_tick2, a_bias2] = dango::tick_count_suspend_bias();
 
