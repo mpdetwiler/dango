@@ -88,7 +88,7 @@ dango
     {
       static void del(type const volatile* const a_ptr)noexcept{ delete a_ptr; }
 
-      DANGO_UNINSTANTIABLE(deleter)
+      DANGO_UNCONSTRUCTIBLE(deleter)
     };
 
     static inline constexpr bool const enable_deep_const = false;
@@ -98,7 +98,7 @@ dango
     static inline constexpr bool const conversion_requires_same_deleter = false;
     static inline constexpr bool const differing_deleter_requires_virtual_destruct = true;
 
-    DANGO_UNINSTANTIABLE(auto_ptr_default_config)
+    DANGO_UNCONSTRUCTIBLE(auto_ptr_default_config)
   };
 
   template
@@ -118,7 +118,7 @@ dango
         dango::operator_delete(a_ptr, a_size, a_align);
       }
 
-      DANGO_UNINSTANTIABLE(deleter)
+      DANGO_UNCONSTRUCTIBLE(deleter)
     };
 
     static inline constexpr bool const enable_deep_const = false;
@@ -128,7 +128,7 @@ dango
     static inline constexpr bool const conversion_requires_same_deleter = true;
     static inline constexpr bool const differing_deleter_requires_virtual_destruct = false;
 
-    DANGO_UNINSTANTIABLE(auto_ptr_default_config)
+    DANGO_UNCONSTRUCTIBLE(auto_ptr_default_config)
   };
 
   template

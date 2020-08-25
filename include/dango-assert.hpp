@@ -55,7 +55,7 @@ private:
   int_type const m_line;
 public:
   DANGO_DELETE_DEFAULT(source_location)
-  DANGO_IMMOBILE(source_location)
+  DANGO_UNMOVEABLE(source_location)
 };
 
 constexpr auto

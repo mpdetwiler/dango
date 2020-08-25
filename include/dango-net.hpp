@@ -33,7 +33,7 @@ public:
   static constexpr auto ntoh(dango::uint const a_arg)noexcept->dango::uint{ return __builtin_bswap32(a_arg); }
   static constexpr auto ntoh(dango::ulong const a_arg)noexcept->dango::ulong{ return __builtin_bswap64(a_arg); }
 public:
-  DANGO_UNINSTANTIABLE(byte_order_funcs)
+  DANGO_UNCONSTRUCTIBLE(byte_order_funcs)
 };
 
 template<>
@@ -54,7 +54,7 @@ public:
   static constexpr auto ntoh(dango::uint const a_arg)noexcept->dango::uint{ return a_arg; }
   static constexpr auto ntoh(dango::ulong const a_arg)noexcept->dango::ulong{ return a_arg; }
 public:
-  DANGO_UNINSTANTIABLE(byte_order_funcs)
+  DANGO_UNCONSTRUCTIBLE(byte_order_funcs)
 };
 
 namespace

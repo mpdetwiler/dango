@@ -399,7 +399,7 @@ private:
   value_type m_data;
 public:
   DANGO_DELETE_DEFAULT(atomic)
-  DANGO_IMMOBILE(atomic)
+  DANGO_UNMOVEABLE(atomic)
 };
 
 template

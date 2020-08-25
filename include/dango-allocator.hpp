@@ -159,7 +159,7 @@ public:
     dango::operator_delete(a_ptr, a_size, a_align);
   }
 public:
-  DANGO_UNINSTANTIABLE(basic_allocator)
+  DANGO_UNCONSTRUCTIBLE(basic_allocator)
 };
 
 /*** polymorphic_allocator ***/
@@ -256,7 +256,7 @@ private:
   <typename tp_mr>
   class control_static;
 public:
-  DANGO_UNINSTANTIABLE(polymorphic_allocator)
+  DANGO_UNCONSTRUCTIBLE(polymorphic_allocator)
 };
 
 template
@@ -318,7 +318,7 @@ private:
   count_type m_count;
 #endif
 public:
-  DANGO_IMMOBILE(mem_resource)
+  DANGO_UNMOVEABLE(mem_resource)
 };
 
 template
@@ -355,7 +355,7 @@ private:
   mem_resource* const m_resource;
 public:
   DANGO_DELETE_DEFAULT(control_base)
-  DANGO_IMMOBILE(control_base)
+  DANGO_UNMOVEABLE(control_base)
 };
 
 template
@@ -439,7 +439,7 @@ private:
 #endif
 public:
   DANGO_DELETE_DEFAULT(control_dynamic)
-  DANGO_IMMOBILE(control_dynamic)
+  DANGO_UNMOVEABLE(control_dynamic)
 };
 
 template
@@ -477,7 +477,7 @@ private:
   resource_type m_resource;
 public:
   DANGO_DELETE_DEFAULT(control_static)
-  DANGO_IMMOBILE(control_static)
+  DANGO_UNMOVEABLE(control_static)
 };
 
 template
@@ -523,7 +523,7 @@ private:
   control_type* const m_control;
 public:
   DANGO_DELETE_DEFAULT(mem_resource_storage)
-  DANGO_IMMOBILE(mem_resource_storage)
+  DANGO_UNMOVEABLE(mem_resource_storage)
 };
 
 template
@@ -559,7 +559,7 @@ private:
   control_type m_control;
 public:
   DANGO_DELETE_DEFAULT(mem_resource_storage_static)
-  DANGO_IMMOBILE(mem_resource_storage_static)
+  DANGO_UNMOVEABLE(mem_resource_storage_static)
 };
 
 template
@@ -637,45 +637,15 @@ public:
   constexpr ~mem_resource_ptr()noexcept = default;
 #endif
 
-  constexpr auto
-  operator =
-  (dango::null_tag const)& noexcept->mem_resource_ptr&
-  {
-    mem_resource_ptr a_temp{ dango::null };
-
-    dango::swap(*this, a_temp);
-
-    return *this;
-  }
-
+  DANGO_DEFINE_NULL_SWAP_ASSIGN(mem_resource_ptr, constexpr, true)
 #ifndef DANGO_NO_DEBUG
-  constexpr auto
-  operator =
-  (mem_resource_ptr const& a_arg)& noexcept->mem_resource_ptr&
-  {
-    mem_resource_ptr a_temp{ a_arg };
-
-    dango::swap(*this, a_temp);
-
-    return *this;
-  }
+  DANGO_DEFINE_COPY_SWAP_ASSIGN(mem_resource_ptr, constexpr, true)
 #else
   constexpr auto operator = (mem_resource_ptr const&)& noexcept->mem_resource_ptr& = default;
 #endif
-
-  constexpr auto
-  operator =
-  (mem_resource_ptr&& a_arg)& noexcept->mem_resource_ptr&
-  {
-    mem_resource_ptr a_temp{ dango::move(a_arg) };
-
-    dango::swap(*this, a_temp);
-
-    return *this;
-  }
+  DANGO_DEFINE_MOVE_SWAP_ASSIGN(mem_resource_ptr, constexpr, true)
 
   explicit constexpr operator bool()const noexcept{ return !dango::is_null(*this); }
-
   auto operator -> ()const noexcept->dango::mem_resource_guard<tp_noexcept>;
 public:
   constexpr auto
@@ -756,7 +726,7 @@ private:
   control_type* const m_control;
 public:
   DANGO_DELETE_DEFAULT(mem_resource_guard)
-  DANGO_IMMOBILE(mem_resource_guard)
+  DANGO_UNMOVEABLE(mem_resource_guard)
 };
 
 template
@@ -836,7 +806,7 @@ public:
     dango::operator_delete(a_ptr, a_size, a_align);
   }
 public:
-  DANGO_IMMOBILE(basic_mem_resource)
+  DANGO_UNMOVEABLE(basic_mem_resource)
 };
 
 namespace

@@ -54,7 +54,7 @@ final
 {
   using type = dango::detail::tuple_pack<tp_type, tp_pack...>;
 
-  DANGO_UNINSTANTIABLE(tuple_pack_prepend_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_pack_prepend_help)
 };
 
 template
@@ -67,7 +67,7 @@ final
 {
   using type = dango::detail::tuple_pack<tp_pack..., tp_type>;
 
-  DANGO_UNINSTANTIABLE(tuple_pack_append_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_pack_append_help)
 };
 
 /*** reverse ***/
@@ -106,7 +106,7 @@ final
   using type =
     typename dango::detail::tuple_pack_reverse_help<dango::detail::tuple_pack_prepend<tp_first, pack_type>, tp_next...>::type;
 
-  DANGO_UNINSTANTIABLE(tuple_pack_reverse_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_pack_reverse_help)
 };
 
 template
@@ -122,7 +122,7 @@ final
 
   using type = pack_type;
 
-  DANGO_UNINSTANTIABLE(tuple_pack_reverse_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_pack_reverse_help)
 };
 
 /*** clamp ***/
@@ -171,7 +171,7 @@ final
   using type =
     typename dango::detail::tuple_pack_clamp_help<dango::detail::tuple_pack_append<tp_first, pack_type>, tp_size - dango::usize(1), tp_next...>::type;
 
-  DANGO_UNINSTANTIABLE(tuple_pack_clamp_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_pack_clamp_help)
 };
 
 template
@@ -187,7 +187,7 @@ final
 
   using type = pack_type;
 
-  DANGO_UNINSTANTIABLE(tuple_pack_clamp_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_pack_clamp_help)
 };
 
 template
@@ -203,7 +203,7 @@ final
 
   using type = pack_type;
 
-  DANGO_UNINSTANTIABLE(tuple_pack_clamp_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_pack_clamp_help)
 };
 
 /*** tuple_is_comparable ***/
@@ -268,7 +268,7 @@ public:
   static inline constexpr bool const value = check(pack_clamped1{ }, pack_clamped2{ });
   static inline constexpr bool const value_noexcept = check_noexcept(pack_clamped1{ }, pack_clamped2{ });
 public:
-  DANGO_UNINSTANTIABLE(tuple_is_comparable_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_is_comparable_help)
 };
 
 /*** tuple constraint ***/
@@ -334,7 +334,7 @@ dango
   struct
   tuple_model
   {
-    DANGO_UNINSTANTIABLE(tuple_model)
+    DANGO_UNCONSTRUCTIBLE(tuple_model)
   };
 }
 
@@ -353,7 +353,7 @@ dango::detail
   {
     using type = dango::conditional<dango::is_ref<tp_value_type>, tp_value_type, tp_value_type&&>;
 
-    DANGO_UNINSTANTIABLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
   };
 
   template
@@ -364,7 +364,7 @@ dango::detail
   {
     using type = dango::conditional<dango::is_ref<tp_value_type>, tp_value_type, tp_value_type const&&>;
 
-    DANGO_UNINSTANTIABLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
   };
 
   template
@@ -382,7 +382,7 @@ dango::detail
   {
     using type = typename dango::detail::tuple_get_type_help<dango::tuple_model&&, tp_value_type>::type;
 
-    DANGO_UNINSTANTIABLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
   };
 
   template
@@ -393,7 +393,7 @@ dango::detail
   {
     using type = typename dango::detail::tuple_get_type_help<dango::tuple_model const&&, tp_value_type>::type;
 
-    DANGO_UNINSTANTIABLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
   };
 
   template
@@ -411,7 +411,7 @@ dango::detail
   {
     using type = dango::conditional<dango::is_ref<tp_value_type>, tp_value_type, tp_value_type&>;
 
-    DANGO_UNINSTANTIABLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
   };
 
   template
@@ -422,7 +422,7 @@ dango::detail
   {
     using type = dango::conditional<dango::is_ref<tp_value_type>, tp_value_type, tp_value_type const&>;
 
-    DANGO_UNINSTANTIABLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
   };
 
   template
@@ -903,7 +903,7 @@ final
     return tp_storage_type{ dango::forward<tp_args>(a_args)... };
   }
 
-  DANGO_UNINSTANTIABLE(make_tuple_storage_help)
+  DANGO_UNCONSTRUCTIBLE(make_tuple_storage_help)
 };
 
 template
@@ -926,7 +926,7 @@ final
     return make_type::make(dango::forward<tp_next>(a_next)..., dango::forward<tp_first>(a_first), dango::forward<tp_args>(a_args)...);
   }
 
-  DANGO_UNINSTANTIABLE(make_tuple_storage_help)
+  DANGO_UNCONSTRUCTIBLE(make_tuple_storage_help)
 };
 
 /*** tuple ***/
@@ -2163,7 +2163,7 @@ public:
     return equals_help(dango::make_index_seq<sizeof...(tp_types)>{ }, a_lhs, a_rhs);
   }
 
-  DANGO_UNINSTANTIABLE(operator_equals)
+  DANGO_UNCONSTRUCTIBLE(operator_equals)
 };
 
 template
@@ -2181,7 +2181,7 @@ final
     return false;
   }
 
-  DANGO_UNINSTANTIABLE(operator_equals)
+  DANGO_UNCONSTRUCTIBLE(operator_equals)
 };
 
 template
@@ -2246,7 +2246,7 @@ public:
     return a_ret;
   }
 
-  DANGO_UNINSTANTIABLE(operator_compare)
+  DANGO_UNCONSTRUCTIBLE(operator_compare)
 };
 
 /*** structured bindings ***/
@@ -2275,7 +2275,7 @@ final
   using type =
     typename dango::detail::tuple_element_help<tp_index - dango::usize(1), tp_next...>::type;
 
-  DANGO_UNINSTANTIABLE(tuple_element_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_element_help)
 };
 
 template
@@ -2288,7 +2288,7 @@ final
 {
   using type = tp_first;
 
-  DANGO_UNINSTANTIABLE(tuple_element_help)
+  DANGO_UNCONSTRUCTIBLE(tuple_element_help)
 };
 
 namespace
@@ -2301,7 +2301,7 @@ std
   {
     static inline constexpr dango::usize const value = sizeof...(tp_types);
 
-    DANGO_UNINSTANTIABLE(tuple_size)
+    DANGO_UNCONSTRUCTIBLE(tuple_size)
   };
 
   template
@@ -2313,7 +2313,7 @@ std
     using type =
       typename dango::detail::tuple_element_help<tp_index, tp_types...>::type;
 
-    DANGO_UNINSTANTIABLE(tuple_element)
+    DANGO_UNCONSTRUCTIBLE(tuple_element)
   };
 
   template
@@ -2323,7 +2323,7 @@ std
   {
     using type = void;
 
-    DANGO_UNINSTANTIABLE(tuple_element)
+    DANGO_UNCONSTRUCTIBLE(tuple_element)
   };
 }
 

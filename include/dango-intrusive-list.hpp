@@ -57,7 +57,7 @@ protected:
   }
   ~intrusive_list_elem()noexcept = default;
 public:
-  DANGO_IMMOBILE(intrusive_list_elem)
+  DANGO_UNMOVEABLE(intrusive_list_elem)
 };
 
 template
@@ -80,7 +80,7 @@ public:
   }
   ~intrusive_list_sentinel()noexcept = default;
 public:
-  DANGO_IMMOBILE(intrusive_list_sentinel)
+  DANGO_UNMOVEABLE(intrusive_list_sentinel)
 };
 
 template
@@ -159,7 +159,7 @@ private:
   sentinel_type m_head;
   sentinel_type m_tail;
 public:
-  DANGO_IMMOBILE(intrusive_list)
+  DANGO_UNMOVEABLE(intrusive_list)
 };
 
 template

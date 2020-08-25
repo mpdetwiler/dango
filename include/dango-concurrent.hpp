@@ -118,7 +118,7 @@ private:
 private:
   value_type m_timeout;
 public:
-  DANGO_IMMOBILE(timeout_base)
+  DANGO_UNMOVEABLE(timeout_base)
 };
 
 constexpr
@@ -246,7 +246,7 @@ public:
 private:
   auto this_tick_count()const noexcept->value_type override{ return this_tick_count_impl(); }
 public:
-  DANGO_IMMOBILE(timeout_impl)
+  DANGO_UNMOVEABLE(timeout_impl)
 };
 
 /*** timeout ***/
@@ -300,7 +300,7 @@ private:
   dango::detail::timeout_base* const m_timeout;
 public:
   DANGO_DELETE_DEFAULT(timeout)
-  DANGO_IMMOBILE(timeout)
+  DANGO_UNMOVEABLE(timeout)
 };
 
 inline auto
@@ -444,7 +444,7 @@ private:
   dango::exec_once m_init;
   dango::detail::mutex_storage m_storage;
 public:
-  DANGO_IMMOBILE(mutex_control)
+  DANGO_UNMOVEABLE(mutex_control)
 };
 
 class
@@ -471,7 +471,7 @@ public:
 private:
   dango::atomic_ref_count m_ref_count;
 public:
-  DANGO_IMMOBILE(mutex_control_dynamic)
+  DANGO_UNMOVEABLE(mutex_control_dynamic)
 };
 
 namespace
@@ -517,7 +517,7 @@ private:
   control_type* const m_control;
 public:
   DANGO_DELETE_DEFAULT(mutex_base)
-  DANGO_IMMOBILE(mutex_base)
+  DANGO_UNMOVEABLE(mutex_base)
 };
 
 namespace
@@ -549,7 +549,7 @@ private:
   control_type* const m_mutex;
 public:
   DANGO_DELETE_DEFAULT(locker)
-  DANGO_IMMOBILE(locker)
+  DANGO_UNMOVEABLE(locker)
 };
 
 class
@@ -576,7 +576,7 @@ private:
   control_type* const m_mutex;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
-  DANGO_IMMOBILE(try_locker)
+  DANGO_UNMOVEABLE(try_locker)
 };
 
 inline auto
@@ -618,7 +618,7 @@ public:
 private:
   explicit mutex(increment_tag, control_type*)noexcept;
 public:
-  DANGO_IMMOBILE(mutex)
+  DANGO_UNMOVEABLE(mutex)
 };
 
 inline
@@ -682,7 +682,7 @@ public:
 private:
   control_type_static m_control_storage;
 public:
-  DANGO_IMMOBILE(static_mutex)
+  DANGO_UNMOVEABLE(static_mutex)
 };
 
 constexpr
@@ -776,7 +776,7 @@ private:
   dango::detail::cond_var_storage m_storage;
 public:
   DANGO_DELETE_DEFAULT(cond_var_control)
-  DANGO_IMMOBILE(cond_var_control)
+  DANGO_UNMOVEABLE(cond_var_control)
 };
 
 class
@@ -804,7 +804,7 @@ public:
 private:
   dango::atomic_ref_count m_ref_count;
 public:
-  DANGO_IMMOBILE(cond_var_control_dynamic)
+  DANGO_UNMOVEABLE(cond_var_control_dynamic)
 };
 
 namespace
@@ -846,7 +846,7 @@ protected:
 private:
   control_type* const m_control;
 public:
-  DANGO_IMMOBILE(cond_var_base)
+  DANGO_UNMOVEABLE(cond_var_base)
 };
 
 namespace
@@ -884,7 +884,7 @@ private:
   control_type* const m_cond;
 public:
   DANGO_DELETE_DEFAULT(locker)
-  DANGO_IMMOBILE(locker)
+  DANGO_UNMOVEABLE(locker)
 };
 
 class
@@ -915,7 +915,7 @@ private:
   control_type* const m_cond;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
-  DANGO_IMMOBILE(try_locker)
+  DANGO_UNMOVEABLE(try_locker)
 };
 
 inline auto
@@ -961,7 +961,7 @@ private:
   dango::mutex m_mutex;
 public:
   DANGO_DELETE_DEFAULT(cond_var)
-  DANGO_IMMOBILE(cond_var)
+  DANGO_UNMOVEABLE(cond_var)
 };
 
 inline
@@ -1028,7 +1028,7 @@ private:
   control_type_static m_control_storage;
 public:
   DANGO_DELETE_DEFAULT(static_cond_var)
-  DANGO_IMMOBILE(static_cond_var)
+  DANGO_UNMOVEABLE(static_cond_var)
 };
 
 constexpr
@@ -1131,23 +1131,25 @@ private:
   explicit thread(construct_tag, bool)noexcept;
   explicit thread(control_block*)noexcept;
 public:
-  constexpr thread()noexcept;
+  explicit constexpr thread()noexcept;
   constexpr thread(dango::null_tag)noexcept;
-  thread(thread const&)noexcept;
-  thread(thread&&)noexcept;
-  ~thread()noexcept;
-  auto operator = (dango::null_tag)&noexcept->thread&;
-  auto operator = (thread const&)&noexcept->thread&;
-  auto operator = (thread&&)&noexcept->thread&;
-  explicit constexpr operator bool()const noexcept;
+  constexpr thread(thread const&)noexcept;
+  constexpr thread(thread&&)noexcept;
+  constexpr ~thread()noexcept;
+  DANGO_DEFINE_NULL_SWAP_ASSIGN(thread, constexpr, true)
+  DANGO_DEFINE_COPY_SWAP_ASSIGN(thread, constexpr, true)
+  DANGO_DEFINE_MOVE_SWAP_ASSIGN(thread, constexpr, true)
+  explicit constexpr operator bool()const noexcept{ return !dango::is_null(*this); }
+  constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_control); }
+  constexpr auto dango_operator_equals(thread const& a_arg)const noexcept->bool{ return dango::equals(m_control, a_arg.m_control); }
+  constexpr auto dango_operator_compare(thread const& a_arg)const noexcept->auto{ return dango::compare(m_control, a_arg.m_control); }
+  constexpr auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_control); }
+  constexpr void dango_operator_swap(thread& a_arg)& noexcept{ dango::swap(m_control, a_arg.m_control); }
   auto is_alive()const noexcept->bool;
   void join()const noexcept;
   void join(dango::timeout const&)const noexcept;
-  constexpr auto is_daemon()const noexcept->bool;
+  auto is_daemon()const noexcept->bool;
   auto get_id()const noexcept->dango::thread_id;
-  constexpr auto dango_operator_is_null()const noexcept->bool;
-  constexpr auto dango_operator_equals(dango::null_tag)const noexcept = delete;
-  constexpr auto dango_operator_equals(thread const&)const noexcept->bool;
 private:
   control_block* m_control;
 };
@@ -1169,7 +1171,7 @@ public:
   explicit control_block(bool, dango::thread_id)dango_new_noexcept;
   ~control_block()noexcept = default;
 public:
-  constexpr auto is_daemon()const noexcept->bool{ return m_daemon; }
+  auto is_daemon()const noexcept->bool{ return m_daemon; }
   void increment()noexcept{ m_ref_count.increment(); }
   auto decrement()noexcept->bool{ return m_ref_count.decrement(); }
   void wait()noexcept;
@@ -1192,7 +1194,7 @@ private:
   dango::usize m_waiter_count;
 public:
   DANGO_DELETE_DEFAULT(control_block)
-  DANGO_IMMOBILE(control_block)
+  DANGO_UNMOVEABLE(control_block)
 };
 
 inline
@@ -1316,7 +1318,7 @@ private:
   dango::static_mutex m_mutex;
   dango::intrusive_list<control_block> m_list;
 public:
-  DANGO_IMMOBILE(registry)
+  DANGO_UNMOVEABLE(registry)
 };
 
 constexpr
@@ -1408,7 +1410,7 @@ private:
   control_block* const m_control;
 public:
   DANGO_DELETE_DEFAULT(notifier)
-  DANGO_IMMOBILE(notifier)
+  DANGO_UNMOVEABLE(notifier)
 };
 
 inline
@@ -1478,7 +1480,7 @@ private:
   dango::tuple<tp_args...> m_args;
 public:
   DANGO_DELETE_DEFAULT(runnable)
-  DANGO_IMMOBILE(runnable)
+  DANGO_UNMOVEABLE(runnable)
 };
 
 template
@@ -1513,7 +1515,7 @@ private:
   tp_func m_func;
 public:
   DANGO_DELETE_DEFAULT(runnable)
-  DANGO_IMMOBILE(runnable)
+  DANGO_UNMOVEABLE(runnable)
 };
 
 /*** thread ***/
@@ -1700,12 +1702,12 @@ m_control{ dango::null }
 
 }
 
-inline
+constexpr
 dango::
 thread::
 thread
-(thread const& a_thread)noexcept:
-m_control{ a_thread.m_control }
+(thread const& a_arg)noexcept:
+m_control{ a_arg.m_control }
 {
   if(m_control)
   {
@@ -1713,17 +1715,17 @@ m_control{ a_thread.m_control }
   }
 }
 
-inline
+constexpr
 dango::
 thread::
 thread
-(thread&& a_thread)noexcept:
-m_control{ a_thread.m_control }
+(thread&& a_arg)noexcept:
+m_control{ a_arg.m_control }
 {
-  a_thread.m_control = dango::null;
+  a_arg.m_control = dango::null;
 }
 
-inline
+constexpr
 dango::
 thread::
 ~thread
@@ -1736,54 +1738,6 @@ thread::
 }
 
 inline auto
-dango::
-thread::
-operator =
-(dango::null_tag const)&noexcept->thread&
-{
-  thread a_temp{ dango::null };
-
-  dango::swap(m_control, a_temp.m_control);
-
-  return *this;
-}
-
-inline auto
-dango::
-thread::
-operator =
-(thread const& a_thread)&noexcept->thread&
-{
-  thread a_temp{ a_thread };
-
-  dango::swap(m_control, a_temp.m_control);
-
-  return *this;
-}
-
-inline auto
-dango::
-thread::
-operator =
-(thread&& a_thread)&noexcept->thread&
-{
-  thread a_temp{ dango::move(a_thread) };
-
-  dango::swap(m_control, a_temp.m_control);
-
-  return *this;
-}
-
-constexpr
-dango::
-thread::
-operator bool
-()const noexcept
-{
-  return m_control != dango::null;
-}
-
-constexpr auto
 dango::
 thread::
 is_daemon
@@ -1803,24 +1757,6 @@ get_id
   dango_assert(m_control != dango::null);
 
   return m_control->get_id();
-}
-
-constexpr auto
-dango::
-thread::
-dango_operator_is_null
-()const noexcept->bool
-{
-  return m_control == dango::null;
-}
-
-constexpr auto
-dango::
-thread::
-dango_operator_equals
-(thread const& a_thread)const noexcept->bool
-{
-  return m_control == a_thread.m_control;
 }
 
 template
@@ -1960,7 +1896,7 @@ final
 private:
   DANGO_EXPORT_ONLY static dango::detail::cond_var_registry s_registry;
 public:
-  DANGO_UNINSTANTIABLE(cond_var_registry_access)
+  DANGO_UNCONSTRUCTIBLE(cond_var_registry_access)
 };
 
 class
@@ -1998,7 +1934,7 @@ private:
   bool m_alive;
   bool m_waiting;
 public:
-  DANGO_IMMOBILE(cond_var_registry)
+  DANGO_UNMOVEABLE(cond_var_registry)
 };
 
 /*** cond_var_registry_thread ***/
@@ -2018,7 +1954,7 @@ public:
 private:
   dango::thread const m_thread;
 public:
-  DANGO_IMMOBILE(cond_var_registry_thread)
+  DANGO_UNMOVEABLE(cond_var_registry_thread)
 };
 
 inline
@@ -2071,7 +2007,7 @@ final
 private:
   DANGO_EXPORT_ONLY static dango::detail::windows_timer_res_manager s_manager;
 public:
-  DANGO_UNINSTANTIABLE(windows_timer_res_access)
+  DANGO_UNCONSTRUCTIBLE(windows_timer_res_access)
 };
 
 class
@@ -2107,7 +2043,7 @@ private:
   timer_state m_timer_state;
   dango::usize m_count;
 public:
-  DANGO_IMMOBILE(windows_timer_res_manager)
+  DANGO_UNMOVEABLE(windows_timer_res_manager)
 };
 
 /*** windows_timer_res_daemon ***/
@@ -2127,7 +2063,7 @@ public:
 private:
   dango::thread const m_thread;
 public:
-  DANGO_IMMOBILE(windows_timer_res_daemon)
+  DANGO_UNMOVEABLE(windows_timer_res_daemon)
 };
 
 inline

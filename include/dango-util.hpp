@@ -42,7 +42,7 @@ private:
   bool m_dismissed;
 public:
   DANGO_DELETE_DEFAULT(scope_guard)
-  DANGO_IMMOBILE(scope_guard)
+  DANGO_UNMOVEABLE(scope_guard)
 };
 
 template
@@ -135,7 +135,7 @@ private:
   func_type m_func;
 public:
   DANGO_DELETE_DEFAULT(finally_guard)
-  DANGO_IMMOBILE(finally_guard)
+  DANGO_UNMOVEABLE(finally_guard)
 };
 
 template
@@ -281,7 +281,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(member_func_type_help)
+  DANGO_UNCONSTRUCTIBLE(member_func_type_help)
 };
 
 template
@@ -294,7 +294,7 @@ final
 {
   using type = dango::member_func<tp_type>;
 
-  DANGO_UNINSTANTIABLE(member_func_type_help)
+  DANGO_UNCONSTRUCTIBLE(member_func_type_help)
 };
 
 #endif // DANGO_UTIL_HPP_INCLUDED

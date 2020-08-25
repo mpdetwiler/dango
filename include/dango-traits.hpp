@@ -34,7 +34,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_const_help)
+  DANGO_UNCONSTRUCTIBLE(remove_const_help)
 };
 
 template
@@ -47,7 +47,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_const_help)
+  DANGO_UNCONSTRUCTIBLE(remove_const_help)
 };
 
 /*** remove_volatile ***/
@@ -83,7 +83,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_volatile_help)
+  DANGO_UNCONSTRUCTIBLE(remove_volatile_help)
 };
 
 template
@@ -96,7 +96,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_volatile_help)
+  DANGO_UNCONSTRUCTIBLE(remove_volatile_help)
 };
 
 /*** remove_cv ***/
@@ -146,7 +146,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_ref_help)
+  DANGO_UNCONSTRUCTIBLE(remove_ref_help)
 };
 
 template
@@ -159,7 +159,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_ref_help)
+  DANGO_UNCONSTRUCTIBLE(remove_ref_help)
 };
 
 template
@@ -172,7 +172,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_ref_help)
+  DANGO_UNCONSTRUCTIBLE(remove_ref_help)
 };
 
 /*** remove_cvref ***/
@@ -231,7 +231,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_ptr_help)
 };
 
 template
@@ -244,7 +244,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_ptr_help)
 };
 
 template
@@ -257,7 +257,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_ptr_help)
 };
 
 template
@@ -270,7 +270,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_ptr_help)
 };
 
 template
@@ -283,7 +283,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_ptr_help)
 };
 
 /*** remove_all_ptr ***/
@@ -331,7 +331,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_all_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_all_ptr_help)
 };
 
 template
@@ -344,7 +344,7 @@ final
 {
   using type = dango::remove_all_ptr<tp_type>;
 
-  DANGO_UNINSTANTIABLE(remove_all_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_all_ptr_help)
 };
 
 template
@@ -357,7 +357,7 @@ final
 {
   using type = dango::remove_all_ptr<tp_type>;
 
-  DANGO_UNINSTANTIABLE(remove_all_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_all_ptr_help)
 };
 
 template
@@ -370,7 +370,7 @@ final
 {
   using type = dango::remove_all_ptr<tp_type>;
 
-  DANGO_UNINSTANTIABLE(remove_all_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_all_ptr_help)
 };
 
 template
@@ -383,7 +383,7 @@ final
 {
   using type = dango::remove_all_ptr<tp_type>;
 
-  DANGO_UNINSTANTIABLE(remove_all_ptr_help)
+  DANGO_UNCONSTRUCTIBLE(remove_all_ptr_help)
 };
 
 /*** remove_array ***/
@@ -423,7 +423,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_array_help)
+  DANGO_UNCONSTRUCTIBLE(remove_array_help)
 };
 
 template
@@ -436,7 +436,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_array_help)
+  DANGO_UNCONSTRUCTIBLE(remove_array_help)
 };
 
 template
@@ -449,7 +449,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_array_help)
+  DANGO_UNCONSTRUCTIBLE(remove_array_help)
 };
 
 /*** remove_all_array ***/
@@ -489,7 +489,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(remove_all_array_help)
+  DANGO_UNCONSTRUCTIBLE(remove_all_array_help)
 };
 
 template
@@ -502,7 +502,7 @@ final
 {
   using type = dango::remove_all_array<tp_type>;
 
-  DANGO_UNINSTANTIABLE(remove_all_array_help)
+  DANGO_UNCONSTRUCTIBLE(remove_all_array_help)
 };
 
 template
@@ -515,7 +515,7 @@ final
 {
   using type = dango::remove_all_array<tp_type>;
 
-  DANGO_UNINSTANTIABLE(remove_all_array_help)
+  DANGO_UNCONSTRUCTIBLE(remove_all_array_help)
 };
 
 /*** copy_cv ***/
@@ -559,7 +559,7 @@ final
 {
   using type = tp_to;
 
-  DANGO_UNINSTANTIABLE(copy_cv_help)
+  DANGO_UNCONSTRUCTIBLE(copy_cv_help)
 };
 
 template
@@ -572,7 +572,7 @@ final
 {
   using type = tp_to const;
 
-  DANGO_UNINSTANTIABLE(copy_cv_help)
+  DANGO_UNCONSTRUCTIBLE(copy_cv_help)
 };
 
 template
@@ -585,7 +585,7 @@ final
 {
   using type = tp_to volatile;
 
-  DANGO_UNINSTANTIABLE(copy_cv_help)
+  DANGO_UNCONSTRUCTIBLE(copy_cv_help)
 };
 
 template
@@ -598,7 +598,7 @@ final
 {
   using type = tp_to const volatile;
 
-  DANGO_UNINSTANTIABLE(copy_cv_help)
+  DANGO_UNCONSTRUCTIBLE(copy_cv_help)
 };
 
 /*** make_uint ***/
@@ -614,12 +614,12 @@ dango::detail
   {
     using type = tp_type;
 
-    DANGO_UNINSTANTIABLE(make_uint_help)
+    DANGO_UNCONSTRUCTIBLE(make_uint_help)
   };
 
 #define DANGO_DEFINE_INT_MAPPING(type1, type2) \
   template<> struct make_uint_help<type1> \
-  final{ using type = type2; DANGO_UNINSTANTIABLE(make_uint_help) };
+  final{ using type = type2; DANGO_UNCONSTRUCTIBLE(make_uint_help) };
 
   DANGO_DEFINE_INT_MAPPING(dango::integer::s_char,     dango::integer::u_char)
   DANGO_DEFINE_INT_MAPPING(dango::integer::s_short,    dango::integer::u_short)
@@ -666,12 +666,12 @@ dango::detail
   {
     using type = tp_type;
 
-    DANGO_UNINSTANTIABLE(make_sint_help)
+    DANGO_UNCONSTRUCTIBLE(make_sint_help)
   };
 
 #define DANGO_DEFINE_INT_MAPPING(type1, type2) \
   template<> struct make_sint_help<type1> \
-  final{ using type = type2; DANGO_UNINSTANTIABLE(make_sint_help) };
+  final{ using type = type2; DANGO_UNCONSTRUCTIBLE(make_sint_help) };
 
   DANGO_DEFINE_INT_MAPPING(dango::integer::u_char,     dango::integer::s_char)
   DANGO_DEFINE_INT_MAPPING(dango::integer::u_short,    dango::integer::s_short)
@@ -746,7 +746,7 @@ final
 {
   using type = dango::remove_cv<tp_type>;
 
-  DANGO_UNINSTANTIABLE(decay_help)
+  DANGO_UNCONSTRUCTIBLE(decay_help)
 };
 
 template
@@ -759,7 +759,7 @@ final
 {
   using type = tp_type*;
 
-  DANGO_UNINSTANTIABLE(decay_help)
+  DANGO_UNCONSTRUCTIBLE(decay_help)
 };
 
 template
@@ -772,7 +772,7 @@ final
 {
   using type = tp_type*;
 
-  DANGO_UNINSTANTIABLE(decay_help)
+  DANGO_UNCONSTRUCTIBLE(decay_help)
 };
 
 template
@@ -785,7 +785,7 @@ final
 {
   using type = tp_ret(*)(tp_args...)noexcept(tp_noexcept);
 
-  DANGO_UNINSTANTIABLE(decay_help)
+  DANGO_UNCONSTRUCTIBLE(decay_help)
 };
 
 /*** conditional ***/
@@ -821,7 +821,7 @@ final
 {
   using type = tp_false_type;
 
-  DANGO_UNINSTANTIABLE(conditional_help)
+  DANGO_UNCONSTRUCTIBLE(conditional_help)
 };
 
 template
@@ -834,7 +834,7 @@ final
 {
   using type = tp_true_type;
 
-  DANGO_UNINSTANTIABLE(conditional_help)
+  DANGO_UNCONSTRUCTIBLE(conditional_help)
 };
 
 /*** is_same ***/
@@ -2174,7 +2174,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(underlying_type_help)
+  DANGO_UNCONSTRUCTIBLE(underlying_type_help)
 };
 
 template
@@ -2187,7 +2187,7 @@ final
 {
   using type = __underlying_type(tp_type);
 
-  DANGO_UNINSTANTIABLE(underlying_type_help)
+  DANGO_UNCONSTRUCTIBLE(underlying_type_help)
 };
 
 /*** endian ***/

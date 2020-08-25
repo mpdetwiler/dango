@@ -54,7 +54,7 @@ private:
   dango::spin_mutex m_lock;
   dango::usize m_ref_count;
 private:
-  DANGO_IMMOBILE(global_storage)
+  DANGO_UNMOVEABLE(global_storage)
 };
 
 /*** strong_incrementer ***/
@@ -74,7 +74,7 @@ public:
   explicit strong_incrementer()noexcept{ tp_storage.increment(); }
   ~strong_incrementer()noexcept{ tp_storage.decrement(); }
 public:
-  DANGO_IMMOBILE(strong_incrementer)
+  DANGO_UNMOVEABLE(strong_incrementer)
 };
 
 /*** weak_incrementer ***/
@@ -107,7 +107,7 @@ public:
   auto operator -> ()const noexcept->tp_type*{ return tp_storage.get(); }
   auto operator * ()const noexcept->tp_type&{ return *tp_storage.get(); }
 public:
-  DANGO_IMMOBILE(weak_incrementer)
+  DANGO_UNMOVEABLE(weak_incrementer)
 };
 
 /*** global_storage ***/

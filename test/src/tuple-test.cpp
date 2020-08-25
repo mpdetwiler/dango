@@ -84,7 +84,7 @@ DANGO_UNIT_TEST_BEGIN(tuple_swap_test)
 DANGO_UNIT_TEST_END
 
 #define dango_offset(s, m) \
-  dango::usize(reinterpret_cast<dango::byte const*>(dango::address_of(s.m)) - reinterpret_cast<dango::byte const*>(dango::address_of(s)))
+  dango::usize(reinterpret_cast<dango::byte const*>(dango::addressof(s.m)) - reinterpret_cast<dango::byte const*>(dango::addressof(s)))
 
 DANGO_UNIT_TEST_BEGIN(tuple_offset_test)
 {

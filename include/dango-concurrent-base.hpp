@@ -119,7 +119,7 @@ dango
     explicit constexpr crit_section()noexcept = default;
     ~crit_section()noexcept = default;
   public:
-    DANGO_IMMOBILE(crit_section)
+    DANGO_UNMOVEABLE(crit_section)
   };
 }
 
@@ -155,7 +155,7 @@ private:
   dango::atomic<count_type> m_in;
   dango::atomic<count_type> m_out;
 public:
-  DANGO_IMMOBILE(spin_mutex)
+  DANGO_UNMOVEABLE(spin_mutex)
 };
 
 namespace
@@ -187,7 +187,7 @@ private:
   spin_mutex* const m_lock;
 public:
   DANGO_DELETE_DEFAULT(locker)
-  DANGO_IMMOBILE(locker)
+  DANGO_UNMOVEABLE(locker)
 };
 
 class
@@ -214,7 +214,7 @@ private:
   spin_mutex* const m_lock;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
-  DANGO_IMMOBILE(try_locker)
+  DANGO_UNMOVEABLE(try_locker)
 };
 
 constexpr
@@ -342,7 +342,7 @@ private:
   mutable dango::spin_mutex m_lock;
   bool m_executed;
 public:
-  DANGO_IMMOBILE(exec_once)
+  DANGO_UNMOVEABLE(exec_once)
 };
 
 constexpr
@@ -503,7 +503,7 @@ private:
   value_type m_count;
 #endif
 public:
-  DANGO_IMMOBILE(atomic_ref_count)
+  DANGO_UNMOVEABLE(atomic_ref_count)
 };
 
 /*** atomic_ref_count_ws ***/
@@ -706,7 +706,7 @@ private:
   value_type m_scount;
 #endif
 public:
-  DANGO_IMMOBILE(atomic_ref_count_ws)
+  DANGO_UNMOVEABLE(atomic_ref_count_ws)
 };
 
 #endif // DANGO_CONCURRENT_BASE_HPP_INCLUDED

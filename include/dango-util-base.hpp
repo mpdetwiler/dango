@@ -384,7 +384,7 @@ dango
   }
 }
 
-/*** address_of ***/
+/*** addressof ***/
 
 namespace
 dango
@@ -393,7 +393,7 @@ dango
   <typename tp_type>
   requires(dango::is_object_ignore_ref<tp_type> && dango::is_lvalue_ref<tp_type>)
   constexpr auto
-  address_of
+  addressof
   (tp_type&& a_arg)noexcept->dango::remove_ref<tp_type>*
   {
     return __builtin_addressof(a_arg);
@@ -403,7 +403,7 @@ dango
   <typename tp_type>
   requires(dango::is_object_ignore_ref<tp_type> && !dango::is_lvalue_ref<tp_type>)
   constexpr auto
-  address_of
+  addressof
   (tp_type&&)noexcept = delete;
 }
 
@@ -995,7 +995,7 @@ final
     }
   }
 
-  DANGO_UNINSTANTIABLE(operator_swap)
+  DANGO_UNCONSTRUCTIBLE(operator_swap)
 };
 
 /*** has_equality_ops has_noexcept_equality_ops ***/
@@ -1416,7 +1416,7 @@ final
     }
   }
 
-  DANGO_UNINSTANTIABLE(operator_equals)
+  DANGO_UNCONSTRUCTIBLE(operator_equals)
 };
 
 /*** is_null_equatable is_noexcept_null_equatable is_null ***/
@@ -1758,7 +1758,7 @@ final
     return dango::comparison::strongest(dango::ptr_as_uint(a_lhs) <=> dango::ptr_as_uint(a_rhs));
   }
 
-  DANGO_UNINSTANTIABLE(operator_compare)
+  DANGO_UNCONSTRUCTIBLE(operator_compare)
 };
 
 /*** is_comparator ***/
@@ -1907,7 +1907,7 @@ dango::detail
       return dango::detail::min_max_help<tp_max>(dango::forward<tp_cmp>(a_cmp), dango::forward<tp_args>(a_args)...);
     }
 
-    DANGO_UNINSTANTIABLE(min_max_deferred)
+    DANGO_UNCONSTRUCTIBLE(min_max_deferred)
   };
 
   // dispatchers
@@ -2025,7 +2025,7 @@ final
     return dango::compare(tp_lsz, tp_rsz);
   }
 
-  DANGO_UNINSTANTIABLE(operator_compare)
+  DANGO_UNCONSTRUCTIBLE(operator_compare)
 };
 
 /*** hash_val ***/
@@ -2198,14 +2198,14 @@ custom::
 operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_type)>
 final
 {
-  constexpr auto
+  static constexpr auto
   hash
   (tp_type const a_val)noexcept->dango::hash_val
   {
     return dango::usize(a_val);
   }
 
-  DANGO_UNINSTANTIABLE(operator_hash)
+  DANGO_UNCONSTRUCTIBLE(operator_hash)
 };
 
 template
@@ -2216,7 +2216,7 @@ custom::
 operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_type)>
 final
 {
-  constexpr auto
+  static constexpr auto
   hash
   (float const a_val)noexcept->dango::hash_val
   {
@@ -2229,7 +2229,7 @@ final
     return dango::usize(a_ret);
   }
 
-  constexpr auto
+  static constexpr auto
   hash
   (double const a_val)noexcept->dango::hash_val
   {
@@ -2242,7 +2242,7 @@ final
     return dango::usize(a_ret);
   }
 
-  constexpr auto
+  static constexpr auto
   hash
   (dango::real const a_real)noexcept->dango::hash_val
   {
@@ -2257,7 +2257,7 @@ final
     return dango::usize(a_ret);
   }
 
-  DANGO_UNINSTANTIABLE(operator_hash)
+  DANGO_UNCONSTRUCTIBLE(operator_hash)
 };
 
 template
@@ -2268,14 +2268,14 @@ custom::
 operator_hash<tp_type*>
 final
 {
-  constexpr auto
+  static constexpr auto
   hash
   (void const volatile* const a_val)noexcept->dango::hash_val
   {
     return dango::usize(dango::ptr_as_uint(a_val));
   }
 
-  DANGO_UNINSTANTIABLE(operator_hash)
+  DANGO_UNCONSTRUCTIBLE(operator_hash)
 };
 
 /*** aligned_storage ***/
@@ -2327,7 +2327,7 @@ public:
 public:
   alignas(c_align) mutable dango::byte bytes[c_size];
 public:
-  DANGO_IMMOBILE(aligned_storage)
+  DANGO_UNMOVEABLE(aligned_storage)
 };
 
 #endif

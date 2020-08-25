@@ -55,42 +55,58 @@ static_assert(false, "dango requires GCC or clang to compile");
 
 #endif // DANGO_PLATFORM_LINUX_OR_APPLE
 
-#define DANGO_UNCOPYABLE(name) \
-constexpr name(name const&)noexcept = delete; \
-constexpr auto operator = (name const&)& noexcept->name& = delete;
-
-#define DANGO_IMMOBILE(name) \
-DANGO_UNCOPYABLE(name) \
-constexpr name(name&&)noexcept = delete; \
-constexpr auto operator = (name&&)& noexcept->name& = delete;
+/*** member generators ***/
 
 #define DANGO_DELETE_DEFAULT(name) \
-explicit constexpr name()noexcept = delete;
+  explicit constexpr name()noexcept = delete;
 
-#define DANGO_UNINSTANTIABLE(name) \
-DANGO_IMMOBILE(name) \
-DANGO_DELETE_DEFAULT(name) \
-~name()noexcept = delete;
+#define DANGO_UNCOPYABLE(name) \
+  constexpr name(name const&)noexcept = delete; \
+  constexpr auto operator = (name const&)& noexcept->name& = delete;
+
+#define DANGO_UNMOVEABLE(name) \
+  DANGO_UNCOPYABLE(name) \
+  constexpr name(name&&)noexcept = delete; \
+  constexpr auto operator = (name&&)& noexcept->name& = delete;
+
+#define DANGO_UNCONSTRUCTIBLE(name) \
+  DANGO_DELETE_DEFAULT(name) \
+  DANGO_UNMOVEABLE(name) \
+  constexpr ~name()noexcept = delete;
 
 #define DANGO_UNASSIGNABLE(name) \
-constexpr auto operator = (name const&)& noexcept->name& = delete; \
-constexpr auto operator = (name&&)& noexcept->name& = delete;
+  constexpr auto operator = (name const&)& noexcept->name& = delete; \
+  constexpr auto operator = (name&&)& noexcept->name& = delete;
 
-#define DANGO_EMPTY_TYPE(name, ...) \
-explicit(bool(__VA_ARGS__)) constexpr name()noexcept = default; \
-constexpr name(name const&)noexcept = default; \
-constexpr name(name&&)noexcept = default; \
-~name()noexcept = default; \
-constexpr auto operator = (name const&)& noexcept->name& = default; \
-constexpr auto operator = (name&&)& noexcept->name& = default;
+#define DANGO_EMPTY_TYPE(name, expl) \
+  explicit(bool(expl)) constexpr name()noexcept = default; \
+  constexpr name(name const&)noexcept = default; \
+  constexpr name(name&&)noexcept = default; \
+  constexpr ~name()noexcept = default; \
+  constexpr auto operator = (name const&)& noexcept->name& = default; \
+  constexpr auto operator = (name&&)& noexcept->name& = default;
 
 #define DANGO_TAG_TYPE(name) DANGO_EMPTY_TYPE(name, true)
+
+#define DANGO_DEFINE_NULL_SWAP_ASSIGN(name, cexpr, noex) \
+  cexpr auto operator = (dango::null_tag const)& noexcept(noex)->name& \
+  { name a_##name##_temp{ dango::null };                 dango::swap(*this, a_##name##_temp); return *this; }
+
+#define DANGO_DEFINE_COPY_SWAP_ASSIGN(name, cexpr, noex) \
+  cexpr auto operator = (name const& a_##name##_arg)& noexcept(noex)->name& \
+  { name a_##name##_temp{ a_##name##_arg };              dango::swap(*this, a_##name##_temp); return *this; }
+
+#define DANGO_DEFINE_MOVE_SWAP_ASSIGN(name, cexpr, noex) \
+  cexpr auto operator = (name&& a_##name##_arg)& noexcept(noex)->name& \
+  { name a_##name##_temp{ dango::move(a_##name##_arg) }; dango::swap(*this, a_##name##_temp); return *this; }
+
+/*** append line number to an identifier ***/
 
 #define DANGO_TOKEN_CONCAT_IMPL(x, y) x##y
 #define DANGO_TOKEN_CONCAT(x, y) DANGO_TOKEN_CONCAT_IMPL(x, y)
 #define DANGO_APPEND_LINE(x) DANGO_TOKEN_CONCAT(x, __LINE__)
 
-/*** DANGO_PARENTH_TYPE ***/
+/*** type name with commas in parentheses to not confuse the preprocessor ***/
 
 #define DANGO_PARENTH_TYPE(...) dango::parenth_type<void(__VA_ARGS__)noexcept>
 
@@ -124,7 +140,7 @@ final
 {
   using type = tp_type;
 
-  DANGO_UNINSTANTIABLE(parenth_type_help)
+  DANGO_UNCONSTRUCTIBLE(parenth_type_help)
 };
 
 /*** DANGO_UNIT_TEST_BEGIN DANGO_UNIT_TEST_END ***/
