@@ -15,48 +15,48 @@ dango::detail
   inline constexpr auto const min_val_help = tp_integer(0);
 
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::uchar> = dango::builtin::uchar(-1);
+  inline constexpr auto const max_val_help<dango::integer::u_char>     = dango::integer::u_char(-1);
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::ushort> = dango::builtin::ushort(-1);
+  inline constexpr auto const max_val_help<dango::integer::u_short>    = dango::integer::u_short(-1);
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::uint> = dango::builtin::uint(-1);
+  inline constexpr auto const max_val_help<dango::integer::u_int>      = dango::integer::u_int(-1);
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::ulong> = dango::builtin::ulong(-1);
+  inline constexpr auto const max_val_help<dango::integer::u_long>     = dango::integer::u_long(-1);
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::ulonglong> = dango::builtin::ulonglong(-1);
+  inline constexpr auto const max_val_help<dango::integer::u_longlong> = dango::integer::u_longlong(-1);
 
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::uchar> = dango::builtin::uchar(0);
+  inline constexpr auto const min_val_help<dango::integer::u_char>     = dango::integer::u_char(0);
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::ushort> = dango::builtin::ushort(0);
+  inline constexpr auto const min_val_help<dango::integer::u_short>    = dango::integer::u_short(0);
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::uint> = dango::builtin::uint(0);
+  inline constexpr auto const min_val_help<dango::integer::u_int>      = dango::integer::u_int(0);
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::ulong> = dango::builtin::ulong(0);
+  inline constexpr auto const min_val_help<dango::integer::u_long>     = dango::integer::u_long(0);
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::ulonglong> = dango::builtin::ulonglong(0);
+  inline constexpr auto const min_val_help<dango::integer::u_longlong> = dango::integer::u_longlong(0);
 
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::schar> = dango::builtin::schar{ SCHAR_MAX };
+  inline constexpr auto const max_val_help<dango::integer::s_char>     = dango::integer::s_char{ SCHAR_MAX };
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::sshort> = dango::builtin::sshort{ SHRT_MAX };
+  inline constexpr auto const max_val_help<dango::integer::s_short>    = dango::integer::s_short{ SHRT_MAX };
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::sint> = dango::builtin::sint{ INT_MAX };
+  inline constexpr auto const max_val_help<dango::integer::s_int>      = dango::integer::s_int{ INT_MAX };
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::slong> = dango::builtin::slong{ LONG_MAX };
+  inline constexpr auto const max_val_help<dango::integer::s_long>     = dango::integer::s_long{ LONG_MAX };
   template<>
-  inline constexpr auto const max_val_help<dango::builtin::slonglong> = dango::builtin::slonglong{ LLONG_MAX };
+  inline constexpr auto const max_val_help<dango::integer::s_longlong> = dango::integer::s_longlong{ LLONG_MAX };
 
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::schar> = dango::builtin::schar{ SCHAR_MIN };
+  inline constexpr auto const min_val_help<dango::integer::s_char>     = dango::integer::s_char{ SCHAR_MIN };
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::sshort> = dango::builtin::sshort{ SHRT_MIN };
+  inline constexpr auto const min_val_help<dango::integer::s_short>    = dango::integer::s_short{ SHRT_MIN };
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::sint> = dango::builtin::sint{ INT_MIN };
+  inline constexpr auto const min_val_help<dango::integer::s_int>      = dango::integer::s_int{ INT_MIN };
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::slong> = dango::builtin::slong{ LONG_MIN };
+  inline constexpr auto const min_val_help<dango::integer::s_long>     = dango::integer::s_long{ LONG_MIN };
   template<>
-  inline constexpr auto const min_val_help<dango::builtin::slonglong> = dango::builtin::slonglong{ LLONG_MIN };
+  inline constexpr auto const min_val_help<dango::integer::s_longlong> = dango::integer::s_longlong{ LLONG_MIN };
 }
 
 namespace
@@ -74,10 +74,7 @@ dango::integer
 namespace
 dango
 {
-	inline constexpr dango::usize const SIZE_MAX_VAL =
-		dango::integer::MAX_VAL<dango::usize> <= dango::integer::MAX_VAL<dango::ssize> ?
-		dango::integer::MAX_VAL<dango::usize> :
-		dango::usize(dango::integer::MAX_VAL<dango::ssize>);
+	inline constexpr auto const SIZE_MAX_VAL = dango::usize(dango::integer::MAX_VAL<dango::ssize>);
 }
 
 /*** signed safe arithmetic tests ***/

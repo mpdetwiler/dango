@@ -16,7 +16,7 @@ final
 {
 private:
   using char_type = char;
-  using int_type = dango::builtin::sint;
+  using int_type = dango::integer::s_int;
 public:
   static constexpr auto
   current

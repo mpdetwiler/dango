@@ -8,19 +8,19 @@
 #endif
 
 namespace
-dango::builtin
+dango::integer
 {
-  using uchar = unsigned char;
-  using ushort = unsigned short int;
-  using uint = unsigned int;
-  using ulong = unsigned long int;
-  using ulonglong = unsigned long long int;
+  using u_char     = unsigned char;
+  using u_short    = unsigned short int;
+  using u_int      = unsigned int;
+  using u_long     = unsigned long int;
+  using u_longlong = unsigned long long int;
 
-  using schar = signed char;
-  using sshort = signed short int;
-  using sint = signed int;
-  using slong = signed long int;
-  using slonglong = signed long long int;
+  using s_char     = signed char;
+  using s_short    = signed short int;
+  using s_int      = signed int;
+  using s_long     = signed long int;
+  using s_longlong = signed long long int;
 }
 
 namespace
@@ -37,17 +37,17 @@ dango
   using usize = std::size_t;
   using ssize = std::ptrdiff_t;
 
-  using ubyte = std::uint8_t;
+  using ubyte  = std::uint8_t;
   using ushort = std::uint16_t;
-  using uint = std::uint32_t;
-  using ulong = std::uint64_t;
-  using uptr = std::uintptr_t;
+  using uint   = std::uint32_t;
+  using ulong  = std::uint64_t;
+  using uptr   = std::uintptr_t;
 
-  using sbyte = std::int8_t;
+  using sbyte  = std::int8_t;
   using sshort = std::int16_t;
-  using sint = std::int32_t;
-  using slong = std::int64_t;
-  using sptr = std::intptr_t;
+  using sint   = std::int32_t;
+  using slong  = std::int64_t;
+  using sptr   = std::intptr_t;
 
   using real = long double;
 }

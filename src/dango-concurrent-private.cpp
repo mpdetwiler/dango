@@ -463,7 +463,7 @@ namespace
 {
   template
   <typename tp_func>
-  auto __stdcall thread_start_address(void*)noexcept->dango::builtin::uint;
+  auto __stdcall thread_start_address(void*)noexcept->dango::integer::u_int;
 
   auto perf_count()noexcept->dango::tick_count_type;
 
@@ -791,7 +791,7 @@ namespace
   <typename tp_func>
   auto __stdcall
   thread_start_address
-  (void* const a_data)noexcept->dango::builtin::uint
+  (void* const a_data)noexcept->dango::integer::u_int
   {
     static_assert(!dango::is_ref<tp_func>);
     static_assert(!dango::is_const<tp_func> && !dango::is_volatile<tp_func>);
@@ -812,7 +812,7 @@ namespace
       dango_unreachable_terminate_msg(u8"uncaught exception in thread");
     }
 
-    return dango::builtin::uint(0);
+    return dango::integer::u_int(0);
   }
 
   auto

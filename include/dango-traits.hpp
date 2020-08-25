@@ -608,18 +608,38 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct make_uint_help;
+  struct
+  make_uint_help
+  final
+  {
+    using type = tp_type;
 
-  template<>
-  struct make_uint_help<dango::builtin::schar>;
-  template<>
-  struct make_uint_help<dango::builtin::sshort>;
-  template<>
-  struct make_uint_help<dango::builtin::sint>;
-  template<>
-  struct make_uint_help<dango::builtin::slong>;
-  template<>
-  struct make_uint_help<dango::builtin::slonglong>;
+    DANGO_UNINSTANTIABLE(make_uint_help)
+  };
+
+#define DANGO_DEFINE_INT_MAPPING(type1, type2) \
+  template<> struct make_uint_help<type1> \
+  final{ using type = type2; DANGO_UNINSTANTIABLE(make_uint_help) };
+
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_char,     dango::integer::u_char)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_short,    dango::integer::u_short)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_int,      dango::integer::u_int)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_long,     dango::integer::u_long)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_longlong, dango::integer::u_longlong)
+
+  DANGO_DEFINE_INT_MAPPING(char,         dango::integer::u_char)
+  DANGO_DEFINE_INT_MAPPING(bool,         dango::ubyte)
+  DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::ubyte)
+  DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::ushort)
+  DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::uint)
+
+#ifdef DANGO_PLATFORM_WINDOWS
+  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::ushort)
+#else
+  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::uint)
+#endif
+
+#undef DANGO_DEFINE_INT_MAPPING
 }
 
 namespace
@@ -631,78 +651,7 @@ dango
     dango::copy_cv<tp_type, typename detail::make_uint_help<dango::remove_cv<tp_type>>::type>;
 }
 
-template
-<typename tp_type>
-struct
-dango::
-detail::
-make_uint_help
-final
-{
-  using type = tp_type;
-
-  DANGO_UNINSTANTIABLE(make_uint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_uint_help<dango::builtin::schar>
-final
-{
-  using type = dango::builtin::uchar;
-
-  DANGO_UNINSTANTIABLE(make_uint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_uint_help<dango::builtin::sshort>
-final
-{
-  using type = dango::builtin::ushort;
-
-  DANGO_UNINSTANTIABLE(make_uint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_uint_help<dango::builtin::sint>
-final
-{
-  using type = dango::builtin::uint;
-
-  DANGO_UNINSTANTIABLE(make_uint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_uint_help<dango::builtin::slong>
-final
-{
-  using type = dango::builtin::ulong;
-
-  DANGO_UNINSTANTIABLE(make_uint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_uint_help<dango::builtin::slonglong>
-final
-{
-  using type = dango::builtin::ulonglong;
-
-  DANGO_UNINSTANTIABLE(make_uint_help)
-};
+static_assert(sizeof(wchar_t) == sizeof(dango::make_uint<wchar_t>));
 
 /*** make_sint ***/
 
@@ -711,18 +660,38 @@ dango::detail
 {
   template
   <typename tp_type>
-  struct make_sint_help;
+  struct
+  make_sint_help
+  final
+  {
+    using type = tp_type;
 
-  template<>
-  struct make_sint_help<dango::builtin::uchar>;
-  template<>
-  struct make_sint_help<dango::builtin::ushort>;
-  template<>
-  struct make_sint_help<dango::builtin::uint>;
-  template<>
-  struct make_sint_help<dango::builtin::ulong>;
-  template<>
-  struct make_sint_help<dango::builtin::ulonglong>;
+    DANGO_UNINSTANTIABLE(make_sint_help)
+  };
+
+#define DANGO_DEFINE_INT_MAPPING(type1, type2) \
+  template<> struct make_sint_help<type1> \
+  final{ using type = type2; DANGO_UNINSTANTIABLE(make_sint_help) };
+
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_char,     dango::integer::s_char)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_short,    dango::integer::s_short)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_int,      dango::integer::s_int)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_long,     dango::integer::s_long)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_longlong, dango::integer::s_longlong)
+
+  DANGO_DEFINE_INT_MAPPING(char,         dango::integer::s_char)
+  DANGO_DEFINE_INT_MAPPING(bool,         dango::sbyte)
+  DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::sbyte)
+  DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::sshort)
+  DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::sint)
+
+#ifdef DANGO_PLATFORM_WINDOWS
+  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::sshort)
+#else
+  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::sint)
+#endif
+
+#undef DANGO_DEFINE_INT_MAPPING
 }
 
 namespace
@@ -734,78 +703,7 @@ dango
     dango::copy_cv<tp_type, typename detail::make_sint_help<dango::remove_cv<tp_type>>::type>;
 }
 
-template
-<typename tp_type>
-struct
-dango::
-detail::
-make_sint_help
-final
-{
-  using type = tp_type;
-
-  DANGO_UNINSTANTIABLE(make_sint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_sint_help<dango::builtin::uchar>
-final
-{
-  using type = dango::builtin::schar;
-
-  DANGO_UNINSTANTIABLE(make_sint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_sint_help<dango::builtin::ushort>
-final
-{
-  using type = dango::builtin::sshort;
-
-  DANGO_UNINSTANTIABLE(make_sint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_sint_help<dango::builtin::uint>
-final
-{
-  using type = dango::builtin::sint;
-
-  DANGO_UNINSTANTIABLE(make_sint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_sint_help<dango::builtin::ulong>
-final
-{
-  using type = dango::builtin::slong;
-
-  DANGO_UNINSTANTIABLE(make_sint_help)
-};
-
-template<>
-struct
-dango::
-detail::
-make_sint_help<dango::builtin::ulonglong>
-final
-{
-  using type = dango::builtin::slonglong;
-
-  DANGO_UNINSTANTIABLE(make_sint_help)
-};
+static_assert(sizeof(wchar_t) == sizeof(dango::make_sint<wchar_t>));
 
 /*** decay ***/
 
@@ -1031,11 +929,11 @@ dango
   template
   <typename tp_type>
   concept is_uint =
-    dango::is_same_ignore_cv<tp_type, dango::builtin::uchar> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::ushort> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::uint> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::ulong> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::ulonglong>;
+    dango::is_same_ignore_cv<tp_type, dango::integer::u_char> ||
+    dango::is_same_ignore_cv<tp_type, dango::integer::u_short> ||
+    dango::is_same_ignore_cv<tp_type, dango::integer::u_int> ||
+    dango::is_same_ignore_cv<tp_type, dango::integer::u_long> ||
+    dango::is_same_ignore_cv<tp_type, dango::integer::u_longlong>;
 }
 
 /*** is_sint ***/
@@ -1046,11 +944,11 @@ dango
   template
   <typename tp_type>
   concept is_sint =
-    dango::is_same_ignore_cv<tp_type, dango::builtin::schar> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::sshort> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::sint> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::slong> ||
-    dango::is_same_ignore_cv<tp_type, dango::builtin::slonglong>;
+    dango::is_same_ignore_cv<tp_type, dango::integer::s_char> ||
+    dango::is_same_ignore_cv<tp_type, dango::integer::s_short> ||
+    dango::is_same_ignore_cv<tp_type, dango::integer::s_int> ||
+    dango::is_same_ignore_cv<tp_type, dango::integer::s_long> ||
+    dango::is_same_ignore_cv<tp_type, dango::integer::s_longlong>;
 }
 
 /*** is_int ***/

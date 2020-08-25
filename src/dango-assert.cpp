@@ -58,12 +58,14 @@ default_assert_log_handler
   dango::source_location const& a_loc
 )noexcept
 {
+  using dango::integer::u_int;
+
   std::fprintf
   (
     stderr,
     "%s[%u]: %s: assertion \"%s\" failed%s%s\n",
     a_loc.file_as_char(),
-    dango::builtin::uint(a_loc.line()),
+    u_int(a_loc.line()),
     a_loc.function_as_char(),
     dango::bchar_as_char(a_expr),
     (a_msg ? ":\n" : ""),
@@ -106,13 +108,15 @@ unit_test_exec
   void(* const a_test)()noexcept(false)
 )noexcept
 {
+  using dango::integer::u_int;
+
   std::fprintf
   (
     stderr,
     "[unit test begin]: \"%s\" (file=%s line=%u)\n",
     a_name,
     a_file,
-    dango::builtin::uint(a_line)
+    u_int(a_line)
   );
 
   try
