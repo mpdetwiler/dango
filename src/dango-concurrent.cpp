@@ -12,11 +12,14 @@ dango::
 tick_count_suspend_bias
 ()noexcept->dango::tick_count_pair
 {
+  DANGO_CACHE_LINE_START
   static constinit dango::spin_mutex s_lock{ };
+  DANGO_CACHE_LINE_START
   static auto s_last = tick_count_suspend_bias_help();
+  DANGO_CACHE_LINE_START
   static auto const s_init = s_last;
 
-  dango::tick_count_pair a_current;
+  dango::tick_count_pair a_current{ };
 
   auto& [a_tick, a_bias] = a_current;
 
@@ -28,8 +31,13 @@ tick_count_suspend_bias
     s_last = a_current;
   }
 
-  a_tick -= dango::min(a_tick, s_init.first());
-  a_bias -= dango::min(a_bias, s_init.second());
+  auto const a_init = s_init;
+
+  dango_assert(a_tick >= a_init.first());
+  dango_assert(a_bias >= a_init.second());
+
+  a_tick -= a_init.first();
+  a_bias -= a_init.second();
 
   return a_current;
 }
@@ -535,7 +543,7 @@ namespace
   {
     using tc64 = dango::tick_count_type;
 
-    static constexpr auto const c_div = tc64(10);
+    constexpr auto const c_div = tc64(10);
 
     tc64 a_mono;
     tc64 a_boot;
@@ -708,7 +716,7 @@ notify_all
   dango::detail::pthread_cond_broadcast(storage());
 }
 
-#endif // DANGO_PLATFORM_WINDOWS_OR_APPLE
+#endif // DANGO_PLATFORM_LINUX_OR_APPLE
 
 #ifdef DANGO_PLATFORM_WINDOWS
 

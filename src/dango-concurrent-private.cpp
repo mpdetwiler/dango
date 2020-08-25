@@ -547,14 +547,14 @@ perf_freq
 ()noexcept->dango::tick_count_type
 {
   static constexpr auto const c_impl =
-  []()noexcept->dango::tick_count_type
-  {
-    LARGE_INTEGER a_result;
+    []()noexcept->dango::tick_count_type
+    {
+      LARGE_INTEGER a_result;
 
-    ::QueryPerformanceFrequency(&a_result);
+      ::QueryPerformanceFrequency(&a_result);
 
-    return dango::tick_count_type(a_result.QuadPart);
-  };
+      return dango::tick_count_type(a_result.QuadPart);
+    };
 
   static auto const s_result = c_impl();
 

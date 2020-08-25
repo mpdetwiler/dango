@@ -22,6 +22,8 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test)
   dango_assert_terminate(a_bias2 >= a_bias1);
 
   test_print("count=%u bias=%u\n", uint(a_count2), uint(a_bias2));
+
+
 }
 DANGO_UNIT_TEST_END
 
