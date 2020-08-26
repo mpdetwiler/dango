@@ -668,7 +668,7 @@ public:
     return dango::compare(m_control, a_arg.m_control);
   }
 
-  constexpr auto
+  auto
   dango_operator_hash()const noexcept->auto
   {
     return dango::hash(m_control);

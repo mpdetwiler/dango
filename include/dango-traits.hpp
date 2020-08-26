@@ -1188,18 +1188,22 @@ dango
     dango::is_user_defined<dango::remove_ref<tp_type>>;
 }
 
-/*** is_lvalue_ref ***/
+/*** is_lvalue_ref is_rvalue_ref is_ref ***/
 
 namespace
 dango::detail
 {
   template
   <typename tp_type>
-  inline constexpr bool const is_lvalue_ref_help = false;
+  inline constexpr auto const is_ref_help = dango::uint(0);
 
   template
   <typename tp_type>
-  inline constexpr bool const is_lvalue_ref_help<tp_type&> = true;
+  inline constexpr auto const is_ref_help<tp_type&> = dango::uint(1);
+
+  template
+  <typename tp_type>
+  inline constexpr auto const is_ref_help<tp_type&&> = dango::uint(2);
 }
 
 namespace
@@ -1207,36 +1211,14 @@ dango
 {
   template
   <typename tp_type>
-  concept is_lvalue_ref = dango::detail::is_lvalue_ref_help<tp_type>;
-}
-
-/*** is_rvalue_ref ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  inline constexpr bool const is_rvalue_ref_help = false;
+  concept is_lvalue_ref =
+    (dango::detail::is_ref_help<tp_type> == dango::uint(1));
 
   template
   <typename tp_type>
-  inline constexpr bool const is_rvalue_ref_help<tp_type&&> = true;
-}
+  concept is_rvalue_ref =
+    (dango::detail::is_ref_help<tp_type> == dango::uint(2));
 
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  concept is_rvalue_ref = dango::detail::is_rvalue_ref_help<tp_type>;
-}
-
-/*** is_ref ***/
-
-namespace
-dango
-{
   template
   <typename tp_type>
   concept is_ref =

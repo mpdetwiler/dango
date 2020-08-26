@@ -1143,7 +1143,7 @@ public:
   constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_control); }
   constexpr auto dango_operator_equals(thread const& a_arg)const noexcept->bool{ return dango::equals(m_control, a_arg.m_control); }
   constexpr auto dango_operator_compare(thread const& a_arg)const noexcept->auto{ return dango::compare(m_control, a_arg.m_control); }
-  constexpr auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_control); }
+  auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_control); }
   constexpr void dango_operator_swap(thread& a_arg)& noexcept{ dango::swap(m_control, a_arg.m_control); }
   auto is_alive()const noexcept->bool;
   void join()const noexcept;

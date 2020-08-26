@@ -18,7 +18,29 @@ namespace
 
 DANGO_UNIT_TEST_BEGIN(main_test)
 {
-  auto const a_rs = dango::polymorphic_allocator<>::make<dango::basic_mem_resource>();
+  auto a_rs = dango::polymorphic_allocator<>::make<dango::basic_mem_resource>();
+
+  auto a_ptr_mut = a_rs.get_ptr();
+
+  dango::swap(a_ptr_mut, a_ptr_mut);
+
+  auto const a_ptr = a_ptr_mut;
+
+  dango_assert_terminate(!(a_ptr  == null));
+  dango_assert_terminate(  a_ptr  != null);
+  dango_assert_terminate(!(null   == a_ptr));
+  dango_assert_terminate(  null   != a_ptr);
+  dango_assert_terminate(  a_ptr  == a_ptr);
+  dango_assert_terminate(!(a_ptr  != a_ptr));
+  dango_assert_terminate(!(a_ptr  >  a_ptr));
+  dango_assert_terminate(  a_ptr  >= a_ptr);
+  dango_assert_terminate(!(a_ptr  <  a_ptr));
+  dango_assert_terminate(  a_ptr  <= a_ptr);
+  dango_assert_terminate( (a_ptr <=> a_ptr).is_eq());
+  dango::hash(a_ptr);
+
+  dango_assert_terminate(dango::max(a_ptr, a_ptr, a_ptr, a_ptr) == a_ptr);
+  dango_assert_terminate(dango::min(a_ptr, a_ptr, a_ptr, a_ptr) == a_ptr);
 }
 DANGO_UNIT_TEST_END
 
