@@ -628,7 +628,6 @@ dango::detail
   DANGO_DEFINE_INT_MAPPING(dango::integer::s_longlong, dango::integer::u_longlong)
 
   DANGO_DEFINE_INT_MAPPING(char,         dango::integer::u_char)
-  DANGO_DEFINE_INT_MAPPING(bool,         dango::ubyte)
   DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::ubyte)
   DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::ushort)
   DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::uint)
@@ -680,7 +679,6 @@ dango::detail
   DANGO_DEFINE_INT_MAPPING(dango::integer::u_longlong, dango::integer::s_longlong)
 
   DANGO_DEFINE_INT_MAPPING(char,         dango::integer::s_char)
-  DANGO_DEFINE_INT_MAPPING(bool,         dango::sbyte)
   DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::sbyte)
   DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::sshort)
   DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::sint)
@@ -2185,6 +2183,37 @@ dango
       big = dango::uint(__ORDER_BIG_ENDIAN__),
       native = dango::uint(__BYTE_ORDER__)
   };
+}
+
+/*** bit_width ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_int>
+  constexpr auto
+  bit_width_help()noexcept->dango::usize
+  {
+    using tp_uint = dango::make_uint<tp_int>;
+
+    auto a_count = dango::usize(0);
+
+    for(auto a_uint = tp_uint(-1); a_uint != tp_uint(0); a_uint >>= tp_uint(1))
+    {
+      ++a_count;
+    }
+
+    return a_count;
+  }
+}
+
+namespace
+dango
+{
+  template
+  <dango::is_integral_exclude_bool tp_int>
+  inline constexpr auto const bit_width = dango::detail::bit_width_help<tp_int>();
 }
 
 /*** sizeof_with_void alignof_with_void ***/

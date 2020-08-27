@@ -2047,12 +2047,7 @@ public:
   template
   <dango::is_uint tp_uint>
   constexpr hash_val(tp_uint)noexcept;
-  explicit constexpr hash_val()noexcept = default;
-  constexpr hash_val(hash_val const&)noexcept = default;
-  constexpr hash_val(hash_val&&)noexcept = default;
-  constexpr ~hash_val()noexcept = default;
-  constexpr auto operator = (hash_val const&)& noexcept->hash_val& = default;
-  constexpr auto operator = (hash_val&&)& noexcept->hash_val& = default;
+  DANGO_ALL_DEFAULT_CONSTEXPR_NOEXCEPT(hash_val, true)
   explicit constexpr operator int_type()const noexcept{ return m_value; }
 public:
   constexpr auto as_int()const noexcept->int_type{ return m_value; }
@@ -2070,15 +2065,19 @@ hash_val
 (tp_uint const a_val)noexcept:
 m_value{ int_type(a_val) }
 {
-  constexpr auto const c_arg = sizeof(tp_uint);
-  constexpr auto const c_int = sizeof(int_type);
-
-  static_assert(c_arg <= dango::usize(4) || c_arg == dango::usize(8));
-  static_assert(c_int == dango::usize(4) || c_int == dango::usize(8));
+  constexpr auto const c_arg = dango::bit_width<tp_uint>;
+  constexpr auto const c_int = dango::bit_width<int_type>;
 
   if constexpr(c_arg > c_int)
   {
-    m_value ^= (a_val >> tp_uint(32));
+    constexpr auto const c_shift = tp_uint(c_int);
+
+    auto a_up = tp_uint(a_val >> c_shift);
+
+    while(a_up != tp_uint(0))
+    {
+      m_value ^= a_up; a_up >>= c_shift;
+    }
   }
 }
 

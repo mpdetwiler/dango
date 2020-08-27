@@ -490,4 +490,45 @@ static_assert(dango::is_trivial<int>);
 static_assert(dango::is_trivial<test_struct>);
 static_assert(dango::is_trivial_copyable<int>);
 static_assert(dango::is_trivial_copyable<test_struct>);
+static_assert(!dango::is_trivial<int&>);
+static_assert(!dango::is_trivial_copyable<int&>);
+static_assert(dango::is_trivial<dango::tuple<int, bool, dango::tuple<float, long, dango::tuple<double, char>, unsigned>, test_struct, long double>>);
+static_assert(dango::is_trivial_copyable<dango::tuple<int, bool, dango::tuple<float, long, dango::tuple<double, char>, unsigned>, test_struct, long double>>);
+
+/*** is_standard_layout ***/
+
+static_assert(dango::is_standard_layout<int>);
+static_assert(dango::is_standard_layout<test_struct>);
+static_assert(dango::is_standard_layout<dango::tuple<>>);
+static_assert(dango::is_standard_layout<dango::tuple<int>>);
+static_assert(!dango::is_standard_layout<dango::tuple<int, float>>);
+
+/*** is_empty ***/
+
+static_assert(dango::is_empty<test_struct>);
+static_assert(dango::is_empty<dango::tuple<>>);
+static_assert(!dango::is_empty<int>);
+static_assert(!dango::is_empty<dango::tuple<int>>);
+
+/*** is_signed is_unsigned ***/
+
+static_assert(dango::is_signed<dango::sint>);
+static_assert(dango::is_unsigned<dango::uint>);
+static_assert(dango::is_unsigned<bool>);
+
+/*** is_destructible ***/
+
+static_assert(dango::is_destructible<int>);
+static_assert(dango::is_destructible<int&>);
+
+/*** bit_width ***/
+
+static_assert(dango::bit_width<dango::ubyte>  == 8);
+static_assert(dango::bit_width<dango::sbyte>  == 8);
+static_assert(dango::bit_width<dango::ushort> == 16);
+static_assert(dango::bit_width<dango::sshort> == 16);
+static_assert(dango::bit_width<dango::uint>   == 32);
+static_assert(dango::bit_width<dango::sint>   == 32);
+static_assert(dango::bit_width<dango::ulong>  == 64);
+static_assert(dango::bit_width<dango::slong>  == 64);
 

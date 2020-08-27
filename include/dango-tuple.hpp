@@ -2011,7 +2011,7 @@ public:
     return dango::usize(0);
   }
 public:
-  DANGO_EMPTY_TYPE(tuple, false)
+  DANGO_ALL_DEFAULT_CONSTEXPR_NOEXCEPT(tuple, false)
 public:
   template
   <typename tp_func>

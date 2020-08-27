@@ -78,15 +78,15 @@ static_assert(false, "dango requires GCC or clang to compile");
   constexpr auto operator = (name const&)& noexcept->name& = delete; \
   constexpr auto operator = (name&&)& noexcept->name& = delete;
 
-#define DANGO_EMPTY_TYPE(name, expl) \
-  explicit(bool(expl)) constexpr name()noexcept = default; \
+#define DANGO_ALL_DEFAULT_CONSTEXPR_NOEXCEPT(name, expl) \
+  explicit(expl) constexpr name()noexcept = default; \
   constexpr name(name const&)noexcept = default; \
   constexpr name(name&&)noexcept = default; \
   constexpr ~name()noexcept = default; \
   constexpr auto operator = (name const&)& noexcept->name& = default; \
   constexpr auto operator = (name&&)& noexcept->name& = default;
 
-#define DANGO_TAG_TYPE(name) DANGO_EMPTY_TYPE(name, true)
+#define DANGO_TAG_TYPE(name) DANGO_ALL_DEFAULT_CONSTEXPR_NOEXCEPT(name, true)
 
 #define DANGO_DEFINE_NULL_SWAP_ASSIGN(name, cexpr, noex) \
   cexpr auto operator = (dango::null_tag const)& noexcept(noex)->name& \
