@@ -41,6 +41,10 @@ DANGO_UNIT_TEST_BEGIN(main_test)
 
   dango_assert_terminate(dango::max(a_ptr, a_ptr, a_ptr, a_ptr) == a_ptr);
   dango_assert_terminate(dango::min(a_ptr, a_ptr, a_ptr, a_ptr) == a_ptr);
+
+  auto const a_mem = a_ptr->alloc(16, 16);
+
+  a_ptr->dealloc(a_mem, 16, 16);
 }
 DANGO_UNIT_TEST_END
 

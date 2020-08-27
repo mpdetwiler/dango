@@ -87,6 +87,7 @@ flags = [
 # '-S',
 # '-Ofast',
 # '-v',
+# '-fsanitize=thread',
 # '-fsanitize=address',
 # '-fsanitize=leak',
   '-flto',

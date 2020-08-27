@@ -249,7 +249,7 @@ dango
 #define dango_assert_terminate_msg(cond, msg) dango_assert_msg(cond, msg)
 #define dango_assert_terminate_msg_loc(cond, msg, loc) dango_assert_msg_loc(cond, msg, loc)
 #else
-#define dango_assert_terminate(cond) do{ if(dango::unlikely(!bool(cond)){ dango::terminate(); } }while(false)
+#define dango_assert_terminate(cond) do{ if(dango::unlikely(!bool(cond))){ dango::terminate(); } }while(false)
 #define dango_assert_terminate_loc(cond, loc) dango_assert_terminate(cond)
 #define dango_assert_terminate_msg(cond, msg) dango_assert_terminate(cond)
 #define dango_assert_terminate_msg_loc(cond, msg, loc) dango_assert_terminate(cond)
