@@ -196,10 +196,10 @@ static_assert(false, "unit tests should only be enabled when building executable
 #else
 
 #define DANGO_UNIT_TEST_BEGIN(name) \
-  static_assert(true || noexcept([]()noexcept->void
+  static_assert(true || (void([]()noexcept->void
 
 #define DANGO_UNIT_TEST_END \
-  ));
+  ), true));
 
 #endif
 
