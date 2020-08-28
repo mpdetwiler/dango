@@ -369,4 +369,3 @@ remove_last()noexcept->elem_ptr
 }
 
 #endif // DANGO_INTRUSIVE_LIST_HPP_INCLUDED
-

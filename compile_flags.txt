@@ -1,0 +1,12 @@
+-O2
+-std=c++20
+-fsized-deallocation
+-pedantic
+-Wall
+-Wextra
+-Wshadow
+-Wno-gnu-zero-variadic-macro-arguments
+-Iinclude
+-Isrc/private
+-Itest/include
+-DDANGO_ENABLE_UNIT_TESTS

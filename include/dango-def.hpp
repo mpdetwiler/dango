@@ -108,4 +108,3 @@ dango
 #define DANGO_CACHE_LINE_START alignas(dango::cache_align_type)
 
 #endif // DANGO_DEF_HPP_INCLUDED
-

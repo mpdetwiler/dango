@@ -317,4 +317,3 @@ DANGO_GLOBAL_DEFINE_INLINE_INC(name)
 if constexpr(auto const local_name = global_name(); true)
 
 #endif // DANGO_GLOBAL_HPP_INCLUDED
-

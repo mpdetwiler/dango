@@ -80,4 +80,3 @@ dango
 }
 
 #endif // DANGO_NET_HPP_INCLUDED
-

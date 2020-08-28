@@ -6,4 +6,3 @@
 #define test_print(...) std::fprintf(stderr, __VA_ARGS__)
 
 #endif
-

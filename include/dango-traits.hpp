@@ -2286,4 +2286,3 @@ dango::detail
 #endif
 
 #endif // DANGO_TRAITS_HPP_INCLUDED
-

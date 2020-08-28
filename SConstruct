@@ -180,4 +180,3 @@ if(compile_test):
   test_env.Append(CPPPATH = ['test/include/']);
   test_env.Append(LIBS = ['dango']);
   test_env.Program('exe_test', [Glob('test/src/*.cpp')]);
-

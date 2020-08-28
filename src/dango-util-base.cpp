@@ -15,4 +15,3 @@ infinite_loop
 
   dango_unreachable;
 }
-

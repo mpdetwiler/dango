@@ -710,4 +710,3 @@ public:
 };
 
 #endif // DANGO_CONCURRENT_BASE_HPP_INCLUDED
-

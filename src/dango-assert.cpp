@@ -142,4 +142,3 @@ unit_test_exec
     a_name
   );
 }
-

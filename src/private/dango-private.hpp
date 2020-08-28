@@ -6,4 +6,3 @@
 
 
 #endif // DANGO_SHARED_HPP_INCLUDED
-

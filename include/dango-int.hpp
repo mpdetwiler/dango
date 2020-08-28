@@ -268,4 +268,3 @@ dango::integer
 }
 
 #endif // DANGO_INT_HPP_INCLUDED
-

@@ -19,4 +19,3 @@ test
 }
 
 #endif
-

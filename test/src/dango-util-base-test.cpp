@@ -45,4 +45,3 @@ static_assert(dango::min(16.0, 32.0) == 16.0);
 static_assert(dango::max(16.0, 32.0) == 32.0);
 static_assert(dango::min(5, 4, 3, 2, 1, 1, 1, 2, 3, 4, 5) == 1);
 static_assert(dango::max(1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1) == 5);
-

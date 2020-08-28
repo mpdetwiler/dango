@@ -63,4 +63,3 @@ dango::detail
 #endif // DANGO_PLATFORM_WINDOWS
 
 #endif // DANGO_SHARED_CONCURRENT_HPP_INCLUDED
-

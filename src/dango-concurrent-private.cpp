@@ -852,4 +852,3 @@ namespace
 }
 
 #endif // DANGO_PLATFORM_WINDOWS
-

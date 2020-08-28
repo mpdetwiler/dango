@@ -101,4 +101,3 @@ DANGO_UNIT_TEST_END
 
 #undef dango_offset
 }
-

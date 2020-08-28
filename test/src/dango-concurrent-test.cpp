@@ -84,4 +84,3 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test_mt)
 DANGO_UNIT_TEST_END
 
 }
-

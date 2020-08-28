@@ -2328,4 +2328,3 @@ std
 }
 
 #endif // DANGO_TUPLE_HPP_INCLUDED
-

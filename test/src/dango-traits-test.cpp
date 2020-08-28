@@ -521,6 +521,8 @@ static_assert(dango::is_unsigned<bool>);
 static_assert(dango::is_destructible<int>);
 static_assert(dango::is_destructible<int&>);
 
+/***  ***/
+
 /*** bit_width ***/
 
 static_assert(dango::bit_width<dango::ubyte>  == 8);
@@ -531,4 +533,3 @@ static_assert(dango::bit_width<dango::uint>   == 32);
 static_assert(dango::bit_width<dango::sint>   == 32);
 static_assert(dango::bit_width<dango::ulong>  == 64);
 static_assert(dango::bit_width<dango::slong>  == 64);
-

@@ -382,4 +382,3 @@ dango
 }
 
 #endif // DANGO_MEM_HPP_INCLUDED
-

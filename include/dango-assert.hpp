@@ -296,4 +296,3 @@ dango::detail
 #endif
 
 #endif // DANGO_ASSERT_HPP_INCLUDED
-

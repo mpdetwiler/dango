@@ -298,4 +298,3 @@ final
 };
 
 #endif // DANGO_UTIL_HPP_INCLUDED
-

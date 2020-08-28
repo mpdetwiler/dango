@@ -16,9 +16,9 @@
     - `--test` also compile test program/executable (testing in progress)
       - to run: `./exe_test` or `./exe_test.exe` on windows
     - `--no-debug` disable debug mode
-      - affects the behavior of dango_assert and dango_unreachable. if a dango_assert could fail or a dango_unreachable 
+      - affects the behavior of dango_assert and dango_unreachable. if a dango_assert could fail or a dango_unreachable
         is actually reachable in a debug-mode program, the corresponding non debug-mode program is undefined
-      - will affect the presence of various bug detection mechanisms, for example whether or not a container contains 
+      - will affect the presence of various bug detection mechanisms, for example whether or not a container contains
         a "mod count" for detecting use of invalid iterators
     - `--no-multicore` affects the behavior of `dango::spin_mutex` and other busy waiting (see dango::busy_wait_while(...))
       - causes blocked threads to not actually do any spinning in userspace and just yield immediately,
@@ -28,16 +28,16 @@
       - some older pentium 4 had 128 byte lines
     - `--new-noexcept` causes `dango::operator_new` to be a noexcept function
       - all heap allocations made by dango are ultimately backed by `dango::operator_new` which just calls `::operator new(std::size_t, std::align_val_t)`
-      - this controls whether or not `dango::operator_new` will propagate an exception thrown by `::operator new` 
+      - this controls whether or not `dango::operator_new` will propagate an exception thrown by `::operator new`
         or just catch it and terminate the program immediately (and in that case `dango::operator_new` is noexcept)
       - rationale:
         - many functions and constructors in dango (and most C++ code in general) are not noexcept solely because they might allocate dynamic
-          memory. on many platforms/configurations (for example windows, or linux with overcommit enabled), `::operator new` will not 
-          realisitically ever throw an exception, outside of programmer error (ie trying to allocate size_t(-1) bytes). if `::operator new` 
+          memory. on many platforms/configurations (for example windows, or linux with overcommit enabled), `::operator new` will not
+          realisitically ever throw an exception, outside of programmer error (ie trying to allocate size_t(-1) bytes). if `::operator new`
           were just noexcept on these platforms where it is never going to throw anyway, many functions and constructors could suddenly
           become noexcept. this could lead to a potential performance increase and code size reduction. that is the sole purpose of this
           build option
-      - obviously code that is intended to be as portable as possible should still be written as if memory allocation can throw (you should 
+      - obviously code that is intended to be as portable as possible should still be written as if memory allocation can throw (you should
         still be writing exception safe code) because it might not be optimal use this option on all platforms
 ### current and future features (goals)
   - type trait library
@@ -56,7 +56,7 @@
   - easy operator customization points
     - specialize dango::custom::operator_*<T> or write a member function dango_operator_*(...) to get various operators, for example
       - `T::dango_operator_is_null()const noexcept(...)->bool` => equatability with `null` (`nullptr`) for nullable types `T == null`, `null == T`, `T != null`, `null != T`
-      - `T::dango_operator_equals(U const&)const noexcept(...)->bool` => T == U, T != U 
+      - `T::dango_operator_equals(U const&)const noexcept(...)->bool` => T == U, T != U
       - `T::dango_operator_compare(U const&)const noexcept(...)->dango::compare_val_strong` (example return type) => `T > U`, `T >= U`, `T < U`, `T <= U`, `T <=> U`, `dango::compare(T, U)`
       - `T::dango_operator_swap(U&)& noexcept(...)->void` => `dango::swap(T, U)`
       - `T::dango_operator_hash()const noexcept->dango::hash_val` => `dango::hash(T)`
@@ -102,4 +102,3 @@
   - window creation and openGL/Vulkan context creation with input handling
     - planned to be implemented with GLFW
   - agents
-    

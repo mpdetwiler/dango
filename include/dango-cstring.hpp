@@ -126,4 +126,3 @@ dango
 }
 
 #endif // DANGO_CSTRING_HPP_INCLUDED
-

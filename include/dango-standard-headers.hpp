@@ -12,4 +12,3 @@
 #include <utility>
 
 #endif // DANGO_STANDARD_HEADERS_HPP_INCLUDED
-

@@ -826,4 +826,3 @@ dango
 }
 
 #endif // DANGO_ALLOCATOR_HPP_INCLUDED
-

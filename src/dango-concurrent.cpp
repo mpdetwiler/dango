@@ -1175,4 +1175,3 @@ stop_thread
 }
 
 #endif // DANGO_PLATFORM_WINDOWS
-

@@ -467,4 +467,3 @@ compare_exchange
 }
 
 #endif // DANGO_ATOMIC_HPP_INCLUDED
-

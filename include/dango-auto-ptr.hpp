@@ -618,4 +618,3 @@ private:
 };
 
 #endif // DANGO_AUTO_PTR_HPP_INCLUDED
-

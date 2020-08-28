@@ -23,4 +23,3 @@
 #include "dango-concurrent.hpp"
 
 #endif // DANGO_HPP_INCLUDED
-

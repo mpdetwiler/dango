@@ -204,4 +204,3 @@ static_assert(false, "unit tests should only be enabled when building executable
 #endif
 
 #endif // DANGO_MACRO_HPP_INCLUDED
-
