@@ -7,6 +7,7 @@
 #include "dango-traits.hpp"
 #include "dango-util-base.hpp"
 #include "dango-concepts.hpp"
+#include "dango-hash.hpp"
 #include "dango-assert.hpp"
 #include "dango-atomic.hpp"
 #include "dango-cstring.hpp"

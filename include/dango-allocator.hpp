@@ -3,6 +3,7 @@
 
 #include "dango-concepts.hpp"
 #include "dango-concurrent-base.hpp"
+#include "dango-hash.hpp"
 #include "dango-mem.hpp"
 
 /*** is_allocator ***/

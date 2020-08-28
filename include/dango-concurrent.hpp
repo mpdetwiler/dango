@@ -3,6 +3,7 @@
 
 #include "dango-concurrent-base.hpp"
 #include "dango-global.hpp"
+#include "dango-hash.hpp"
 #include "dango-int.hpp"
 #include "dango-intrusive-list.hpp"
 #include "dango-tuple.hpp"
