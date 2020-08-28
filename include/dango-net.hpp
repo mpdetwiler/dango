@@ -66,19 +66,19 @@ dango
   <typename tp_arg>
   constexpr auto hton(tp_arg)noexcept = delete;
 
-  constexpr auto hton(dango::ubyte const a_arg)noexcept->dango::ubyte{ return detail::byte_order_funcs<>::hton(a_arg); }
-  constexpr auto hton(dango::ushort const a_arg)noexcept->dango::ushort{ return detail::byte_order_funcs<>::hton(a_arg); }
-  constexpr auto hton(dango::uint const a_arg)noexcept->dango::uint{ return detail::byte_order_funcs<>::hton(a_arg); }
-  constexpr auto hton(dango::ulong const a_arg)noexcept->dango::ulong{ return detail::byte_order_funcs<>::hton(a_arg); }
+  constexpr auto hton(dango::ubyte const a_arg)noexcept->dango::ubyte{ return dango::detail::byte_order_funcs<>::hton(a_arg); }
+  constexpr auto hton(dango::ushort const a_arg)noexcept->dango::ushort{ return dango::detail::byte_order_funcs<>::hton(a_arg); }
+  constexpr auto hton(dango::uint const a_arg)noexcept->dango::uint{ return dango::detail::byte_order_funcs<>::hton(a_arg); }
+  constexpr auto hton(dango::ulong const a_arg)noexcept->dango::ulong{ return dango::detail::byte_order_funcs<>::hton(a_arg); }
 
   template
   <typename tp_arg>
   constexpr auto ntoh(tp_arg)noexcept = delete;
 
-  constexpr auto ntoh(dango::ubyte const a_arg)noexcept->dango::ubyte{ return detail::byte_order_funcs<>::ntoh(a_arg); }
-  constexpr auto ntoh(dango::ushort const a_arg)noexcept->dango::ushort{ return detail::byte_order_funcs<>::ntoh(a_arg); }
-  constexpr auto ntoh(dango::uint const a_arg)noexcept->dango::uint{ return detail::byte_order_funcs<>::ntoh(a_arg); }
-  constexpr auto ntoh(dango::ulong const a_arg)noexcept->dango::ulong{ return detail::byte_order_funcs<>::ntoh(a_arg); }
+  constexpr auto ntoh(dango::ubyte const a_arg)noexcept->dango::ubyte{ return dango::detail::byte_order_funcs<>::ntoh(a_arg); }
+  constexpr auto ntoh(dango::ushort const a_arg)noexcept->dango::ushort{ return dango::detail::byte_order_funcs<>::ntoh(a_arg); }
+  constexpr auto ntoh(dango::uint const a_arg)noexcept->dango::uint{ return dango::detail::byte_order_funcs<>::ntoh(a_arg); }
+  constexpr auto ntoh(dango::ulong const a_arg)noexcept->dango::ulong{ return dango::detail::byte_order_funcs<>::ntoh(a_arg); }
 }
 
 #endif // DANGO_NET_HPP_INCLUDED

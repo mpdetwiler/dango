@@ -97,39 +97,6 @@ static_assert(dango::is_same<dango::copy_cv<int volatile, bool>, bool volatile>)
 static_assert(dango::is_same<dango::copy_cv<int const volatile, bool>, bool const volatile>);
 static_assert(dango::is_same<dango::copy_cv<int, bool const volatile>, bool const volatile>);
 
-/*** make_uint make_sint ***/
-
-static_assert(sizeof(dango::integer::s_char)     == sizeof(dango::make_uint<dango::integer::s_char>));
-static_assert(sizeof(dango::integer::s_short)    == sizeof(dango::make_uint<dango::integer::s_short>));
-static_assert(sizeof(dango::integer::s_int)      == sizeof(dango::make_uint<dango::integer::s_int>));
-static_assert(sizeof(dango::integer::s_long)     == sizeof(dango::make_uint<dango::integer::s_long>));
-static_assert(sizeof(dango::integer::s_longlong) == sizeof(dango::make_uint<dango::integer::s_longlong>));
-static_assert(sizeof(char)                       == sizeof(dango::make_uint<char>));
-static_assert(sizeof(wchar_t)                    == sizeof(dango::make_uint<wchar_t>));
-static_assert(sizeof(char8_t)                    == sizeof(dango::make_uint<char8_t>));
-static_assert(sizeof(char16_t)                   == sizeof(dango::make_uint<char16_t>));
-static_assert(sizeof(char32_t)                   == sizeof(dango::make_uint<char32_t>));
-static_assert(sizeof(bool)                       == sizeof(dango::make_uint<bool>));
-
-static_assert(sizeof(dango::integer::u_char)     == sizeof(dango::make_sint<dango::integer::u_char>));
-static_assert(sizeof(dango::integer::u_short)    == sizeof(dango::make_sint<dango::integer::u_short>));
-static_assert(sizeof(dango::integer::u_int)      == sizeof(dango::make_sint<dango::integer::u_int>));
-static_assert(sizeof(dango::integer::u_long)     == sizeof(dango::make_sint<dango::integer::u_long>));
-static_assert(sizeof(dango::integer::u_longlong) == sizeof(dango::make_sint<dango::integer::u_longlong>));
-static_assert(sizeof(char)                       == sizeof(dango::make_sint<char>));
-static_assert(sizeof(wchar_t)                    == sizeof(dango::make_sint<wchar_t>));
-static_assert(sizeof(char8_t)                    == sizeof(dango::make_sint<char8_t>));
-static_assert(sizeof(char16_t)                   == sizeof(dango::make_sint<char16_t>));
-static_assert(sizeof(char32_t)                   == sizeof(dango::make_sint<char32_t>));
-static_assert(sizeof(bool)                       == sizeof(dango::make_sint<bool>));
-
-static_assert(dango::is_same<dango::make_uint<float>, float>);
-static_assert(dango::is_same<dango::make_sint<int*>, int*>);
-static_assert(dango::is_same<dango::make_sint<dango::ulong>, dango::slong>);
-static_assert(dango::is_same<dango::make_uint<dango::sint>, dango::uint>);
-static_assert(dango::is_same<dango::make_sint<dango::ushort> const, dango::sshort const>);
-static_assert(dango::is_same<dango::make_uint<dango::sbyte volatile>, dango::ubyte volatile>);
-
 /*** decay ***/
 
 static_assert(dango::is_same<dango::decay<int>, int>);
@@ -546,15 +513,118 @@ static_assert(dango::is_destructible<int[3][4][5]>);
 
 /*** is_convertible ***/
 
+namespace
+{
+  struct
+  unmoveable
+  {
+    constexpr unmoveable()noexcept = default;
+    DANGO_UNMOVEABLE(unmoveable)
+    constexpr ~unmoveable()noexcept = default;
+  };
+}
 
+static_assert(dango::is_convertible<void const, void>);
+static_assert(dango::is_convertible_ret<void, void volatile>);
+static_assert(dango::is_convertible<int*, int*>);
+static_assert(dango::is_convertible_ret<int*, int*>);
+static_assert(dango::is_convertible<int const&, int>);
+static_assert(dango::is_convertible_ret<int&&, int>);
+static_assert(!dango::is_convertible<unmoveable, unmoveable>);
+static_assert(dango::is_convertible_ret<unmoveable, unmoveable>);
+static_assert(dango::is_convertible<void(int, bool)noexcept, void(*)(int, bool)noexcept(false)>);
+static_assert(dango::is_convertible_ret<void(int, bool)noexcept, void(*)(int, bool)noexcept(false)>);
+
+/*** is_callable ***/
+
+static_assert(dango::is_callable<unmoveable(int, float)noexcept, int, float>);
+static_assert(dango::is_noexcept_callable<unmoveable(int, float)noexcept, int, float>);
+static_assert(dango::is_callable_ret<unmoveable, unmoveable(int, float)noexcept, int, float>);
+static_assert(dango::is_noexcept_callable_ret<unmoveable, unmoveable(int, float)noexcept, int, float>);
+
+/*** is_constructible ***/
+
+static_assert(dango::is_constructible<int>);
+static_assert(dango::is_constructible<int&, int&>);
+static_assert(!dango::is_constructible<unconstructible>);
+static_assert(dango::is_noexcept_constructible<unmoveable>);
+static_assert(dango::is_trivial_constructible<unmoveable>);
+static_assert(!dango::is_constructible<int[]>);
+static_assert(dango::is_constructible<int[4]>);
+static_assert(!dango::is_constructible<int[4], int, int, int, int, int>);
+static_assert(!dango::is_copy_constructible<unmoveable>);
+static_assert(!dango::is_move_constructible<unmoveable>);
+
+/*** is_brace_constructible ***/
+
+static_assert(dango::is_brace_constructible<int>);
+static_assert(dango::is_brace_constructible<int&, int&>);
+static_assert(!dango::is_brace_constructible<unconstructible>);
+static_assert(dango::is_noexcept_brace_constructible<unmoveable>);
+static_assert(!dango::is_brace_constructible<int[]>);
+static_assert(dango::is_brace_constructible<int[4]>);
+static_assert(!dango::is_brace_constructible<int[4], int, int, int, int, int>);
+
+/*** is_assignable ***/
+
+static_assert(dango::is_assignable<int&, int&>);
+static_assert(dango::is_assignable<int&, int const&>);
+static_assert(dango::is_noexcept_assignable<int&, int&>);
+static_assert(dango::is_noexcept_assignable<int&, int const&>);
+static_assert(dango::is_trivial_assignable<int&, int&>);
+static_assert(dango::is_trivial_assignable<int&, int const&>);
+static_assert(!dango::is_assignable<unmoveable&, unmoveable&>);
+static_assert(!dango::is_assignable<unmoveable&, unmoveable const&>);
+static_assert(!dango::is_assignable<unmoveable&, unmoveable&&>);
+static_assert(!dango::is_assignable<unmoveable&, unmoveable const&&>);
+
+/*** underlying_type ***/
+
+static_assert(dango::is_same<dango::underlying_type<test_enum_class>, dango::uint>);
+static_assert(dango::is_same<dango::underlying_type<test_enum_class const>, dango::uint>);
+
+/*** make_uint make_sint ***/
+
+static_assert(sizeof(dango::integer::s_char)     == sizeof(dango::make_uint<dango::integer::s_char>));
+static_assert(sizeof(dango::integer::s_short)    == sizeof(dango::make_uint<dango::integer::s_short>));
+static_assert(sizeof(dango::integer::s_int)      == sizeof(dango::make_uint<dango::integer::s_int>));
+static_assert(sizeof(dango::integer::s_long)     == sizeof(dango::make_uint<dango::integer::s_long>));
+static_assert(sizeof(dango::integer::s_longlong) == sizeof(dango::make_uint<dango::integer::s_longlong>));
+static_assert(sizeof(char)                       == sizeof(dango::make_uint<char>));
+static_assert(sizeof(wchar_t)                    == sizeof(dango::make_uint<wchar_t>));
+static_assert(sizeof(char8_t)                    == sizeof(dango::make_uint<char8_t>));
+static_assert(sizeof(char16_t)                   == sizeof(dango::make_uint<char16_t>));
+static_assert(sizeof(char32_t)                   == sizeof(dango::make_uint<char32_t>));
+static_assert(sizeof(bool)                       == sizeof(dango::make_uint<bool>));
+
+static_assert(sizeof(dango::integer::u_char)     == sizeof(dango::make_sint<dango::integer::u_char>));
+static_assert(sizeof(dango::integer::u_short)    == sizeof(dango::make_sint<dango::integer::u_short>));
+static_assert(sizeof(dango::integer::u_int)      == sizeof(dango::make_sint<dango::integer::u_int>));
+static_assert(sizeof(dango::integer::u_long)     == sizeof(dango::make_sint<dango::integer::u_long>));
+static_assert(sizeof(dango::integer::u_longlong) == sizeof(dango::make_sint<dango::integer::u_longlong>));
+static_assert(sizeof(char)                       == sizeof(dango::make_sint<char>));
+static_assert(sizeof(wchar_t)                    == sizeof(dango::make_sint<wchar_t>));
+static_assert(sizeof(char8_t)                    == sizeof(dango::make_sint<char8_t>));
+static_assert(sizeof(char16_t)                   == sizeof(dango::make_sint<char16_t>));
+static_assert(sizeof(char32_t)                   == sizeof(dango::make_sint<char32_t>));
+static_assert(sizeof(bool)                       == sizeof(dango::make_sint<bool>));
+
+static_assert(dango::is_same<dango::make_uint<float>, float>);
+static_assert(dango::is_same<dango::make_sint<int*>, int*>);
+static_assert(dango::is_same<dango::make_sint<dango::ulong>, dango::slong>);
+static_assert(dango::is_same<dango::make_uint<dango::sint>, dango::uint>);
+static_assert(dango::is_same<dango::make_sint<dango::ushort> const, dango::sshort const>);
+static_assert(dango::is_same<dango::make_uint<dango::sbyte volatile>, dango::ubyte volatile>);
+static_assert(dango::is_same<dango::make_uint<test_enum_class const>, dango::uint const>);
+static_assert(dango::is_same<dango::make_sint<test_enum_class const>, dango::sint const>);
 
 /*** bit_width ***/
 
 static_assert(dango::bit_width<dango::ubyte>  == 8);
-static_assert(dango::bit_width<dango::sbyte>  == 8);
-static_assert(dango::bit_width<dango::ushort> == 16);
-static_assert(dango::bit_width<dango::sshort> == 16);
+static_assert(dango::bit_width<dango::sbyte const>  == 8);
+static_assert(dango::bit_width<dango::ushort volatile> == 16);
+static_assert(dango::bit_width<dango::sshort const volatile> == 16);
 static_assert(dango::bit_width<dango::uint>   == 32);
-static_assert(dango::bit_width<dango::sint>   == 32);
-static_assert(dango::bit_width<dango::ulong>  == 64);
-static_assert(dango::bit_width<dango::slong>  == 64);
+static_assert(dango::bit_width<dango::sint const>   == 32);
+static_assert(dango::bit_width<dango::ulong volatile>  == 64);
+static_assert(dango::bit_width<dango::slong const volatile>  == 64);

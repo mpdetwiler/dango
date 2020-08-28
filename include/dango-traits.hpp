@@ -23,7 +23,7 @@ dango
   template
   <typename tp_type>
   using remove_const =
-    typename detail::remove_const_help<tp_type>::type;
+    typename dango::detail::remove_const_help<tp_type>::type;
 }
 
 template
@@ -72,7 +72,7 @@ dango
   template
   <typename tp_type>
   using remove_volatile =
-    typename detail::remove_volatile_help<tp_type>::type;
+    typename dango::detail::remove_volatile_help<tp_type>::type;
 }
 
 template
@@ -135,7 +135,7 @@ dango
   template
   <typename tp_type>
   using remove_ref =
-    typename detail::remove_ref_help<tp_type>::type;
+    typename dango::detail::remove_ref_help<tp_type>::type;
 }
 
 template
@@ -220,7 +220,7 @@ dango
   template
   <typename tp_type>
   using remove_ptr =
-    typename detail::remove_ptr_help<tp_type>::type;
+    typename dango::detail::remove_ptr_help<tp_type>::type;
 }
 
 template
@@ -320,7 +320,7 @@ dango
   template
   <typename tp_type>
   using remove_all_ptr =
-    typename detail::remove_all_ptr_help<tp_type>::type;
+    typename dango::detail::remove_all_ptr_help<tp_type>::type;
 }
 
 template
@@ -412,7 +412,7 @@ dango
   template
   <typename tp_type>
   using remove_array =
-    typename detail::remove_array_help<tp_type>::type;
+    typename dango::detail::remove_array_help<tp_type>::type;
 }
 
 template
@@ -478,7 +478,7 @@ dango
   template
   <typename tp_type>
   using remove_all_array =
-    typename detail::remove_all_array_help<tp_type>::type;
+    typename dango::detail::remove_all_array_help<tp_type>::type;
 }
 
 template
@@ -548,7 +548,7 @@ dango
   template
   <typename tp_from, typename tp_to>
   using copy_cv =
-    typename detail::copy_cv_help<tp_from, tp_to>::type;
+    typename dango::detail::copy_cv_help<tp_from, tp_to>::type;
 }
 
 template
@@ -603,108 +603,6 @@ final
   DANGO_UNCONSTRUCTIBLE(copy_cv_help)
 };
 
-/*** make_uint ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  struct
-  make_uint_help
-  final
-  {
-    using type = tp_type;
-
-    DANGO_UNCONSTRUCTIBLE(make_uint_help)
-  };
-
-#define DANGO_DEFINE_INT_MAPPING(type1, type2) \
-  template<> struct make_uint_help<type1> \
-  final{ using type = type2; DANGO_UNCONSTRUCTIBLE(make_uint_help) };
-
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_char,     dango::integer::u_char)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_short,    dango::integer::u_short)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_int,      dango::integer::u_int)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_long,     dango::integer::u_long)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_longlong, dango::integer::u_longlong)
-
-  DANGO_DEFINE_INT_MAPPING(char,         dango::integer::u_char)
-  DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::ubyte)
-  DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::ushort)
-  DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::uint)
-
-#ifdef DANGO_PLATFORM_WINDOWS
-  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::ushort)
-#else
-  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::uint)
-#endif
-
-#undef DANGO_DEFINE_INT_MAPPING
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  using make_uint =
-    dango::copy_cv<tp_type, typename detail::make_uint_help<dango::remove_cv<tp_type>>::type>;
-}
-
-static_assert(sizeof(wchar_t) == sizeof(dango::make_uint<wchar_t>));
-
-/*** make_sint ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_type>
-  struct
-  make_sint_help
-  final
-  {
-    using type = tp_type;
-
-    DANGO_UNCONSTRUCTIBLE(make_sint_help)
-  };
-
-#define DANGO_DEFINE_INT_MAPPING(type1, type2) \
-  template<> struct make_sint_help<type1> \
-  final{ using type = type2; DANGO_UNCONSTRUCTIBLE(make_sint_help) };
-
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_char,     dango::integer::s_char)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_short,    dango::integer::s_short)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_int,      dango::integer::s_int)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_long,     dango::integer::s_long)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_longlong, dango::integer::s_longlong)
-
-  DANGO_DEFINE_INT_MAPPING(char,         dango::integer::s_char)
-  DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::sbyte)
-  DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::sshort)
-  DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::sint)
-
-#ifdef DANGO_PLATFORM_WINDOWS
-  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::sshort)
-#else
-  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::sint)
-#endif
-
-#undef DANGO_DEFINE_INT_MAPPING
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  using make_sint =
-    dango::copy_cv<tp_type, typename detail::make_sint_help<dango::remove_cv<tp_type>>::type>;
-}
-
-static_assert(sizeof(wchar_t) == sizeof(dango::make_sint<wchar_t>));
-
 /*** decay ***/
 
 namespace
@@ -733,7 +631,7 @@ dango
   template
   <typename tp_type>
   using decay =
-    typename detail::decay_help<dango::remove_ref<tp_type>>::type;
+    typename dango::detail::decay_help<dango::remove_ref<tp_type>>::type;
 }
 
 template
@@ -808,7 +706,7 @@ dango
   template
   <bool tp_cond, typename tp_true_type, typename tp_false_type>
   using conditional =
-    typename detail::conditional_help<tp_cond, tp_true_type, tp_false_type>::type;
+    typename dango::detail::conditional_help<tp_cond, tp_true_type, tp_false_type>::type;
 }
 
 template
@@ -1752,31 +1650,39 @@ dango::detail
 
   template
   <typename tp_from, typename tp_to>
+  concept is_convertible_help_help =
+    dango::is_referenceable_ignore_ref<tp_from> && (dango::is_ref<tp_to> || dango::is_object_exclude_array<tp_to>);
+
+  template
+  <typename tp_from, typename tp_to>
   concept is_convertible_help =
-    dango::is_referenceable_ignore_ref<tp_from> &&
-    (dango::is_ref<tp_to> || dango::is_object_exclude_array<tp_to>) &&
+    dango::detail::is_convertible_help_help<tp_from, tp_to> &&
     dango::is_destructible<tp_to> &&
     requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()) }; };
 
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_help =
-    dango::detail::is_convertible_help<tp_from, tp_to> &&
+    dango::detail::is_convertible_help_help<tp_from, tp_to> &&
     dango::is_noexcept_destructible<tp_to> &&
     requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()) }noexcept; };
 
   template
   <typename tp_from, typename tp_to>
-  concept is_convertible_ret_help =
+  concept is_convertible_ret_help_help =
     dango::is_object_exclude_array<tp_from> &&
     dango::is_object_exclude_array<tp_to> &&
-    dango::is_same_ignore_cv<tp_from, tp_to> &&
-    dango::is_destructible<tp_to>;
+    dango::is_same_ignore_cv<tp_from, tp_to>;
+
+  template
+  <typename tp_from, typename tp_to>
+  concept is_convertible_ret_help =
+    dango::detail::is_convertible_ret_help_help<tp_from, tp_to> && dango::is_destructible<tp_to>;
 
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_ret_help =
-    dango::detail::is_convertible_ret_help<tp_from, tp_to> && dango::is_noexcept_destructible<tp_to>;
+    dango::detail::is_convertible_ret_help_help<tp_from, tp_to> && dango::is_noexcept_destructible<tp_to>;
 }
 
 namespace
@@ -1790,7 +1696,8 @@ dango
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible =
-    dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_noexcept_convertible_help<tp_from, tp_to>;
+    dango::is_convertible<tp_from, tp_to> &&
+    (dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_noexcept_convertible_help<tp_from, tp_to>);
 
   template
   <typename tp_from, typename tp_to>
@@ -1800,7 +1707,8 @@ dango
   template
   <typename tp_from, typename tp_to>
   concept is_noexcept_convertible_ret =
-    dango::detail::is_noexcept_convertible_ret_help<tp_from, tp_to> || dango::is_noexcept_convertible<tp_from, tp_to>;
+    dango::is_convertible_ret<tp_from, tp_to> &&
+    (dango::detail::is_noexcept_convertible_ret_help<tp_from, tp_to> || dango::is_noexcept_convertible<tp_from, tp_to>);
 }
 
 /*** is_callable is_noexcept_callable is_callable_ret is_noexcept_callable_ret ***/
@@ -2129,12 +2037,12 @@ namespace
 dango::detail
 {
   template
-  <typename tp_type, bool tp_enum = dango::is_enum<tp_type>>
+  <typename tp_type>
   struct underlying_type_help;
 
   template
-  <typename tp_type>
-  struct underlying_type_help<tp_type, true>;
+  <dango::is_enum tp_type>
+  struct underlying_type_help<tp_type>;
 }
 
 namespace
@@ -2143,11 +2051,11 @@ dango
   template
   <typename tp_enum>
   using underlying_type =
-    typename detail::underlying_type_help<tp_enum>::type;
+    typename dango::detail::underlying_type_help<tp_enum>::type;
 }
 
 template
-<typename tp_type, bool tp_enum>
+<typename tp_type>
 struct
 dango::
 detail::
@@ -2160,17 +2068,115 @@ final
 };
 
 template
-<typename tp_type>
+<dango::is_enum tp_type>
 struct
 dango::
 detail::
-underlying_type_help<tp_type, true>
+underlying_type_help<tp_type>
 final
 {
   using type = __underlying_type(tp_type);
 
   DANGO_UNCONSTRUCTIBLE(underlying_type_help)
 };
+
+/*** make_uint ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct
+  make_uint_help
+  final
+  {
+    using type = tp_type;
+
+    DANGO_UNCONSTRUCTIBLE(make_uint_help)
+  };
+
+#define DANGO_DEFINE_INT_MAPPING(type1, type2) \
+  template<> struct make_uint_help<type1> \
+  final{ using type = type2; DANGO_UNCONSTRUCTIBLE(make_uint_help) };
+
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_char,     dango::integer::u_char)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_short,    dango::integer::u_short)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_int,      dango::integer::u_int)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_long,     dango::integer::u_long)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::s_longlong, dango::integer::u_longlong)
+
+  DANGO_DEFINE_INT_MAPPING(char,         dango::integer::u_char)
+  DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::ubyte)
+  DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::ushort)
+  DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::uint)
+
+#ifdef DANGO_PLATFORM_WINDOWS
+  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::ushort)
+#else
+  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::uint)
+#endif
+
+#undef DANGO_DEFINE_INT_MAPPING
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using make_uint =
+    dango::copy_cv<tp_type, typename dango::detail::make_uint_help<dango::underlying_type<dango::remove_cv<tp_type>>>::type>;
+}
+
+/*** make_sint ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct
+  make_sint_help
+  final
+  {
+    using type = tp_type;
+
+    DANGO_UNCONSTRUCTIBLE(make_sint_help)
+  };
+
+#define DANGO_DEFINE_INT_MAPPING(type1, type2) \
+  template<> struct make_sint_help<type1> \
+  final{ using type = type2; DANGO_UNCONSTRUCTIBLE(make_sint_help) };
+
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_char,     dango::integer::s_char)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_short,    dango::integer::s_short)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_int,      dango::integer::s_int)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_long,     dango::integer::s_long)
+  DANGO_DEFINE_INT_MAPPING(dango::integer::u_longlong, dango::integer::s_longlong)
+
+  DANGO_DEFINE_INT_MAPPING(char,         dango::integer::s_char)
+  DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::sbyte)
+  DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::sshort)
+  DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::sint)
+
+#ifdef DANGO_PLATFORM_WINDOWS
+  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::sshort)
+#else
+  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::sint)
+#endif
+
+#undef DANGO_DEFINE_INT_MAPPING
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using make_sint =
+    dango::copy_cv<tp_type, typename dango::detail::make_sint_help<dango::underlying_type<dango::remove_cv<tp_type>>>::type>;
+}
 
 /*** endian ***/
 
@@ -2215,7 +2221,8 @@ dango
 {
   template
   <dango::is_integral_exclude_bool tp_int>
-  inline constexpr auto const bit_width = dango::detail::bit_width_help<tp_int>();
+  inline constexpr auto const bit_width =
+    dango::detail::bit_width_help<dango::remove_cv<tp_int>>();
 }
 
 /*** sizeof_with_void alignof_with_void ***/

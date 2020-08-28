@@ -131,7 +131,7 @@ dango
   {
     using dango::integer::s_int;
 
-    static_assert(detail::is_valid_mem_order(tp_order));
+    static_assert(dango::detail::is_valid_mem_order(tp_order));
 
     static_assert
     (
@@ -162,7 +162,7 @@ dango
   {
     using dango::integer::s_int;
 
-    static_assert(detail::is_valid_mem_order(tp_order));
+    static_assert(dango::detail::is_valid_mem_order(tp_order));
 
     static_assert
     (
@@ -190,7 +190,7 @@ dango
   {
     using dango::integer::s_int;
 
-    static_assert(detail::is_valid_mem_order(tp_order));
+    static_assert(dango::detail::is_valid_mem_order(tp_order));
 
     using type = dango::remove_volatile<tp_type>;
 
@@ -226,8 +226,8 @@ dango
   {
     using dango::integer::s_int;
 
-    static_assert(detail::is_valid_mem_order(tp_success));
-    static_assert(detail::is_valid_mem_order(tp_failure));
+    static_assert(dango::detail::is_valid_mem_order(tp_success));
+    static_assert(dango::detail::is_valid_mem_order(tp_failure));
 
     static_assert
     (
@@ -269,7 +269,7 @@ atomic_##name \
 (tp_type* const a_addr, tp_arg&& a_arg) \
 noexcept(dango::is_noexcept_brace_constructible<dango::remove_volatile<tp_type>, tp_arg>)->dango::remove_volatile<tp_type> \
 { \
-  static_assert(detail::is_valid_mem_order(tp_order)); \
+  static_assert(dango::detail::is_valid_mem_order(tp_order)); \
   using type = dango::remove_volatile<tp_type>; \
   return __atomic_##name(a_addr, type{ dango::forward<tp_arg>(a_arg) }, dango::integer::s_int(tp_order)); \
 }
@@ -300,7 +300,7 @@ auto \
 atomic_##name \
 (tp_type* const a_addr, dango::ssize const a_arg)noexcept->dango::remove_volatile<tp_type> \
 { \
-  static_assert(detail::is_valid_mem_order(tp_order)); \
+  static_assert(dango::detail::is_valid_mem_order(tp_order)); \
   auto const a_val = a_arg * dango::ssize(sizeof(dango::remove_ptr<tp_type>)); \
   return __atomic_##name(a_addr, a_val, dango::integer::s_int(tp_order)); \
 }
