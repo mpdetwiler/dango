@@ -521,7 +521,32 @@ static_assert(dango::is_unsigned<bool>);
 static_assert(dango::is_destructible<int>);
 static_assert(dango::is_destructible<int&>);
 
-/***  ***/
+/*** is_destructible ***/
+
+namespace
+{
+  struct unconstructible{ DANGO_UNCONSTRUCTIBLE(unconstructible) };
+  class private_destructor{ ~private_destructor()noexcept = default; };
+}
+
+static_assert(!dango::is_destructible<void>);
+static_assert(!dango::is_destructible<int(float, bool)noexcept>);
+static_assert(dango::is_destructible<int const>);
+static_assert(!dango::is_destructible<unconstructible>);
+static_assert(!dango::is_destructible<private_destructor>);
+static_assert(dango::is_destructible<int&>);
+static_assert(dango::is_destructible<int&&>);
+static_assert(dango::is_noexcept_destructible<int&>);
+static_assert(dango::is_noexcept_destructible<int&&>);
+static_assert(dango::is_trivial_destructible<int&>);
+static_assert(dango::is_trivial_destructible<int&&>);
+static_assert(!dango::is_destructible<int[]>);
+static_assert(dango::is_destructible<int[4]>);
+static_assert(dango::is_destructible<int[3][4][5]>);
+
+/*** is_convertible ***/
+
+
 
 /*** bit_width ***/
 

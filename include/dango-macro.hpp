@@ -1,7 +1,7 @@
 #ifndef DANGO_MACRO_HPP_INCLUDED
 #define DANGO_MACRO_HPP_INCLUDED
 
-#include "dango-standard-headers.hpp""
+#include "dango-standard-headers.hpp"
 
 #ifndef __GNUG__
 static_assert(false, "dango requires GCC or clang to compile");
