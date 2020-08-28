@@ -6,6 +6,6 @@
 -Wextra
 -Wshadow
 -Wno-gnu-zero-variadic-macro-arguments
--Iinclude
--Isrc/private
--DDANGO_BUILDING_DANGO
+-I../include
+-I../test/include
+-DDANGO_ENABLE_UNIT_TESTS
