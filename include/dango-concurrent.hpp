@@ -1,6 +1,12 @@
 #ifndef DANGO_CONCURRENT_HPP_INCLUDED
 #define DANGO_CONCURRENT_HPP_INCLUDED
 
+#include "dango-concurrent-base.hpp"
+#include "dango-global.hpp"
+#include "dango-int.hpp"
+#include "dango-intrusive-list.hpp"
+#include "dango-tuple.hpp"
+
 /*** tick_count ***/
 
 namespace

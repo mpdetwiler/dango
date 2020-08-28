@@ -1,6 +1,8 @@
 #ifndef DANGO_ASSERT_HPP_INCLUDED
 #define DANGO_ASSERT_HPP_INCLUDED
 
+#include "dango-util-base.hpp"
+
 /*** source_location ***/
 
 namespace

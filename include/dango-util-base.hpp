@@ -1,6 +1,8 @@
 #ifndef DANGO_UTIL_BASE_HPP_INCLUDED
 #define DANGO_UTIL_BASE_HPP_INCLUDED
 
+#include "dango-traits.hpp"
+
 /*** priority_tag ***/
 
 namespace

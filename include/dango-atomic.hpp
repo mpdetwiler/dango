@@ -1,6 +1,8 @@
 #ifndef DANGO_ATOMIC_HPP_INCLUDED
 #define DANGO_ATOMIC_HPP_INCLUDED
 
+#include "dango-util-base.hpp"
+
 namespace
 dango
 {

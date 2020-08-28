@@ -1,6 +1,8 @@
 #ifndef DANGO_TUPLE_HPP_INCLUDED
 #define DANGO_TUPLE_HPP_INCLUDED
 
+#include "dango-util-base.hpp"
+
 /*** helpers ***/
 
 namespace

@@ -1,6 +1,9 @@
 #ifndef DANGO_AUTO_PTR_HPP_INCLUDED
 #define DANGO_AUTO_PTR_HPP_INCLUDED
 
+#include "dango-mem.hpp"
+#include "dango-tuple.hpp"
+
 namespace
 dango
 {

@@ -1,6 +1,8 @@
 #ifndef DANGO_CONCEPTS_HPP_INCLUDED
 #define DANGO_CONCEPTS_HPP_INCLUDED
 
+#include "dango-util-base.hpp"
+
 /*** is_nullable ***/
 
 namespace

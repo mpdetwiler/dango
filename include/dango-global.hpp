@@ -1,6 +1,9 @@
 #ifndef DANGO_GLOBAL_HPP_INCLUDED
 #define DANGO_GLOBAL_HPP_INCLUDED
 
+#include "dango-concurrent-base.hpp"
+#include "dango-mem.hpp"
+
 namespace
 dango::detail
 {

@@ -1,6 +1,8 @@
 #ifndef DANGO_NET_HPP_INCLUDED
 #define DANGO_NET_HPP_INCLUDED
 
+#include "dango-traits.hpp"
+
 namespace
 dango::detail
 {

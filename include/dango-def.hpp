@@ -1,6 +1,8 @@
 #ifndef DANGO_DEF_HPP_INCLUDED
 #define DANGO_DEF_HPP_INCLUDED
 
+#include "dango-macro.hpp"
+
 #define dango_restrict __restrict__
 
 #ifndef DANGO_NO_KEYWORDS

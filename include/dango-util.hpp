@@ -1,6 +1,8 @@
 #ifndef DANGO_UTIL_HPP_INCLUDED
 #define DANGO_UTIL_HPP_INCLUDED
 
+#include "dango-assert.hpp"
+
 /*** make_guard ***/
 
 namespace

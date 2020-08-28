@@ -1,6 +1,8 @@
 #ifndef DANGO_CSTRING_HPP_INCLUDED
 #define DANGO_CSTRING_HPP_INCLUDED
 
+#include "dango-assert.hpp"
+
 namespace
 dango
 {

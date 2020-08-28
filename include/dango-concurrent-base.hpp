@@ -1,6 +1,9 @@
 #ifndef DANGO_CONCURRENT_BASE_HPP_INCLUDED
 #define DANGO_CONCURRENT_BASE_HPP_INCLUDED
 
+#include "dango-assert.hpp"
+#include "dango-atomic.hpp"
+
 /*** dango_crit ***/
 
 #define dango_crit(lockable) \

@@ -1,6 +1,10 @@
 #ifndef DANGO_ALLOCATOR_HPP_INCLUDED
 #define DANGO_ALLOCATOR_HPP_INCLUDED
 
+#include "dango-concepts.hpp"
+#include "dango-concurrent-base.hpp"
+#include "dango-mem.hpp"
+
 /*** is_allocator ***/
 
 namespace

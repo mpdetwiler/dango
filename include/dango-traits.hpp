@@ -1,6 +1,8 @@
 #ifndef DANGO_TRAITS_HPP_INCLUDED
 #define DANGO_TRAITS_HPP_INCLUDED
 
+#include "dango-def.hpp"
+
 /*** remove_const ***/
 
 namespace

@@ -1,6 +1,8 @@
 #ifndef DANGO_INTRUSIVE_LIST_HPP_INCLUDED
 #define DANGO_INTRUSIVE_LIST_HPP_INCLUDED
 
+#include "dango-assert.hpp"
+
 /*** intrusive_list ***/
 
 namespace

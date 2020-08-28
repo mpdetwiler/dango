@@ -1,6 +1,8 @@
 #ifndef DANGO_MEM_HPP_INCLUDED
 #define DANGO_MEM_HPP_INCLUDED
 
+#include "dango-util.hpp"
+
 /*** dango_new_noexcept ***/
 
 namespace
