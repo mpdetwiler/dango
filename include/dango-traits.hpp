@@ -1390,6 +1390,23 @@ dango
     dango::is_ref<tp_type> || dango::is_referenceable<tp_type>;
 }
 
+/*** is_pointable ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_pointable =
+    dango::is_void<tp_type> || dango::is_object<tp_type> || dango::is_unqualified_func<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_pointable_ignore_ref =
+    dango::is_pointable<tp_type> ||
+    dango::is_pointable<dango::remove_ref<tp_type>>;
+}
+
 /*** is_const ***/
 
 namespace
@@ -1561,6 +1578,127 @@ dango
   template
   <typename tp_derived, typename tp_base>
   concept is_derived_from = dango::is_base_of<tp_base, tp_derived>;
+}
+
+/*** sizeof_with_default alignof_with_default ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type, dango::usize tp_default>
+  inline constexpr dango::usize const sizeof_with_default = tp_default;
+  template
+  <dango::is_object_ignore_ref tp_type, dango::usize tp_default>
+  inline constexpr dango::usize const sizeof_with_default<tp_type, tp_default> = sizeof(tp_type);
+
+  template
+  <typename tp_type, dango::usize tp_default>
+  inline constexpr dango::usize const alignof_with_default = tp_default;
+  template
+  <dango::is_object_ignore_ref tp_type, dango::usize tp_default>
+  inline constexpr dango::usize const alignof_with_default<tp_type, tp_default> = alignof(tp_type);
+}
+
+/*** add_lvalue_ref add is_rvalue_ref ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct
+  add_lvalue_ref_help
+  final
+  {
+    using type = tp_type;
+
+    DANGO_UNCONSTRUCTIBLE(add_lvalue_ref_help)
+  };
+
+  template
+  <dango::is_referenceable tp_type>
+  struct
+  add_lvalue_ref_help<tp_type>
+  final
+  {
+    using type = tp_type&;
+
+    DANGO_UNCONSTRUCTIBLE(add_lvalue_ref_help)
+  };
+
+  template
+  <typename tp_type>
+  struct
+  add_rvalue_ref_help
+  final
+  {
+    using type = tp_type;
+
+    DANGO_UNCONSTRUCTIBLE(add_rvalue_ref_help)
+  };
+
+  template
+  <dango::is_referenceable tp_type>
+  struct
+  add_rvalue_ref_help<tp_type>
+  final
+  {
+    using type = tp_type&&;
+
+    DANGO_UNCONSTRUCTIBLE(add_rvalue_ref_help)
+  };
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using add_lvalue_ref =
+    typename dango::detail::add_lvalue_ref_help<tp_type>::type;
+
+  template
+  <typename tp_type>
+  using add_rvalue_ref =
+    typename dango::detail::add_rvalue_ref_help<tp_type>::type;
+}
+
+/*** add_pointer ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct
+  add_ptr_help
+  final
+  {
+    using type = tp_type;
+
+    DANGO_UNCONSTRUCTIBLE(add_ptr_help)
+  };
+
+  template
+  <dango::is_pointable_ignore_ref tp_type>
+  struct
+  add_ptr_help<tp_type>
+  final
+  {
+    using type = dango::remove_ref<tp_type>*;
+
+    DANGO_UNCONSTRUCTIBLE(add_ptr_help)
+  };
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using add_ptr =
+    typename dango::detail::add_ptr_help<tp_type>::type;
 }
 
 /*** is_destructible is_trivial_destructible is_noexcept_destructible has_virtual_destructor ***/
@@ -2223,26 +2361,6 @@ dango
   <dango::is_integral_exclude_bool tp_int>
   inline constexpr auto const bit_width =
     dango::detail::bit_width_help<dango::remove_cv<tp_int>>();
-}
-
-/*** sizeof_with_void alignof_with_void ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type, dango::usize tp_default = dango::usize(1)>
-  inline constexpr dango::usize const sizeof_with_void = sizeof(tp_type);
-  template
-  <dango::is_void tp_type, dango::usize tp_default>
-  inline constexpr dango::usize const sizeof_with_void<tp_type, tp_default> = tp_default;
-
-  template
-  <typename tp_type, dango::usize tp_default = dango::usize(1)>
-  inline constexpr dango::usize const alignof_with_void = alignof(tp_type);
-  template
-  <dango::is_void tp_type, dango::usize tp_default>
-  inline constexpr dango::usize const alignof_with_void<tp_type, tp_default> = tp_default;
 }
 
 /*** constexpr_check ***/

@@ -22,7 +22,7 @@ dango
 
   inline constexpr auto const plain_delete =
     []<dango::is_object_exclude_array tp_type>
-    (tp_type* const a_ptr)noexcept->void
+    (tp_type* const a_ptr)constexpr noexcept->void
     {
       delete a_ptr;
     };
@@ -77,8 +77,8 @@ private:
   using make_tag = dango::detail::auto_ptr_make::make_tag;
 public:
   using value_type = tp_type;
-  using ptr_type = value_type*;
-  using ref_type = value_type&;
+  using ptr_type = dango::add_ptr<value_type>;
+  using ref_type = dango::add_lvalue_ref<value_type>;
   using allocator_type = tp_deleter;
   using deleter_type = dango::present_if<dango::is_auto_ptr_deleter<tp_deleter, value_type>, dango::decay<tp_deleter>, dango::uint(0)>;
   using allocator_handle_type = dango::allocator_handle_type_or<allocator_type, dango::present_if_type<dango::uint(1)>>;
@@ -87,15 +87,15 @@ public:
 private:
   template
   <typename tp_del>
+  explicit constexpr
+  auto_ptr
+  (make_tag const, ptr_type const a_ptr, tp_del&& a_del)noexcept
   requires
   (
     !dango::is_void<value_type> &&
     dango::is_auto_ptr_deleter<tp_deleter, value_type> &&
     dango::is_noexcept_constructible<deleter_type, tp_del>
-  )
-  explicit constexpr
-  auto_ptr
-  (make_tag const, value_type const a_ptr, tp_del&& a_del)noexcept:
+  ):
   m_ptr{ a_ptr },
   m_deleter{ dango::forward<tp_del>(a_del) },
   m_alloc_ptr{ },
@@ -105,15 +105,15 @@ private:
 
   template
   <typename tp_alloc>
+  explicit constexpr
+  auto_ptr
+  (make_tag const, ptr_type const a_ptr, tp_alloc&& a_alloc_ptr)noexcept
   requires
   (
     !dango::is_void<value_type> &&
     dango::is_handle_based_allocator<tp_deleter> &&
     dango::is_noexcept_constructible<allocator_handle_type, tp_alloc>
-  )
-  explicit constexpr
-  auto_ptr
-  (make_tag const, value_type const a_ptr, tp_alloc&& a_alloc_ptr)noexcept:
+  ):
   m_ptr{ a_ptr },
   m_deleter{ },
   m_alloc_ptr{ dango::forward<tp_alloc>(a_alloc_ptr) },
@@ -123,8 +123,12 @@ private:
 
   explicit constexpr
   auto_ptr
-  (make_tag const, value_type const a_ptr)noexcept
-  requires(!dango::is_void<value_type> && dango::is_nohandle_allocator<tp_deleter>):
+  (make_tag const, ptr_type const a_ptr)noexcept
+  requires
+  (
+    !dango::is_void<value_type> &&
+    dango::is_nohandle_allocator<tp_deleter>
+  ):
   m_ptr{ a_ptr },
   m_deleter{ },
   m_alloc_ptr{ },
@@ -134,21 +138,21 @@ private:
 
   template
   <typename tp_alloc>
+  explicit constexpr
+  auto_ptr
+  (
+    make_tag const,
+    ptr_type const a_ptr,
+    tp_alloc&& a_alloc_ptr,
+    size_type const a_size,
+    align_type const a_align
+  )noexcept
   requires
   (
     dango::is_void<value_type> &&
     dango::is_handle_based_allocator<tp_deleter> &&
     dango::is_noexcept_constructible<allocator_handle_type, tp_alloc>
-  )
-  explicit constexpr
-  auto_ptr
-  (
-    make_tag const,
-    value_type const a_ptr,
-    tp_alloc&& a_alloc_ptr,
-    size_type const a_size,
-    align_type const a_align
-  )noexcept:
+  ):
   m_ptr{ a_ptr },
   m_deleter{ },
   m_alloc_ptr{ dango::forward<tp_alloc>(a_alloc_ptr) },
@@ -160,11 +164,15 @@ private:
   auto_ptr
   (
     make_tag const,
-    value_type const a_ptr,
+    ptr_type const a_ptr,
     size_type const a_size,
     align_type const a_align
   )noexcept
-  requires(dango::is_void<value_type> && dango::is_nohandle_allocator<tp_deleter>):
+  requires
+  (
+    dango::is_void<value_type> &&
+    dango::is_nohandle_allocator<tp_deleter>
+  ):
   m_ptr{ a_ptr },
   m_deleter{ },
   m_alloc_ptr{ },
@@ -172,69 +180,54 @@ private:
   m_align{ a_align }
   { }
 public:
+  constexpr
+  auto_ptr
+  (dango::null_tag const)noexcept
+  requires
+  (
+    dango::is_auto_ptr_deleter<tp_deleter, value_type> &&
+    dango::is_noexcept_default_constructible<deleter_type>
+  ):
+  m_ptr{ dango::null },
+  m_deleter{ },
+  m_alloc_ptr{ },
+  m_size{ },
+  m_align{ }
+  { }
+
+  constexpr
+  auto_ptr
+  (dango::null_tag const)noexcept
+  requires
+  (dango::is_handle_based_allocator<tp_deleter>):
+  m_ptr{ dango::null },
+  m_deleter{ },
+  m_alloc_ptr{ dango::null },
+  m_size{ },
+  m_align{ }
+  { }
+
+  constexpr
+  auto_ptr
+  (dango::null_tag const)noexcept
+  requires(dango::is_nohandle_allocator<tp_deleter>):
+  m_ptr{ dango::null },
+  m_deleter{ },
+  m_alloc_ptr{ },
+  m_size{ },
+  m_align{ }
+  { }
+
   explicit constexpr auto_ptr()noexcept = delete;
 
   explicit constexpr
   auto_ptr()noexcept
-  requires(dango::is_auto_ptr_deleter<tp_deleter, value_type> && dango::is_noexcept_default_constructible<deleter_type>):
-  m_ptr{ dango::null },
-  m_deleter{ },
-  m_alloc_ptr{ },
-  m_size{ },
-  m_align{ }
-  { }
-
-  explicit constexpr
-  auto_ptr()noexcept
-  requires(dango::is_handle_based_allocator<tp_deleter>):
-  m_ptr{ dango::null },
-  m_deleter{ },
-  m_alloc_ptr{ dango::null },
-  m_size{ },
-  m_align{ }
-  { }
-
-  explicit constexpr
-  auto_ptr()noexcept
-  requires(dango::is_nohandle_allocator<tp_deleter>):
-  m_ptr{ dango::null },
-  m_deleter{ },
-  m_alloc_ptr{ },
-  m_size{ },
-  m_align{ }
-  { }
-
-  explicit constexpr
-  auto_ptr
-  (dango::null_tag const)noexcept
-  requires(dango::is_auto_ptr_deleter<tp_deleter, value_type> && dango::is_noexcept_default_constructible<deleter_type>):
-  m_ptr{ dango::null },
-  m_deleter{ },
-  m_alloc_ptr{ },
-  m_size{ },
-  m_align{ }
-  { }
-
-  explicit constexpr
-  auto_ptr
-  (dango::null_tag const)noexcept
-  requires(dango::is_handle_based_allocator<tp_deleter>):
-  m_ptr{ dango::null },
-  m_deleter{ },
-  m_alloc_ptr{ dango::null },
-  m_size{ },
-  m_align{ }
-  { }
-
-  explicit constexpr
-  auto_ptr
-  (dango::null_tag const)noexcept
-  requires(dango::is_nohandle_allocator<tp_deleter>):
-  m_ptr{ dango::null },
-  m_deleter{ },
-  m_alloc_ptr{ },
-  m_size{ },
-  m_align{ }
+  requires
+  (
+    !dango::is_auto_ptr_deleter<tp_deleter, value_type> ||
+    dango::is_noexcept_default_constructible<deleter_type>
+  ):
+  auto_ptr{ dango::null }
   { }
 
   constexpr auto_ptr(auto_ptr const&)noexcept = delete;
@@ -244,12 +237,16 @@ public:
   constexpr
   auto_ptr
   (auto_ptr&& a_ptr)noexcept
-  requires(dango::is_auto_ptr_deleter<tp_deleter, value_type> && dango::is_noexcept_move_constructible<deleter_type>):
+  requires
+  (
+    dango::is_auto_ptr_deleter<tp_deleter, value_type> &&
+    dango::is_noexcept_move_constructible<deleter_type>
+  ):
   m_ptr{ dango::move(a_ptr).m_ptr },
   m_deleter{ dango::move(a_ptr).m_deleter },
   m_alloc_ptr{ },
-  m_size{ dango::move(a_ptr).m_size },
-  m_align{ dango::move(a_ptr).m_align }
+  m_size{ },
+  m_align{ }
   {
     a_ptr.m_ptr = dango::null;
   }
@@ -310,7 +307,14 @@ public:
         }
         else
         {
-          dango::destructor(a_ptr);
+          if constexpr(dango::is_virtual_destructible<value_type>)
+          {
+            dango::destructor(a_ptr);
+          }
+          else
+          {
+            dango::destructor_as<value_type>(a_ptr);
+          }
 
           if constexpr(dango::is_handle_based_allocator<tp_deleter>)
           {
@@ -323,6 +327,69 @@ public:
         }
       }
     }
+  }
+
+  constexpr auto
+  operator =
+  (dango::null_tag const)& noexcept->auto_ptr&
+  requires
+  (
+    !dango::is_auto_ptr_deleter<tp_deleter, value_type> ||
+    (dango::is_default_constructible<deleter_type> && dango::is_noexcept_swappable<deleter_type&, deleter_type&>)
+  )
+  {
+    auto_ptr a_temp{ dango::null };
+
+    dango::swap(*this, a_temp);
+
+    return *this;
+  }
+
+  constexpr auto operator = (auto_ptr const&)& noexcept->auto_ptr& = delete;
+
+  constexpr auto operator = (auto_ptr&&)& noexcept->auto_ptr& = delete;
+
+  constexpr auto
+  operator =
+  (auto_ptr&& a_ptr)& noexcept->auto_ptr&
+  requires
+  (
+    !dango::is_auto_ptr_deleter<tp_deleter, value_type> ||
+    dango::is_noexcept_swappable<deleter_type&, deleter_type&>
+  )
+  {
+    auto_ptr a_temp{ dango::move(a_ptr) };
+
+    dango::swap(*this, a_temp);
+
+    return *this;
+  }
+public:
+  constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_ptr); }
+
+  constexpr void
+  dango_operator_swap
+  (auto_ptr& a_ptr)& noexcept
+  requires
+  (
+    !dango::is_auto_ptr_deleter<tp_deleter, value_type> ||
+    dango::is_noexcept_swappable<deleter_type&, deleter_type&>
+  )
+  {
+    dango::swap(m_ptr, a_ptr.m_ptr);
+
+    if constexpr(dango::is_auto_ptr_deleter<tp_deleter, value_type>)
+    {
+      dango::swap(m_deleter, a_ptr.m_deleter);
+    }
+
+    if constexpr(dango::is_handle_based_allocator<tp_deleter>)
+    {
+      dango::swap(m_alloc_ptr, a_ptr.m_alloc_ptr);
+    }
+
+    dango::swap(m_size, a_ptr.m_size);
+    dango::swap(m_align, a_ptr.m_align);
   }
 private:
   ptr_type m_ptr;

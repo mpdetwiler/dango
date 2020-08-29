@@ -45,6 +45,15 @@ DANGO_UNIT_TEST_BEGIN(main_test)
   auto const a_mem = a_ptr->alloc(16, 16);
 
   a_ptr->dealloc(a_mem, 16, 16);
+
+  dango::auto_ptr<void> a_void_ptr = null;
+  dango::auto_ptr<bool> a_bool_ptr = null;
+
+  a_void_ptr = null;
+  a_void_ptr = dango::move(a_void_ptr);
+
+  a_bool_ptr = null;
+  a_bool_ptr = dango::move(a_bool_ptr);
 }
 DANGO_UNIT_TEST_END
 
