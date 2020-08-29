@@ -679,17 +679,17 @@ public:
   strong_decrement
   (tp_func&& a_func)noexcept->bool
   {
-    auto const a_exec =
-      [this]()noexcept->bool
+    auto a_exec = false;
+
+    dango_crit(m_lock)
+    {
+      dango_assert(m_scount != value_type(0));
+
+      if(--m_scount == value_type(0))
       {
-        auto const a_guard = m_lock.lock();
-
-        dango_assert(m_scount != value_type(0));
-
-        --m_scount;
-
-        return m_scount == value_type(0);
-      }();
+        a_exec = true;
+      }
+    }
 
     if(a_exec)
     {

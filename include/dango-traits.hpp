@@ -2262,7 +2262,8 @@ dango
 
 /*** in_constexpr_context ***/
 
-namespace dango
+namespace
+dango
 {
   constexpr auto in_constexpr_context()noexcept->bool;
 }
@@ -2273,6 +2274,26 @@ in_constexpr_context
 ()noexcept->bool
 {
   return __builtin_is_constant_evaluated();
+}
+
+/*** present_if ***/
+
+namespace
+dango
+{
+  template
+  <dango::uint>
+  struct
+  present_if_type
+  final
+  {
+    DANGO_TAG_TYPE(present_if_type)
+  };
+
+  template
+  <bool tp_cond, typename tp_type, dango::uint tp_id = dango::uint(0)>
+  using present_if =
+    dango::conditional<tp_cond, tp_type, dango::present_if_type<tp_id>>;
 }
 
 // workaround for GCC bug 81043

@@ -14,7 +14,7 @@ dango
   template
   <typename tp_alloc>
   concept is_handle_based_allocator =
-    dango::is_class_or_union<tp_alloc> &&
+    dango::is_class_or_union<tp_alloc> && !dango::is_const_or_volatile<tp_alloc> &&
     requires{ typename tp_alloc::handle_type; typename tp_alloc::guard_type; } &&
     dango::is_object_exclude_array<typename tp_alloc::handle_type> && dango::is_object_exclude_array<typename tp_alloc::guard_type> &&
     !dango::is_const_or_volatile<typename tp_alloc::handle_type> && !dango::is_const_or_volatile<typename tp_alloc::guard_type> &&
@@ -87,7 +87,7 @@ dango
   template
   <typename tp_alloc>
   concept is_nohandle_allocator =
-    dango::is_class_or_union<tp_alloc> &&
+    dango::is_class_or_union<tp_alloc> && !dango::is_const_or_volatile<tp_alloc> &&
     !requires{ typename tp_alloc::handle_type; } && !requires{ typename tp_alloc::guard_type; } &&
     requires(void const volatile* const a_voidp, dango::usize const a_usize)
     {
@@ -115,6 +115,41 @@ dango
   concept is_noexcept_allocator =
     dango::is_allocator<tp_alloc> &&
     (dango::is_noexcept_handle_based_allocator<tp_alloc> || dango::is_noexcept_nohandle_allocator<tp_alloc>);
+}
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_alloc, typename tp_type>
+  struct
+  allocator_handle_type_or_help
+  final
+  {
+    using type = tp_type;
+
+    DANGO_UNCONSTRUCTIBLE(allocator_handle_type_or_help)
+  };
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_type>
+  struct
+  allocator_handle_type_or_help<tp_alloc, tp_type>
+  final
+  {
+    using type = typename tp_alloc::handle_type;
+
+    DANGO_UNCONSTRUCTIBLE(allocator_handle_type_or_help)
+  };
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_alloc, typename tp_type>
+  using allocator_handle_type_or =
+    typename dango::detail::allocator_handle_type_or_help<tp_alloc, tp_type>::type;
 }
 
 /*** basic_allocator ***/
