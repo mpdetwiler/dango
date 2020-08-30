@@ -181,6 +181,13 @@ noexcept
 #define dango_assert_msg_loc(cond, msg, loc) dango_assert(cond)
 #endif
 
+/*** dango_assert_nonnull ***/
+
+#define dango_assert_nonnull(arg) dango_assert(!dango::is_null(arg))
+#define dango_assert_nonnull_loc(arg, loc) dango_assert_loc(!dango::is_null(arg), loc)
+#define dango_assert_nonnull_msg(arg, msg) dango_assert_msg(!dango::is_null(arg), msg)
+#define dango_assert_nonnull_msg_loc(arg, msg, loc) dango_assert_msg_loc(!dango::is_null(arg), msg, loc)
+
 /*** dango_assert_noassume ***/
 
 #ifndef DANGO_NO_DEBUG
@@ -194,6 +201,13 @@ noexcept
 #define dango_assert_noassume_msg(cond, msg) dango_assert_noassume(cond)
 #define dango_assert_noassume_msg_loc(cond, msg, loc) dango_assert_noassume(cond)
 #endif
+
+/*** dango_assert_nonnull_noassume ***/
+
+#define dango_assert_nonnull_noassume(arg) dango_assert_noassume(!dango::is_null(arg))
+#define dango_assert_nonnull_noassume_loc(arg, loc) dango_assert_noassume_loc(!dango::is_null(arg), loc)
+#define dango_assert_nonnull_noassume_msg(arg, msg) dango_assert_noassume_msg(!dango::is_null(arg), msg)
+#define dango_assert_nonnull_noassume_msg_loc(arg, msg, loc) dango_assert_noassume_msg_loc(!dango::is_null(arg), msg, loc)
 
 /*** dango_unreachable ***/
 
@@ -256,6 +270,13 @@ dango
 #define dango_assert_terminate_msg(cond, msg) dango_assert_terminate(cond)
 #define dango_assert_terminate_msg_loc(cond, msg, loc) dango_assert_terminate(cond)
 #endif
+
+/*** dango_assert_nonnull_terminate ***/
+
+#define dango_assert_nonnull_terminate(arg) dango_assert_terminate(!dango::is_null(arg))
+#define dango_assert_nonnull_terminate_loc(arg, loc) dango_assert_terminate_loc(!dango::is_null(arg), loc)
+#define dango_assert_nonnull_terminate_msg(arg, msg) dango_assert_terminate_msg(!dango::is_null(arg), msg)
+#define dango_assert_nonnull_terminate_msg_loc(arg, msg, loc) dango_assert_terminate_msg_loc(!dango::is_null(arg), msg, loc)
 
 /*** dango_unreachable_terminate ***/
 

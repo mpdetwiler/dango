@@ -24,6 +24,7 @@ dango
     dango::is_noexcept_move_constructible<typename tp_alloc::handle_type> &&
     dango::is_noexcept_copy_assignable<typename tp_alloc::handle_type> &&
     dango::is_noexcept_move_assignable<typename tp_alloc::handle_type> &&
+    dango::is_noexcept_equatable<typename tp_alloc::handle_type const&, typename tp_alloc::handle_type const&> &&
     requires
     (
       typename tp_alloc::handle_type& a_handle_m,
@@ -753,6 +754,8 @@ public:
       dango_assert(a_destroy_func != dango::null);
 
       a_destroy_func(a_control);
+
+      dango_unreachable_msg(u8"mem_resource_ptr: detected use of memory resource during or after its destruction");
     }
   }
 public:
@@ -782,7 +785,7 @@ operator ->
 
   bool const a_alive = m_control->try_strong_increment();
 
-  dango_assert_msg(a_alive, u8"mem_resource_ptr: detected use of already-destroyed memory resource");
+  dango_assert_msg(a_alive, u8"mem_resource_ptr: detected use of memory resource after its destruction");
 
   return guard_type{ privacy_tag{ }, m_control };
 }

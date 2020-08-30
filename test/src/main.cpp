@@ -26,6 +26,7 @@ DANGO_UNIT_TEST_BEGIN(main_test)
 
   auto const a_ptr = a_ptr_mut;
 
+  dango_assert_nonnull_terminate(a_ptr);
   dango_assert_terminate(!(a_ptr  == null));
   dango_assert_terminate(  a_ptr  != null);
   dango_assert_terminate(!(null   == a_ptr));
@@ -54,6 +55,16 @@ DANGO_UNIT_TEST_BEGIN(main_test)
 
   a_bool_ptr = null;
   a_bool_ptr = dango::move(a_bool_ptr);
+
+  a_bool_ptr.get_deleter();
+
+  dango_assert_terminate(a_bool_ptr == a_bool_ptr);
+
+  dango::auto_ptr<bool const volatile> a_bool_const{ dango::move(a_bool_ptr) };
+  dango::auto_ptr<void const volatile> a_void_const{ dango::move(a_void_ptr) };
+
+  a_bool_const = dango::move(a_bool_ptr);
+  a_void_const = dango::move(a_void_ptr);
 }
 DANGO_UNIT_TEST_END
 
