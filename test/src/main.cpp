@@ -2,6 +2,8 @@
 #include "dango-global-test.hpp"
 #include "dango-test-print.hpp"
 
+static_assert(dango::is_same<decltype(*dango::declval<int*&>()), int&>);
+
 auto
 main
 ()noexcept(false)->int
@@ -15,6 +17,12 @@ main
 
 namespace
 {
+
+struct node
+{
+  int m_data;
+  dango::auto_ptr<node> m_next;
+};
 
 DANGO_UNIT_TEST_BEGIN(main_test)
 {
@@ -65,6 +73,29 @@ DANGO_UNIT_TEST_BEGIN(main_test)
 
   a_bool_const = dango::move(a_bool_ptr);
   a_void_const = dango::move(a_void_ptr);
+
+  dango_assert_terminate(a_void_const   == a_void_ptr);
+  dango_assert_terminate((a_void_const <=> a_void_ptr).is_eq());
+  dango_assert_terminate(a_bool_const   == a_bool_ptr);
+  dango_assert_terminate((a_bool_const <=> a_bool_ptr).is_eq());
+
+  delete new node{ 5, null };
+}
+DANGO_UNIT_TEST_END
+
+DANGO_UNIT_TEST_BEGIN(main_test2)
+{
+  using p = dango::priority_tag<4>;
+
+  auto a_ptr_int = dango::detail::auto_ptr_make::make<int, dango::plain_delete_type>(p{ }, dango::plain_delete, 1);
+  auto a_ptr_int2 = dango::detail::auto_ptr_make::make<int, dango::polymorphic_allocator<>>(p{ }, dango::default_mem_resource_ptr(), 2);
+  auto a_ptr_int3 = dango::detail::auto_ptr_make::make<int, dango::basic_allocator>(p{ }, 3);
+  auto a_ptr_void = dango::detail::auto_ptr_make::make<void, dango::polymorphic_allocator<>>(p{ }, dango::default_mem_resource_ptr(), 16, 16);
+  auto a_ptr_void2 = dango::detail::auto_ptr_make::make<void, dango::basic_allocator>(p{ }, 16, 16);
+
+  dango_assert_terminate(*a_ptr_int == 1);
+  dango_assert_terminate(*a_ptr_int2 == 2);
+  dango_assert_terminate(*a_ptr_int3 == 3);
 }
 DANGO_UNIT_TEST_END
 

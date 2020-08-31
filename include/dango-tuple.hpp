@@ -625,7 +625,7 @@ public:
   (tuple_storage&&)noexcept(dango::is_noexcept_move_constructible<value_type>)
   requires(dango::is_move_constructible<value_type>) = default;
 
-  ~tuple_storage()noexcept = default;
+  constexpr ~tuple_storage()noexcept = default;
 
   constexpr auto operator = (tuple_storage const&)& noexcept = delete;
   constexpr auto
@@ -760,7 +760,7 @@ public:
   noexcept((dango::is_noexcept_move_constructible<value_type> && ... && dango::is_noexcept_move_constructible<tp_next>))
   requires((dango::is_move_constructible<value_type> && ... && dango::is_move_constructible<tp_next>)) = default;
 
-  ~tuple_storage()noexcept = default;
+  constexpr ~tuple_storage()noexcept = default;
 
   constexpr auto operator = (tuple_storage const&)& noexcept = delete;
   constexpr auto
@@ -984,7 +984,7 @@ public:
   noexcept(( ... && dango::is_noexcept_move_constructible<tp_types>))
   requires(( ... && dango::is_move_constructible<tp_types>)) = default;
 
-  ~tuple()noexcept = default;
+  constexpr ~tuple()noexcept = default;
 
   constexpr auto operator = (tuple const&)& noexcept = delete;
   constexpr auto
@@ -1424,7 +1424,7 @@ public:
 
   constexpr tuple(tuple&&)noexcept = default;
 
-  ~tuple()noexcept = default;
+  constexpr ~tuple()noexcept = default;
 
   template
   <dango::usize tp_index>
