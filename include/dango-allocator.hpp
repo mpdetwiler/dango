@@ -24,7 +24,8 @@ dango
     dango::is_noexcept_move_constructible<typename tp_alloc::handle_type> &&
     dango::is_noexcept_copy_assignable<typename tp_alloc::handle_type> &&
     dango::is_noexcept_move_assignable<typename tp_alloc::handle_type> &&
-    dango::is_noexcept_equatable<typename tp_alloc::handle_type const&, typename tp_alloc::handle_type const&> &&
+    dango::is_noexcept_equatable<typename tp_alloc::handle_type const&> &&
+    dango::is_noexcept_swappable<typename tp_alloc::handle_type&> &&
     requires
     (
       typename tp_alloc::handle_type& a_handle_m,

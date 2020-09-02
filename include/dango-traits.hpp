@@ -3,6 +3,32 @@
 
 #include "dango-def.hpp"
 
+/*** type_identity ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct
+  type_identity_help
+  final
+  {
+    using type = tp_type;
+
+    DANGO_UNCONSTRUCTIBLE(type_identity_help)
+  };
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using type_identity =
+    typename dango::detail::type_identity_help<tp_type>::type;
+}
+
 /*** remove_const ***/
 
 namespace

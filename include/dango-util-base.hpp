@@ -942,14 +942,14 @@ namespace
 dango
 {
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept is_swappable =
     dango::is_object_ignore_ref<tp_lhs> && dango::is_object_ignore_ref<tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
     { { dango::detail::swap_help(dango::detail::swap_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }->dango::is_convertible_ret<void>; };
 
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept is_noexcept_swappable =
     dango::is_swappable<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
@@ -1006,7 +1006,7 @@ namespace
 dango
 {
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept has_equality_ops =
     dango::is_referenceable_ignore_ref<tp_lhs> && dango::is_referenceable_ignore_ref<tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
@@ -1016,7 +1016,7 @@ dango
     };
 
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept has_noexcept_equality_ops =
     dango::has_equality_ops<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
@@ -1346,12 +1346,12 @@ namespace
 dango
 {
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept is_equatable =
     dango::detail::has_equals_help<tp_lhs, tp_rhs> || dango::has_equality_ops<tp_lhs, tp_rhs>;
 
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept is_noexcept_equatable =
     dango::is_equatable<tp_lhs, tp_rhs> &&
     (dango::detail::has_noexcept_equals_help<tp_lhs, tp_rhs> ||
@@ -1430,14 +1430,19 @@ dango
   <typename tp_type>
   concept is_null_equatable =
     dango::is_equatable<tp_type, dango::null_tag const&> &&
-    dango::is_equatable<dango::null_tag const&, tp_type>;
+    dango::is_equatable<tp_type, dango::null_tag&&> &&
+    dango::is_equatable<dango::null_tag const&, tp_type> &&
+    dango::is_equatable<dango::null_tag&&, tp_type>;
 
   template
   <typename tp_type>
   concept is_noexcept_null_equatable =
     dango::is_null_equatable<tp_type> &&
     dango::is_noexcept_equatable<tp_type, dango::null_tag const&> &&
-    dango::is_noexcept_equatable<dango::null_tag const&, tp_type>;
+    dango::is_noexcept_equatable<tp_type, dango::null_tag&&> &&
+    dango::is_noexcept_equatable<dango::null_tag const&, tp_type> &&
+    dango::is_noexcept_equatable<dango::null_tag&&, tp_type>;
+
 
   inline constexpr auto const is_null =
     []<typename tp_arg>
@@ -1467,7 +1472,7 @@ namespace
 dango
 {
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept has_comparison_ops =
     dango::is_object_exclude_array_ignore_ref<tp_lhs> &&
     dango::is_object_exclude_array_ignore_ref<tp_rhs> &&
@@ -1482,7 +1487,7 @@ dango
     };
 
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept has_noexcept_comparison_ops =
     dango::has_comparison_ops<tp_lhs, tp_rhs> &&
     dango::has_noexcept_equality_ops<tp_lhs, tp_rhs> &&
@@ -1515,7 +1520,7 @@ namespace
 dango
 {
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept has_spaceship_op =
     dango::detail::has_spaceship_op_help1<tp_lhs, tp_rhs> &&
     dango::detail::has_spaceship_op_help2<tp_lhs, tp_rhs>;
@@ -1673,12 +1678,12 @@ namespace
 dango
 {
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept is_comparable =
     dango::detail::has_compare_help<tp_lhs, tp_rhs> || dango::has_comparison_ops<tp_lhs, tp_rhs>;
 
   template
-  <typename tp_lhs, typename tp_rhs>
+  <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept is_noexcept_comparable =
     dango::is_comparable<tp_lhs, tp_rhs> &&
     (dango::detail::has_noexcept_compare_help<tp_lhs, tp_rhs> ||

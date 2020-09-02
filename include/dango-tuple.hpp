@@ -2063,7 +2063,7 @@ dango
   <typename... tp_args>
   requires(( ... && dango::is_lvalue_ref<tp_args>))
   constexpr auto
-  make_tie
+  tie
   (tp_args&&... a_args)noexcept->auto
   {
     return dango::tuple<tp_args...>{ a_args... };
@@ -2073,7 +2073,7 @@ dango
   <typename... tp_args>
   requires(( ... && dango::is_lvalue_ref<tp_args>))
   constexpr auto
-  make_tie_const
+  tie_const
   (tp_args&&... a_args)noexcept->auto
   {
     return dango::tuple<dango::remove_ref<tp_args> const&...>{ a_args... };
@@ -2083,10 +2083,17 @@ dango
   <typename... tp_args>
   constexpr auto
   forward_as_tuple
-  (tp_args&&... a_args)noexcept->auto
+  (dango::remove_ref<tp_args>&... a_args)noexcept->auto
   {
     return dango::tuple<tp_args&&...>{ dango::forward<tp_args>(a_args)... };
   }
+
+  template
+  <typename... tp_args>
+  requires(!( ... && dango::is_lvalue_ref<tp_args>))
+  constexpr auto
+  forward_as_tuple
+  (dango::type_identity<tp_args>&&...)noexcept = delete;
 }
 
 /*** tuple_get ***/

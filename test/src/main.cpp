@@ -22,6 +22,7 @@ struct node
 {
   int m_data;
   dango::auto_ptr<node> m_next;
+  ~node()noexcept = default;
 };
 
 DANGO_UNIT_TEST_BEGIN(main_test)
@@ -55,7 +56,7 @@ DANGO_UNIT_TEST_BEGIN(main_test)
 
   a_ptr->dealloc(a_mem, 16, 16);
 
-  dango::auto_ptr<void> a_void_ptr = null;
+  dango::auto_ptr<void> a_void_ptr;
   dango::auto_ptr<bool> a_bool_ptr = null;
 
   a_void_ptr = null;
@@ -85,17 +86,21 @@ DANGO_UNIT_TEST_END
 
 DANGO_UNIT_TEST_BEGIN(main_test2)
 {
-  using p = dango::priority_tag<4>;
+  auto a_ptr_int = dango::make_auto_ptr<int>(42);
+  auto a_ptr_void = dango::make_auto_ptr<void>(64, 64);
 
-  auto a_ptr_int = dango::detail::auto_ptr_make::make<int, dango::plain_delete_type>(p{ }, dango::plain_delete, 1);
-  auto a_ptr_int2 = dango::detail::auto_ptr_make::make<int, dango::polymorphic_allocator<>>(p{ }, dango::default_mem_resource_ptr(), 2);
-  auto a_ptr_int3 = dango::detail::auto_ptr_make::make<int, dango::basic_allocator>(p{ }, 3);
-  auto a_ptr_void = dango::detail::auto_ptr_make::make<void, dango::polymorphic_allocator<>>(p{ }, dango::default_mem_resource_ptr(), 16, 16);
-  auto a_ptr_void2 = dango::detail::auto_ptr_make::make<void, dango::basic_allocator>(p{ }, 16, 16);
+  a_ptr_int.get_deleter();
 
-  dango_assert_terminate(*a_ptr_int == 1);
-  dango_assert_terminate(*a_ptr_int2 == 2);
-  dango_assert_terminate(*a_ptr_int3 == 3);
+  static_assert(sizeof(a_ptr_int) == sizeof(int*));
+  static_assert(sizeof(a_ptr_void) == 3 * sizeof(void*));
+
+  auto a_ptr_void2 = dango::make_auto_ptr<void, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 64, 64);
+
+  a_ptr_void2.get_allocator_handle();
+
+  static_assert(sizeof(a_ptr_void2) == 4 * sizeof(void*));
+
+  dango_assert_terminate(*a_ptr_int == 42);
 }
 DANGO_UNIT_TEST_END
 
