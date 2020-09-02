@@ -2035,6 +2035,7 @@ dango
 {
   template
   <typename... tp_args>
+  explicit(!( ... && dango::is_convertible<tp_args, dango::decay<tp_args>>))
   tuple(tp_args&&...)->tuple<dango::decay<tp_args>...>;
 
   template

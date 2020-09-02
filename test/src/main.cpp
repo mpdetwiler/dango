@@ -93,10 +93,10 @@ DANGO_UNIT_TEST_BEGIN(main_test2)
    };
 
   auto a_ptr_int1 = dango::make_auto_ptr<int>(1);
-  auto a_ptr_int2 = dango::auto_ptr<int const>{ new int{ 2 } };
+  auto a_ptr_int2 = dango::auto_ptr{ new int{ 2 } };
   auto a_ptr_int3 = dango::auto_ptr<int const volatile>{ new int{ 3 }, dango::plain_delete };
   auto a_ptr_int4 = dango::auto_ptr<int, decltype(a_deleter)>{ new int{ 4 } };
-  auto a_ptr_int5 = dango::auto_ptr<int const, decltype(a_deleter)>{ new int{ 5 }, dango::move(a_deleter) };
+  auto a_ptr_int5 = dango::auto_ptr{ new int{ 5 }, dango::move(a_deleter) };
   auto a_ptr_int6 = dango::make_auto_ptr<int, dango::basic_allocator>(6);
   auto a_ptr_int7 = dango::make_auto_ptr<int const volatile, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 7);
 
