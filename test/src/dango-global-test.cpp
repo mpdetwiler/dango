@@ -6,11 +6,6 @@ global_printer::
 global_printer
 ()noexcept
 {
-  dango_access_global(dango::detail::s_cond_var_registry_thread, a_registry_thread)
-  {
-
-  }
-
   test_print("global_printer::global_printer()\n");
 }
 

@@ -1,4 +1,4 @@
-#include "dango.hpp"
+#include "dango-util-base.hpp"
 
 static_assert(dango::is_convertible<dango::compare_val_strong, std::strong_ordering>);
 static_assert(dango::is_convertible<dango::compare_val_strong, std::weak_ordering>);

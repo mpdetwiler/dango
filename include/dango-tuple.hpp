@@ -2072,9 +2072,8 @@ dango
 
   template
   <typename... tp_args>
-  requires(( ... && dango::is_lvalue_ref<tp_args>))
   constexpr auto
-  tie_const
+  tie_as_const
   (tp_args&&... a_args)noexcept->auto
   {
     return dango::tuple<dango::remove_ref<tp_args> const&...>{ a_args... };

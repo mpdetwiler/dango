@@ -1,7 +1,7 @@
 #ifndef DANGO_GLOBAL_TEST_HPP_INCLUDED
 #define DANGO_GLOBAL_TEST_HPP_INCLUDED
 
-#include "dango.hpp"
+#include "dango-global.hpp"
 
 namespace
 test

@@ -109,11 +109,6 @@ dango
 {
   template
   <typename tp_type>
-  constexpr auto as_const(tp_type&&)noexcept = delete;
-
-  template
-  <typename tp_type>
-  requires(dango::is_lvalue_ref<tp_type>)
   constexpr auto
   as_const
   (tp_type&& a_arg)noexcept->dango::remove_ref<tp_type> const&
