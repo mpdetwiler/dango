@@ -131,4 +131,18 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
 }
 DANGO_UNIT_TEST_END
 
+#ifdef DANGO_USING_CLANG
+constexpr auto
+auto_ptr_contstexpr_test()noexcept(false)->bool
+{
+  dango::auto_ptr a_ptr{ new int{ 5 } };
+
+  auto a_ptr2{ dango::move(a_ptr) };
+
+  return (*a_ptr2 == 5);
+}
+
+static_assert(auto_ptr_contstexpr_test());
+#endif
+
 }

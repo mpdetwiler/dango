@@ -3,6 +3,7 @@
 
 #include "dango-assert.hpp"
 #include "dango-atomic.hpp"
+#include "dango-util.hpp"
 
 /*** dango_crit ***/
 

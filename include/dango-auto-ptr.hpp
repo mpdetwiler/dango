@@ -12,8 +12,6 @@ dango
   concept is_deleter =
     !dango::is_const_or_volatile<tp_deleter> &&
     (dango::is_object_exclude_array<tp_deleter> || dango::is_func<tp_deleter>) &&
-    (!dango::is_move_constructible<dango::decay<tp_deleter>> || dango::is_noexcept_move_constructible<dango::decay<tp_deleter>>) &&
-    (!dango::is_swappable<dango::decay<tp_deleter>&> || dango::is_noexcept_swappable<dango::decay<tp_deleter>&>) &&
     dango::is_object_exclude_array<tp_type> &&
     dango::is_noexcept_callable_ret<void, dango::decay<tp_deleter>&, tp_type* const&> &&
     !dango::is_allocator<tp_deleter>;
