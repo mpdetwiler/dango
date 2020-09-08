@@ -1632,20 +1632,20 @@ namespace
 dango::detail
 {
   template
-  <typename tp_type>
+  <typename tp_type, typename tp_default>
   struct
   add_lvalue_ref_help
   final
   {
-    using type = tp_type;
+    using type = tp_default;
 
     DANGO_UNCONSTRUCTIBLE(add_lvalue_ref_help)
   };
 
   template
-  <dango::is_referenceable tp_type>
+  <dango::is_referenceable tp_type, typename tp_default>
   struct
-  add_lvalue_ref_help<tp_type>
+  add_lvalue_ref_help<tp_type, tp_default>
   final
   {
     using type = tp_type&;
@@ -1654,20 +1654,20 @@ dango::detail
   };
 
   template
-  <typename tp_type>
+  <typename tp_type, typename tp_default>
   struct
   add_rvalue_ref_help
   final
   {
-    using type = tp_type;
+    using type = tp_default;
 
     DANGO_UNCONSTRUCTIBLE(add_rvalue_ref_help)
   };
 
   template
-  <dango::is_referenceable tp_type>
+  <dango::is_referenceable tp_type, typename tp_default>
   struct
-  add_rvalue_ref_help<tp_type>
+  add_rvalue_ref_help<tp_type, tp_default>
   final
   {
     using type = tp_type&&;
@@ -1680,14 +1680,14 @@ namespace
 dango
 {
   template
-  <typename tp_type>
+  <typename tp_type, typename tp_default = tp_type>
   using add_lvalue_ref =
-    typename dango::detail::add_lvalue_ref_help<tp_type>::type;
+    typename dango::detail::add_lvalue_ref_help<tp_type, tp_default>::type;
 
   template
-  <typename tp_type>
+  <typename tp_type, typename tp_default = tp_type>
   using add_rvalue_ref =
-    typename dango::detail::add_rvalue_ref_help<tp_type>::type;
+    typename dango::detail::add_rvalue_ref_help<tp_type, tp_default>::type;
 }
 
 /*** add_pointer ***/
@@ -1696,20 +1696,20 @@ namespace
 dango::detail
 {
   template
-  <typename tp_type>
+  <typename tp_type, typename tp_defualt>
   struct
   add_ptr_help
   final
   {
-    using type = tp_type;
+    using type = tp_defualt;
 
     DANGO_UNCONSTRUCTIBLE(add_ptr_help)
   };
 
   template
-  <dango::is_pointable_ignore_ref tp_type>
+  <dango::is_pointable_ignore_ref tp_type, typename tp_default>
   struct
-  add_ptr_help<tp_type>
+  add_ptr_help<tp_type, tp_default>
   final
   {
     using type = dango::remove_ref<tp_type>*;
@@ -1722,9 +1722,9 @@ namespace
 dango
 {
   template
-  <typename tp_type>
+  <typename tp_type, typename tp_default = tp_type>
   using add_ptr =
-    typename dango::detail::add_ptr_help<tp_type>::type;
+    typename dango::detail::add_ptr_help<tp_type, tp_default>::type;
 }
 
 /*** is_destructible is_trivial_destructible is_noexcept_destructible has_virtual_destructor ***/

@@ -123,25 +123,25 @@ namespace
 dango::detail
 {
   template
-  <typename tp_alloc, typename tp_type>
+  <typename tp_alloc, typename tp_default>
   struct
-  allocator_handle_type_or_help
+  allocator_handle_type_help
   final
   {
-    using type = tp_type;
+    using type = tp_default;
 
-    DANGO_UNCONSTRUCTIBLE(allocator_handle_type_or_help)
+    DANGO_UNCONSTRUCTIBLE(allocator_handle_type_help)
   };
 
   template
-  <dango::is_handle_based_allocator tp_alloc, typename tp_type>
+  <dango::is_handle_based_allocator tp_alloc, typename tp_default>
   struct
-  allocator_handle_type_or_help<tp_alloc, tp_type>
+  allocator_handle_type_help<tp_alloc, tp_default>
   final
   {
     using type = typename tp_alloc::handle_type;
 
-    DANGO_UNCONSTRUCTIBLE(allocator_handle_type_or_help)
+    DANGO_UNCONSTRUCTIBLE(allocator_handle_type_help)
   };
 }
 
@@ -149,9 +149,9 @@ namespace
 dango
 {
   template
-  <typename tp_alloc, typename tp_type>
-  using allocator_handle_type_or =
-    typename dango::detail::allocator_handle_type_or_help<tp_alloc, tp_type>::type;
+  <typename tp_alloc, typename tp_default = tp_alloc>
+  using allocator_handle_type =
+    typename dango::detail::allocator_handle_type_help<tp_alloc, tp_default>::type;
 }
 
 /*** basic_allocator ***/

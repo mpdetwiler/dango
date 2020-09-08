@@ -1,7 +1,7 @@
 #ifndef DANGO_TUPLE_HPP_INCLUDED
 #define DANGO_TUPLE_HPP_INCLUDED
 
-#include "dango-util-base.hpp"
+#include "dango-util.hpp"
 
 /*** helpers ***/
 
@@ -2035,29 +2035,33 @@ dango
 {
   template
   <typename... tp_args>
-  explicit(!( ... && dango::is_convertible<tp_args, dango::decay<tp_args>>))
-  tuple(tp_args&&...)->tuple<dango::decay<tp_args>...>;
+  explicit(!( ... && dango::is_convertible<tp_args, dango::emplacer_return_type_decay<tp_args>>))
+  tuple(tp_args&&...)->tuple<dango::emplacer_return_type_decay<tp_args>...>;
 
   template
   <typename... tp_args>
-  requires(( ... && dango::is_constructible<dango::decay<tp_args>, tp_args>))
+  requires(( ... && dango::is_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))
   constexpr auto
   make_tuple
   (tp_args&&... a_args)
-  noexcept(( ... && dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>))->auto
+  noexcept(( ... && dango::is_noexcept_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))->auto
   {
-    return dango::tuple<dango::decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
+    return dango::tuple<dango::emplacer_return_type_decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
   }
 
   template
   <typename... tp_args>
-  requires((sizeof...(tp_args) == dango::usize(2)) && ( ... && dango::is_constructible<dango::decay<tp_args>, tp_args>))
+  requires
+  (
+    (sizeof...(tp_args) == dango::usize(2)) &&
+    ( ... && dango::is_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>)
+  )
   constexpr auto
   make_pair
   (tp_args&&... a_args)
-  noexcept(( ... && dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>))->auto
+  noexcept(( ... && dango::is_noexcept_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))->auto
   {
-    return dango::tuple<dango::decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
+    return dango::tuple<dango::emplacer_return_type_decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
   }
 
   template
@@ -2073,7 +2077,7 @@ dango
   template
   <typename... tp_args>
   constexpr auto
-  tie_const_as_tuple
+  ctie_as_tuple
   (tp_args&&... a_args)noexcept->auto
   {
     return dango::tuple<dango::remove_ref<tp_args> const&...>{ a_args... };

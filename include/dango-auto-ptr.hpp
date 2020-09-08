@@ -326,11 +326,11 @@ private:
 public:
   using value_type = tp_type;
   using ptr_type = value_type*;
-  using ref_type = dango::conditional<dango::is_void<value_type>, void, dango::add_lvalue_ref<value_type>>;
+  using ref_type = dango::add_lvalue_ref<value_type, void>;
   using size_type = dango::usize;
   using deleter_type = dango::conditional<dango::is_deleter<tp_deleter, value_type>, dango::decay<tp_deleter>, void>;
   using allocator_type = dango::conditional<dango::is_allocator<tp_deleter>, tp_deleter, void>;
-  using allocator_handle_type = dango::allocator_handle_type_or<allocator_type, void>;
+  using allocator_handle_type = dango::allocator_handle_type<allocator_type, void>;
   using release_type = dango::conditional<dango::is_void<value_type>, dango::tuple<ptr_type, size_type, size_type>, ptr_type>;
 private:
   using deleter_member_type = dango::present_if<!dango::is_void<deleter_type>, deleter_type, dango::uint(0)>;

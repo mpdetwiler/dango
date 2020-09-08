@@ -1,6 +1,7 @@
 #ifndef DANGO_UTIL_HPP_INCLUDED
 #define DANGO_UTIL_HPP_INCLUDED
 
+#include "dango-util-base.hpp"
 #include "dango-assert.hpp"
 
 /*** make_guard ***/
@@ -304,14 +305,14 @@ namespace
 dango::detail
 {
   template
-  <dango::is_object_exclude_array tp_type, dango::is_object_exclude_array tp_func>
-  requires(!dango::is_const_or_volatile<tp_type> && !dango::is_const_or_volatile<tp_func>)
+  <dango::is_object_exclude_array tp_ret, dango::is_object_exclude_array tp_func>
+  requires(!dango::is_const_or_volatile<tp_ret> && !dango::is_const_or_volatile<tp_func>)
   class emplacer;
 }
 
 template
-<dango::is_object_exclude_array tp_type, dango::is_object_exclude_array tp_func>
-requires(!dango::is_const_or_volatile<tp_type> && !dango::is_const_or_volatile<tp_func>)
+<dango::is_object_exclude_array tp_ret, dango::is_object_exclude_array tp_func>
+requires(!dango::is_const_or_volatile<tp_ret> && !dango::is_const_or_volatile<tp_func>)
 class
 dango::
 detail::
@@ -319,7 +320,7 @@ emplacer
 final
 {
 public:
-  using return_type = tp_type;
+  using return_type = tp_ret;
   using func_type = tp_func;
 public:
   template
@@ -333,6 +334,14 @@ public:
   { }
   constexpr ~emplacer()noexcept = default;
 public:
+  constexpr
+  operator return_type
+  ()const noexcept(dango::is_noexcept_callable_ret<return_type, func_type&>)
+  requires(dango::is_callable_ret<return_type, func_type&>)
+  {
+    return m_func();
+  }
+
   constexpr auto
   operator ()
   ()const noexcept(dango::is_noexcept_callable_ret<return_type, func_type&>)->return_type
@@ -351,87 +360,99 @@ namespace
 dango
 {
   template
-  <dango::is_object_exclude_array tp_type, typename tp_func>
+  <dango::is_object_exclude_array tp_ret, typename tp_func>
   requires
   (
-    !dango::is_const_or_volatile<tp_type> &&
+    !dango::is_const_or_volatile<tp_ret> &&
     dango::is_noexcept_destructible<dango::decay<tp_func>> &&
-    dango::is_callable_ret<tp_type, dango::decay<tp_func>&> &&
-    dango::is_brace_constructible<dango::detail::emplacer<tp_type, dango::decay<tp_func>>, tp_func>
+    dango::is_callable_ret<tp_ret, dango::decay<tp_func>&> &&
+    dango::is_brace_constructible<dango::detail::emplacer<tp_ret, dango::decay<tp_func>>, tp_func>
   )
   constexpr auto
   make_emplacer
   (tp_func&& a_func)
-  noexcept(dango::is_noexcept_brace_constructible<dango::detail::emplacer<tp_type, dango::decay<tp_func>>, tp_func>)->auto
+  noexcept(dango::is_noexcept_brace_constructible<dango::detail::emplacer<tp_ret, dango::decay<tp_func>>, tp_func>)->auto
   {
-    using emplacer_type = dango::detail::emplacer<tp_type, dango::decay<tp_func>>;
+    using emplacer_type = dango::detail::emplacer<tp_ret, dango::decay<tp_func>>;
 
     return emplacer_type{ dango::forward<tp_func>(a_func) };
   }
 
   template
-  <dango::is_object_exclude_array tp_type, typename... tp_args>
+  <dango::is_object_exclude_array tp_ret, typename... tp_args>
   requires
   (
-    !dango::is_const_or_volatile<tp_type> &&
+    !dango::is_const_or_volatile<tp_ret> &&
     ( ... && dango::is_lvalue_ref<tp_args>) &&
-    dango::is_brace_constructible<tp_type, tp_args...>
+    dango::is_brace_constructible<tp_ret, tp_args...>
   )
   constexpr auto
   tie_as_emplacer
   (tp_args&&... a_args)noexcept->auto
   {
+    using return_type = tp_ret;
+
+    constexpr bool const c_noexcept =
+      dango::is_noexcept_brace_constructible<return_type, tp_args...>;
+
     return
-      dango::make_emplacer<tp_type>
+      dango::make_emplacer<return_type>
       (
-        [&a_args...]()
-        noexcept(dango::is_noexcept_brace_constructible<tp_type, tp_args...>)->tp_type
+        [&a_args...]()constexpr noexcept(c_noexcept)->return_type
         {
-          return tp_type{ a_args... };
+          return return_type{ a_args... };
         }
       );
   }
 
   template
-  <dango::is_object_exclude_array tp_type, typename... tp_args>
+  <dango::is_object_exclude_array tp_ret, typename... tp_args>
   requires
   (
-    !dango::is_const_or_volatile<tp_type> &&
-    dango::is_brace_constructible<tp_type, dango::remove_ref<tp_args> const&...>
+    !dango::is_const_or_volatile<tp_ret> &&
+    dango::is_brace_constructible<tp_ret, dango::remove_ref<tp_args> const&...>
   )
   constexpr auto
-  tie_const_as_emplacer
+  ctie_as_emplacer
   (tp_args&&... a_args)noexcept->auto
   {
+    using return_type = tp_ret;
+
+    constexpr bool const c_noexcept =
+      dango::is_noexcept_brace_constructible<return_type, dango::remove_ref<tp_args> const&...>;
+
     return
-      dango::make_emplacer<tp_type>
+      dango::make_emplacer<return_type>
       (
-        [&a_args...]()
-        noexcept(dango::is_noexcept_brace_constructible<tp_type, dango::remove_ref<tp_args> const&...>)->tp_type
+        [&a_args...]()constexpr noexcept(c_noexcept)->return_type
         {
-          return tp_type{ dango::as_const(a_args)... };
+          return return_type{ dango::as_const(a_args)... };
         }
       );
   }
 
   template
-  <dango::is_object_exclude_array tp_type, typename... tp_args>
+  <dango::is_object_exclude_array tp_ret, typename... tp_args>
   requires
   (
-    !dango::is_const_or_volatile<tp_type> &&
-    dango::is_brace_constructible<tp_type, tp_args...>
+    !dango::is_const_or_volatile<tp_ret> &&
+    dango::is_brace_constructible<tp_ret, tp_args...>
   )
   constexpr auto
   forward_as_emplacer
   (tp_args&&... a_args)noexcept->auto
   {
+    using return_type = tp_ret;
+
+    constexpr bool const c_noexcept =
+      dango::is_noexcept_brace_constructible<return_type, tp_args...>;
+
     return
-      dango::make_emplacer<tp_type>
+      dango::make_emplacer<return_type>
       (
-        [&a_args...]()
-        noexcept(dango::is_noexcept_brace_constructible<tp_type, tp_args...>)->tp_type
+        [&a_args...]()constexpr noexcept(c_noexcept)->return_type
         {
-          return tp_type{ dango::forward<tp_args>(a_args)... };
+          return return_type{ dango::forward<tp_args>(a_args)... };
         }
       );
   }
@@ -480,25 +501,25 @@ namespace
 dango::detail
 {
   template
-  <typename tp_emplacer, typename tp_type>
+  <typename tp_emplacer, typename tp_default>
   struct
-  emplacer_return_type_or_help
+  emplacer_return_type_help
   final
   {
-    using type = tp_type;
+    using type = tp_default;
 
-    DANGO_UNCONSTRUCTIBLE(emplacer_return_type_or_help)
+    DANGO_UNCONSTRUCTIBLE(emplacer_return_type_help)
   };
 
   template
-  <dango::is_emplacer tp_emplacer, typename tp_type>
+  <dango::is_emplacer tp_emplacer, typename tp_default>
   struct
-  emplacer_return_type_or_help<tp_emplacer, tp_type>
+  emplacer_return_type_help<tp_emplacer, tp_default>
   final
   {
     using type = typename tp_emplacer::return_type;
 
-    DANGO_UNCONSTRUCTIBLE(emplacer_return_type_or_help)
+    DANGO_UNCONSTRUCTIBLE(emplacer_return_type_help)
   };
 }
 
@@ -506,9 +527,14 @@ namespace
 dango
 {
   template
-  <typename tp_emplacer, typename tp_type>
-  using emplacer_return_type_or =
-   typename dango::detail::emplacer_return_type_or_help<tp_emplacer, tp_type>::type;
+  <typename tp_emplacer, typename tp_default = tp_emplacer>
+  using emplacer_return_type =
+   typename dango::detail::emplacer_return_type_help<tp_emplacer, tp_default>::type;
+
+  template
+  <typename tp_type>
+  using emplacer_return_type_decay =
+    dango::emplacer_return_type<dango::decay<tp_type>>;
 }
 
 #endif // DANGO_UTIL_HPP_INCLUDED

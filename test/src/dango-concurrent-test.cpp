@@ -80,6 +80,18 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test_mt)
   dango_assert_terminate(a_bias2 >= a_bias1);
 
   test_print("tick=%u bias=%u\n", uint(a_tick2), uint(a_bias2));
+
+  dango::tuple
+  a_tup
+  {
+    dango::forward_as_emplacer<dango::atomic<uint>>(dango::uint(2)),
+    dango::forward_as_emplacer<dango::atomic<ushort>>(dango::ushort(3)),
+    dango::forward_as_emplacer<dango::atomic<ubyte>>(dango::ubyte(4))
+  };
+
+  dango_assert_terminate(a_tup.first().load() == 2);
+  dango_assert_terminate(a_tup.second().load() == 3);
+  dango_assert_terminate(a_tup.third().load() == 4);
 }
 DANGO_UNIT_TEST_END
 
