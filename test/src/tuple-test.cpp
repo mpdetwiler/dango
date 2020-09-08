@@ -69,15 +69,15 @@ DANGO_UNIT_TEST_BEGIN(tuple_swap_test)
   int x = 5, y = 7, z = 9;
   int a = 4, b = 6, c = 8;
 
-  auto const t1 = dango::tie(x, y, z);
-  auto const t2 = dango::tie(a, b, c);
+  auto const t1 = dango::tie_as_tuple(x, y, z);
+  auto const t2 = dango::tie_as_tuple(a, b, c);
 
   dango::swap(t1, t2);
 
   dango_assert_terminate(x == 4 && y == 6 && z == 8);
   dango_assert_terminate(a == 5 && b == 7 && c == 9);
 
-  dango::swap(dango::tie(z, y, x), dango::tie(a, b, c));
+  dango::swap(dango::tie_as_tuple(z, y, x), dango::tie_as_tuple(a, b, c));
 
   dango_assert_terminate(x == 9 && y == 7 && z == 5);
   dango_assert_terminate(a == 8 && b == 6 && c == 4);
