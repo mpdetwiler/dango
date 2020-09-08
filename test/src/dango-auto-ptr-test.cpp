@@ -133,16 +133,87 @@ DANGO_UNIT_TEST_END
 
 #ifdef DANGO_USING_CLANG
 constexpr auto
-auto_ptr_contstexpr_test()noexcept(false)->bool
+auto_ptr_contstexpr_test(int const a_val)noexcept(false)->int
 {
-  dango::auto_ptr a_ptr{ new int{ 5 } };
+  dango::auto_ptr a_ptr{ new int{ a_val } };
+
+  dango_assert(*a_ptr == a_val);
 
   auto a_ptr2{ dango::move(a_ptr) };
 
-  return (*a_ptr2 == 5);
+  dango_assert(a_ptr == null);
+  dango_assert(*a_ptr2 == a_val);
+
+  auto a_ptr3 = dango::make_auto_ptr<int>(*a_ptr2);
+
+  dango_assert(a_ptr2 != null);
+
+  return *a_ptr3;
 }
 
-static_assert(auto_ptr_contstexpr_test());
+static_assert(auto_ptr_contstexpr_test(5) == 5);
 #endif
+
+struct poly_base_nv
+{
+
+};
+
+struct poly_derived_nv:poly_base_nv
+{
+
+};
+
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv* const&>);
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv*&&>);
+static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv> const&>);
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv>&&>);
+static_assert(!dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_base_nv> const&>);
+static_assert(dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_base_nv>&&>);
+
+static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, poly_derived_nv* const&>);
+static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, poly_derived_nv*&&>);
+static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_derived_nv> const&>);
+static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_derived_nv>&&>);
+static_assert(!dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_derived_nv> const&>);
+static_assert(!dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_derived_nv>&&>);
+
+struct poly_base
+{
+  virtual ~poly_base()noexcept
+  {
+    test_print("~poly_base()\n");
+  }
+};
+
+struct poly_derived:poly_base
+{
+  ~poly_derived()noexcept override
+  {
+    test_print("~poly_derived()\n");
+  }
+};
+
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, poly_base* const&>);
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, poly_base*&&>);
+static_assert(!dango::is_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base> const&>);
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base>&&>);
+static_assert(!dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_base> const&>);
+static_assert(dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_base>&&>);
+
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, poly_derived* const&>);
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, poly_derived*&&>);
+static_assert(!dango::is_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived> const&>);
+static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived>&&>);
+static_assert(!dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_derived> const&>);
+static_assert(dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_derived>&&>);
+
+DANGO_UNIT_TEST_BEGIN(auto_ptr_polymorphic_test)
+{
+  dango::auto_ptr<poly_base> a_ptr = null;
+
+  a_ptr = dango::auto_ptr{ new poly_derived{ } };
+}
+DANGO_UNIT_TEST_END
 
 }
