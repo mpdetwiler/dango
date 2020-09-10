@@ -133,7 +133,7 @@ dango
   move_if_noexcept
   (tp_type&& a_arg)noexcept->decltype(auto)
   {
-    if constexpr(dango::is_noexcept_constructible<dango::decay<tp_type>, dango::remove_ref<tp_type>&&>)
+    if constexpr(dango::is_noexcept_brace_constructible<dango::decay<tp_type>, dango::remove_ref<tp_type>&&>)
     {
       return dango::move(a_arg);
     }
@@ -161,7 +161,7 @@ dango
   forward_if_noexcept
   (dango::remove_ref<tp_type>& a_arg)noexcept->decltype(auto)
   {
-    if constexpr(dango::is_noexcept_constructible<dango::decay<tp_type>, tp_type>)
+    if constexpr(dango::is_noexcept_brace_constructible<dango::decay<tp_type>, tp_type>)
     {
       return dango::forward<tp_type>(a_arg);
     }
@@ -554,7 +554,7 @@ protected:
   { }
   template
   <dango::detail::is_std_comparison_category tp_arg>
-  requires(dango::is_convertible<tp_arg, super_type> && dango::is_constructible<super_type, tp_arg const&>)
+  requires(dango::is_noexcept_convertible<tp_arg, super_type> && dango::is_noexcept_brace_constructible<super_type, tp_arg const&>)
   explicit constexpr
   compare_val_base(tp_arg const a_arg)noexcept:
   super_type{ a_arg }

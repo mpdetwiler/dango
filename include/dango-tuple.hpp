@@ -521,14 +521,14 @@ dango::detail
   concept tuple_is_constructible_help =
     (dango::detail::is_value_init_tag<tp_arg> && dango::is_default_constructible<tp_value_type>) ||
     (dango::detail::is_skip_init_tag<tp_arg> && dango::detail::is_skip_constructible_help<tp_value_type>) ||
-    dango::is_constructible<tp_value_type, tp_arg>;
+    dango::is_brace_constructible<tp_value_type, tp_arg>;
 
   template
   <typename tp_value_type, typename tp_arg>
   concept tuple_is_noexcept_constructible_help =
     (dango::detail::is_value_init_tag<tp_arg> && dango::is_noexcept_default_constructible<tp_value_type>) ||
     (dango::detail::is_skip_init_tag<tp_arg> && dango::detail::is_noexcept_skip_constructible_help<tp_value_type>) ||
-    dango::is_noexcept_constructible<tp_value_type, tp_arg>;
+    dango::is_noexcept_brace_constructible<tp_value_type, tp_arg>;
 
   template
   <typename tp_arg, typename tp_value_type>
@@ -592,8 +592,8 @@ public:
   requires(!dango::detail::is_init_tag<tp_arg> && !dango::is_same_ignore_cvref<tp_arg, tuple_storage>)
   explicit constexpr
   tuple_storage
-  (tp_arg&& a_arg)noexcept(dango::is_noexcept_constructible<value_type, tp_arg>):
-  m_value(dango::forward<tp_arg>(a_arg))
+  (tp_arg&& a_arg)noexcept(dango::is_noexcept_brace_constructible<value_type, tp_arg>):
+  m_value{ dango::forward<tp_arg>(a_arg) }
   {
 
   }
@@ -714,9 +714,9 @@ public:
   explicit constexpr
   tuple_storage
   (tp_arg&& a_arg, tp_args&&... a_args)
-  noexcept(dango::is_noexcept_constructible<value_type, tp_arg> && dango::is_noexcept_brace_constructible<super_type, tp_args...>):
+  noexcept(dango::is_noexcept_brace_constructible<value_type, tp_arg> && dango::is_noexcept_brace_constructible<super_type, tp_args...>):
   super_type{ dango::forward<tp_args>(a_args)... },
-  m_value(dango::forward<tp_arg>(a_arg))
+  m_value{ dango::forward<tp_arg>(a_arg) }
   {
 
   }
@@ -1121,7 +1121,7 @@ public:
     (sizeof...(tp_args) == dango::usize(1)) &&
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, const&) &&
-    !( ... && dango::is_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
+    !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
     !( ... && dango::is_convertible<dango::tuple<tp_args...> const&, tp_types>)
   )
   explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
@@ -1163,7 +1163,7 @@ public:
     (sizeof...(tp_args) == dango::usize(1)) &&
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, &&)  &&
-    !( ... && dango::is_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
+    !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
     !( ... && dango::is_convertible<dango::tuple<tp_args...>&&, tp_types>)
   )
   explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
@@ -1400,7 +1400,7 @@ public:
   constexpr tuple()noexcept = delete;
 
 #define DANGO_TUPLE_SPEC(noex) \
-  ( ... && dango::is##noex##constructible<tp_types, tp_args>)
+  ( ... && dango::is##noex##brace_constructible<tp_types, tp_args>)
 
   template
   <typename... tp_args>
@@ -1518,7 +1518,7 @@ public:
 /*** converting copy-construct ***/
 
 #define DANGO_TUPLE_SPEC(noex, cvref) \
-  ( ... && dango::is##noex##constructible<tp_types, dango::tuple_get_type<dango::tuple_model cvref, tp_args>>)
+  ( ... && dango::is##noex##brace_constructible<tp_types, dango::tuple_get_type<dango::tuple_model cvref, tp_args>>)
 
   template
   <typename... tp_args>
@@ -1547,7 +1547,7 @@ public:
     (sizeof...(tp_args) == dango::usize(1)) &&
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, const&) &&
-    !( ... && dango::is_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
+    !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
     !( ... && dango::is_convertible<dango::tuple<tp_args...> const&, tp_types>)
   )
   explicit(!( ... && dango::is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
@@ -1589,7 +1589,7 @@ public:
     (sizeof...(tp_args) == dango::usize(1)) &&
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, &&) &&
-    !( ... && dango::is_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
+    !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
     !( ... && dango::is_convertible<dango::tuple<tp_args...>&&, tp_types>)
   )
   explicit(!( ... && dango::is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
@@ -2040,11 +2040,11 @@ dango
 
   template
   <typename... tp_args>
-  requires(( ... && dango::is_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))
+  requires(( ... && dango::is_brace_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))
   constexpr auto
   make_tuple
   (tp_args&&... a_args)
-  noexcept(( ... && dango::is_noexcept_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))->auto
+  noexcept(( ... && dango::is_noexcept_brace_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))->auto
   {
     return dango::tuple<dango::emplacer_return_type_decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
   }
@@ -2054,12 +2054,12 @@ dango
   requires
   (
     (sizeof...(tp_args) == dango::usize(2)) &&
-    ( ... && dango::is_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>)
+    ( ... && dango::is_brace_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>)
   )
   constexpr auto
   make_pair
   (tp_args&&... a_args)
-  noexcept(( ... && dango::is_noexcept_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))->auto
+  noexcept(( ... && dango::is_noexcept_brace_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))->auto
   {
     return dango::tuple<dango::emplacer_return_type_decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
   }

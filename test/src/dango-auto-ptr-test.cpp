@@ -164,17 +164,17 @@ struct poly_derived_nv:poly_base_nv
 
 };
 
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv* const&>);
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv*&&>);
-static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv> const&>);
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv>&&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv* const&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv*&&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv> const&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv>&&>);
 static_assert(!dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_base_nv> const&>);
 static_assert(dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_base_nv>&&>);
 
-static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, poly_derived_nv* const&>);
-static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, poly_derived_nv*&&>);
-static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_derived_nv> const&>);
-static_assert(!dango::is_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_derived_nv>&&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_derived_nv* const&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_derived_nv*&&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_derived_nv> const&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_derived_nv>&&>);
 static_assert(!dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_derived_nv> const&>);
 static_assert(!dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_derived_nv>&&>);
 
@@ -194,17 +194,17 @@ struct poly_derived:poly_base
   }
 };
 
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, poly_base* const&>);
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, poly_base*&&>);
-static_assert(!dango::is_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base> const&>);
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base>&&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_base* const&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_base*&&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base> const&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base>&&>);
 static_assert(!dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_base> const&>);
 static_assert(dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_base>&&>);
 
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, poly_derived* const&>);
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, poly_derived*&&>);
-static_assert(!dango::is_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived> const&>);
-static_assert(dango::is_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived>&&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_derived* const&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_derived*&&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived> const&>);
+static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived>&&>);
 static_assert(!dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_derived> const&>);
 static_assert(dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_derived>&&>);
 

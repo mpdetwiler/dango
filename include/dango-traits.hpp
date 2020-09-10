@@ -1643,7 +1643,7 @@ dango::detail
   };
 
   template
-  <dango::is_referenceable tp_type, typename tp_default>
+  <dango::is_referenceable_ignore_ref tp_type, typename tp_default>
   struct
   add_lvalue_ref_help<tp_type, tp_default>
   final
@@ -1938,19 +1938,19 @@ dango
   template
   <typename tp_type, typename... tp_args>
   concept is_noexcept_constructible =
-    dango::is_constructible<tp_type, tp_args...> &&
     dango::is_noexcept_destructible<tp_type> &&
+    dango::is_constructible<tp_type, tp_args...> &&
     dango::detail::is_noexcept_constructible_help<tp_type, tp_args...>;
 
   template
   <typename tp_type, typename... tp_args>
   concept is_trivial_constructible =
-    dango::is_noexcept_constructible<tp_type, tp_args...> &&
     dango::is_trivial_destructible<tp_type> &&
+    dango::is_noexcept_constructible<tp_type, tp_args...> &&
     dango::detail::is_trivial_constructible_help<tp_type, tp_args...>;
 }
 
-/*** is_brace_constructible is_noexcept_brace_constructible ***/
+/*** is_brace_constructible is_noexcept_brace_constructible is_trivial_brace_constructible ***/
 
 namespace
 dango::detail
@@ -1960,7 +1960,7 @@ dango::detail
   inline constexpr bool const is_brace_constructible_help = requires{ { tp_type{ dango::declval<tp_args>()... } }; };
   template
   <dango::is_ref tp_type, typename... tp_args>
-  inline constexpr bool const is_brace_constructible_help<tp_type, tp_args...> = dango::is_constructible<tp_type, tp_args...>;
+  inline constexpr bool const is_brace_constructible_help<tp_type, tp_args...> = true;
 
   template
   <typename tp_type, typename... tp_args>
@@ -1976,14 +1976,21 @@ dango
   template
   <typename tp_type, typename... tp_args>
   concept is_brace_constructible =
-    dango::is_destructible<tp_type> && dango::detail::is_brace_constructible_help<tp_type, tp_args...>;
+    dango::is_constructible<tp_type, tp_args...> &&
+    dango::detail::is_brace_constructible_help<tp_type, tp_args...>;
 
   template
   <typename tp_type, typename... tp_args>
   concept is_noexcept_brace_constructible =
+    dango::is_noexcept_constructible<tp_type, tp_args...> &&
     dango::is_brace_constructible<tp_type, tp_args...> &&
-    dango::is_noexcept_destructible<tp_type> &&
     dango::detail::is_noexcept_brace_constructible_help<tp_type, tp_args...>;
+
+  template
+  <typename tp_type, typename... tp_args>
+  concept is_trivial_brace_constructible =
+    dango::is_trivial_constructible<tp_type, tp_args...> &&
+    dango::is_noexcept_brace_constructible<tp_type, tp_args...>;
 }
 
 /*** is_default_constructible is_trivial_default_constructible is_noexcept_default_constructible ***/
@@ -1994,17 +2001,17 @@ dango
   template
   <typename tp_type>
   concept is_default_constructible =
-    dango::is_object<tp_type> && dango::is_constructible<tp_type>;
+    dango::is_object<tp_type> && dango::is_brace_constructible<tp_type>;
 
   template
   <typename tp_type>
   concept is_noexcept_default_constructible =
-    dango::is_default_constructible<tp_type> && dango::is_noexcept_constructible<tp_type>;
+    dango::is_default_constructible<tp_type> && dango::is_noexcept_brace_constructible<tp_type>;
 
   template
   <typename tp_type>
   concept is_trivial_default_constructible =
-    dango::is_noexcept_default_constructible<tp_type> && dango::is_trivial_constructible<tp_type>;
+    dango::is_noexcept_default_constructible<tp_type> && dango::is_trivial_brace_constructible<tp_type>;
 }
 
 /*** is_copy_constructible is_trivial_copy_constructible is_noexcept_copy_constructible ***/
@@ -2015,19 +2022,19 @@ dango
   template
   <typename tp_type>
   concept is_copy_constructible =
-    dango::is_ref<tp_type> || dango::is_constructible<tp_type, tp_type const&>;
+    dango::is_ref<tp_type> || dango::is_brace_constructible<tp_type, tp_type const&>;
 
   template
   <typename tp_type>
   concept is_noexcept_copy_constructible =
     dango::is_copy_constructible<tp_type> &&
-    (dango::is_ref<tp_type> || dango::is_noexcept_constructible<tp_type, tp_type const&>);
+    (dango::is_ref<tp_type> || dango::is_noexcept_brace_constructible<tp_type, tp_type const&>);
 
   template
   <typename tp_type>
   concept is_trivial_copy_constructible =
     dango::is_noexcept_copy_constructible<tp_type> &&
-    (dango::is_ref<tp_type> || dango::is_trivial_constructible<tp_type, tp_type const&>);
+    (dango::is_ref<tp_type> || dango::is_trivial_brace_constructible<tp_type, tp_type const&>);
 }
 
 /*** is_move_constructible is_trivial_move_constructible is_noexcept_move_constructible ***/
@@ -2038,19 +2045,19 @@ dango
   template
   <typename tp_type>
   concept is_move_constructible =
-    dango::is_ref<tp_type> || dango::is_constructible<tp_type, tp_type&&>;
+    dango::is_ref<tp_type> || dango::is_brace_constructible<tp_type, tp_type&&>;
 
   template
   <typename tp_type>
   concept is_noexcept_move_constructible =
     dango::is_move_constructible<tp_type> &&
-    (dango::is_ref<tp_type> || dango::is_noexcept_constructible<tp_type, tp_type&&>);
+    (dango::is_ref<tp_type> || dango::is_noexcept_brace_constructible<tp_type, tp_type&&>);
 
   template
   <typename tp_type>
   concept is_trivial_move_constructible =
     dango::is_noexcept_move_constructible<tp_type> &&
-    (dango::is_ref<tp_type> || dango::is_trivial_constructible<tp_type, tp_type&&>);
+    (dango::is_ref<tp_type> || dango::is_trivial_brace_constructible<tp_type, tp_type&&>);
 }
 
 /*** is_noexcept_or_copy_constructible ***/
@@ -2061,8 +2068,8 @@ dango
   template
   <typename tp_type>
   concept is_noexcept_or_copy_constructible =
-    dango::is_noexcept_constructible<dango::decay<tp_type>, tp_type> ||
-    dango::is_constructible<dango::decay<tp_type>, dango::remove_ref<tp_type> const&>;
+    dango::is_noexcept_brace_constructible<dango::decay<tp_type>, tp_type> ||
+    dango::is_brace_constructible<dango::decay<tp_type>, dango::remove_ref<tp_type> const&>;
 }
 
 /*** is_assignable is_trivial_assignable is_noexcept_assignable ***/
@@ -2148,10 +2155,10 @@ in_exception_safe_order_help()noexcept->bool
   constexpr auto const c_size = sizeof...(tp_args) + dango::usize(1);
 
   constexpr bool const c_throwing_construct[c_size] =
-    { true, (!dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>)... };
+    { true, (!dango::is_noexcept_brace_constructible<dango::decay<tp_args>, tp_args>)... };
 
   constexpr bool const c_non_trivial_move_construct[c_size] =
-    { false, (!dango::is_lvalue_ref<tp_args> && !dango::is_trivial_constructible<dango::decay<tp_args>, tp_args>)... };
+    { false, (!dango::is_lvalue_ref<tp_args> && !dango::is_trivial_brace_constructible<dango::decay<tp_args>, tp_args>)... };
 
   auto a_throwing_construct_allowed = true;
 
@@ -2192,7 +2199,7 @@ dango
   concept in_exception_safe_order =
     ( ... && dango::is_noexcept_or_copy_constructible<tp_args>) &&
     dango::detail::in_exception_safe_order_help
-    <dango::conditional<dango::is_noexcept_constructible<dango::decay<tp_args>, tp_args>, tp_args, dango::remove_ref<tp_args> const&>...>();
+    <dango::conditional<dango::is_noexcept_brace_constructible<dango::decay<tp_args>, tp_args>, tp_args, dango::remove_ref<tp_args> const&>...>();
 }
 
 /*** underlying_type ***/
