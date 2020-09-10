@@ -59,10 +59,14 @@ dango::
 s_default_mem_resource =
   dango::polymorphic_allocator<>::make_static<dango::basic_mem_resource>();
 
+template auto dango::detail::current_allocator_handle<dango::polymorphic_allocator<>>()noexcept->auto&;
+
 #include <cstdio>
 
 void
 print_tls_test()noexcept
 {
-  std::fprintf(stderr, "export print_tls_test: %p\n", tls_test());
+  void const* const a_addr = &dango::detail::current_allocator_handle<dango::polymorphic_allocator<>>();
+
+  std::fprintf(stderr, "export print_tls_test: %p\n", a_addr);
 }
