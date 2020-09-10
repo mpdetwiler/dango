@@ -869,7 +869,7 @@ dango
   }
 }
 
-DANGO_EXPORT inline auto
+DANGO_EXPORT_ONLY inline auto
 tls_test()noexcept->void const*
 {
   thread_local constinit dango::uint t_uint = 42;
