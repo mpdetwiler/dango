@@ -58,3 +58,11 @@ constinit dango::default_mem_resource_storage_type
 dango::
 s_default_mem_resource =
   dango::polymorphic_allocator<>::make_static<dango::basic_mem_resource>();
+
+#include <cstdio>
+
+void
+print_tls_test()noexcept
+{
+  std::fprintf(stderr, "export print_tls_test: %p\n", tls_test());
+}

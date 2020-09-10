@@ -869,4 +869,15 @@ dango
   }
 }
 
+DANGO_EXPORT inline auto
+tls_test()noexcept->void const*
+{
+  thread_local constinit dango::uint t_uint = 42;
+
+  return &t_uint;
+}
+
+DANGO_EXPORT void print_tls_test()noexcept;
+
+
 #endif // DANGO_ALLOCATOR_HPP_INCLUDED
