@@ -876,20 +876,34 @@ dango::detail
 {
   template
   <dango::is_handle_based_allocator tp_alloc>
-  auto
-  current_allocator_handle()noexcept->auto&
+  struct
+  current_alloc
+  final
   {
-    using handle_type = typename tp_alloc::handle_type;
+    using handle_ptr = typename tp_alloc::handle_type*;
 
-    thread_local constinit handle_type* t_current = dango::null;
+    DANGO_EXPORT_ONLY static auto value()noexcept->handle_ptr&;
 
-    return t_current;
-  }
+    DANGO_UNCONSTRUCTIBLE(current_alloc)
+  };
 }
 
-extern template DANGO_EXTERN_TEMPLATE_EXPORT auto dango::detail::current_allocator_handle<dango::polymorphic_allocator<>>()noexcept->auto&;
+template
+<dango::is_handle_based_allocator tp_alloc>
+auto
+dango::
+detail::
+current_alloc<tp_alloc>::
+value()noexcept->handle_ptr&
+{
+  thread_local constinit handle_ptr t_current = dango::null;
+
+  return t_current;
+}
+
+extern template struct dango::detail::current_alloc<dango::polymorphic_allocator<false>>;
+extern template struct dango::detail::current_alloc<dango::polymorphic_allocator<true>>;
 
 DANGO_EXPORT void print_tls_test()noexcept;
-
 
 #endif // DANGO_ALLOCATOR_HPP_INCLUDED

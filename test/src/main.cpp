@@ -10,7 +10,9 @@ main
 
   print_tls_test();
 
-  test_print("inline print_tls_test: %p\n", static_cast<void const*>(&dango::detail::current_allocator_handle<dango::polymorphic_allocator<>>()));
+  void const* const a_addr = &(dango::detail::current_alloc<dango::polymorphic_allocator<true>>::value());
+
+  test_print("inline print_tls_test: %p\n", a_addr);
 
   test_print("main exiting\n");
 
