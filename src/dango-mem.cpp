@@ -61,13 +61,3 @@ s_default_mem_resource =
 
 template struct dango::detail::current_alloc<dango::polymorphic_allocator<false>>;
 template struct dango::detail::current_alloc<dango::polymorphic_allocator<true>>;
-
-#include <cstdio>
-
-void
-print_tls_test()noexcept
-{
-  void const* const a_addr = &(dango::detail::current_alloc<dango::polymorphic_allocator<true>>::value());
-
-  std::fprintf(stderr, "export print_tls_test: %p\n", a_addr);
-}

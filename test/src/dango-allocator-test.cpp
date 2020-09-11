@@ -37,4 +37,21 @@ DANGO_UNIT_TEST_BEGIN(allocator_test1)
 }
 DANGO_UNIT_TEST_END
 
+DANGO_UNIT_TEST_BEGIN(push_allocator_test)
+{
+  dango_assert_terminate(dango::current_allocator_or_default<dango::polymorphic_allocator<>>() == dango::default_mem_resource_ptr());
+
+  auto a_rs = dango::polymorphic_allocator<>::make<dango::basic_mem_resource>();
+
+  auto a_guard = dango::push_allocator<dango::polymorphic_allocator<>>(a_rs.get_ptr());
+
+  dango_assert_terminate(dango::current_allocator_or_default<dango::polymorphic_allocator<>>() != dango::default_mem_resource_ptr());
+  dango_assert_terminate(dango::current_allocator_or_default<dango::polymorphic_allocator<>>() == a_rs.get_ptr());
+
+  a_guard.pop();
+
+  dango_assert_terminate(dango::current_allocator_or_default<dango::polymorphic_allocator<>>() == dango::default_mem_resource_ptr());
+}
+DANGO_UNIT_TEST_END
+
 }

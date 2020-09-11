@@ -94,29 +94,44 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   auto a_ptr_int2 = dango::auto_ptr{ new int{ 2 } };
   auto a_ptr_int3 = dango::auto_ptr<int const volatile>{ new int{ 3 }, dango::plain_delete };
   auto a_ptr_int4 = dango::auto_ptr<int, decltype(a_deleter)>{ new int{ 4 } };
-  auto a_ptr_int5 = dango::auto_ptr{ new int{ 5 }, dango::move(a_deleter) };
-  auto a_ptr_int6 = dango::make_auto_ptr<int, dango::basic_allocator>(6);
-  auto a_ptr_int7 = dango::make_auto_ptr<int const volatile, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 7);
+  auto a_ptr_int5 = dango::auto_ptr{ new int{ 5 }, a_deleter };
+  auto a_ptr_int6 = dango::make_auto_ptr<int>(a_deleter, 6);
+  auto a_ptr_int7 = dango::make_auto_ptr<int, dango::basic_allocator>(7);
+  auto a_ptr_int8 = dango::make_auto_ptr<int const volatile, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 8);
+  auto a_ptr_int9 = dango::make_auto_ptr<int const, dango::polymorphic_allocator<>>(9);
+
+  auto a_ptr_ptr_int =
+    dango::make_auto_ptr<dango::auto_ptr<int, dango::polymorphic_allocator<>>, dango::polymorphic_allocator<>>
+    (
+      dango::make_auto_ptr<int, dango::polymorphic_allocator<>>(9)
+    );
 
   a_ptr_int1.get_deleter();
   a_ptr_int2.get_deleter();
   a_ptr_int3.get_deleter();
   a_ptr_int4.get_deleter();
   a_ptr_int5.get_deleter();
-  a_ptr_int7.get_allocator_handle();
+  a_ptr_int6.get_deleter();
+
+  dango_assert_terminate(a_ptr_int8.get_allocator_handle() == a_ptr_int9.get_allocator_handle());
+  dango_assert_terminate(a_ptr_ptr_int.get_allocator_handle() == a_ptr_ptr_int->get_allocator_handle());
 
   static_assert(sizeof(a_ptr_int1) == sizeof(int*));
   static_assert(sizeof(a_ptr_int2) == sizeof(int*));
   static_assert(sizeof(a_ptr_int3) == sizeof(int*));
   static_assert(sizeof(a_ptr_int4) == sizeof(int*));
   static_assert(sizeof(a_ptr_int5) == sizeof(int*));
-  static_assert(sizeof(a_ptr_int6) == 2 * sizeof(int*));
+  static_assert(sizeof(a_ptr_int6) == sizeof(int*));
   static_assert(sizeof(a_ptr_int7) == 2 * sizeof(int*));
+  static_assert(sizeof(a_ptr_int8) == 2 * sizeof(int*));
+  static_assert(sizeof(a_ptr_int9) == 2 * sizeof(int*));
+  static_assert(sizeof(a_ptr_ptr_int) == 2 * sizeof(int*));
 
   auto a_ptr_void1 = dango::make_auto_ptr<void>(64, 64);
   auto a_ptr_void2 = dango::make_auto_ptr<void const, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 64, 64);
+  auto a_ptr_void3 = dango::make_auto_ptr<void volatile, dango::polymorphic_allocator<>>(64, 64);
 
-  a_ptr_void2.get_allocator_handle();
+  dango_assert_terminate(a_ptr_void2.get_allocator_handle() == a_ptr_void3.get_allocator_handle());
 
   static_assert(sizeof(a_ptr_void1) == 3 * sizeof(void*));
   static_assert(sizeof(a_ptr_void2) == 4 * sizeof(void*));
@@ -128,6 +143,8 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   dango_assert_terminate(*a_ptr_int5 == 5);
   dango_assert_terminate(*a_ptr_int6 == 6);
   dango_assert_terminate(*a_ptr_int7 == 7);
+  dango_assert_terminate(*a_ptr_int8 == 8);
+  dango_assert_terminate(*a_ptr_int9 == 9);
 }
 DANGO_UNIT_TEST_END
 

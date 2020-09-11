@@ -869,6 +869,62 @@ dango
   }
 }
 
+/*** allocator_traits ***/
+
+namespace
+dango::custom
+{
+  template
+  <typename tp_alloc>
+  struct allocator_traits;
+
+  template<>
+  struct
+  allocator_traits<dango::polymorphic_allocator<>>
+  final
+  {
+    using handle_type = typename dango::polymorphic_allocator<>::handle_type;
+
+    static auto
+    get_default_handle()noexcept->handle_type
+    {
+      return dango::default_mem_resource_ptr();
+    }
+
+    DANGO_UNCONSTRUCTIBLE(allocator_traits)
+  };
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_alloc>
+  concept allocator_has_default_handle =
+    dango::is_handle_based_allocator<tp_alloc> &&
+    requires{ { dango::custom::allocator_traits<tp_alloc>::get_default_handle() }noexcept->dango::is_same<typename tp_alloc::handle_type>; };
+}
+
+/*** uses_allocator ***/
+
+namespace
+dango::custom
+{
+  template
+  <typename tp_type>
+  struct allocator_user;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_allocator_user =
+    dango::is_class_or_union<tp_type> &&
+    requires{ typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type; };
+}
+
 /*** push_allocator ***/
 
 namespace
@@ -904,6 +960,188 @@ value()noexcept->handle_ptr&
 extern template struct DANGO_DEFAULT_VISIBILITY dango::detail::current_alloc<dango::polymorphic_allocator<false>>;
 extern template struct DANGO_DEFAULT_VISIBILITY dango::detail::current_alloc<dango::polymorphic_allocator<true>>;
 
-DANGO_EXPORT void print_tls_test()noexcept;
+namespace
+dango::detail
+{
+  template
+  <dango::is_handle_based_allocator tp_alloc>
+  class allocator_pusher;
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc>
+class
+dango::
+detail::
+allocator_pusher
+final
+{
+private:
+  using handle_type = typename tp_alloc::handle_type;
+  using current_alloc = dango::detail::current_alloc<tp_alloc>;
+public:
+  template
+  <dango::is_same_ignore_cvref<handle_type> tp_handle>
+  explicit
+  allocator_pusher
+  (tp_handle&& a_handle)noexcept:
+  m_current{ dango::forward<tp_handle>(a_handle) },
+  m_prev{ current_alloc::value() },
+  m_active{ true }
+  {
+    current_alloc::value() = dango::addressof(m_current);
+  }
+
+  explicit
+  allocator_pusher
+  (dango::null_tag const)noexcept:
+  m_current{ dango::null },
+  m_prev{ dango::null },
+  m_active{ false }
+  { }
+
+  ~allocator_pusher()noexcept{ pop(); }
+public:
+  void
+  pop()noexcept
+  {
+    if(m_active)
+    {
+      current_alloc::value() = m_prev;
+
+      m_active = false;
+    }
+  }
+private:
+  handle_type m_current;
+  handle_type* m_prev;
+  bool m_active;
+public:
+  DANGO_DELETE_DEFAULT(allocator_pusher)
+  DANGO_UNMOVEABLE(allocator_pusher)
+};
+
+namespace
+dango
+{
+  template
+  <dango::is_handle_based_allocator tp_alloc, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
+  auto
+  current_allocator
+  (tp_handle&& a_default)noexcept->auto
+  {
+    using return_type = typename tp_alloc::handle_type;
+    using current_alloc = dango::detail::current_alloc<tp_alloc>;
+
+    dango_assert_nonnull(a_default);
+
+    auto const a_current = current_alloc::value();
+
+    if(dango::is_null(a_current))
+    {
+      return return_type{ dango::forward<tp_handle>(a_default) };
+    }
+
+    return return_type{ *a_current };
+  }
+
+  template
+  <dango::allocator_has_default_handle tp_alloc>
+  auto
+  current_allocator_or_default()noexcept->auto
+  {
+    return dango::current_allocator<tp_alloc>(dango::custom::allocator_traits<tp_alloc>::get_default_handle());
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
+  [[nodiscard]] auto
+  push_allocator
+  (tp_handle&& a_handle)noexcept->auto
+  {
+    using return_type = dango::detail::allocator_pusher<tp_alloc>;
+
+    dango_assert_nonnull(a_handle);
+
+    return return_type{ dango::forward<tp_handle>(a_handle) };
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
+  [[nodiscard]] auto
+  push_allocator_if_no_current
+  (tp_handle&& a_handle)noexcept->auto
+  {
+    using return_type = dango::detail::allocator_pusher<tp_alloc>;
+    using current_alloc = dango::detail::current_alloc<tp_alloc>;
+
+    dango_assert_nonnull(a_handle);
+
+    auto const a_current = current_alloc::value();
+
+    if(dango::is_null(a_current))
+    {
+      return return_type{ dango::forward<tp_handle>(a_handle) };
+    }
+
+    return return_type{ dango::null };
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_user, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
+  [[nodiscard]] auto
+  push_allocator_if_user
+  (tp_handle&& a_handle)noexcept->auto
+  {
+    using return_type = dango::detail::allocator_pusher<tp_alloc>;
+
+    if constexpr(dango::is_allocator_user<tp_user>)
+    {
+      using user_alloc =
+        typename dango::custom::allocator_user<dango::remove_cv<tp_user>>::allocator_type;
+
+      if constexpr(dango::is_same<tp_alloc, user_alloc>)
+      {
+        return dango::push_allocator<tp_alloc>(dango::forward<tp_handle>(a_handle));
+      }
+      else
+      {
+        return return_type{ dango::null };
+      }
+    }
+    else
+    {
+      return return_type{ dango::null };
+    }
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_user, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
+  [[nodiscard]] auto
+  push_allocator_if_user_and_no_current
+  (tp_handle&& a_handle)noexcept->auto
+  {
+    using return_type = dango::detail::allocator_pusher<tp_alloc>;
+
+    if constexpr(dango::is_allocator_user<tp_user>)
+    {
+      using user_alloc =
+        typename dango::custom::allocator_user<dango::remove_cv<tp_user>>::allocator_type;
+
+      if constexpr(dango::is_same<tp_alloc, user_alloc>)
+      {
+        return dango::push_allocator_if_no_current<tp_alloc>(dango::forward<tp_handle>(a_handle));
+      }
+      else
+      {
+        return return_type{ dango::null };
+      }
+    }
+    else
+    {
+      return return_type{ dango::null };
+    }
+  }
+}
 
 #endif // DANGO_ALLOCATOR_HPP_INCLUDED
