@@ -876,13 +876,13 @@ dango::detail
 {
   template
   <dango::is_handle_based_allocator tp_alloc>
-  struct
+  struct DANGO_EXPORT
   current_alloc
   final
   {
     using handle_ptr = typename tp_alloc::handle_type*;
 
-    DANGO_EXPORT_ONLY static auto value()noexcept->handle_ptr&;
+    static auto value()noexcept->handle_ptr&;
 
     DANGO_UNCONSTRUCTIBLE(current_alloc)
   };
@@ -901,8 +901,8 @@ value()noexcept->handle_ptr&
   return t_current;
 }
 
-extern template struct dango::detail::current_alloc<dango::polymorphic_allocator<false>>;
-extern template struct dango::detail::current_alloc<dango::polymorphic_allocator<true>>;
+extern template struct DANGO_DEFAULT_VISIBILITY dango::detail::current_alloc<dango::polymorphic_allocator<false>>;
+extern template struct DANGO_DEFAULT_VISIBILITY dango::detail::current_alloc<dango::polymorphic_allocator<true>>;
 
 DANGO_EXPORT void print_tls_test()noexcept;
 

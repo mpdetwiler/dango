@@ -38,9 +38,11 @@ static_assert(false, "dango requires GCC or clang to compile");
 #ifdef DANGO_BUILDING_LIB
 #define DANGO_EXPORT [[gnu::dllexport]]
 #define DANGO_EXPORT_ONLY DANGO_EXPORT
+#define DANGO_DEFAULT_VISIBILITY
 #else
 #define DANGO_EXPORT [[gnu::dllimport]]
 #define DANGO_EXPORT_ONLY
+#define DANGO_DEFAULT_VISIBILITY
 #endif
 
 #endif // DANGO_PLATFORM_WINDOWS
@@ -50,9 +52,11 @@ static_assert(false, "dango requires GCC or clang to compile");
 #ifdef DANGO_BUILDING_LIB
 #define DANGO_EXPORT [[gnu::visibility("default")]]
 #define DANGO_EXPORT_ONLY DANGO_EXPORT
+#define DANGO_DEFAULT_VISIBILITY __attribute((visibility("default")))
 #else
 #define DANGO_EXPORT
 #define DANGO_EXPORT_ONLY
+#define DANGO_DEFAULT_VISIBILITY
 #endif
 
 #endif // DANGO_PLATFORM_LINUX_OR_APPLE
