@@ -944,7 +944,7 @@ dango::detail
 {
   template
   <dango::is_handle_based_allocator tp_alloc>
-  struct DANGO_EXPORT
+  struct
   current_alloc
   final
   {
@@ -970,7 +970,7 @@ value()noexcept->handle_ptr&
 }
 
 #define DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(...) \
-  extern template struct DANGO_EXPORT_ONLY_LEGACY dango::detail::current_alloc<__VA_ARGS__>;
+  extern template struct DANGO_EXPORT_LEGACY dango::detail::current_alloc<__VA_ARGS__>;
 
 #define DANGO_DEFINE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(...) \
   template struct dango::detail::current_alloc<__VA_ARGS__>;
