@@ -905,7 +905,7 @@ dango
     requires{ { dango::custom::allocator_traits<tp_alloc>::get_default_handle() }noexcept->dango::is_same<typename tp_alloc::handle_type>; };
 }
 
-/*** uses_allocator ***/
+/*** allocator_user ***/
 
 namespace
 dango::custom
@@ -922,7 +922,13 @@ dango
   <typename tp_type>
   concept is_allocator_user =
     dango::is_class_or_union<tp_type> &&
-    requires{ typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type; };
+    requires{ typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type; } &&
+    dango::is_allocator<typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type>;
+
+  template
+  <dango::is_allocator_user tp_type>
+  using allocator_user_allocator_type =
+    typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type;
 }
 
 /*** push_allocator ***/
@@ -1088,19 +1094,16 @@ dango
   }
 
   template
-  <dango::is_handle_based_allocator tp_alloc, typename tp_user, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
+  <dango::is_handle_based_allocator tp_alloc, typename... tp_users, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
   [[nodiscard]] auto
   push_allocator_if_user
   (tp_handle&& a_handle)noexcept->auto
   {
     using return_type = dango::detail::allocator_pusher<tp_alloc>;
 
-    if constexpr(dango::is_allocator_user<tp_user>)
+    if constexpr(( ... || dango::is_allocator_user<tp_users>))
     {
-      using user_alloc =
-        typename dango::custom::allocator_user<dango::remove_cv<tp_user>>::allocator_type;
-
-      if constexpr(dango::is_same<tp_alloc, user_alloc>)
+      if constexpr(( ... || dango::is_same<tp_alloc, dango::allocator_user_allocator_type<tp_users>>))
       {
         return dango::push_allocator<tp_alloc>(dango::forward<tp_handle>(a_handle));
       }
@@ -1116,19 +1119,16 @@ dango
   }
 
   template
-  <dango::is_handle_based_allocator tp_alloc, typename tp_user, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
+  <dango::is_handle_based_allocator tp_alloc, typename... tp_users, dango::is_same_ignore_cvref<typename tp_alloc::handle_type> tp_handle>
   [[nodiscard]] auto
   push_allocator_if_user_and_no_current
   (tp_handle&& a_handle)noexcept->auto
   {
     using return_type = dango::detail::allocator_pusher<tp_alloc>;
 
-    if constexpr(dango::is_allocator_user<tp_user>)
+    if constexpr(( ... || dango::is_allocator_user<tp_users>))
     {
-      using user_alloc =
-        typename dango::custom::allocator_user<dango::remove_cv<tp_user>>::allocator_type;
-
-      if constexpr(dango::is_same<tp_alloc, user_alloc>)
+      if constexpr(( ... || dango::is_same<tp_alloc, dango::allocator_user_allocator_type<tp_users>>))
       {
         return dango::push_allocator_if_no_current<tp_alloc>(dango::forward<tp_handle>(a_handle));
       }

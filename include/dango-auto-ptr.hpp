@@ -1245,6 +1245,8 @@ public:
     constexpr auto const c_size = sizeof(control_type);
     constexpr auto const c_align = alignof(control_type);
 
+    dango_assert_nonnull(a_alloc);
+
     typename tp_allocator::handle_type a_alloc_ptr{ dango::forward<tp_alloc>(a_alloc) };
 
     auto const a_addr = a_alloc_ptr->alloc(c_size, c_align);
@@ -1280,6 +1282,8 @@ public:
   (dango::priority_tag<dango::uint(2)> const, tp_alloc&& a_alloc, dango::usize const a_size, dango::usize const a_align)
   noexcept(dango::is_noexcept_handle_based_allocator<tp_allocator>)->auto
   {
+    dango_assert_nonnull(a_alloc);
+
     typename tp_allocator::handle_type a_alloc_ptr{ dango::forward<tp_alloc>(a_alloc) };
 
     auto const a_ptr = a_alloc_ptr->alloc(a_size, a_align);
