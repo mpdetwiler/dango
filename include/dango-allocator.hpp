@@ -970,13 +970,27 @@ value()noexcept->handle_ptr&
 }
 
 #define DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(...) \
-  extern template struct DANGO_DEFAULT_VISIBILITY dango::detail::current_alloc<__VA_ARGS__>;
+  extern template struct DANGO_EXPORT_ONLY_LEGACY dango::detail::current_alloc<__VA_ARGS__>;
 
 #define DANGO_DEFINE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(...) \
   template struct dango::detail::current_alloc<__VA_ARGS__>;
 
 DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<false>)
 DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<true>)
+
+#ifndef DANGO_NO_DEBUG
+namespace
+dango::detail::test
+{
+  DANGO_EXPORT auto current_alloc_address_extern()noexcept->void const*;
+
+  inline auto
+  current_alloc_address_inline()noexcept->void const*
+  {
+    return dango::addressof(dango::detail::current_alloc<dango::polymorphic_allocator<>>::value());
+  }
+}
+#endif
 
 namespace
 dango::detail

@@ -54,4 +54,18 @@ DANGO_UNIT_TEST_BEGIN(push_allocator_test)
 }
 DANGO_UNIT_TEST_END
 
+#ifndef DANGO_NO_DEBUG
+DANGO_UNIT_TEST_BEGIN(current_alloc_address_test)
+{
+  auto const a_extern = dango::detail::test::current_alloc_address_extern();
+  auto const a_inline = dango::detail::test::current_alloc_address_inline();
+
+  test_print("current_alloc_address_extern: %p\n", a_extern);
+  test_print("current_alloc_address_inline: %p\n", a_inline);
+
+  dango_assert_terminate(a_extern == a_inline);
+}
+DANGO_UNIT_TEST_END
+#endif
+
 }

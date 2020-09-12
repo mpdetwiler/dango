@@ -61,3 +61,14 @@ s_default_mem_resource =
 
 DANGO_DEFINE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<false>)
 DANGO_DEFINE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<true>)
+
+#ifndef DANGO_NO_DEBUG
+auto
+dango::
+detail::
+test::
+current_alloc_address_extern()noexcept->void const*
+{
+  return dango::addressof(dango::detail::current_alloc<dango::polymorphic_allocator<>>::value());
+}
+#endif
