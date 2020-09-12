@@ -1809,70 +1809,56 @@ dango::detail
   constexpr void is_convertible_test(tp_arg)noexcept;
 
   template
-  <typename tp_type1, typename tp_type2>
-  concept is_both_void = dango::is_void<tp_type1> && dango::is_void<tp_type2>;
-
-  template
-  <typename tp_from, typename tp_to>
-  concept is_convertible_help_help =
-    dango::is_referenceable_ignore_ref<tp_from> && (dango::is_ref<tp_to> || dango::is_object_exclude_array<tp_to>);
-
-  template
-  <typename tp_from, typename tp_to>
-  concept is_convertible_help =
-    dango::detail::is_convertible_help_help<tp_from, tp_to> &&
+  <typename tp_fr, typename tp_to>
+  concept is_convertible_arg_help =
+    (dango::is_ref<tp_fr> || dango::is_referenceable<tp_fr>) &&
+    (dango::is_ref<tp_to> || dango::is_object_exclude_array<tp_to>) &&
     dango::is_destructible<tp_to> &&
-    requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()) }; };
+    requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_fr>()) }; };
 
   template
-  <typename tp_from, typename tp_to>
-  concept is_noexcept_convertible_help =
-    dango::detail::is_convertible_help_help<tp_from, tp_to> &&
+  <typename tp_fr, typename tp_to>
+  concept is_noexcept_convertible_arg_help =
     dango::is_noexcept_destructible<tp_to> &&
-    requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_from>()) }noexcept; };
+    requires{ { dango::detail::is_convertible_test<tp_to>(dango::declval<tp_fr>()) }noexcept; };
 
   template
-  <typename tp_from, typename tp_to>
-  concept is_convertible_ret_help_help =
-    dango::is_object_exclude_array<tp_from> &&
-    dango::is_object_exclude_array<tp_to> &&
-    dango::is_same_ignore_cv<tp_from, tp_to>;
-
-  template
-  <typename tp_from, typename tp_to>
+  <typename tp_fr, typename tp_to>
   concept is_convertible_ret_help =
-    dango::detail::is_convertible_ret_help_help<tp_from, tp_to> && dango::is_destructible<tp_to>;
+    dango::is_same_ignore_cv<tp_fr, tp_to> &&
+    (dango::is_void<tp_fr> || dango::is_object_exclude_array<tp_fr>) &&
+    (dango::is_void<tp_to> || dango::is_destructible<tp_to>);
 
   template
-  <typename tp_from, typename tp_to>
+  <typename tp_fr, typename tp_to>
   concept is_noexcept_convertible_ret_help =
-    dango::detail::is_convertible_ret_help_help<tp_from, tp_to> && dango::is_noexcept_destructible<tp_to>;
+    (dango::is_void<tp_to> || dango::is_noexcept_destructible<tp_to>);
 }
 
 namespace
 dango
 {
   template
-  <typename tp_from, typename tp_to>
-  concept is_convertible =
-    dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_convertible_help<tp_from, tp_to>;
+  <typename tp_fr, typename tp_to>
+  concept is_convertible_arg =
+    dango::detail::is_convertible_arg_help<tp_fr, tp_to>;
 
   template
-  <typename tp_from, typename tp_to>
-  concept is_noexcept_convertible =
-    dango::is_convertible<tp_from, tp_to> &&
-    (dango::detail::is_both_void<tp_from, tp_to> || dango::detail::is_noexcept_convertible_help<tp_from, tp_to>);
+  <typename tp_fr, typename tp_to>
+  concept is_noexcept_convertible_arg =
+    dango::is_convertible_arg<tp_fr, tp_to> &&
+    dango::detail::is_noexcept_convertible_arg_help<tp_fr, tp_to>;
 
   template
-  <typename tp_from, typename tp_to>
+  <typename tp_fr, typename tp_to>
   concept is_convertible_ret =
-    dango::detail::is_convertible_ret_help<tp_from, tp_to> || dango::is_convertible<tp_from, tp_to>;
+    dango::detail::is_convertible_ret_help<tp_fr, tp_to> || dango::is_convertible_arg<tp_fr, tp_to>;
 
   template
-  <typename tp_from, typename tp_to>
+  <typename tp_fr, typename tp_to>
   concept is_noexcept_convertible_ret =
-    dango::is_convertible_ret<tp_from, tp_to> &&
-    (dango::detail::is_noexcept_convertible_ret_help<tp_from, tp_to> || dango::is_noexcept_convertible<tp_from, tp_to>);
+    dango::is_convertible_ret<tp_fr, tp_to> &&
+    (dango::detail::is_noexcept_convertible_ret_help<tp_fr, tp_to> || dango::is_noexcept_convertible_arg<tp_fr, tp_to>);
 }
 
 /*** is_callable is_noexcept_callable is_callable_ret is_noexcept_callable_ret ***/
@@ -2439,6 +2425,11 @@ dango
   final
   {
     DANGO_TAG_TYPE(present_if_type)
+
+    template
+    <typename tp_arg>
+    explicit constexpr
+    present_if_type(tp_arg&&)noexcept{ }
   };
 
   template

@@ -153,7 +153,7 @@ dango
   (
     !dango::is_const<tp_type> &&
     dango::is_brace_constructible<dango::remove_volatile<tp_type>, tp_arg> &&
-    dango::is_convertible<tp_arg, dango::remove_volatile<tp_type>>
+    dango::is_convertible_arg<tp_arg, dango::remove_volatile<tp_type>>
   )
   void
   atomic_store
@@ -182,7 +182,7 @@ dango
   (
     !dango::is_const<tp_type> &&
     dango::is_brace_constructible<dango::remove_volatile<tp_type>, tp_arg> &&
-    dango::is_convertible<tp_arg, dango::remove_volatile<tp_type>>
+    dango::is_convertible_arg<tp_arg, dango::remove_volatile<tp_type>>
   )
   auto
   atomic_exchange(tp_type* const a_addr, tp_arg&& a_arg)
@@ -217,7 +217,7 @@ dango
     !dango::is_const<tp_type> && !is_const<tp_expected_type> &&
     dango::is_same<dango::remove_volatile<tp_type>, dango::remove_volatile<tp_expected_type>> &&
     dango::is_brace_constructible<dango::remove_volatile<tp_type>, tp_arg> &&
-    dango::is_convertible<tp_arg, dango::remove_volatile<tp_type>>
+    dango::is_convertible_arg<tp_arg, dango::remove_volatile<tp_type>>
   )
   auto
   atomic_compare_exchange
@@ -262,7 +262,7 @@ requires \
 ( \
   !dango::is_const<tp_type> && dango::is_int<tp_type> && \
   dango::is_brace_constructible<dango::remove_volatile<tp_type>, tp_arg> && \
-  dango::is_convertible<tp_arg, dango::remove_volatile<tp_type>> \
+  dango::is_convertible_arg<tp_arg, dango::remove_volatile<tp_type>> \
 ) \
 auto \
 atomic_##name \

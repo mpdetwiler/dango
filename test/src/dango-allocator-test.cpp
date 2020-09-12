@@ -1,6 +1,11 @@
 #include "dango-allocator.hpp"
 #include "dango-test-print.hpp"
 
+template struct dango::polymorphic_allocator<false>;
+template struct dango::polymorphic_allocator<true>;
+template class dango::polymorphic_allocator<dango::c_operator_new_noexcept>::mem_resource_storage<dango::basic_mem_resource>;
+template class dango::polymorphic_allocator<dango::c_operator_new_noexcept>::mem_resource_storage_static<dango::basic_mem_resource>;
+
 namespace
 {
 

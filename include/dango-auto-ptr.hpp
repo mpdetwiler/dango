@@ -135,21 +135,21 @@ dango::detail
     dango::is_noexcept_destructible<tp_lhs> &&
     dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs* const&> &&
     dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs*&&> &&
-    dango::is_noexcept_convertible<tp_rhs* const&, tp_lhs*> &&
-    dango::is_noexcept_convertible<tp_rhs*&&, tp_lhs*>;
+    dango::is_noexcept_convertible_arg<tp_rhs* const&, tp_lhs*> &&
+    dango::is_noexcept_convertible_arg<tp_rhs*&&, tp_lhs*>;
 
-    template
-    <typename tp_lhs, typename tp_rhs>
-  #ifdef DANGO_USING_CLANG
-    inline constexpr bool const auto_ptr_valid_conversion_void =
-  #else
-    concept auto_ptr_valid_conversion_void =
-  #endif
-      dango::is_void<tp_rhs> &&
-      dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs* const&> &&
-      dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs*&&> &&
-      dango::is_noexcept_convertible<tp_rhs* const&, tp_lhs*> &&
-      dango::is_noexcept_convertible<tp_rhs*&&, tp_lhs*>;
+  template
+  <typename tp_lhs, typename tp_rhs>
+#ifdef DANGO_USING_CLANG
+  inline constexpr bool const auto_ptr_valid_conversion_void =
+#else
+  concept auto_ptr_valid_conversion_void =
+#endif
+    dango::is_void<tp_rhs> &&
+    dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs* const&> &&
+    dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs*&&> &&
+    dango::is_noexcept_convertible_arg<tp_rhs* const&, tp_lhs*> &&
+    dango::is_noexcept_convertible_arg<tp_rhs*&&, tp_lhs*>;
 
   struct auto_ptr_make;
 
@@ -389,8 +389,8 @@ private:
     make_tag const,
     ptr_type const a_ptr,
     tp_alloc&& a_alloc_ptr,
-    dango::usize const a_size,
-    dango::usize const a_align
+    size_type const a_size,
+    size_type const a_align
   )
   noexcept
   requires(dango::is_noexcept_brace_constructible<allocator_handle_type, tp_alloc>):
@@ -407,8 +407,8 @@ private:
   (
     make_tag const,
     ptr_type const a_ptr,
-    dango::usize const a_size,
-    dango::usize const a_align
+    size_type const a_size,
+    size_type const a_align
   )
   noexcept
   requires

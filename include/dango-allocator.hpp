@@ -251,7 +251,12 @@ public:
   <typename tp_mr>
   class mem_resource_storage_static;
 private:
-  struct privacy_tag{ DANGO_TAG_TYPE(privacy_tag) };
+  struct
+  privacy_tag
+  final
+  {
+    DANGO_TAG_TYPE(privacy_tag)
+  };
 public:
   static auto lock(handle_type const&)noexcept->guard_type;
 
@@ -262,7 +267,7 @@ public:
     !dango::is_const_or_volatile<tp_mr> &&
     dango::is_brace_constructible<tp_mr, tp_args...> &&
     dango::is_noexcept_destructible<tp_mr> &&
-    dango::is_convertible<tp_mr*, dango::mem_resource<tp_noexcept>*>
+    dango::is_convertible_arg<tp_mr*, dango::mem_resource<tp_noexcept>*>
   )
   static auto
   make
@@ -279,7 +284,7 @@ public:
     !dango::is_const_or_volatile<tp_mr> &&
     dango::is_noexcept_brace_constructible<tp_mr, tp_args...> &&
     dango::is_trivial_destructible<tp_mr> &&
-    dango::is_convertible<tp_mr*, dango::mem_resource<tp_noexcept>*>
+    dango::is_convertible_arg<tp_mr*, dango::mem_resource<tp_noexcept>*>
   )
   static constexpr auto
   make_static
@@ -670,7 +675,7 @@ public:
     {
       auto const a_destroy_func = a_control->get_destroy_func();
 
-      dango_assert(a_destroy_func != dango::null);
+      dango_assert_nonnull(a_destroy_func);
 
       a_destroy_func(a_control);
     }
@@ -752,11 +757,9 @@ public:
     {
       auto const a_destroy_func = a_control->get_destroy_func();
 
-      dango_assert(a_destroy_func != dango::null);
+      dango_assert_nonnull(a_destroy_func);
 
       a_destroy_func(a_control);
-
-      dango_unreachable_msg(u8"mem_resource_ptr: detected use of memory resource during or after its destruction");
     }
   }
 public:
@@ -782,7 +785,7 @@ mem_resource_ptr::
 operator ->
 ()const noexcept->dango::mem_resource_guard<tp_noexcept>
 {
-  dango_assert(m_control != dango::null);
+  dango_assert_nonnull(*this);
 
   bool const a_alive = m_control->try_strong_increment();
 
@@ -800,7 +803,7 @@ mem_resource_ptr::
 operator ->
 ()const noexcept->dango::mem_resource_guard<tp_noexcept>
 {
-  dango_assert(m_control != dango::null);
+  dango_assert_nonnull(*this);
 
   return m_control->get_resource_ptr();
 }
@@ -828,10 +831,10 @@ dango
 class
 dango::
 basic_mem_resource:
-public dango::mem_resource<>
+public dango::mem_resource<dango::c_operator_new_noexcept>
 {
 private:
-  using super_type = dango::mem_resource<>;
+  using super_type = dango::mem_resource<dango::c_operator_new_noexcept>;
 public:
   explicit constexpr basic_mem_resource()noexcept:super_type{ }{ }
   constexpr ~basic_mem_resource()noexcept = default;
@@ -857,7 +860,7 @@ namespace
 dango
 {
   using default_mem_resource_storage_type =
-    dango::polymorphic_allocator<>::mem_resource_storage_static<dango::basic_mem_resource>;
+    dango::polymorphic_allocator<dango::c_operator_new_noexcept>::mem_resource_storage_static<dango::basic_mem_resource>;
 
   DANGO_EXPORT_ONLY extern dango::default_mem_resource_storage_type s_default_mem_resource;
 

@@ -534,7 +534,7 @@ dango::detail
   <typename tp_arg, typename tp_value_type>
   concept tuple_is_convertible_help =
     !dango::detail::is_value_init_tag<tp_arg> && !dango::detail::is_skip_init_tag<tp_arg> &&
-    dango::is_convertible<tp_arg, tp_value_type>;
+    dango::is_convertible_arg<tp_arg, tp_value_type>;
 
   template
   <typename tp_type, typename tp_arg>
@@ -1122,7 +1122,7 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, const&) &&
     !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
-    !( ... && dango::is_convertible<dango::tuple<tp_args...> const&, tp_types>)
+    !( ... && dango::is_convertible_arg<dango::tuple<tp_args...> const&, tp_types>)
   )
   explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
   constexpr
@@ -1164,7 +1164,7 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, &&)  &&
     !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
-    !( ... && dango::is_convertible<dango::tuple<tp_args...>&&, tp_types>)
+    !( ... && dango::is_convertible_arg<dango::tuple<tp_args...>&&, tp_types>)
   )
   explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
   constexpr
@@ -1409,7 +1409,7 @@ public:
     (sizeof...(tp_args) == sizeof...(tp_types)) &&
     DANGO_TUPLE_SPEC(_)
   )
-  explicit(!( ... && dango::is_convertible<tp_args, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<tp_args, tp_types>))
   constexpr
   tuple(tp_args&&... a_args)
   noexcept(DANGO_TUPLE_SPEC(_noexcept_)):
@@ -1529,7 +1529,7 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, const&)
   )
-  explicit(!( ... && dango::is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...> const& a_tup)
@@ -1548,9 +1548,9 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, const&) &&
     !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
-    !( ... && dango::is_convertible<dango::tuple<tp_args...> const&, tp_types>)
+    !( ... && dango::is_convertible_arg<dango::tuple<tp_args...> const&, tp_types>)
   )
-  explicit(!( ... && dango::is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...> const& a_tup)
@@ -1571,7 +1571,7 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, &&)
   )
-  explicit(!( ... && dango::is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...>&& a_tup)
@@ -1590,9 +1590,9 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, &&) &&
     !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
-    !( ... && dango::is_convertible<dango::tuple<tp_args...>&&, tp_types>)
+    !( ... && dango::is_convertible_arg<dango::tuple<tp_args...>&&, tp_types>)
   )
-  explicit(!( ... && dango::is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...>&& a_tup)
@@ -2035,7 +2035,7 @@ dango
 {
   template
   <typename... tp_args>
-  explicit(!( ... && dango::is_convertible<tp_args, dango::emplacer_return_type_decay<tp_args>>))
+  explicit(!( ... && dango::is_convertible_arg<tp_args, dango::emplacer_return_type_decay<tp_args>>))
   tuple(tp_args&&...)->tuple<dango::emplacer_return_type_decay<tp_args>...>;
 
   template

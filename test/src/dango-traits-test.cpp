@@ -525,15 +525,15 @@ namespace
   };
 }
 
-static_assert(dango::is_convertible<void const, void>);
+static_assert(!dango::is_convertible_arg<void const, void>);
 static_assert(dango::is_convertible_ret<void, void volatile>);
-static_assert(dango::is_convertible<int*, int*>);
+static_assert(dango::is_convertible_arg<int*, int*>);
 static_assert(dango::is_convertible_ret<int*, int*>);
-static_assert(dango::is_convertible<int const&, int>);
+static_assert(dango::is_convertible_arg<int const&, int>);
 static_assert(dango::is_convertible_ret<int&&, int>);
-static_assert(!dango::is_convertible<unmoveable, unmoveable>);
+static_assert(!dango::is_convertible_arg<unmoveable, unmoveable>);
 static_assert(dango::is_convertible_ret<unmoveable, unmoveable>);
-static_assert(dango::is_convertible<void(int, bool)noexcept, void(*)(int, bool)noexcept(false)>);
+static_assert(dango::is_convertible_arg<void(int, bool)noexcept, void(*)(int, bool)noexcept(false)>);
 static_assert(dango::is_convertible_ret<void(int, bool)noexcept, void(*)(int, bool)noexcept(false)>);
 
 /*** is_callable ***/

@@ -467,7 +467,7 @@ dango
   (
     !dango::is_const<tp_type> &&
     dango::is_brace_constructible<tp_type, tp_arg> &&
-    dango::is_convertible<tp_arg, tp_type>
+    dango::is_convertible_arg<tp_arg, tp_type>
   )
   constexpr void
   volatile_store
@@ -554,7 +554,7 @@ protected:
   { }
   template
   <dango::detail::is_std_comparison_category tp_arg>
-  requires(dango::is_noexcept_convertible<tp_arg, super_type> && dango::is_noexcept_brace_constructible<super_type, tp_arg const&>)
+  requires(dango::is_noexcept_convertible_arg<tp_arg, super_type> && dango::is_noexcept_brace_constructible<super_type, tp_arg const&>)
   explicit constexpr
   compare_val_base(tp_arg const a_arg)noexcept:
   super_type{ a_arg }

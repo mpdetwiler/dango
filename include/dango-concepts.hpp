@@ -16,8 +16,8 @@ dango
     dango::is_noexcept_null_equatable<dango::remove_cv<tp_type>&&> &&
     dango::is_noexcept_brace_constructible<dango::remove_cv<tp_type>, dango::null_tag const&> &&
     dango::is_noexcept_brace_constructible<dango::remove_cv<tp_type>, dango::null_tag&&> &&
-    dango::is_noexcept_convertible<dango::null_tag const&, dango::remove_cv<tp_type>> &&
-    dango::is_noexcept_convertible<dango::null_tag&&, dango::remove_cv<tp_type>> &&
+    dango::is_noexcept_convertible_arg<dango::null_tag const&, dango::remove_cv<tp_type>> &&
+    dango::is_noexcept_convertible_arg<dango::null_tag&&, dango::remove_cv<tp_type>> &&
     dango::is_noexcept_assignable<dango::remove_cv<tp_type>&, dango::null_tag const&> &&
     dango::is_noexcept_assignable<dango::remove_cv<tp_type>&, dango::null_tag&&>;
 }
