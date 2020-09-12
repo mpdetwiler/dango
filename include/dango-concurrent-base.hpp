@@ -186,9 +186,19 @@ private:
   m_lock{ a_lock->acquire() }
   { }
 public:
-  ~locker()noexcept{ m_lock->release(); }
+  ~locker()noexcept{ unlock(); }
+public:
+  void
+  unlock()noexcept
+  {
+    if(m_lock)
+    {
+      m_lock->release();
+      m_lock = dango::null;
+    }
+  }
 private:
-  spin_mutex* const m_lock;
+  spin_mutex* m_lock;
 public:
   DANGO_DELETE_DEFAULT(locker)
   DANGO_UNMOVEABLE(locker)
@@ -211,11 +221,21 @@ private:
   m_lock{ a_lock->try_acquire() }
   { }
 public:
-  ~try_locker()noexcept{ if(m_lock){ m_lock->release(); } }
+  ~try_locker()noexcept{ unlock(); }
+public:
+  void
+  unlock()noexcept
+  {
+    if(m_lock)
+    {
+      m_lock->release();
+      m_lock = dango::null;
+    }
+  }
 public:
   explicit operator bool()const{ return m_lock != dango::null; }
 private:
-  spin_mutex* const m_lock;
+  spin_mutex* m_lock;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
   DANGO_UNMOVEABLE(try_locker)

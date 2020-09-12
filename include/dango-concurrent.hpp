@@ -551,9 +551,19 @@ protected:
   m_mutex{ (void(a_mutex->get_control()->init()), a_mutex->get_control()->acquire()) }
   { }
 public:
-  ~locker()noexcept{ m_mutex->release(); }
+  ~locker()noexcept{ unlock(); }
+public:
+  void
+  unlock()noexcept
+  {
+    if(m_mutex)
+    {
+      m_mutex->release();
+      m_mutex = dango::null;
+    }
+  }
 private:
-  control_type* const m_mutex;
+  control_type* m_mutex;
 public:
   DANGO_DELETE_DEFAULT(locker)
   DANGO_UNMOVEABLE(locker)
@@ -576,11 +586,21 @@ protected:
   m_mutex{ (void(a_mutex->get_control()->init()), a_mutex->get_control()->try_acquire()) }
   { }
 public:
-  ~try_locker()noexcept{ if(m_mutex){ m_mutex->release(); } }
+  ~try_locker()noexcept{ unlock(); }
+public:
+  void
+  unlock()noexcept
+  {
+    if(m_mutex)
+    {
+      m_mutex->release();
+      m_mutex = dango::null;
+    }
+  }
 public:
   explicit operator bool()const{ return m_mutex != dango::null; }
 private:
-  control_type* const m_mutex;
+  control_type* m_mutex;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
   DANGO_UNMOVEABLE(try_locker)

@@ -365,40 +365,27 @@ cond_var_registry::
 pop_internal
 ()noexcept->bool
 {
-  using cond_ref = dango::cond_var;
-
-  dango::aligned_union<cond_ref> a_s;
-
-  auto const a_cond_ptr =
-  [this, &a_s]()noexcept->cond_ref*
-  {
-    auto const a_guard = m_mutex.lock();
+  auto a_guard = m_mutex.lock();
 
     if(m_internal_list->is_empty())
     {
-      return dango::null;
+      return false;
     }
 
-    auto const a_cond = m_internal_list->first();
+    auto const a_cond_control = m_internal_list->first();
 
-    remove(a_cond);
+    remove(a_cond_control);
 
-    add(a_cond);
+    add(a_cond_control);
 
-    return dango_placement_new(a_s.get(), cond_ref, { a_cond->make_reference() });
-  }();
+    auto a_cond = a_cond_control->make_reference();
 
-  if(!a_cond_ptr)
-  {
-    return false;
-  }
+  a_guard.unlock();
 
-  dango_crit_full(*a_cond_ptr, a_crit)
+  dango_crit_full(a_cond, a_crit)
   {
     a_crit.notify_all();
   }
-
-  dango::destructor(a_cond_ptr);
 
   return true;
 }

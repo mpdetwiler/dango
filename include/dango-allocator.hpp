@@ -963,8 +963,14 @@ value()noexcept->handle_ptr&
   return t_current;
 }
 
-extern template struct DANGO_DEFAULT_VISIBILITY dango::detail::current_alloc<dango::polymorphic_allocator<false>>;
-extern template struct DANGO_DEFAULT_VISIBILITY dango::detail::current_alloc<dango::polymorphic_allocator<true>>;
+#define DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(...) \
+  extern template struct DANGO_DEFAULT_VISIBILITY dango::detail::current_alloc<__VA_ARGS__>;
+
+#define DANGO_DEFINE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(...) \
+  template struct dango::detail::current_alloc<__VA_ARGS__>;
+
+DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<false>)
+DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<true>)
 
 namespace
 dango::detail

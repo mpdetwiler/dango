@@ -59,5 +59,5 @@ dango::
 s_default_mem_resource =
   dango::polymorphic_allocator<>::make_static<dango::basic_mem_resource>();
 
-template struct dango::detail::current_alloc<dango::polymorphic_allocator<false>>;
-template struct dango::detail::current_alloc<dango::polymorphic_allocator<true>>;
+DANGO_DEFINE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<false>)
+DANGO_DEFINE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<true>)
