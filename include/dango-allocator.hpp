@@ -926,6 +926,12 @@ dango
     dango::is_allocator<typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type>;
 
   template
+  <typename tp_type, typename tp_alloc>
+  concept is_user_of_allocator =
+    dango::is_allocator_user<tp_type> &&
+    dango::is_same<tp_alloc, typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type>;
+
+  template
   <dango::is_allocator_user tp_type>
   using allocator_user_allocator_type =
     typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type;
@@ -1107,16 +1113,9 @@ dango
   {
     using return_type = dango::detail::allocator_pusher<tp_alloc>;
 
-    if constexpr(( ... || dango::is_allocator_user<tp_users>))
+    if constexpr(( ... || dango::is_user_of_allocator<tp_users, tp_alloc>))
     {
-      if constexpr(( ... || dango::is_same<tp_alloc, dango::allocator_user_allocator_type<tp_users>>))
-      {
-        return dango::push_allocator<tp_alloc>(dango::forward<tp_handle>(a_handle));
-      }
-      else
-      {
-        return return_type{ dango::null };
-      }
+      return dango::push_allocator<tp_alloc>(dango::forward<tp_handle>(a_handle));
     }
     else
     {
@@ -1132,16 +1131,9 @@ dango
   {
     using return_type = dango::detail::allocator_pusher<tp_alloc>;
 
-    if constexpr(( ... || dango::is_allocator_user<tp_users>))
+    if constexpr(( ... || dango::is_user_of_allocator<tp_users, tp_alloc>))
     {
-      if constexpr(( ... || dango::is_same<tp_alloc, dango::allocator_user_allocator_type<tp_users>>))
-      {
-        return dango::push_allocator_if_no_current<tp_alloc>(dango::forward<tp_handle>(a_handle));
-      }
-      else
-      {
-        return return_type{ dango::null };
-      }
+      return dango::push_allocator_if_no_current<tp_alloc>(dango::forward<tp_handle>(a_handle));
     }
     else
     {
