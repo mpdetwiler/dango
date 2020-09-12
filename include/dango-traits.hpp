@@ -2425,11 +2425,6 @@ dango
   final
   {
     DANGO_TAG_TYPE(present_if_type)
-
-    template
-    <typename tp_arg>
-    explicit constexpr
-    present_if_type(tp_arg&&)noexcept{ }
   };
 
   template
