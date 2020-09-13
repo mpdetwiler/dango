@@ -2438,6 +2438,8 @@ dango
 #ifdef DANGO_USING_GCC
 #define DANGO_GCC_BUG_81043_WORKAROUND \
   , dango::is_same<void> = void
+#define DANGO_GCC_BUG_81043_WORKAROUND_ND \
+  , dango::is_same<void>
 #define DANGO_GCC_BUG_81043_WORKAROUND_ID(idno, ...) \
   , dango::detail::spec_id<dango::uint(idno), __VA_ARGS__>
 namespace
@@ -2449,7 +2451,9 @@ dango::detail
 }
 #else
 #define DANGO_GCC_BUG_81043_WORKAROUND
+#define DANGO_GCC_BUG_81043_WORKAROUND_ND
 #define DANGO_GCC_BUG_81043_WORKAROUND_ID(idno, ...)
 #endif
 
 #endif // DANGO_TRAITS_HPP_INCLUDED
+

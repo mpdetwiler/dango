@@ -117,6 +117,15 @@ dango
   concept is_noexcept_allocator =
     dango::is_allocator<tp_alloc> &&
     (dango::is_noexcept_handle_based_allocator<tp_alloc> || dango::is_noexcept_nohandle_allocator<tp_alloc>);
+
+  struct
+  allocator_arg_tag
+  final
+  {
+    DANGO_TAG_TYPE(allocator_arg_tag)
+  };
+
+  inline constexpr allocator_arg_tag const allocator_arg{ };
 }
 
 namespace

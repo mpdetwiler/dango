@@ -773,19 +773,12 @@ dango::comparison
   <typename tp_type>
   concept is_convertible =
     dango::is_object_exclude_array_ignore_ref<tp_type> &&
-    requires{ { dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::declval<tp_type>()) }; };
-
-  template
-  <typename tp_type>
-  concept is_noexcept_convertible =
-    dango::comparison::is_convertible<tp_type> &&
     requires{ { dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::declval<tp_type>()) }noexcept; };
 
   template
   <dango::comparison::is_convertible tp_arg>
   constexpr auto
-  strongest(tp_arg&& a_arg)
-  noexcept(dango::comparison::is_noexcept_convertible<tp_arg>)->auto
+  strongest(tp_arg&& a_arg)noexcept->auto
   {
     return dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::forward<tp_arg>(a_arg));
   }
@@ -960,6 +953,36 @@ dango
     };
 }
 
+/*** exchange ***/
+
+namespace
+dango
+{
+  inline constexpr auto const exchange =
+    []<typename tp_lhs, typename tp_rhs>
+    (tp_lhs& a_lhs, tp_rhs&& a_rhs)constexpr
+    noexcept
+    (
+      dango::is_noexcept_brace_constructible<dango::remove_volatile<tp_lhs>, tp_rhs> &&
+      dango::is_noexcept_swappable<dango::remove_volatile<tp_lhs>&, tp_lhs&> &&
+      dango::is_noexcept_move_constructible<dango::remove_volatile<tp_lhs>>
+    )->dango::remove_volatile<tp_lhs>
+    requires
+    (
+      !dango::is_const<tp_lhs> &&
+      dango::is_brace_constructible<dango::remove_volatile<tp_lhs>, tp_rhs> &&
+      dango::is_swappable<dango::remove_volatile<tp_lhs>&, tp_lhs&> &&
+      dango::is_move_constructible<dango::remove_volatile<tp_lhs>>
+    )
+    {
+      dango::remove_volatile<tp_lhs> a_temp{ dango::forward<tp_rhs>(a_rhs) };
+
+      dango::swap(a_temp, a_lhs);
+
+      return a_temp;
+    };
+}
+
 /*** swap for arrays of same dim ***/
 
 namespace
@@ -1120,11 +1143,7 @@ dango
   concept has_noexcept_operator_compare_struct =
     dango::has_operator_compare_struct<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    {
-      {
-        dango::custom::operator_compare<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::compare(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
-      }noexcept->dango::comparison::is_noexcept_convertible;
-    };
+    { { dango::custom::operator_compare<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::compare(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept; };
 
   template
   <typename tp_lhs, typename tp_rhs>
@@ -1138,7 +1157,7 @@ dango
   concept has_noexcept_operator_compare_method =
     dango::has_operator_compare_method<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_lhs>(a_lhs).dango_operator_compare(dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::comparison::is_noexcept_convertible; };
+    { { dango::forward<tp_lhs>(a_lhs).dango_operator_compare(dango::forward<tp_rhs>(a_rhs)) }noexcept; };
 }
 
 namespace
@@ -1508,7 +1527,7 @@ dango::detail
   <typename tp_lhs, typename tp_rhs>
   concept has_spaceship_op_help2 =
     !dango::has_noexcept_comparison_ops<tp_lhs, tp_rhs> ||
-    requires(tp_lhs a_lhs, tp_rhs a_rhs){ { dango::forward<tp_lhs>(a_lhs) <=> dango::forward<tp_rhs>(a_rhs) }noexcept->dango::comparison::is_noexcept_convertible; };
+    requires(tp_lhs a_lhs, tp_rhs a_rhs){ { dango::forward<tp_lhs>(a_lhs) <=> dango::forward<tp_rhs>(a_rhs) }noexcept; };
 }
 
 namespace
@@ -1580,7 +1599,7 @@ dango::detail
     {
       {
         dango::detail::compare_help(dango::detail::compare_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
-        }->dango::comparison::is_convertible;
+      }->dango::comparison::is_convertible;
     };
 
   template
@@ -1588,11 +1607,7 @@ dango::detail
   concept has_noexcept_compare_help =
     dango::detail::has_compare_help<tp_lhs, tp_rhs> &&
     requires(tp_lhs a_lhs, tp_rhs a_rhs)
-    {
-      {
-        dango::detail::compare_help(dango::detail::compare_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
-      }noexcept->dango::comparison::is_noexcept_convertible;
-    };
+    { { dango::detail::compare_help(dango::detail::compare_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept; };
 }
 
 namespace
@@ -1781,7 +1796,7 @@ dango
     dango::is_comparator<tp_cmp, tp_lhs, tp_rhs> &&
     dango::is_noexcept_callable<tp_cmp, tp_lhs, tp_rhs> &&
     requires(tp_cmp a_cmp, tp_lhs a_lhs, tp_rhs a_rhs)
-    { { dango::forward<tp_cmp>(a_cmp)(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept->dango::comparison::is_noexcept_convertible; };
+    { { dango::forward<tp_cmp>(a_cmp)(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs)) }noexcept; };
 }
 
 /*** min max ***/

@@ -1,32 +1,58 @@
 #include "dango-auto-ptr.hpp"
 #include "dango-test-print.hpp"
 
+template class dango::auto_ptr<double, dango::plain_delete_type>;
+template class dango::auto_ptr<double, dango::basic_allocator>;
+template class dango::auto_ptr<double, dango::polymorphic_allocator<>>;
+template class dango::auto_ptr<void, dango::basic_allocator>;
+template class dango::auto_ptr<void, dango::polymorphic_allocator<>>;
+
 namespace
 {
 
 struct incomplete;
 
-static_assert(dango::auto_ptr_constraint_spec<incomplete, dango::plain_delete_type>);
-
 using incomplete_ptr = dango::auto_ptr<incomplete>;
 
-static_assert(dango::is_same<incomplete_ptr::value_type, incomplete>);
+static_assert(dango::is_same<incomplete_ptr::elem_type, incomplete>);
 static_assert(dango::is_same<incomplete_ptr::ptr_type, incomplete*>);
 static_assert(dango::is_same<incomplete_ptr::ref_type, incomplete&>);
 static_assert(dango::is_same<incomplete_ptr::deleter_type, dango::plain_delete_type>);
-static_assert(dango::is_same<incomplete_ptr::allocator_type, void>);
-static_assert(dango::is_same<incomplete_ptr::allocator_handle_type, void>);
 static_assert(dango::is_noexcept_default_constructible<incomplete_ptr>);
 static_assert(dango::is_nullable<incomplete_ptr>);
 static_assert(dango::is_noexcept_destructible<incomplete_ptr>);
 static_assert(dango::is_deleter<dango::plain_delete_type, incomplete>);
 
+using incomplete_ptr2 = dango::auto_ptr<incomplete, dango::basic_allocator>;
+
+static_assert(dango::is_same<incomplete_ptr2::elem_type, incomplete>);
+static_assert(dango::is_same<incomplete_ptr2::ptr_type, incomplete*>);
+static_assert(dango::is_same<incomplete_ptr2::ref_type, incomplete&>);
+static_assert(dango::is_same<incomplete_ptr2::allocator_type, dango::basic_allocator>);
+static_assert(dango::is_same<incomplete_ptr2::allocator_handle_type, void>);
+static_assert(dango::is_noexcept_default_constructible<incomplete_ptr2>);
+static_assert(dango::is_nullable<incomplete_ptr2>);
+static_assert(dango::is_noexcept_destructible<incomplete_ptr2>);
+
+using incomplete_ptr3 = dango::auto_ptr<incomplete, dango::polymorphic_allocator<>>;
+
+static_assert(dango::is_same<incomplete_ptr3::elem_type, incomplete>);
+static_assert(dango::is_same<incomplete_ptr3::ptr_type, incomplete*>);
+static_assert(dango::is_same<incomplete_ptr3::ref_type, incomplete&>);
+static_assert(dango::is_same<incomplete_ptr3::allocator_type, dango::polymorphic_allocator<>>);
+static_assert(dango::is_same<incomplete_ptr3::allocator_handle_type, dango::mem_resource_ptr<>>);
+static_assert(dango::is_noexcept_default_constructible<incomplete_ptr3>);
+static_assert(dango::is_nullable<incomplete_ptr3>);
+static_assert(dango::is_noexcept_destructible<incomplete_ptr3>);
+
 struct incomplete
 {
   incomplete_ptr m_ptr;
+  incomplete_ptr2 m_ptr2;
+  incomplete_ptr2 m_ptr3;
 };
 
-static_assert(dango::is_destructible<incomplete>);
+static_assert(dango::is_noexcept_destructible<incomplete>);
 
 struct node
 {
@@ -95,9 +121,8 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   auto a_ptr_int3 = dango::auto_ptr<int const volatile>{ new int{ 3 }, dango::plain_delete };
   auto a_ptr_int4 = dango::auto_ptr<int, decltype(a_deleter)>{ new int{ 4 } };
   auto a_ptr_int5 = dango::auto_ptr{ new int{ 5 }, a_deleter };
-  auto a_ptr_int6 = dango::make_auto_ptr<int>(a_deleter, 6);
   auto a_ptr_int7 = dango::make_auto_ptr<int, dango::basic_allocator>(7);
-  auto a_ptr_int8 = dango::make_auto_ptr<int const volatile, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 8);
+  auto a_ptr_int8 = dango::make_auto_ptr<int const volatile, dango::polymorphic_allocator<>>(dango::allocator_arg, dango::default_mem_resource_ptr(), 8);
   auto a_ptr_int9 = dango::make_auto_ptr<int const, dango::polymorphic_allocator<>>(9);
 
   auto a_ptr_ptr_int =
@@ -111,7 +136,6 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   a_ptr_int3.get_deleter();
   a_ptr_int4.get_deleter();
   a_ptr_int5.get_deleter();
-  a_ptr_int6.get_deleter();
 
   dango_assert_terminate(a_ptr_int8.get_allocator_handle() == a_ptr_int9.get_allocator_handle());
   dango_assert_terminate(a_ptr_ptr_int.get_allocator_handle() == a_ptr_ptr_int->get_allocator_handle());
@@ -121,17 +145,19 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   static_assert(sizeof(a_ptr_int3) == sizeof(int*));
   static_assert(sizeof(a_ptr_int4) == sizeof(int*));
   static_assert(sizeof(a_ptr_int5) == sizeof(int*));
-  static_assert(sizeof(a_ptr_int6) == sizeof(int*));
   static_assert(sizeof(a_ptr_int7) == 2 * sizeof(int*));
   static_assert(sizeof(a_ptr_int8) == 2 * sizeof(int*));
   static_assert(sizeof(a_ptr_int9) == 2 * sizeof(int*));
   static_assert(sizeof(a_ptr_ptr_int) == 2 * sizeof(int*));
 
   auto a_ptr_void1 = dango::make_auto_ptr<void>(64, 64);
-  auto a_ptr_void2 = dango::make_auto_ptr<void const, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 64, 64);
+  auto a_ptr_void2 = dango::make_auto_ptr<void const, dango::polymorphic_allocator<>>(dango::allocator_arg, dango::default_mem_resource_ptr(), 64, 64);
   auto a_ptr_void3 = dango::make_auto_ptr<void volatile, dango::polymorphic_allocator<>>(64, 64);
+  auto a_ptr_void4 = dango::auto_ptr{ 64, 64 };
+  auto a_ptr_void5 = dango::auto_ptr{ dango::allocator_arg, dango::default_mem_resource_ptr(), 64, 64 };
 
   dango_assert_terminate(a_ptr_void2.get_allocator_handle() == a_ptr_void3.get_allocator_handle());
+  dango_assert_terminate(a_ptr_void2.get_allocator_handle() == a_ptr_void5.get_allocator_handle());
 
   static_assert(sizeof(a_ptr_void1) == 3 * sizeof(void*));
   static_assert(sizeof(a_ptr_void2) == 4 * sizeof(void*));
@@ -141,7 +167,6 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   dango_assert_terminate(*a_ptr_int3 == 3);
   dango_assert_terminate(*a_ptr_int4 == 4);
   dango_assert_terminate(*a_ptr_int5 == 5);
-  dango_assert_terminate(*a_ptr_int6 == 6);
   dango_assert_terminate(*a_ptr_int7 == 7);
   dango_assert_terminate(*a_ptr_int8 == 8);
   dango_assert_terminate(*a_ptr_int9 == 9);
