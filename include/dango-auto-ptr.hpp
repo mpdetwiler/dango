@@ -664,7 +664,7 @@ public:
     auto const a_addr = a_alloc_ptr->alloc(c_size, c_align);
 
     auto const a_push_guard =
-      dango::push_allocator_if_user_and_no_current<allocator_type, elem_type>(a_alloc_ptr);
+      dango::push_allocator_if_user<allocator_type, elem_type>(a_alloc_ptr);
 
     if constexpr(dango::is_noexcept_brace_constructible<elem_type, tp_args...>)
     {
