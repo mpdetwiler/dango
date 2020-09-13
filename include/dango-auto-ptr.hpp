@@ -235,13 +235,13 @@ public:
   (tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<tp_type, tp_args...>):
   super_type{ &delete_this, dango::null },
-  m_data{ dango::forward<tp_args>(a_args)... }
+  m_object{ dango::forward<tp_args>(a_args)... }
   { }
   constexpr ~auto_ptr_control_nohandle()noexcept = default;
 public:
-  constexpr auto get_object_ptr()noexcept->auto{ return &m_data; }
+  constexpr auto get_object_ptr()noexcept->auto{ return dango::addressof(m_object); }
 private:
-  tp_type m_data;
+  tp_type m_object;
 public:
   DANGO_UNMOVEABLE(auto_ptr_control_nohandle)
 };
@@ -286,14 +286,14 @@ public:
   noexcept(dango::is_noexcept_brace_constructible<tp_type, tp_args...>):
   super_type{ &delete_this, dango::addressof(m_alloc_ptr) },
   m_alloc_ptr{ dango::move(a_alloc) },
-  m_data{ dango::forward<tp_args>(a_args)... }
+  m_object{ dango::forward<tp_args>(a_args)... }
   { }
   constexpr ~auto_ptr_control_handle_based()noexcept = default;
 public:
-  constexpr auto get_object_ptr()noexcept->auto{ return &m_data; }
+  constexpr auto get_object_ptr()noexcept->auto{ return dango::addressof(m_object); }
 private:
   allocator_handle_type m_alloc_ptr;
-  tp_type m_data;
+  tp_type m_object;
 public:
   DANGO_DELETE_DEFAULT(auto_ptr_control_handle_based)
   DANGO_UNMOVEABLE(auto_ptr_control_handle_based)

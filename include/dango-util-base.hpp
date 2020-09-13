@@ -2072,14 +2072,61 @@ public:
   constexpr ~aligned_storage()noexcept = default;
 public:
   constexpr auto get()const noexcept->void*{ return bytes; }
+
   template
   <dango::is_object tp_type>
+  requires((sizeof(tp_type) <= c_size) && (alignof(tp_type) <= c_align))
   constexpr auto
-  launder_get()const noexcept->tp_type*{ return dango::launder(static_cast<tp_type*>(get())); }
+  get_as()const noexcept->tp_type*
+  {
+    return static_cast<tp_type*>(get());
+  }
+
+  template
+  <dango::is_object tp_type>
+  requires((sizeof(tp_type) <= c_size) && (alignof(tp_type) <= c_align))
+  constexpr auto
+  launder_get()const noexcept->tp_type*
+  {
+    return dango::launder(get_as<tp_type>());
+  }
 public:
   alignas(c_align) mutable dango::byte bytes[c_size];
 public:
   DANGO_UNMOVEABLE(aligned_storage)
 };
+
+namespace
+dango
+{
+  template
+  <dango::usize tp_size, dango::usize tp_align>
+  constexpr auto
+  aligned_storage_get
+  (dango::aligned_storage<tp_size, tp_align> const& a_storage)noexcept->void*
+  {
+    return a_storage.bytes;
+  }
+
+  template
+  <dango::is_object tp_type, dango::usize tp_size, dango::usize tp_align>
+  requires((sizeof(tp_type) <= dango::next_multiple(tp_size, tp_align)) && (alignof(tp_type) <= tp_align))
+  constexpr auto
+  aligned_storage_get_as
+  (dango::aligned_storage<tp_size, tp_align> const& a_storage)noexcept->tp_type*
+  {
+    return static_cast<tp_type*>(dango::aligned_storage_get(a_storage));
+  }
+
+  template
+  <dango::is_object tp_type, dango::usize tp_size, dango::usize tp_align>
+  requires((sizeof(tp_type) <= dango::next_multiple(tp_size, tp_align)) && (alignof(tp_type) <= tp_align))
+  constexpr auto
+  aligned_storage_launder_get
+  (dango::aligned_storage<tp_size, tp_align> const& a_storage)noexcept->tp_type*
+  {
+    return dango::launder(dango::aligned_storage_get_as<tp_type>(a_storage));
+  }
+}
 
 #endif

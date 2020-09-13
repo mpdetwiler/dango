@@ -434,14 +434,14 @@ public:
   control_dynamic(privacy_tag const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<resource_type, tp_args...>):
 #ifndef DANGO_NO_DEBUG
-  super_type{ reinterpret_cast<resource_type*>(&m_storage.bytes[dango::usize(0)]) },
+  super_type{ dango::aligned_storage_get_as<resource_type>(m_storage) },
   m_storage{ },
   m_count{ }
   {
     dango_placement_new(m_storage.get(), resource_type, { dango::forward<tp_args>(a_args)... });
   }
 #else
-  super_type{ &m_resource },
+  super_type{ dango::addressof(m_resource) },
   m_resource{ dango::forward<tp_args>(a_args)... }
   { }
 #endif
@@ -513,11 +513,9 @@ public:
   explicit constexpr
   control_static
   (privacy_tag const, tp_args&&... a_args)noexcept:
-  super_type{ &m_resource },
+  super_type{ dango::addressof(m_resource) },
   m_resource{ dango::forward<tp_args>(a_args)... }
-  {
-    static_assert(dango::is_noexcept_brace_constructible<resource_type, tp_args...>);
-  }
+  { }
 
   constexpr ~control_static()noexcept = default;
 private:
