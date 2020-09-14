@@ -142,6 +142,11 @@ if(not clang_target_flag is None):
 
 lib_env.Append(CPPPATH = ['include/']);
 lib_env.Append(LIBPATH = ['./']);
+
+if(use_clang and compilation_target == target.darwin):
+  lib_env.Append(CPPPATH = ['/usr/local/opt/llvm/include']);
+  lib_env.Append(LIBPATH = ['/usr/local/opt/llvm/lib']);
+
 lib_env.Append(RPATH = ['./']);
 lib_env.Append(CXXFLAGS = flags);
 lib_env.Append(LINKFLAGS = flags);

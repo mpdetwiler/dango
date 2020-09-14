@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <compare>
 #include <exception>
-#include <initializer_list>
 #include <new>
 #include <typeinfo>
 #include <utility>

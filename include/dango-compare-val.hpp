@@ -317,4 +317,4 @@ dango
   using compare_val = dango::compare_val_strong;
 }
 
-#endif
+#endif // DANGO_COMPARE_VAL_HPP_INCLUDED
