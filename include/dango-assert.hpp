@@ -42,22 +42,22 @@ private:
   m_line{ a_line }
   { }
 public:
-  ~source_location()noexcept = default;
-
+  constexpr source_location(source_location const&)noexcept = default;
+  constexpr source_location(source_location&&)noexcept = default;
+  constexpr ~source_location()noexcept = default;
+public:
   constexpr auto file_as_char()const noexcept->char_type const*{ return m_file; }
-  auto file()const noexcept->dango::bchar const*{ return dango::char_as_bchar(file_as_char()); }
-
   constexpr auto function_as_char()const noexcept->char_type const*{ return m_func; }
-  auto function()const noexcept->dango::bchar const*{ return dango::char_as_bchar(function_as_char()); }
-
   constexpr auto line()const noexcept->dango::uint{ return dango::uint(m_line); }
+  auto file()const noexcept->dango::bchar const*{ return dango::char_as_bchar(file_as_char()); }
+  auto function()const noexcept->dango::bchar const*{ return dango::char_as_bchar(function_as_char()); }
 private:
   char_type const* const m_file;
   char_type const* const m_func;
   int_type const m_line;
 public:
   DANGO_DELETE_DEFAULT(source_location)
-  DANGO_UNMOVEABLE(source_location)
+  DANGO_UNASSIGNABLE(source_location)
 };
 
 constexpr auto

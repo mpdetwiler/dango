@@ -107,6 +107,16 @@ sleep
   }
 }
 
+/*** bad_thread ***/
+
+auto
+dango::
+bad_thread::
+message()const noexcept->dango::bchar const*
+{
+  return u8"dango::bad_thread";
+}
+
 /*** cond_var_registry ***/
 
 constexpr
@@ -515,7 +525,7 @@ noexcept(false)
     return;
   }
 
-  throw "thread creation failed"; // TODO
+  throw dango::bad_thread{ };
 }
 
 #ifdef DANGO_PLATFORM_LINUX_OR_APPLE

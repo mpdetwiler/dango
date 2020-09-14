@@ -2,6 +2,7 @@
 #define DANGO_CONCURRENT_HPP_INCLUDED
 
 #include "dango-concurrent-base.hpp"
+#include "dango-exception.hpp"
 #include "dango-global.hpp"
 #include "dango-hash.hpp"
 #include "dango-int.hpp"
@@ -1747,9 +1748,9 @@ dango::
 thread::
 thread
 (thread&& a_arg)noexcept:
-m_control{ a_arg.m_control }
+m_control{ dango::exchange(a_arg.m_control, dango::null) }
 {
-  a_arg.m_control = dango::null;
+
 }
 
 constexpr
@@ -1885,6 +1886,36 @@ thread_start_address
 
   a_func();
 }
+
+/*** bad_thread ***/
+
+namespace
+dango
+{
+  class bad_thread;
+}
+
+class DANGO_EXPORT
+dango::
+bad_thread
+final:
+public dango::exception
+{
+public:
+  using super_type = dango::exception;
+public:
+  explicit
+  bad_thread
+  (dango::source_location const& a_location = dango::source_location::current())noexcept:
+  super_type{ a_location }
+  { }
+
+  ~bad_thread()noexcept override = default;
+public:
+  auto message()const noexcept->dango::bchar const* override;
+public:
+  DANGO_UNMOVEABLE(bad_thread)
+};
 
 /*** init things before main ***/
 
