@@ -130,7 +130,6 @@ lib_env.Append(ENV = { 'PATH':os.environ['PATH'] });
 clang_target_flag = None;
 
 if(use_clang):
-  lib_env.Append(LINKFLAGS = '-fuse-ld=lld');
   if(compilation_target == target.win64):
     clang_target_flag = '-target x86_64-pc-windows-gnu';
   elif(compilation_target == target.win32):
@@ -140,13 +139,14 @@ if(not clang_target_flag is None):
   lib_env.Append(CXXFLAGS = clang_target_flag);
   lib_env.Append(LINKFLAGS = clang_target_flag);
 
+if(use_clang):
+  if(compilation_target == target.darwin):
+    lib_env.Append(LINKFLAGS = '-fuse-ld=ld');
+  else:
+    lib_env.Append(LINKFLAGS = '-fuse-ld=lld');
+
 lib_env.Append(CPPPATH = ['include/']);
 lib_env.Append(LIBPATH = ['./']);
-
-if(use_clang and compilation_target == target.darwin):
-  lib_env.Append(CPPPATH = ['/usr/local/opt/llvm/include']);
-  lib_env.Append(LIBPATH = ['/usr/local/opt/llvm/lib']);
-
 lib_env.Append(RPATH = ['./']);
 lib_env.Append(CXXFLAGS = flags);
 lib_env.Append(LINKFLAGS = flags);
