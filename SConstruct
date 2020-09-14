@@ -130,8 +130,7 @@ lib_env.Append(ENV = { 'PATH':os.environ['PATH'] });
 clang_target_flag = None;
 
 if(use_clang):
-  if(compilation_target != target.darwin):
-    lib_env.Append(LINKFLAGS = '-fuse-ld=lld');
+  lib_env.Append(LINKFLAGS = '-fuse-ld=lld');
   if(compilation_target == target.win64):
     clang_target_flag = '-target x86_64-pc-windows-gnu';
   elif(compilation_target == target.win32):
