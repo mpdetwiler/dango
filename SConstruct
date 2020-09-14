@@ -135,6 +135,8 @@ if(use_clang):
     clang_target_flag = '-target x86_64-pc-windows-gnu';
   elif(compilation_target == target.win32):
     clang_target_flag = '-target i686-pc-windows-gnu';
+  elif(compilation_target == target.darwin):
+    clang_target_flag = '-target x86_64-apple-darwin-gnu';
 
 if(not clang_target_flag is None):
   lib_env.Append(CXXFLAGS = clang_target_flag);
