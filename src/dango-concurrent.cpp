@@ -515,7 +515,7 @@ noexcept(false)
     return;
   }
 
-  throw u8"thread creation failed"; // TODO
+  throw "thread creation failed"; // TODO
 }
 
 #ifdef DANGO_PLATFORM_LINUX_OR_APPLE
