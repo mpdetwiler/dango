@@ -2093,20 +2093,38 @@ dango
   }
 }
 
-/*** tuple_get ***/
+/*** get for tuple ***/
 
 namespace
-dango
+dango::custom
 {
   template
-  <dango::usize tp_index, typename tp_tuple>
-  requires(dango::is_tuple<dango::remove_ref<tp_tuple>>)
-  constexpr auto
-  tuple_get(tp_tuple&& a_tup)noexcept->decltype(auto)
+  <typename... tp_types>
+  struct operator_get<dango::tuple<tp_types...>>;
+}
+
+template
+<typename... tp_types>
+struct
+dango::
+custom::
+operator_get<dango::tuple<tp_types...>>
+final
+{
+  using tuple_type = dango::tuple<tp_types...>;
+
+  template
+  <dango::usize tp_index, dango::is_same_ignore_cvref<tuple_type> tp_tuple>
+  requires(tp_index < sizeof...(tp_types))
+  static constexpr auto
+  get
+  (tp_tuple&& a_tup)noexcept->decltype(auto)
   {
     return dango::forward<tp_tuple>(a_tup).template get<tp_index>();
   }
-}
+
+  DANGO_UNCONSTRUCTIBLE(operator_get)
+};
 
 /*** equals and compare for tuples ***/
 
@@ -2159,7 +2177,7 @@ private:
   equals_help
   (dango::index_seq<tp_indices...> const, tuple_type const& a_lhs, tuple_type const& a_rhs)noexcept(c_noexcept)->bool
   {
-    return ( ... && dango::equals(dango::tuple_get<tp_indices>(a_lhs), dango::tuple_get<tp_indices>(a_rhs)));
+    return ( ... && dango::equals(dango::get<tp_indices>(a_lhs), dango::get<tp_indices>(a_rhs)));
   }
 public:
   static constexpr auto
@@ -2224,12 +2242,12 @@ private:
   (dango::index_seq<tp_indices...> const, tuple_lhs const& a_lhs, tuple_rhs const& a_rhs)noexcept(c_noexcept)->auto
   {
     using ret_type =
-      dango::comparison::common_type<decltype(dango::compare(dango::tuple_get<tp_indices>(a_lhs), dango::tuple_get<tp_indices>(a_rhs)))...>;
+      dango::comparison::common_type<decltype(dango::compare(dango::get<tp_indices>(a_lhs), dango::get<tp_indices>(a_rhs)))...>;
 
     ret_type a_ret{ 0 };
 
     [[maybe_unused]] bool const a_temp =
-      ( ... && (a_ret = ret_type{ dango::compare(dango::tuple_get<tp_indices>(a_lhs), dango::tuple_get<tp_indices>(a_rhs)) }).is_eq());
+      ( ... && (a_ret = ret_type{ dango::compare(dango::get<tp_indices>(a_lhs), dango::get<tp_indices>(a_rhs)) }).is_eq());
 
     return a_ret;
   }

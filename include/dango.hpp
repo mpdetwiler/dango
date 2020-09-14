@@ -5,6 +5,7 @@
 #include "dango-macro.hpp"
 #include "dango-def.hpp"
 #include "dango-traits.hpp"
+#include "dango-compare-val.hpp"
 #include "dango-util-base.hpp"
 #include "dango-concepts.hpp"
 #include "dango-hash.hpp"

@@ -2397,20 +2397,70 @@ dango
   };
 }
 
-/*** in_constexpr_context ***/
+/*** priority_tag ***/
 
 namespace
 dango
 {
-  constexpr auto in_constexpr_context()noexcept->bool;
+  template
+  <dango::uint tp_prio>
+  struct priority_tag;
+
+  template<>
+  struct priority_tag<dango::uint(0)>;
 }
 
-constexpr auto
+template
+<dango::uint tp_prio>
+struct
 dango::
-in_constexpr_context
-()noexcept->bool
+priority_tag:
+dango::priority_tag<tp_prio - dango::uint(1)>
 {
-  return __builtin_is_constant_evaluated();
+  DANGO_TAG_TYPE(priority_tag)
+};
+
+template<>
+struct
+dango::
+priority_tag<dango::uint(0)>
+{
+  DANGO_TAG_TYPE(priority_tag)
+};
+
+/*** integer_seq ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_int, tp_int... tp_integers>
+  struct
+  integer_seq
+  final
+  {
+    DANGO_TAG_TYPE(integer_seq)
+  };
+
+#ifdef DANGO_USING_GCC
+  template
+  <typename tp_int, tp_int tp_len>
+  using make_integer_seq = dango::integer_seq<tp_int, __integer_pack(tp_len)...>;
+#endif
+
+#ifdef DANGO_USING_CLANG
+  template
+  <typename tp_int, tp_int tp_len>
+  using make_integer_seq = __make_integer_seq<dango::integer_seq, tp_int, tp_len>;
+#endif
+
+  template
+  <dango::usize... tp_indices>
+  using index_seq = dango::integer_seq<dango::usize, tp_indices...>;
+
+  template
+  <dango::usize tp_len>
+  using make_index_seq = dango::make_integer_seq<dango::usize, tp_len>;
 }
 
 /*** present_if ***/
@@ -2431,6 +2481,109 @@ dango
   <bool tp_cond, typename tp_type, dango::uint tp_id = dango::uint(0)>
   using present_if =
     dango::conditional<tp_cond, tp_type, dango::present_if_type<tp_id>>;
+}
+
+/*** move forward ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto move(tp_type&&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  requires(dango::is_lvalue_ref<tp_type>)
+  constexpr auto
+  move
+  (tp_type&& a_arg)noexcept->dango::remove_ref<tp_type>&&
+  {
+    return static_cast<dango::remove_ref<tp_type>&&>(a_arg);
+  }
+
+  template
+  <typename tp_type>
+  constexpr auto forward(dango::remove_ref<tp_type>&&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  constexpr auto
+  forward
+  (dango::remove_ref<tp_type>& a_arg)noexcept->tp_type&&
+  {
+    return static_cast<tp_type&&>(a_arg);
+  }
+}
+
+/*** as_const ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto
+  as_const
+  (tp_type&& a_arg)noexcept->dango::remove_ref<tp_type> const&
+  {
+    return a_arg;
+  }
+}
+
+/*** move_if_noexcept forward_if_noexcept ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto move_if_noexcept(tp_type&&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  requires(dango::is_lvalue_ref<tp_type> && dango::is_noexcept_or_copy_constructible<dango::remove_ref<tp_type>&&>)
+  constexpr auto
+  move_if_noexcept
+  (tp_type&& a_arg)noexcept->decltype(auto)
+  {
+    if constexpr(dango::is_noexcept_brace_constructible<dango::decay<tp_type>, dango::remove_ref<tp_type>&&>)
+    {
+      return dango::move(a_arg);
+    }
+    else
+    {
+      return dango::as_const(a_arg);
+    }
+  }
+
+  template
+  <typename tp_type>
+  constexpr auto
+  forward_if_noexcept(dango::remove_ref<tp_type>&&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  requires(!dango::is_noexcept_or_copy_constructible<tp_type>)
+  constexpr auto
+  forward_if_noexcept(dango::remove_ref<tp_type>&)noexcept = delete;
+
+  template
+  <typename tp_type>
+  requires(dango::is_noexcept_or_copy_constructible<tp_type>)
+  constexpr auto
+  forward_if_noexcept
+  (dango::remove_ref<tp_type>& a_arg)noexcept->decltype(auto)
+  {
+    if constexpr(dango::is_noexcept_brace_constructible<dango::decay<tp_type>, tp_type>)
+    {
+      return dango::forward<tp_type>(a_arg);
+    }
+    else
+    {
+      return dango::as_const(a_arg);
+    }
+  }
 }
 
 // workaround for GCC bug 81043
@@ -2456,4 +2609,3 @@ dango::detail
 #endif
 
 #endif // DANGO_TRAITS_HPP_INCLUDED
-
