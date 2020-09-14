@@ -1,4 +1,5 @@
 #include "dango-util-base.hpp"
+#include "dango-test-print.hpp"
 
 static_assert(dango::is_convertible_arg<dango::compare_val_strong, std::strong_ordering>);
 static_assert(dango::is_convertible_arg<dango::compare_val_strong, std::weak_ordering>);
@@ -52,3 +53,61 @@ static_assert(dango::get<2>("hello") == 'l');
 static_assert(dango::get<3>("hello") == 'l');
 static_assert(dango::get<4>("hello") == 'o');
 static_assert(dango::get<5>("hello") == '\0');
+
+namespace ns
+{
+  struct
+  ranged_for_test
+  {
+    dango::uint data[4];
+  };
+}
+
+namespace
+dango::custom
+{
+  template<>
+  struct
+  operator_iter<ns::ranged_for_test>
+  final
+  {
+    static constexpr auto
+    begin(auto& a_arg)noexcept->auto
+    {
+      return &(a_arg.data[0]);
+    }
+
+    static constexpr auto
+    end(auto& a_arg)noexcept->auto
+    {
+      return &(a_arg.data[0]) + 4;
+    }
+  };
+}
+
+namespace ns
+{
+  DANGO_USING_RANGED_FOR_OPERATORS
+}
+
+namespace
+{
+
+DANGO_UNIT_TEST_BEGIN(util_ranged_for_test)
+{
+  ns::ranged_for_test const a_test{ { 1, 2, 3, 4 } };
+  ns::ranged_for_test a_test2{ { 4, 3, 2, 1 } };
+
+  for(auto& a_val : a_test)
+  {
+    test_print("%u\n", dango::integer::u_int(a_val));
+  }
+
+  for(auto& a_val : a_test2)
+  {
+    test_print("%u\n", dango::integer::u_int(a_val));
+  }
+}
+DANGO_UNIT_TEST_END
+
+}
