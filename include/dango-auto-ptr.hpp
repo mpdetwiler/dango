@@ -635,7 +635,7 @@ private:
 
     a_guard.dismiss();
 
-    return { a_control.get_object_ptr(), a_control };
+    return { a_control->get_object_ptr(), a_control };
   }
 
   template
@@ -672,7 +672,7 @@ private:
       auto const a_control =
         dango_placement_new(a_addr, control_type, { dango::move(a_alloc_ptr), dango::forward<tp_args>(a_args)... });
 
-      return { a_control.get_object_ptr(), a_control };
+      return { a_control->get_object_ptr(), a_control };
     }
     else
     {
@@ -684,7 +684,7 @@ private:
 
       a_guard.dismiss();
 
-      return { a_control.get_object_ptr(), a_control };
+      return { a_control->get_object_ptr(), a_control };
     }
   }
 public:
