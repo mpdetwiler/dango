@@ -14,7 +14,7 @@ dango
   template
   <typename tp_alloc>
   concept is_handle_based_allocator =
-    dango::is_class_or_union<tp_alloc> && !dango::is_const_or_volatile<tp_alloc> &&
+    dango::is_class<tp_alloc> && !dango::is_const_or_volatile<tp_alloc> &&
     requires{ typename tp_alloc::handle_type; typename tp_alloc::guard_type; } &&
     dango::is_object_exclude_array<typename tp_alloc::handle_type> && dango::is_object_exclude_array<typename tp_alloc::guard_type> &&
     !dango::is_const_or_volatile<typename tp_alloc::handle_type> && !dango::is_const_or_volatile<typename tp_alloc::guard_type> &&
@@ -89,7 +89,7 @@ dango
   template
   <typename tp_alloc>
   concept is_nohandle_allocator =
-    dango::is_class_or_union<tp_alloc> && !dango::is_const_or_volatile<tp_alloc> &&
+    dango::is_class<tp_alloc> && !dango::is_const_or_volatile<tp_alloc> &&
     !requires{ typename tp_alloc::handle_type; } && !requires{ typename tp_alloc::guard_type; } &&
     requires(void const volatile* const a_voidp, dango::usize const a_usize)
     {
@@ -163,6 +163,58 @@ dango
     typename dango::detail::allocator_handle_type_help<tp_alloc, tp_default>::type;
 }
 
+/*** allocator_traits ***/
+
+namespace
+dango::custom
+{
+  template
+  <typename tp_alloc>
+  struct allocator_traits;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_alloc>
+  concept allocator_has_default_handle =
+    dango::is_handle_based_allocator<tp_alloc> &&
+    requires{ { dango::custom::allocator_traits<tp_alloc>::get_default_handle() }noexcept->dango::is_same_ignore_cvref<typename tp_alloc::handle_type>; };
+}
+
+/*** allocator_user ***/
+
+namespace
+dango::custom
+{
+  template
+  <typename tp_type>
+  struct allocator_user;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_allocator_user =
+    dango::is_class_or_union<tp_type> &&
+    requires{ typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type; } &&
+    dango::is_allocator<typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type>;
+
+  template
+  <typename tp_type, typename tp_alloc>
+  concept is_allocator_user_allocator_same =
+    dango::is_allocator_user<tp_type> &&
+    dango::is_same<tp_alloc, typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type>;
+
+  template
+  <dango::is_allocator_user tp_type>
+  using allocator_user_allocator_type =
+    typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type;
+}
+
 /*** basic_allocator ***/
 
 namespace
@@ -212,6 +264,20 @@ public:
 public:
   DANGO_UNCONSTRUCTIBLE(basic_allocator)
 };
+
+/*** allocator_traits for basic_allocator ***/
+
+namespace
+dango::custom
+{
+  template<>
+  struct
+  allocator_traits<dango::basic_allocator>
+  final
+  {
+    DANGO_UNCONSTRUCTIBLE(allocator_traits)
+  };
+}
 
 /*** polymorphic_allocator ***/
 
@@ -667,10 +733,8 @@ public:
   constexpr
   mem_resource_ptr
   (mem_resource_ptr&& a_arg)noexcept:
-  m_control{ a_arg.m_control }
-  {
-    a_arg.m_control = dango::null;
-  }
+  m_control{ dango::exchange(a_arg.m_control, dango::null) }
+  { }
 
 #ifndef DANGO_NO_DEBUG
   constexpr
@@ -879,72 +943,32 @@ dango
   }
 }
 
-/*** allocator_traits ***/
+/*** allocator_traits for polymorphic_allocator ***/
 
 namespace
 dango::custom
 {
-  template
-  <typename tp_alloc>
-  struct allocator_traits;
-
   template<>
   struct
-  allocator_traits<dango::polymorphic_allocator<>>
+  allocator_traits<dango::polymorphic_allocator<dango::c_operator_new_noexcept>>
   final
   {
-    using handle_type = typename dango::polymorphic_allocator<>::handle_type;
-
     static auto
-    get_default_handle()noexcept->handle_type
+    get_default_handle()noexcept->auto
     {
       return dango::default_mem_resource_ptr();
     }
 
     DANGO_UNCONSTRUCTIBLE(allocator_traits)
   };
-}
 
-namespace
-dango
-{
-  template
-  <typename tp_alloc>
-  concept allocator_has_default_handle =
-    dango::is_handle_based_allocator<tp_alloc> &&
-    requires{ { dango::custom::allocator_traits<tp_alloc>::get_default_handle() }noexcept->dango::is_same<typename tp_alloc::handle_type>; };
-}
-
-/*** allocator_user ***/
-
-namespace
-dango::custom
-{
-  template
-  <typename tp_type>
-  struct allocator_user;
-}
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  concept is_allocator_user =
-    dango::is_class_or_union<tp_type> &&
-    requires{ typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type; } &&
-    dango::is_allocator<typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type>;
-
-  template
-  <typename tp_type, typename tp_alloc>
-  concept is_user_of_allocator =
-    dango::is_allocator_user<tp_type> &&
-    dango::is_same<tp_alloc, typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type>;
-
-  template
-  <dango::is_allocator_user tp_type>
-  using allocator_user_allocator_type =
-    typename dango::custom::allocator_user<dango::remove_cv<tp_type>>::allocator_type;
+  template<>
+  struct
+  allocator_traits<dango::polymorphic_allocator<!dango::c_operator_new_noexcept>>
+  final
+  {
+    DANGO_UNCONSTRUCTIBLE(allocator_traits)
+  };
 }
 
 /*** push_allocator ***/
@@ -1137,7 +1161,7 @@ dango
   {
     using return_type = dango::detail::allocator_pusher<tp_alloc>;
 
-    if constexpr(( ... || dango::is_user_of_allocator<tp_users, tp_alloc>))
+    if constexpr(( ... || dango::is_allocator_user_allocator_same<tp_users, tp_alloc>))
     {
       return dango::push_allocator<tp_alloc>(dango::forward<tp_handle>(a_handle));
     }
@@ -1155,7 +1179,7 @@ dango
   {
     using return_type = dango::detail::allocator_pusher<tp_alloc>;
 
-    if constexpr(( ... || dango::is_user_of_allocator<tp_users, tp_alloc>))
+    if constexpr(( ... || dango::is_allocator_user_allocator_same<tp_users, tp_alloc>))
     {
       return dango::push_allocator_if_no_current<tp_alloc>(dango::forward<tp_handle>(a_handle));
     }

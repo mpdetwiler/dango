@@ -63,6 +63,11 @@ namespace ns
   };
 }
 
+namespace ns
+{
+  DANGO_USING_RANGE_BASED_FOR_OPERATORS
+}
+
 namespace
 dango::custom
 {
@@ -85,10 +90,10 @@ dango::custom
   };
 }
 
-namespace ns
-{
-  DANGO_USING_RANGE_BASED_FOR_OPERATORS
-}
+static_assert(dango::is_iterable<ns::ranged_for_test&>);
+static_assert(dango::is_iterable<ns::ranged_for_test const&>);
+static_assert(dango::is_noexcept_iterable<ns::ranged_for_test&>);
+static_assert(dango::is_noexcept_iterable<ns::ranged_for_test const&>);
 
 namespace
 {

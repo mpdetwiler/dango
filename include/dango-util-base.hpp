@@ -1997,7 +1997,113 @@ final
 
 /*** clone ***/
 
+namespace
+dango::custom
+{
+  template
+  <typename tp_type>
+  struct operator_clone;
+}
 
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept has_operator_clone_struct =
+    dango::is_object_exclude_array_ignore_ref<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::custom::operator_clone<dango::remove_cvref<tp_type>>::clone(dango::forward<tp_type>(a_arg)) }->dango::is_same<dango::remove_cvref<tp_type>>; };
+
+  template
+  <typename tp_type>
+  concept has_noexcept_operator_clone_struct =
+    dango::has_operator_clone_struct<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::custom::operator_clone<dango::remove_cvref<tp_type>>::clone(dango::forward<tp_type>(a_arg)) }noexcept->dango::is_same<dango::remove_cvref<tp_type>>; };
+
+  template
+  <typename tp_type>
+  concept has_operator_clone_method =
+    dango::is_class_or_union_ignore_ref<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::forward<tp_type>(a_arg).dango_operator_clone() }->dango::is_same<dango::remove_cvref<tp_type>>; };
+
+  template
+  <typename tp_type>
+  concept has_noexcept_operator_clone_method =
+    dango::has_operator_clone_method<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::forward<tp_type>(a_arg).dango_operator_clone() }noexcept->dango::is_same<dango::remove_cvref<tp_type>>; };
+}
+
+namespace
+dango::detail
+{
+  using clone_help_prio = dango::priority_tag<dango::uint(2)>;
+
+  template
+  <typename tp_type>
+  requires(dango::has_operator_clone_struct<tp_type const&>)
+  constexpr auto
+  clone_help
+  (dango::priority_tag<dango::uint(2)> const, tp_type const& a_arg)
+  noexcept(dango::has_noexcept_operator_clone_struct<tp_type const&>)->dango::remove_volatile<tp_type>
+  {
+    return dango::custom::operator_clone<dango::remove_volatile<tp_type>>::clone(a_arg);
+  }
+
+  template
+  <typename tp_type>
+  requires(dango::has_operator_clone_method<tp_type const&>)
+  constexpr auto
+  clone_help
+  (dango::priority_tag<dango::uint(1)> const, tp_type const& a_arg)
+  noexcept(dango::has_noexcept_operator_clone_method<tp_type const&>)->dango::remove_volatile<tp_type>
+  {
+    return a_arg.dango_operator_clone();
+  }
+
+  template
+  <typename tp_type>
+  requires(dango::is_brace_constructible<dango::remove_volatile<tp_type>, tp_type const&>)
+  constexpr auto
+  clone_help
+  (dango::priority_tag<dango::uint(0)> const, tp_type const& a_arg)
+  noexcept(dango::is_noexcept_brace_constructible<dango::remove_volatile<tp_type>, tp_type const&>)->auto
+  {
+    return dango::remove_volatile<tp_type>{ a_arg };
+  }
+}
+
+/*** is_cloneable is_noexcept_cloneable clone ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_cloneable =
+    dango::is_object_exclude_array_ignore_ref<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::detail::clone_help(dango::detail::clone_help_prio{ }, dango::forward<tp_type>(a_arg)) }->dango::is_same<dango::remove_cvref<tp_type>>; };
+
+  template
+  <typename tp_type>
+  concept is_noexcept_cloneable =
+    dango::is_cloneable<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::detail::clone_help(dango::detail::clone_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept; };
+
+  inline constexpr auto const clone =
+    []<typename tp_type>
+    (tp_type const& a_arg)constexpr
+    noexcept(dango::is_noexcept_cloneable<tp_type const&>)->auto
+    requires(dango::is_cloneable<tp_type const&>)
+    {
+      return dango::detail::clone_help(dango::detail::clone_help_prio{ }, a_arg);
+    };
+}
 
 /*** aligned_storage ***/
 
