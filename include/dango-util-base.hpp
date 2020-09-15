@@ -889,12 +889,6 @@ dango
   DANGO_USING_EQUALITY_OPERATORS
 }
 
-namespace
-dango::custom
-{
-  DANGO_USING_EQUALITY_OPERATORS
-}
-
 /*** is_equatable is_noexcept_equatable equals ***/
 
 namespace
@@ -1215,12 +1209,6 @@ dango::operators
 
 namespace
 dango
-{
-  DANGO_USING_COMPARISON_OPERATORS
-}
-
-namespace
-dango::custom
 {
   DANGO_USING_COMPARISON_OPERATORS
 }
@@ -1733,43 +1721,59 @@ dango
 {
   template
   <typename tp_type>
-  concept has_operator_iter_struct =
+  concept has_operator_iter_struct_begin =
     dango::is_object_ignore_ref<tp_type> &&
     requires(tp_type a_arg)
-    {
-      { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::begin(dango::forward<tp_type>(a_arg)) };
-      { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::end(dango::forward<tp_type>(a_arg)) };
-    };
+    { { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::begin(dango::forward<tp_type>(a_arg)) }; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_iter_struct =
-    dango::has_operator_iter_struct<tp_type> &&
+  concept has_noexcept_operator_iter_struct_begin =
+    dango::has_operator_iter_struct_begin<tp_type> &&
     requires(tp_type a_arg)
-    {
-      { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::begin(dango::forward<tp_type>(a_arg)) }noexcept;
-      { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::end(dango::forward<tp_type>(a_arg)) }noexcept;
-    };
+    { { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::begin(dango::forward<tp_type>(a_arg)) }noexcept; };
 
   template
   <typename tp_type>
-  concept has_operator_iter_method =
+  concept has_operator_iter_method_begin =
     dango::is_class_or_union_ignore_ref<tp_type> &&
     requires(tp_type a_arg)
-    {
-      { dango::forward<tp_type>(a_arg).dango_operator_begin() };
-      { dango::forward<tp_type>(a_arg).dango_operator_end() };
-    };
+    { { dango::forward<tp_type>(a_arg).dango_operator_begin() }; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_iter_method =
-    dango::has_operator_iter_method<tp_type> &&
+  concept has_noexcept_operator_iter_method_begin =
+    dango::has_operator_iter_method_begin<tp_type> &&
     requires(tp_type a_arg)
-    {
-      { dango::forward<tp_type>(a_arg).dango_operator_begin() }noexcept;
-      { dango::forward<tp_type>(a_arg).dango_operator_end() }noexcept;
-    };
+    { { dango::forward<tp_type>(a_arg).dango_operator_begin() }noexcept; };
+
+  template
+  <typename tp_type>
+  concept has_operator_iter_struct_end =
+    dango::is_object_ignore_ref<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::end(dango::forward<tp_type>(a_arg)) }; };
+
+  template
+  <typename tp_type>
+  concept has_noexcept_operator_iter_struct_end =
+    dango::has_operator_iter_struct_end<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::end(dango::forward<tp_type>(a_arg)) }noexcept; };
+
+  template
+  <typename tp_type>
+  concept has_operator_iter_method_end =
+    dango::is_class_or_union_ignore_ref<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::forward<tp_type>(a_arg).dango_operator_end() }; };
+
+  template
+  <typename tp_type>
+  concept has_noexcept_operator_iter_method_end =
+    dango::has_operator_iter_method_end<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::forward<tp_type>(a_arg).dango_operator_end() }noexcept; };
 }
 
 namespace
@@ -1779,99 +1783,109 @@ dango::detail
 
   template
   <typename tp_type>
-  requires(dango::has_operator_iter_struct<tp_type>)
+  requires(dango::has_operator_iter_struct_begin<tp_type>)
   constexpr auto
   iter_begin_help
   (dango::priority_tag<dango::uint(1)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_iter_struct<tp_type>)->decltype(auto)
+  noexcept(dango::has_noexcept_operator_iter_struct_begin<tp_type>)->decltype(auto)
   {
     return dango::custom::operator_iter<dango::remove_cvref<tp_type>>::begin(dango::forward<tp_type>(a_arg));
   }
 
   template
   <typename tp_type>
-  requires(dango::has_operator_iter_struct<tp_type>)
+  requires(dango::has_operator_iter_struct_end<tp_type>)
   constexpr auto
   iter_end_help
   (dango::priority_tag<dango::uint(1)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_iter_struct<tp_type>)->decltype(auto)
+  noexcept(dango::has_noexcept_operator_iter_struct_end<tp_type>)->decltype(auto)
   {
     return dango::custom::operator_iter<dango::remove_cvref<tp_type>>::end(dango::forward<tp_type>(a_arg));
   }
 
   template
   <typename tp_type>
-  requires(dango::has_operator_iter_method<tp_type>)
+  requires(dango::has_operator_iter_method_begin<tp_type>)
   constexpr auto
   iter_begin_help
   (dango::priority_tag<dango::uint(0)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_iter_method<tp_type>)->decltype(auto)
+  noexcept(dango::has_noexcept_operator_iter_method_begin<tp_type>)->decltype(auto)
   {
     return dango::forward<tp_type>(a_arg).dango_operator_begin();
   }
 
   template
   <typename tp_type>
-  requires(dango::has_operator_iter_method<tp_type>)
+  requires(dango::has_operator_iter_method_end<tp_type>)
   constexpr auto
   iter_end_help
   (dango::priority_tag<dango::uint(0)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_iter_method<tp_type>)->decltype(auto)
+  noexcept(dango::has_noexcept_operator_iter_method_end<tp_type>)->decltype(auto)
   {
     return dango::forward<tp_type>(a_arg).dango_operator_end();
   }
 
   template
   <typename tp_type>
-  concept has_iter_help =
+  concept has_iter_begin_help =
     dango::is_object_ignore_ref<tp_type> &&
     requires(tp_type a_arg)
-    {
-      { dango::detail::iter_begin_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg)) };
-      { dango::detail::iter_end_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg)) };
-    };
+    { { dango::detail::iter_begin_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg)) }; };
 
   template
   <typename tp_type>
-  concept has_noexcept_iter_help =
-    dango::detail::has_iter_help<tp_type> &&
+  concept has_noexcept_iter_begin_help =
+    dango::detail::has_iter_begin_help<tp_type> &&
     requires(tp_type a_arg)
-    {
-      { dango::detail::iter_begin_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept;
-      { dango::detail::iter_end_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept;
-    };
+    { { dango::detail::iter_begin_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept; };
 
   template
   <typename tp_type>
-  using iter_begin_help_type =
-    decltype(dango::detail::iter_begin_help(dango::detail::iter_help_prio{ }, dango::declval<tp_type>()));
+  concept has_iter_end_help =
+    dango::is_object_ignore_ref<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::detail::iter_end_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg)) }; };
 
   template
   <typename tp_type>
-  using iter_end_help_type =
-    decltype(dango::detail::iter_end_help(dango::detail::iter_help_prio{ }, dango::declval<tp_type>()));
+  concept has_noexcept_iter_end_help =
+    dango::detail::has_iter_end_help<tp_type> &&
+    requires(tp_type a_arg)
+    { { dango::detail::iter_end_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept; };
 }
 
 namespace
 dango
 {
   template
+  <dango::detail::has_iter_begin_help tp_type>
+  using iter_begin_type =
+    decltype(dango::detail::iter_begin_help(dango::detail::iter_help_prio{ }, dango::declval<tp_type>()));
+
+  template
+  <dango::detail::has_iter_end_help tp_type>
+  using iter_end_type =
+    decltype(dango::detail::iter_end_help(dango::detail::iter_help_prio{ }, dango::declval<tp_type>()));
+
+  template
   <typename tp_type>
   concept is_iterable =
-    dango::detail::has_iter_help<tp_type> &&
-    dango::is_noexcept_equatable<dango::detail::iter_begin_help_type<tp_type>, dango::detail::iter_end_help_type<tp_type>>;
+    dango::detail::has_iter_begin_help<tp_type> &&
+    dango::detail::has_iter_end_help<tp_type> &&
+    dango::is_noexcept_equatable<dango::iter_begin_type<tp_type>, dango::iter_end_type<tp_type>>;
 
   template
   <typename tp_type>
   concept is_noexcept_iterable =
     dango::is_iterable<tp_type> &&
-    dango::detail::has_noexcept_iter_help<tp_type>;
+    dango::detail::has_noexcept_iter_begin_help<tp_type> &&
+    dango::detail::has_noexcept_iter_end_help<tp_type>;
 
   inline constexpr auto const iter_begin =
     []<typename tp_type>
     (tp_type&& a_arg)constexpr
-    noexcept(dango::is_noexcept_iterable<tp_type>)->decltype(auto)
-    requires(dango::is_iterable<tp_type>)
+    noexcept(dango::detail::has_noexcept_iter_begin_help<tp_type>)->decltype(auto)
+    requires(dango::detail::has_iter_begin_help<tp_type>)
     {
       return dango::detail::iter_begin_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg));
     };
@@ -1879,8 +1893,8 @@ dango
   inline constexpr auto const iter_end =
     []<typename tp_type>
     (tp_type&& a_arg)constexpr
-    noexcept(dango::is_noexcept_iterable<tp_type>)->decltype(auto)
-    requires(dango::is_iterable<tp_type>)
+    noexcept(dango::detail::has_noexcept_iter_end_help<tp_type>)->decltype(auto)
+    requires(dango::detail::has_iter_end_help<tp_type>)
     {
       return dango::detail::iter_end_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg));
     };
@@ -1918,12 +1932,6 @@ dango::operators
 
 namespace
 dango
-{
-  DANGO_USING_RANGED_FOR_OPERATORS
-}
-
-namespace
-dango::custom
 {
   DANGO_USING_RANGED_FOR_OPERATORS
 }
