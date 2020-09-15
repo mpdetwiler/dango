@@ -1889,7 +1889,7 @@ dango
     []<typename tp_type>
     (tp_type&& a_arg)constexpr
     noexcept(dango::has_noexcept_iter_begin<tp_type>)->decltype(auto)
-    requires(dango::has_iter_begin<tp_type>)
+    requires(dango::is_iterable<tp_type>)
     {
       return dango::detail::iter_begin_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg));
     };
@@ -1898,9 +1898,27 @@ dango
     []<typename tp_type>
     (tp_type&& a_arg)constexpr
     noexcept(dango::has_noexcept_iter_end<tp_type>)->decltype(auto)
-    requires(dango::has_iter_end<tp_type>)
+    requires(dango::is_iterable<tp_type>)
     {
       return dango::detail::iter_end_help(dango::detail::iter_help_prio{ }, dango::forward<tp_type>(a_arg));
+    };
+
+  inline constexpr auto const iter_cbegin =
+    []<typename tp_type>
+    (tp_type const& a_arg)constexpr
+    noexcept(dango::has_noexcept_iter_begin<tp_type const&>)->decltype(auto)
+    requires(dango::is_iterable<tp_type const&>)
+    {
+      return dango::iter_begin(a_arg);
+    };
+
+  inline constexpr auto const iter_cend =
+    []<typename tp_type>
+    (tp_type const& a_arg)constexpr
+    noexcept(dango::has_noexcept_iter_end<tp_type const&>)->decltype(auto)
+    requires(dango::is_iterable<tp_type const&>)
+    {
+      return dango::iter_end(a_arg);
     };
 }
 
@@ -1909,7 +1927,7 @@ dango::operators
 {
   template
   <typename tp_type>
-  requires(dango::has_iter_begin<tp_type>)
+  requires(dango::is_iterable<tp_type>)
   constexpr auto
   begin
   (tp_type&& a_arg)
@@ -1920,7 +1938,7 @@ dango::operators
 
   template
   <typename tp_type>
-  requires(dango::has_noexcept_iter_end<tp_type>)
+  requires(dango::is_iterable<tp_type>)
   constexpr auto
   end
   (tp_type&& a_arg)
@@ -1931,7 +1949,7 @@ dango::operators
 }
 
 #define DANGO_USING_RANGE_BASED_FOR_OPERATORS \
-  using dango::operators::begin;         \
+  using dango::operators::begin;              \
   using dango::operators::end;
 
 namespace
@@ -1969,13 +1987,17 @@ final
 
   static constexpr auto
   end
-  (tp_elem const volatile* const a_array)noexcept->auto
+  (tp_elem const volatile* const a_array)noexcept->void const volatile*
   {
     return a_array + tp_size;
   }
 
   DANGO_UNCONSTRUCTIBLE(operator_iter)
 };
+
+/*** clone ***/
+
+
 
 /*** aligned_storage ***/
 

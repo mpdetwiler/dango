@@ -186,14 +186,20 @@ auto_ptr_contstexpr_test(int const a_val)noexcept(false)->int
   dango_assert(a_ptr == null);
   dango_assert(*a_ptr2 == a_val);
 
-  auto a_ptr3 = dango::make_auto_ptr<int>(*a_ptr2);
+  auto a_ptr3 = dango::make_auto_ptr<int, dango::polymorphic_allocator<>>(*a_ptr2);
 
   dango_assert(a_ptr2 != null);
 
-  return *a_ptr3;
+  auto a_ptr4 = dango::make_auto_ptr<int const, dango::basic_allocator>(*a_ptr3);
+
+  dango::mem_resource_ptr<> a_null{ null };
+
+  auto a_ptr5 = dango::make_auto_ptr<int, dango::polymorphic_allocator<>>(dango::allocator_arg, a_null, *a_ptr4);
+
+  return *a_ptr5;
 }
 
-static_assert(auto_ptr_contstexpr_test(5) == 5);
+static_assert(auto_ptr_contstexpr_test(42) == 42);
 #endif
 
 struct poly_base_nv

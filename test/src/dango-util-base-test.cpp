@@ -74,13 +74,13 @@ dango::custom
     static constexpr auto
     begin(auto& a_arg)noexcept->auto
     {
-      return &(a_arg.data[0]);
+      return dango::iter_begin(a_arg.data);
     }
 
     static constexpr auto
     end(auto& a_arg)noexcept->auto
     {
-      return &(a_arg.data[0]) + 4;
+      return dango::iter_end(a_arg.data);
     }
   };
 }
