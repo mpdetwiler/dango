@@ -259,6 +259,40 @@ operator dango::compare_val_partial
 }
 
 namespace
+dango::custom
+{
+  template<>
+  struct
+  common_type<dango::compare_val_strong, dango::compare_val_weak>
+  final
+  {
+    using type = dango::compare_val_weak;
+
+    DANGO_UNCONSTRUCTIBLE(common_type)
+  };
+
+  template<>
+  struct
+  common_type<dango::compare_val_strong, dango::compare_val_partial>
+  final
+  {
+    using type = dango::compare_val_partial;
+
+    DANGO_UNCONSTRUCTIBLE(common_type)
+  };
+
+  template<>
+  struct
+  common_type<dango::compare_val_weak, dango::compare_val_partial>
+  final
+  {
+    using type = dango::compare_val_partial;
+
+    DANGO_UNCONSTRUCTIBLE(common_type)
+  };
+}
+
+namespace
 dango
 {
   template
@@ -272,6 +306,8 @@ dango
 namespace
 dango::detail
 {
+  using strongest_comparison_prio = dango::priority_tag<dango::uint(2)>;
+
   constexpr auto strongest_comparison_help(dango::priority_tag<dango::uint(2)> const, dango::compare_val_strong const a_val)noexcept->auto{ return a_val; }
   constexpr auto strongest_comparison_help(dango::priority_tag<dango::uint(1)> const, dango::compare_val_weak const a_val)noexcept->auto{ return a_val; }
   constexpr auto strongest_comparison_help(dango::priority_tag<dango::uint(0)> const, dango::compare_val_partial const a_val)noexcept->auto{ return a_val; }
@@ -284,20 +320,20 @@ dango::comparison
   <typename tp_type>
   concept is_convertible =
     dango::is_object_exclude_array_ignore_ref<tp_type> &&
-    requires{ { dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::declval<tp_type>()) }noexcept; };
+    requires{ { dango::detail::strongest_comparison_help(dango::detail::strongest_comparison_prio{ }, dango::declval<tp_type>()) }noexcept; };
 
   template
   <dango::comparison::is_convertible tp_arg>
   constexpr auto
   strongest(tp_arg&& a_arg)noexcept->auto
   {
-    return dango::detail::strongest_comparison_help(dango::priority_tag<dango::uint(2)>{ }, dango::forward<tp_arg>(a_arg));
+    return dango::detail::strongest_comparison_help(dango::detail::strongest_comparison_prio{ }, dango::forward<tp_arg>(a_arg));
   }
 
   template
   <dango::is_compare_val... tp_types>
   using common_type =
-    decltype(dango::comparison::strongest(dango::declval<std::common_comparison_category_t<std::strong_ordering, typename tp_types::category_type...>>()));
+    dango::common_type<dango::compare_val_strong, dango::remove_cv<tp_types>...>;
 
   constexpr auto is_eq(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_eq(); }
   constexpr auto is_neq(dango::compare_val_partial const a_val)noexcept->bool{ return a_val.is_neq(); }
