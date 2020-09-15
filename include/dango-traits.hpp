@@ -3,6 +3,47 @@
 
 #include "dango-def.hpp"
 
+/*** declval ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  constexpr auto declval()noexcept->tp_type&&;
+}
+
+/*** priority_tag ***/
+
+namespace
+dango
+{
+  template
+  <dango::uint tp_prio>
+  struct priority_tag;
+
+  template<>
+  struct priority_tag<dango::uint(0)>;
+}
+
+template
+<dango::uint tp_prio>
+struct
+dango::
+priority_tag:
+dango::priority_tag<tp_prio - dango::uint(1)>
+{
+  DANGO_TAG_TYPE(priority_tag)
+};
+
+template<>
+struct
+dango::
+priority_tag<dango::uint(0)>
+{
+  DANGO_TAG_TYPE(priority_tag)
+};
+
 /*** type_identity ***/
 
 namespace
@@ -829,20 +870,6 @@ dango
   template
   <typename tp_type>
   concept is_bool = dango::is_same_ignore_cv<tp_type, bool>;
-}
-
-/*** declval ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  constexpr auto declval()noexcept->tp_type&&;
-
-  template
-  <dango::is_void tp_type>
-  constexpr void declval()noexcept;
 }
 
 /*** is_uint ***/
@@ -2120,6 +2147,144 @@ dango
     dango::is_noexcept_move_assignable<tp_type> && dango::is_trivial_assignable<tp_type&, tp_type&&>;
 }
 
+/*** common_type ***/
+
+namespace
+dango::custom
+{
+  template
+  <typename tp_type1, typename tp_type2>
+  struct common_type;
+}
+
+namespace
+dango::detail
+{
+  using common_type_prio = dango::priority_tag<dango::uint(3)>;
+
+  template
+  <typename tp_type1, typename tp_type2, typename tp_result = typename dango::custom::common_type<dango::decay<tp_type1>, dango::decay<tp_type2>>::type>
+  requires
+  (
+    !dango::is_ref<tp_result> && !dango::is_const_or_volatile<tp_result> &&
+    dango::is_brace_constructible<tp_result, tp_type1> &&
+    dango::is_brace_constructible<tp_result, tp_type2>
+  )
+  constexpr auto
+  common_type_test
+  (dango::priority_tag<dango::uint(3)>)
+  noexcept->tp_result;
+
+  template
+  <typename tp_type1, typename tp_type2, typename tp_result = typename dango::custom::common_type<dango::decay<tp_type2>, dango::decay<tp_type1>>::type>
+  requires
+  (
+    !dango::is_ref<tp_result> && !dango::is_const_or_volatile<tp_result> &&
+    dango::is_brace_constructible<tp_result, tp_type1> &&
+    dango::is_brace_constructible<tp_result, tp_type2>
+  )
+  constexpr auto
+  common_type_test
+  (dango::priority_tag<dango::uint(2)>)
+  noexcept->tp_result;
+
+  template
+  <typename tp_type1, typename tp_type2>
+  constexpr auto
+  common_type_test
+  (dango::priority_tag<dango::uint(1)>)
+  noexcept->dango::decay<decltype(false ? dango::declval<tp_type1>() : dango::declval<tp_type2>())>;
+
+  template
+  <typename tp_type1, typename tp_type2>
+  constexpr auto
+  common_type_test
+  (dango::priority_tag<dango::uint(0)>)
+  noexcept->dango::decay<decltype(false ? dango::declval<dango::remove_ref<tp_type1> const&>() : dango::declval<dango::remove_ref<tp_type2> const&>())>;
+}
+
+namespace
+dango::detail
+{
+  template
+  <typename... tp_types>
+  struct common_type_help;
+
+  template
+  <typename... tp_types>
+  using common_type_type =
+    typename dango::detail::common_type_help<tp_types...>::type;
+}
+
+namespace
+dango
+{
+  template
+  <typename... tp_types>
+  concept has_common_type =
+    requires{ typename dango::detail::common_type_type<tp_types...>; };
+
+  template
+  <typename... tp_types>
+  requires(dango::has_common_type<tp_types...>)
+  using common_type =
+    dango::detail::common_type_type<tp_types...>;
+}
+
+namespace
+dango::detail
+{
+  template
+  <typename... tp_types>
+  struct
+  common_type_help
+  final
+  {
+    DANGO_UNCONSTRUCTIBLE(common_type_help)
+  };
+
+  template
+  <typename tp_type>
+  requires(requires{ typename dango::detail::common_type_type<tp_type, tp_type>; })
+  struct
+  common_type_help<tp_type>
+  final
+  {
+    using type = dango::detail::common_type_type<tp_type, tp_type>;
+
+    DANGO_UNCONSTRUCTIBLE(common_type_help)
+  };
+
+  template
+  <typename tp_type1, typename tp_type2>
+  requires(requires{ { dango::detail::common_type_test<tp_type1, tp_type2>(dango::detail::common_type_prio{ }) }; })
+  struct
+  common_type_help<tp_type1, tp_type2>
+  final
+  {
+    using type =
+      decltype(dango::detail::common_type_test<tp_type1, tp_type2>(dango::detail::common_type_prio{ }));
+
+    DANGO_UNCONSTRUCTIBLE(common_type_help)
+  };
+
+  template
+  <typename tp_type1, typename tp_type2, typename... tp_next>
+  requires
+  (
+    (sizeof...(tp_next) != dango::usize(0)) &&
+    requires{ typename dango::detail::common_type_type<dango::detail::common_type_type<tp_type1, tp_type2>, tp_next...>; }
+  )
+  struct
+  common_type_help<tp_type1, tp_type2, tp_next...>
+  final
+  {
+    using type = dango::detail::common_type_type<dango::detail::common_type_type<tp_type1, tp_type2>, tp_next...>;
+
+    DANGO_UNCONSTRUCTIBLE(common_type_help)
+  };
+}
+
 /*** in_exception_safe_order ***/
 
 namespace
@@ -2396,37 +2561,6 @@ dango
     DANGO_TAG_TYPE(constexpr_check)
   };
 }
-
-/*** priority_tag ***/
-
-namespace
-dango
-{
-  template
-  <dango::uint tp_prio>
-  struct priority_tag;
-
-  template<>
-  struct priority_tag<dango::uint(0)>;
-}
-
-template
-<dango::uint tp_prio>
-struct
-dango::
-priority_tag:
-dango::priority_tag<tp_prio - dango::uint(1)>
-{
-  DANGO_TAG_TYPE(priority_tag)
-};
-
-template<>
-struct
-dango::
-priority_tag<dango::uint(0)>
-{
-  DANGO_TAG_TYPE(priority_tag)
-};
 
 /*** integer_seq ***/
 

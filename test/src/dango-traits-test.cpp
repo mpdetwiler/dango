@@ -114,6 +114,17 @@ static_assert(dango::is_same<dango::decay<void(float, bool)noexcept(false)>, voi
 static_assert(dango::is_same<dango::decay<int(&)(float, bool)noexcept(false)>, int(*)(float, bool)noexcept(false)>);
 static_assert(dango::is_same<dango::decay<double const(&&)[3][4][5]>, double const(*)[4][5]>);
 
+/*** common_type ***/
+
+static_assert(dango::is_same<dango::common_type<int>, int>);
+static_assert(dango::is_same<dango::common_type<int, int>, int>);
+static_assert(dango::is_same<dango::common_type<int, int, int>, int>);
+static_assert(dango::is_same<dango::common_type<int, long, int, int>, long>);
+static_assert(dango::is_same<dango::common_type<int, short, int, int>, int>);
+static_assert(dango::is_same<dango::common_type<int, int, unsigned, int>, unsigned>);
+static_assert(dango::is_same<dango::common_type<int*, int const*, int volatile*, int const volatile*, void const volatile*>, void const volatile*>);
+static_assert(!dango::has_common_type<int, float, int*>);
+
 /*** contitional ***/
 
 static_assert(dango::is_same<dango::conditional<false, int, bool>, bool>);
@@ -161,10 +172,6 @@ static_assert(dango::is_bool<bool const volatile>);
 
 /*** declval ***/
 
-static_assert(dango::is_same<decltype(dango::declval<void>()), void>);
-static_assert(dango::is_same<decltype(dango::declval<void const>()), void>);
-static_assert(dango::is_same<decltype(dango::declval<void volatile>()), void>);
-static_assert(dango::is_same<decltype(dango::declval<void const volatile>()), void>);
 static_assert(dango::is_same<decltype(dango::declval<int>()), int&&>);
 static_assert(dango::is_same<decltype(dango::declval<int const>()), int const&&>);
 static_assert(dango::is_same<decltype(dango::declval<int&>()), int&>);
