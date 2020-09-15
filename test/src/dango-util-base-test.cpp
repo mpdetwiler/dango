@@ -87,7 +87,7 @@ dango::custom
 
 namespace ns
 {
-  DANGO_USING_RANGED_FOR_OPERATORS
+  DANGO_USING_RANGE_BASED_FOR_OPERATORS
 }
 
 namespace
