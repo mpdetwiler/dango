@@ -813,7 +813,7 @@ dango::detail
   (dango::priority_tag<dango::uint(2)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
   noexcept(dango::has_noexcept_operator_compare_struct<tp_rhs const&, tp_lhs const&>)->bool
   {
-    return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_lhs, a_rhs)).is_eq();
+    return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_rhs, a_lhs)).is_eq();
   }
 
   template
@@ -2048,9 +2048,9 @@ dango::detail
   constexpr auto
   clone_help
   (dango::priority_tag<dango::uint(2)> const, tp_type const& a_arg)
-  noexcept(dango::has_noexcept_operator_clone_struct<tp_type const&>)->dango::remove_volatile<tp_type>
+  noexcept(dango::has_noexcept_operator_clone_struct<tp_type const&>)->dango::remove_cv<tp_type>
   {
-    return dango::custom::operator_clone<dango::remove_volatile<tp_type>>::clone(a_arg);
+    return dango::custom::operator_clone<dango::remove_cv<tp_type>>::clone(a_arg);
   }
 
   template
@@ -2059,20 +2059,20 @@ dango::detail
   constexpr auto
   clone_help
   (dango::priority_tag<dango::uint(1)> const, tp_type const& a_arg)
-  noexcept(dango::has_noexcept_operator_clone_method<tp_type const&>)->dango::remove_volatile<tp_type>
+  noexcept(dango::has_noexcept_operator_clone_method<tp_type const&>)->dango::remove_cv<tp_type>
   {
     return a_arg.dango_operator_clone();
   }
 
   template
   <typename tp_type>
-  requires(dango::is_brace_constructible<dango::remove_volatile<tp_type>, tp_type const&>)
+  requires(dango::is_brace_constructible<dango::remove_cv<tp_type>, tp_type const&>)
   constexpr auto
   clone_help
   (dango::priority_tag<dango::uint(0)> const, tp_type const& a_arg)
-  noexcept(dango::is_noexcept_brace_constructible<dango::remove_volatile<tp_type>, tp_type const&>)->auto
+  noexcept(dango::is_noexcept_brace_constructible<dango::remove_cv<tp_type>, tp_type const&>)->auto
   {
-    return dango::remove_volatile<tp_type>{ a_arg };
+    return dango::remove_cv<tp_type>{ a_arg };
   }
 }
 
