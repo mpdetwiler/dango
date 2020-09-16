@@ -72,3 +72,14 @@ current_alloc_address_extern()noexcept->void const*
   return dango::addressof(dango::detail::current_alloc<dango::polymorphic_allocator<>>::value());
 }
 #endif
+
+#ifndef DANGO_NO_DEBUG
+auto
+dango::
+detail::
+test::
+inline_global_address_extern()noexcept->void const*
+{
+  return dango::addressof(*dango::detail::test::inline_global_address_test_lib());
+}
+#endif

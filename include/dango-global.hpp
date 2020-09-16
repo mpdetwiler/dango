@@ -232,4 +232,22 @@ decrement
   dango::destructor_as<dango::remove_cv<tp_type>>(a_ptr);
 }
 
+#ifndef DANGO_NO_DEBUG
+namespace
+dango::detail::test
+{
+  DANGO_DEFINE_GLOBAL_INLINE(dango::ulong, inline_global_address_test, { 10 })
+
+  DANGO_EXPORT auto inline_global_address_extern()noexcept->void const*;
+
+#ifndef DANGO_BUILDING_LIB
+  inline auto
+  inline_global_address_inline()noexcept->void const*
+  {
+    return dango::addressof(*dango::detail::test::inline_global_address_test());
+  }
+#endif
+}
+#endif
+
 #endif // DANGO_GLOBAL_HPP_INCLUDED

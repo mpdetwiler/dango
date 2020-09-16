@@ -434,7 +434,7 @@ name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_ty
 
 #define DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
 
-#else
+#else // DANGO_BUILDING_LIB
 
 #define DANGO_GLOBAL_DEFINE_STATIC_INC(name)
 #define DANGO_GLOBAL_DEFINE_INLINE_INC(name)
@@ -477,8 +477,6 @@ namespace name##_namespace \
 
 /*** inline globals ***/
 
-#ifndef DANGO_BUILDING_LIB
-
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...) \
 namespace name##_namespace \
 { \
@@ -489,19 +487,14 @@ namespace name##_namespace \
   { try{ return name##_return_type __VA_ARGS__ ; }catch(...) \
     { dango_unreachable_terminate_msg(u8"constructor of inline global \"name\" threw exception"); } } \
   using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
-  inline constinit name##_storage_type name##_storage{ }; \
+  inline constinit name##_storage_type DANGO_EXPORT_ONLY_LEGACY name##_storage{ }; \
   using name##_strong_type = name##_storage_type::strong_incrementer<name##_storage>; \
   using name##_weak_type = name##_storage_type::weak_incrementer<name##_storage>; \
   DANGO_GLOBAL_DEFINE_STATIC_INC(name) \
 } \
 DANGO_GLOBAL_DEFINE_ACCESS(name) \
-DANGO_GLOBAL_DEFINE_INLINE_INC(name)
-
-#else
-
-#define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...)
-
-#endif // DANGO_BUILDING_LIB
+DANGO_GLOBAL_DEFINE_INLINE_INC(name) \
+DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
 
 /*** access ***/
 
