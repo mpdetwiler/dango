@@ -81,7 +81,7 @@ test::
 inline_global_address_extern()noexcept->void const*
 {
 #ifdef DANGO_PLATFORM_WINDOWS
-  return dango::addressof(dango::detail::test::inline_global_address_test_namespace::inline_global_address_test_storage);
+  return dango::null;
 #else
   return dango::addressof(*dango::detail::test::inline_global_address_test_lib());
 #endif
