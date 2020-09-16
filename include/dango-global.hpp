@@ -4,6 +4,8 @@
 #include "dango-concurrent-base.hpp"
 #include "dango-mem.hpp"
 
+/*** globals ***/
+
 namespace
 dango::detail
 {
@@ -232,7 +234,12 @@ decrement
   dango::destructor_as<dango::remove_cv<tp_type>>(a_ptr);
 }
 
-#ifndef DANGO_PLATFORM_WINDOWS
+/*** thread locals ***/
+
+
+
+/*** inline global test ***/
+
 #ifndef DANGO_NO_DEBUG
 namespace
 dango::detail::test
@@ -245,11 +252,10 @@ dango::detail::test
   inline auto
   inline_global_address_inline()noexcept->void const*
   {
-    return dango::addressof(dango::detail::test::inline_global_address_test_namespace::inline_global_address_test_storage);
+    return dango::addressof(*dango::detail::test::inline_global_address_test());
   }
 #endif
 }
-#endif
 #endif
 
 #endif // DANGO_GLOBAL_HPP_INCLUDED

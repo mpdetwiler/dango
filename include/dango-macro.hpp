@@ -501,7 +501,9 @@ DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
 #else
 
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...) \
-  static_assert(false, u8"inline globals not supported in library mode on Windows, use an extern global");
+template<dango::is_same<void> tp_void = void> constexpr void \
+name##_lib()noexcept \
+{ static_assert(!dango::is_void<tp_void>, u8"access to inline globals not supported in library mode on Windows, use an extern global"); }
 
 #endif
 

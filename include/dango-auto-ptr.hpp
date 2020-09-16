@@ -440,7 +440,7 @@ public:
     return *this;
   }
 
-  explicit constexpr operator bool()const noexcept{ return !dango::is_null(*this); }
+  DANGO_DEFINE_NULLABLE_OPERATOR_BOOL(constexpr, true)
 
   explicit constexpr operator ptr_type()const noexcept{ return get(); }
 
@@ -521,6 +521,26 @@ public:
   requires(dango::is_noexcept_comparable<ptr_type const&, tp_elem* const&>)
   {
     return dango::compare(m_ptr, a_ptr.m_ptr);
+  }
+
+  template
+  <typename tp_elem>
+  constexpr auto
+  dango_operator_equals
+  (tp_elem* const a_ptr)const noexcept->bool
+  requires(dango::is_noexcept_equatable<ptr_type const&, tp_elem* const&>)
+  {
+    return dango::equals(m_ptr, a_ptr);
+  }
+
+  template
+  <typename tp_elem>
+  constexpr auto
+  dango_operator_compare
+  (tp_elem* const a_ptr)const noexcept->auto
+  requires(dango::is_noexcept_comparable<ptr_type const&, tp_elem* const&>)
+  {
+    return dango::compare(m_ptr, a_ptr);
   }
 
   auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_ptr); }
@@ -849,7 +869,7 @@ public:
     return *this;
   }
 
-  explicit constexpr operator bool()const noexcept{ return !dango::is_null(*this); }
+  DANGO_DEFINE_NULLABLE_OPERATOR_BOOL(constexpr, true)
 
   explicit constexpr operator ptr_type()const noexcept{ return get(); }
 
@@ -914,6 +934,26 @@ public:
   requires(dango::is_noexcept_comparable<ptr_type const&, tp_elem* const&>)
   {
     return dango::compare(m_ptr, a_ptr.m_ptr);
+  }
+
+  template
+  <typename tp_elem>
+  constexpr auto
+  dango_operator_equals
+  (tp_elem* const a_ptr)const noexcept->bool
+  requires(dango::is_noexcept_equatable<ptr_type const&, tp_elem* const&>)
+  {
+    return dango::equals(m_ptr, a_ptr);
+  }
+
+  template
+  <typename tp_elem>
+  constexpr auto
+  dango_operator_compare
+  (tp_elem* const a_ptr)const noexcept->auto
+  requires(dango::is_noexcept_comparable<ptr_type const&, tp_elem* const&>)
+  {
+    return dango::compare(m_ptr, a_ptr);
   }
 
   auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_ptr); }
@@ -1040,7 +1080,7 @@ public:
     return *this;
   }
 
-  explicit constexpr operator bool()const noexcept{ return !dango::is_null(*this); }
+  DANGO_DEFINE_NULLABLE_OPERATOR_BOOL(constexpr, true)
 
   explicit constexpr operator ptr_type()const noexcept{ return get(); }
 public:
@@ -1090,6 +1130,26 @@ public:
   requires(dango::is_noexcept_comparable<ptr_type const&, tp_elem* const&>)
   {
     return dango::compare(m_ptr, a_ptr.m_ptr);
+  }
+
+  template
+  <typename tp_elem>
+  constexpr auto
+  dango_operator_equals
+  (tp_elem* const a_ptr)const noexcept->bool
+  requires(dango::is_noexcept_equatable<ptr_type const&, tp_elem* const&>)
+  {
+    return dango::equals(m_ptr, a_ptr);
+  }
+
+  template
+  <typename tp_elem>
+  constexpr auto
+  dango_operator_compare
+  (tp_elem* const a_ptr)const noexcept->auto
+  requires(dango::is_noexcept_comparable<ptr_type const&, tp_elem* const&>)
+  {
+    return dango::compare(m_ptr, a_ptr);
   }
 
   auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_ptr); }
@@ -1240,7 +1300,7 @@ public:
     return *this;
   }
 
-  explicit constexpr operator bool()const noexcept{ return !dango::is_null(*this); }
+  DANGO_DEFINE_NULLABLE_OPERATOR_BOOL(constexpr, true)
 
   explicit constexpr operator ptr_type()const noexcept{ return get(); }
 public:
@@ -1291,6 +1351,26 @@ public:
   requires(dango::is_noexcept_comparable<ptr_type const&, tp_elem* const&>)
   {
     return dango::compare(m_ptr, a_ptr.m_ptr);
+  }
+
+  template
+  <typename tp_elem>
+  constexpr auto
+  dango_operator_equals
+  (tp_elem* const a_ptr)const noexcept->bool
+  requires(dango::is_noexcept_equatable<ptr_type const&, tp_elem* const&>)
+  {
+    return dango::equals(m_ptr, a_ptr);
+  }
+
+  template
+  <typename tp_elem>
+  constexpr auto
+  dango_operator_compare
+  (tp_elem* const a_ptr)const noexcept->auto
+  requires(dango::is_noexcept_comparable<ptr_type const&, tp_elem* const&>)
+  {
+    return dango::compare(m_ptr, a_ptr);
   }
 
   auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_ptr); }
