@@ -489,7 +489,7 @@ namespace name##_namespace \
   { try{ return name##_return_type __VA_ARGS__ ; }catch(...) \
     { dango_unreachable_terminate_msg(u8"constructor of inline global \"name\" threw exception"); } } \
   using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
-  inline constinit name##_storage_type DANGO_EXPORT_ONLY_LEGACY name##_storage{ }; \
+  DANGO_EXPORT_ONLY inline constinit name##_storage_type name##_storage{ }; \
   using name##_strong_type = name##_storage_type::strong_incrementer<name##_storage>; \
   using name##_weak_type = name##_storage_type::weak_incrementer<name##_storage>; \
   DANGO_GLOBAL_DEFINE_STATIC_INC(name) \
