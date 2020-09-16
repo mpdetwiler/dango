@@ -1003,12 +1003,6 @@ value()noexcept->handle_ptr&
   return t_current;
 }
 
-#define DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(...) \
-  extern template struct DANGO_EXPORT_LEGACY dango::detail::current_alloc<__VA_ARGS__>;
-
-#define DANGO_DEFINE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(...) \
-  template struct dango::detail::current_alloc<__VA_ARGS__>;
-
 DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<false>)
 DANGO_DECLARE_CURRENT_ALLOC_EXPLICIT_INSTANTIATION(dango::polymorphic_allocator<true>)
 

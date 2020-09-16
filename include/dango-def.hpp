@@ -3,12 +3,6 @@
 
 #include "dango-macro.hpp"
 
-#define dango_restrict __restrict__
-
-#ifndef DANGO_NO_KEYWORDS
-#define restrict dango_restrict
-#endif
-
 namespace
 dango::integer
 {
@@ -77,10 +71,6 @@ using dango::real;
 
 #endif
 
-#ifndef DANGO_CACHE_LINE_SIZE
-#define DANGO_CACHE_LINE_SIZE 64
-#endif
-
 namespace
 dango::detail
 {
@@ -106,7 +96,5 @@ dango
 
   void constexpr_unreachable()noexcept;
 }
-
-#define DANGO_CACHE_LINE_START alignas(dango::cache_align_type)
 
 #endif // DANGO_DEF_HPP_INCLUDED

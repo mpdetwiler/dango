@@ -5,20 +5,6 @@
 #include "dango-atomic.hpp"
 #include "dango-util.hpp"
 
-/*** dango_crit ***/
-
-#define dango_crit(lockable) \
-dango_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_guard_))
-
-#define dango_crit_full(lockable, local_name) \
-if constexpr(auto const local_name = (lockable).lock(); true)
-
-#define dango_try_crit(lockable) \
-dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_guard_))
-
-#define dango_try_crit_full(lockable, local_name) \
-if(auto const local_name = (lockable).try_lock(); local_name)
-
 /*** thread_yeld_soft thread_yield_hard ***/
 
 namespace

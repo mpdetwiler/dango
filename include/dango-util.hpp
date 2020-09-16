@@ -1,8 +1,8 @@
 #ifndef DANGO_UTIL_HPP_INCLUDED
 #define DANGO_UTIL_HPP_INCLUDED
 
-#include "dango-util-base.hpp"
 #include "dango-assert.hpp"
+#include "dango-util-base.hpp"
 
 /*** make_guard ***/
 

@@ -879,10 +879,6 @@ dango::operators
   }
 }
 
-#define DANGO_USING_EQUALITY_OPERATORS   \
-  using dango::operators::operator == ;  \
-  using dango::operators::operator != ;
-
 namespace
 dango
 {
@@ -1198,14 +1194,6 @@ dango::operators
     return dango::detail::compare_help(dango::detail::compare_help_prio{ }, a_lhs, a_rhs);
   }
 }
-
-#define DANGO_USING_COMPARISON_OPERATORS  \
-  DANGO_USING_EQUALITY_OPERATORS          \
-  using dango::operators::operator <   ;  \
-  using dango::operators::operator <=  ;  \
-  using dango::operators::operator >   ;  \
-  using dango::operators::operator >=  ;  \
-  using dango::operators::operator <=> ;
 
 namespace
 dango
@@ -1947,10 +1935,6 @@ dango::operators
     return dango::iter_end(dango::forward<tp_type>(a_arg));
   }
 }
-
-#define DANGO_USING_RANGE_BASED_FOR_OPERATORS \
-  using dango::operators::begin;              \
-  using dango::operators::end;
 
 namespace
 dango

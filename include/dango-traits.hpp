@@ -802,6 +802,42 @@ final
   DANGO_UNCONSTRUCTIBLE(conditional_help)
 };
 
+/*** parenth_type ***/
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  struct parenth_type_help;
+
+  template
+  <typename tp_ret, typename tp_type, bool tp_noexcept>
+  struct parenth_type_help<tp_ret(tp_type)noexcept(tp_noexcept)>;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  using parenth_type =
+    typename dango::detail::parenth_type_help<tp_type>::type;
+}
+
+template
+<typename tp_ret, typename tp_type, bool tp_noexcept>
+struct
+dango::
+detail::
+parenth_type_help<tp_ret(tp_type)noexcept(tp_noexcept)>
+final
+{
+  using type = tp_type;
+
+  DANGO_UNCONSTRUCTIBLE(parenth_type_help)
+};
+
 /*** is_same ***/
 
 namespace
@@ -2720,15 +2756,9 @@ dango
   }
 }
 
-// workaround for GCC bug 81043
+/*** workaround for GCC bug 81043 ***/
 
 #ifdef DANGO_USING_GCC
-#define DANGO_GCC_BUG_81043_WORKAROUND \
-  , dango::is_same<void> = void
-#define DANGO_GCC_BUG_81043_WORKAROUND_ND \
-  , dango::is_same<void>
-#define DANGO_GCC_BUG_81043_WORKAROUND_ID(idno, ...) \
-  , dango::detail::spec_id<dango::uint(idno), __VA_ARGS__>
 namespace
 dango::detail
 {
@@ -2736,10 +2766,6 @@ dango::detail
   <dango::uint, typename, typename...>
   using spec_id = void;
 }
-#else
-#define DANGO_GCC_BUG_81043_WORKAROUND
-#define DANGO_GCC_BUG_81043_WORKAROUND_ND
-#define DANGO_GCC_BUG_81043_WORKAROUND_ID(idno, ...)
 #endif
 
 #endif // DANGO_TRAITS_HPP_INCLUDED

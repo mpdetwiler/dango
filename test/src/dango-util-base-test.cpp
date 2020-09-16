@@ -1,4 +1,5 @@
 #include "dango-util-base.hpp"
+#include "dango-assert.hpp"
 #include "dango-test-print.hpp"
 
 static_assert(dango::is_convertible_arg<dango::compare_val_strong, std::strong_ordering>);

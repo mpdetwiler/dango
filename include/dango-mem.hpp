@@ -15,14 +15,6 @@ dango
 #endif
 }
 
-#define dango_new_noexcept noexcept(dango::c_operator_new_noexcept)
-
-#define dango_new_noexcept_and(cond, ...) \
-  noexcept(dango::c_operator_new_noexcept && bool(cond __VA_OPT__(, __VA_ARGS__)))
-
-#define dango_new_noexcept_or(cond, ...) \
-  noexcept(dango::c_operator_new_noexcept || bool(cond __VA_OPT__(, __VA_ARGS__)))
-
 /*** is_aligned ***/
 
 namespace
@@ -90,16 +82,6 @@ dango
   DANGO_EXPORT void operator_delete(void const volatile*, dango::usize, dango::usize)noexcept;
 }
 
-#define DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(name) \
-  static auto operator new(std::size_t const a_size)dango_new_noexcept->void* \
-  { dango_assert(a_size == sizeof(name)); return dango::operator_new(sizeof(name), alignof(name)); } \
-  static void operator delete(void* const a_ptr)noexcept \
-  { dango::operator_delete(a_ptr, sizeof(name), alignof(name)); }
-
-#define DANGO_DELETE_CLASS_OPERATOR_NEW_DELETE \
-  static auto operator new(std::size_t)noexcept->void* = delete; \
-  static void operator delete(void*)noexcept = delete;
-
 /*** placement new ***/
 
 namespace
@@ -114,12 +96,6 @@ dango
 
   inline constexpr dango::placement_tag const placement{ };
 }
-
-#define dango_placement_new(addr, type, ...) \
-  ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type)) type __VA_OPT__(__VA_ARGS__)
-
-#define dango_placement_new_array(addr, type, count) \
-  ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type)) type[dango::usize(count)]
 
 [[nodiscard]] constexpr auto
 operator new
