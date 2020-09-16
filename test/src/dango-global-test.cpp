@@ -38,6 +38,7 @@ DANGO_UNIT_TEST_BEGIN(global_access_test)
 }
 DANGO_UNIT_TEST_END
 
+#ifndef DANGO_PLATFORM_WINDOWS
 #ifndef DANGO_NO_DEBUG
 DANGO_UNIT_TEST_BEGIN(inline_global_address_test)
 {
@@ -50,6 +51,7 @@ DANGO_UNIT_TEST_BEGIN(inline_global_address_test)
   dango_assert_terminate(a_extern == a_inline);
 }
 DANGO_UNIT_TEST_END
+#endif
 #endif
 
 }

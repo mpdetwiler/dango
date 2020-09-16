@@ -232,6 +232,7 @@ decrement
   dango::destructor_as<dango::remove_cv<tp_type>>(a_ptr);
 }
 
+#ifndef DANGO_PLATFORM_WINDOWS
 #ifndef DANGO_NO_DEBUG
 namespace
 dango::detail::test
@@ -244,10 +245,11 @@ dango::detail::test
   inline auto
   inline_global_address_inline()noexcept->void const*
   {
-    return dango::addressof(*dango::detail::test::inline_global_address_test());
+    return dango::addressof(dango::detail::test::inline_global_address_test_namespace::inline_global_address_test_storage);
   }
 #endif
 }
+#endif
 #endif
 
 #endif // DANGO_GLOBAL_HPP_INCLUDED

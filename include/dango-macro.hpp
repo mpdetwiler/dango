@@ -477,6 +477,8 @@ namespace name##_namespace \
 
 /*** inline globals ***/
 
+#if !(defined(DANGO_BUILDING_LIB) && defined(DANGO_PLATFORM_WINDOWS))
+
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...) \
 namespace name##_namespace \
 { \
@@ -495,6 +497,13 @@ namespace name##_namespace \
 DANGO_GLOBAL_DEFINE_ACCESS(name) \
 DANGO_GLOBAL_DEFINE_INLINE_INC(name) \
 DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
+
+#else
+
+#define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...) \
+  static_assert(false, u8"inline globals not supported in library mode on Windows, use an extern global");
+
+#endif
 
 /*** access ***/
 
