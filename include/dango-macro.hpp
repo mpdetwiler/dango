@@ -454,7 +454,7 @@ namespace dango_def_global_##name##_namespace{ \
   using dango_def_global_##name##_value_type = type_name; \
   static_assert(dango::is_object_exclude_array<dango_def_global_##name##_value_type>); \
   using dango_def_global_##name##_return_type = dango::remove_cv<dango_def_global_##name##_value_type>; \
-  DANGO_EXPORT auto dango_def_global_##name##_construct()noexcept->dango_def_global_##name##_return_type; \
+  DANGO_EXPORT_ONLY auto dango_def_global_##name##_construct()noexcept->dango_def_global_##name##_return_type; \
   using dango_def_global_##name##_storage_type = dango::detail::global_storage<dango_def_global_##name##_value_type, dango_def_global_##name##_construct>; \
   DANGO_EXPORT_ONLY extern dango_def_global_##name##_storage_type dango_def_global_##name##_storage; \
   using dango_def_global_##name##_strong_type = dango_def_global_##name##_storage_type::strong_incrementer<dango_def_global_##name##_storage>; \
@@ -514,7 +514,7 @@ namespace dango_def_thread_local_##name##_namespace{ \
   using dango_def_thread_local_##name##_value_type = type_name; \
   static_assert(dango::is_object<dango_def_thread_local_##name##_value_type>); \
   using dango_def_thread_local_##name##_ptr_type = dango_def_thread_local_##name##_value_type*; \
-  DANGO_EXPORT auto dango_def_thread_local_##name##_try_access()noexcept->dango_def_thread_local_##name##_ptr_type; } \
+  DANGO_EXPORT_ONLY auto dango_def_thread_local_##name##_try_access()noexcept->dango_def_thread_local_##name##_ptr_type; } \
 inline constexpr auto const name##_try_access = \
 []()noexcept->auto{ \
   return dango_def_thread_local_##name##_namespace::dango_def_thread_local_##name##_try_access(); }; \
