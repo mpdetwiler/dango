@@ -405,7 +405,7 @@ pop_internal
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::cond_var_registry_thread const, s_cond_var_registry_thread, { })
+  DANGO_DEFINE_GLOBAL_EXTERN(s_cond_var_registry_thread, { })
 }
 
 auto
@@ -1135,7 +1135,7 @@ timed_wait
 namespace
 dango::detail
 {
-  DANGO_DEFINE_GLOBAL_EXTERN(dango::detail::windows_timer_res_daemon const, s_windows_timer_res_daemon, { })
+  DANGO_DEFINE_GLOBAL_EXTERN(s_windows_timer_res_daemon, { })
 }
 
 auto

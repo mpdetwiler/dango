@@ -234,10 +234,6 @@ decrement
   dango::destructor_as<dango::remove_cv<tp_type>>(a_ptr);
 }
 
-/*** thread locals ***/
-
-
-
 /*** inline global test ***/
 
 #ifndef DANGO_NO_DEBUG

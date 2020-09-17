@@ -55,3 +55,62 @@ DANGO_UNIT_TEST_END
 #endif
 
 }
+
+namespace
+{
+  struct incomplete;
+}
+
+namespace ns
+{
+  DANGO_DECLARE_NAMESPACE_SCOPE_THREAD_LOCAL_EXTERN(incomplete, t_incomplete)
+
+  DANGO_DEFINE_NAMESPACE_SCOPE_THREAD_LOCAL_INLINE(float, t_float, { 1.0f })
+
+  struct
+  tls_class_test
+  {
+    DANGO_DEFINE_CLASS_SCOPE_THREAD_LOCAL_INLINE(double, t_double, { 4.0 })
+  };
+}
+
+namespace
+{
+
+struct incomplete
+{
+  DANGO_TAG_TYPE(incomplete)
+};
+
+DANGO_UNIT_TEST_BEGIN(thread_local_test)
+{
+  DANGO_DEFINE_FUNC_SCOPE_THREAD_LOCAL(dango::ulong, t_integer, { 10 })
+
+  dango_assert_nonnull_terminate(t_integer_try_access());
+
+  test_print("%u\n", dango::integer::u_int(t_integer()));
+
+  t_integer() = 5;
+
+  dango_assert_nonnull_terminate(ns::t_incomplete_try_access());
+
+  incomplete a_incomplete{ };
+
+  ns::t_incomplete() = a_incomplete;
+
+  dango_assert_nonnull_terminate(ns::t_float_try_access());
+
+  ns::t_float() = 2.0f;
+
+  dango_assert_nonnull_terminate(ns::tls_class_test::t_double_try_access());
+
+  ns::tls_class_test::t_double() = 7.0;
+}
+DANGO_UNIT_TEST_END
+
+}
+
+namespace ns
+{
+  DANGO_DEFINE_NAMESPACE_SCOPE_THREAD_LOCAL_EXTERN(t_incomplete, { })
+}

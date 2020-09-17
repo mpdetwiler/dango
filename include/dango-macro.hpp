@@ -123,8 +123,8 @@ static_assert(false, u8"dango requires GCC or clang to compile");
 
 /*** append line number to an identifier ***/
 
-#define DANGO_TOKEN_CONCAT_HELP(x, y) x##y
-#define DANGO_TOKEN_CONCAT(x, y) DANGO_TOKEN_CONCAT_HELP(x, y)
+#define DANGO_DETAIL_TOKEN_CONCAT_HELP(x, y) x##y
+#define DANGO_TOKEN_CONCAT(x, y) DANGO_DETAIL_TOKEN_CONCAT_HELP(x, y)
 #define DANGO_APPEND_LINE(x) DANGO_TOKEN_CONCAT(x, __LINE__)
 
 /*** default CACHE_LINE_SIZE ***/
@@ -413,7 +413,7 @@ dango_try_crit_full(lockable, DANGO_APPEND_LINE(dango_crit_guard_))
 #define dango_try_crit_full(lockable, local_name) \
 if(auto const local_name = (lockable).try_lock(); local_name)
 
-/*** DANGO_<DECLARE/DEFINE>_GLOBAL (include dango-global.hpp before use) ***/
+/*** DANGO_<DECLARE/DEFINE>_GLOBAL<EXTERN/INLINE> (include dango-global.hpp before use) ***/
 
 /*
 
@@ -423,14 +423,14 @@ usage: // TODO
 
 #ifndef DANGO_BUILDING_LIB
 
-#define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static name##_strong_type const name##_strong{ };
-#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace name##_namespace{ inline bool const name##_bool{ (void(name()), false) }; }
+#define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static dango_def_global_##name##_strong_type const dango_def_global_##name##_strong{ };
+#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace dango_def_global_##name##_namespace{ inline bool const dango_def_global_##name##_bool{ (void(name()), false) }; }
 
 #define DANGO_GLOBAL_DEFINE_ACCESS(name) \
-[[nodiscard]] inline auto \
-name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
-{ static name##_namespace::name##_strong_type const name##_strong_func{ }; \
-  return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; }
+inline constexpr auto const name = \
+[](DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type \
+{ static dango_def_global_##name##_namespace::dango_def_global_##name##_strong_type const dango_def_global_##name##_strong_func_scope{ }; \
+  return dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; };
 
 #define DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
 
@@ -441,69 +441,64 @@ name(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_ty
 #define DANGO_GLOBAL_DEFINE_ACCESS(name)
 
 #define DANGO_GLOBAL_DEFINE_ACCESS_LIB(name) \
-[[nodiscard]] inline auto \
-name##_lib(DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->name##_namespace::name##_weak_type \
-{ return name##_namespace::name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; }
+inline constexpr auto const name##_lib = \
+[](DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type \
+{ return dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; };
 
 #endif // DANGO_BUILDING_LIB
 
 /*** extern globals ***/
 
 #define DANGO_DECLARE_GLOBAL_EXTERN(type_name, name) \
-namespace name##_namespace \
-{ \
-  using name##_value_type = type_name; \
-  using name##_return_type = dango::remove_cv<name##_value_type>; \
-  DANGO_EXPORT auto name##_construct()noexcept->name##_return_type; \
-  using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
-  DANGO_EXPORT_ONLY extern name##_storage_type name##_storage; \
-  using name##_strong_type = name##_storage_type::strong_incrementer<name##_storage>; \
-  using name##_weak_type = name##_storage_type::weak_incrementer<name##_storage>; \
-  DANGO_GLOBAL_DEFINE_STATIC_INC(name) \
-} \
+namespace dango_def_global_##name##_namespace{ \
+  using dango_def_global_##name##_value_type = type_name; \
+  static_assert(dango::is_object_exclude_array<dango_def_global_##name##_value_type>); \
+  using dango_def_global_##name##_return_type = dango::remove_cv<dango_def_global_##name##_value_type>; \
+  DANGO_EXPORT auto dango_def_global_##name##_construct()noexcept->dango_def_global_##name##_return_type; \
+  using dango_def_global_##name##_storage_type = dango::detail::global_storage<dango_def_global_##name##_value_type, dango_def_global_##name##_construct>; \
+  DANGO_EXPORT_ONLY extern dango_def_global_##name##_storage_type dango_def_global_##name##_storage; \
+  using dango_def_global_##name##_strong_type = dango_def_global_##name##_storage_type::strong_incrementer<dango_def_global_##name##_storage>; \
+  using dango_def_global_##name##_weak_type = dango_def_global_##name##_storage_type::weak_incrementer<dango_def_global_##name##_storage>; \
+  DANGO_GLOBAL_DEFINE_STATIC_INC(name) } \
 DANGO_GLOBAL_DEFINE_ACCESS(name) \
 DANGO_GLOBAL_DEFINE_INLINE_INC(name) \
 DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
 
-#define DANGO_DEFINE_GLOBAL_EXTERN(type_name, name, ...) \
-namespace name##_namespace \
-{ \
-  static_assert(dango::detail::global_storage_constraint_spec<name##_value_type>); \
-  auto name##_construct()noexcept->name##_return_type \
-  { try{ return name##_return_type __VA_ARGS__ ; }catch(...) \
+#define DANGO_DEFINE_GLOBAL_EXTERN(name, ...) \
+namespace dango_def_global_##name##_namespace{ \
+  static_assert(dango::detail::global_storage_constraint_spec<dango_def_global_##name##_value_type>); \
+  auto dango_def_global_##name##_construct()noexcept->dango_def_global_##name##_return_type \
+  { try{ return dango_def_global_##name##_return_type __VA_ARGS__ ; }catch(...) \
     { dango_unreachable_terminate_msg(u8"constructor of extern global \"name\" threw exception"); } } \
-  constinit name##_storage_type name##_storage{ }; \
-}
+  constinit dango_def_global_##name##_storage_type dango_def_global_##name##_storage{ }; }
 
 /*** inline globals ***/
 
 #if !(defined(DANGO_BUILDING_LIB) && defined(DANGO_PLATFORM_WINDOWS))
 
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...) \
-namespace name##_namespace \
-{ \
-  using name##_value_type = type_name; \
-  static_assert(dango::detail::global_storage_constraint_spec<name##_value_type>); \
-  using name##_return_type = dango::remove_cv<name##_value_type>; \
-  inline auto name##_construct()noexcept->name##_return_type \
-  { try{ return name##_return_type __VA_ARGS__ ; }catch(...) \
+namespace dango_def_global_##name##_namespace{ \
+  using dango_def_global_##name##_value_type = type_name; \
+  static_assert(dango::detail::global_storage_constraint_spec<dango_def_global_##name##_value_type>); \
+  using dango_def_global_##name##_return_type = dango::remove_cv<dango_def_global_##name##_value_type>; \
+  inline auto dango_def_global_##name##_construct()noexcept->dango_def_global_##name##_return_type \
+  { try{ return dango_def_global_##name##_return_type __VA_ARGS__ ; }catch(...) \
     { dango_unreachable_terminate_msg(u8"constructor of inline global \"name\" threw exception"); } } \
-  using name##_storage_type = dango::detail::global_storage<name##_value_type, name##_construct>; \
-  DANGO_EXPORT_ONLY inline constinit name##_storage_type name##_storage{ }; \
-  using name##_strong_type = name##_storage_type::strong_incrementer<name##_storage>; \
-  using name##_weak_type = name##_storage_type::weak_incrementer<name##_storage>; \
-  DANGO_GLOBAL_DEFINE_STATIC_INC(name) \
-} \
+  using dango_def_global_##name##_storage_type = dango::detail::global_storage<dango_def_global_##name##_value_type, dango_def_global_##name##_construct>; \
+  DANGO_EXPORT_ONLY inline constinit dango_def_global_##name##_storage_type dango_def_global_##name##_storage{ }; \
+  using dango_def_global_##name##_strong_type = dango_def_global_##name##_storage_type::strong_incrementer<dango_def_global_##name##_storage>; \
+  using dango_def_global_##name##_weak_type = dango_def_global_##name##_storage_type::weak_incrementer<dango_def_global_##name##_storage>; \
+  DANGO_GLOBAL_DEFINE_STATIC_INC(name) } \
 DANGO_GLOBAL_DEFINE_ACCESS(name) \
 DANGO_GLOBAL_DEFINE_INLINE_INC(name) \
 DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
 
-#else
+#else // (defined(DANGO_BUILDING_LIB) && defined(DANGO_PLATFORM_WINDOWS)) == true
 
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...) \
-template<dango::is_same<void> tp_void = void> constexpr void \
-name##_lib()noexcept \
-{ static_assert(!dango::is_void<tp_void>, u8"access to inline globals not supported in library mode on Windows, use an extern global"); }
+inline constexpr auto const name##_lib = \
+[]<dango::is_same<void> tp_void = void>()constexpr noexcept->void \
+{ static_assert(!dango::is_void<tp_void>, u8"access to inline globals is not supported in library mode on Windows, use an extern global"); };
 
 #endif
 
@@ -511,6 +506,65 @@ name##_lib()noexcept \
 
 #define dango_access_global(global_name, local_name) \
 if constexpr(auto const local_name = global_name(); true)
+
+/*** DANGO_<DECLARE/DEFINE>_*_SCOPE_THREAD_LOCAL_<EXTERN_INLINE> (include dango-util.hpp before use) ***/
+
+#define DANGO_DECLARE_NAMESPACE_SCOPE_THREAD_LOCAL_EXTERN(type_name, name) \
+namespace dango_def_thread_local_##name##_namespace{ \
+  using dango_def_thread_local_##name##_value_type = type_name; \
+  static_assert(dango::is_object<dango_def_thread_local_##name##_value_type>); \
+  using dango_def_thread_local_##name##_ptr_type = dango_def_thread_local_##name##_value_type*; \
+  DANGO_EXPORT auto dango_def_thread_local_##name##_try_access()noexcept->dango_def_thread_local_##name##_ptr_type; } \
+inline constexpr auto const name##_try_access = \
+[]()noexcept->auto{ \
+  return dango_def_thread_local_##name##_namespace::dango_def_thread_local_##name##_try_access(); }; \
+inline constexpr auto const name = \
+[]()noexcept->auto&{ auto const dango_def_thread_local_##name##_ptr = name##_try_access(); \
+  dango_assert_nonnull_terminate_msg(dango_def_thread_local_##name##_ptr, u8"attempt to access already-destroyed thread_local \"name\""); \
+  return *dango_def_thread_local_##name##_ptr; };
+
+#define DANGO_DEFINE_NAMESPACE_SCOPE_THREAD_LOCAL_EXTERN(name, ...) \
+namespace dango_def_thread_local_##name##_namespace{ \
+  static_assert(dango::is_noexcept_destructible<dango_def_thread_local_##name##_value_type>); \
+  auto dango_def_thread_local_##name##_try_access \
+  ()noexcept->dango_def_thread_local_##name##_ptr_type{ \
+    static thread_local dango_def_thread_local_##name##_value_type dango_def_thread_local_##name##_object __VA_ARGS__ ; \
+    static thread_local constinit bool dango_def_thread_local_##name##_alive = true; \
+    static thread_local auto const dango_def_thread_local_##name##_finally = \
+    dango::make_finally([]()noexcept->void{ dango_def_thread_local_##name##_alive = false; }); \
+    if(dango_def_thread_local_##name##_alive){ return dango::addressof(dango_def_thread_local_##name##_object); } return dango::null; } }
+
+#define DANGO_DEFINE_FUNC_SCOPE_THREAD_LOCAL(type_name, name, ...) \
+  DANGO_DETAIL_DEFINE_THREAD_LOCAL_HELP(static, type_name, name, __VA_ARGS__)
+
+#ifndef DANGO_BUILDING_LIB
+
+#define DANGO_DEFINE_NAMESPACE_SCOPE_THREAD_LOCAL_INLINE(type_name, name, ...) \
+  DANGO_DETAIL_DEFINE_THREAD_LOCAL_HELP(inline, type_name, name, __VA_ARGS__)
+
+#define DANGO_DEFINE_CLASS_SCOPE_THREAD_LOCAL_INLINE(type_name, name, ...) \
+  DANGO_DETAIL_DEFINE_THREAD_LOCAL_HELP(static inline, type_name, name, __VA_ARGS__)
+
+#else // DANGO_BUILDING_LIB
+#define DANGO_DEFINE_NAMESPACE_SCOPE_THREAD_LOCAL_INLINE(type_name, name, ...)
+#define DANGO_DEFINE_CLASS_SCOPE_THREAD_LOCAL_INLINE(type_name, name, ...)
+#endif // DANGO_BUILDING_LIB
+
+#define DANGO_DETAIL_DEFINE_THREAD_LOCAL_HELP(spec, type_name, name, ...) \
+spec constexpr auto const name##_try_access = \
+[]()noexcept->dango::add_ptr<type_name>{ \
+  using dango_def_thread_local_##name##_value_type = type_name; \
+  static_assert(dango::is_object<dango_def_thread_local_##name##_value_type>); \
+  static_assert(dango::is_noexcept_destructible<dango_def_thread_local_##name##_value_type>); \
+  static thread_local dango_def_thread_local_##name##_value_type dango_def_thread_local_##name##_object __VA_ARGS__ ; \
+  static thread_local constinit bool dango_def_thread_local_##name##_alive = true; \
+  static thread_local auto const dango_def_thread_local_##name##_finally = \
+  dango::make_finally([]()noexcept->void{ dango_def_thread_local_##name##_alive = false; }); \
+  if(dango_def_thread_local_##name##_alive){ return dango::addressof(dango_def_thread_local_##name##_object); } return dango::null; }; \
+spec constexpr auto const name = \
+[]()noexcept->auto&{ auto const dango_def_thread_local_##name##_ptr = name##_try_access(); \
+  dango_assert_nonnull_terminate_msg(dango_def_thread_local_##name##_ptr, u8"attempt to access already-destroyed thread_local \"name\""); \
+  return *dango_def_thread_local_##name##_ptr; };
 
 /*** DANGO_<DECLARE/DEFINE>_CURRENT_ALLOC_EXPLICIT_INSTANTIATION (include dango-allocator.hpp before use) ***/
 
