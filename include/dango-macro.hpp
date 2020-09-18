@@ -423,24 +423,16 @@ usage: // TODO
 
 #ifndef DANGO_BUILDING_LIB
 
-#define DANGO_GLOBAL_DEFINE_STATIC_INC(name) static dango_def_global_##name##_strong_type const dango_def_global_##name##_strong{ };
-#define DANGO_GLOBAL_DEFINE_INLINE_INC(name) namespace dango_def_global_##name##_namespace{ inline bool const dango_def_global_##name##_bool{ (void(name()), false) }; }
-
-#define DANGO_GLOBAL_DEFINE_ACCESS(name) \
+#define DANGO_DETAIL_DEFINE_GLOBAL_ACCESS(name) \
 inline constexpr auto const name = \
 [](DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type \
 { static dango_def_global_##name##_namespace::dango_def_global_##name##_strong_type const dango_def_global_##name##_strong_func_scope{ }; \
-  return dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; };
-
-#define DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
+  return dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; }; \
+namespace dango_def_global_##name##_namespace{ inline bool const dango_def_global_##name##_bool{ (void(name()), false) }; }
 
 #else // DANGO_BUILDING_LIB
 
-#define DANGO_GLOBAL_DEFINE_STATIC_INC(name)
-#define DANGO_GLOBAL_DEFINE_INLINE_INC(name)
-#define DANGO_GLOBAL_DEFINE_ACCESS(name)
-
-#define DANGO_GLOBAL_DEFINE_ACCESS_LIB(name) \
+#define DANGO_DETAIL_DEFINE_GLOBAL_ACCESS(name) \
 inline constexpr auto const name##_lib = \
 [](DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type \
 { return dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; };
@@ -458,11 +450,8 @@ namespace dango_def_global_##name##_namespace{ \
   using dango_def_global_##name##_storage_type = dango::detail::global_storage<dango_def_global_##name##_value_type, dango_def_global_##name##_construct>; \
   DANGO_EXPORT_ONLY extern dango_def_global_##name##_storage_type dango_def_global_##name##_storage; \
   using dango_def_global_##name##_strong_type = dango_def_global_##name##_storage_type::strong_incrementer<dango_def_global_##name##_storage>; \
-  using dango_def_global_##name##_weak_type = dango_def_global_##name##_storage_type::weak_incrementer<dango_def_global_##name##_storage>; \
-  DANGO_GLOBAL_DEFINE_STATIC_INC(name) } \
-DANGO_GLOBAL_DEFINE_ACCESS(name) \
-DANGO_GLOBAL_DEFINE_INLINE_INC(name) \
-DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
+  using dango_def_global_##name##_weak_type = dango_def_global_##name##_storage_type::weak_incrementer<dango_def_global_##name##_storage>; } \
+DANGO_DETAIL_DEFINE_GLOBAL_ACCESS(name)
 
 #define DANGO_DEFINE_GLOBAL_EXTERN(name, ...) \
 namespace dango_def_global_##name##_namespace{ \
@@ -487,13 +476,10 @@ namespace dango_def_global_##name##_namespace{ \
   using dango_def_global_##name##_storage_type = dango::detail::global_storage<dango_def_global_##name##_value_type, dango_def_global_##name##_construct>; \
   DANGO_EXPORT_ONLY inline constinit dango_def_global_##name##_storage_type dango_def_global_##name##_storage{ }; \
   using dango_def_global_##name##_strong_type = dango_def_global_##name##_storage_type::strong_incrementer<dango_def_global_##name##_storage>; \
-  using dango_def_global_##name##_weak_type = dango_def_global_##name##_storage_type::weak_incrementer<dango_def_global_##name##_storage>; \
-  DANGO_GLOBAL_DEFINE_STATIC_INC(name) } \
-DANGO_GLOBAL_DEFINE_ACCESS(name) \
-DANGO_GLOBAL_DEFINE_INLINE_INC(name) \
-DANGO_GLOBAL_DEFINE_ACCESS_LIB(name)
+  using dango_def_global_##name##_weak_type = dango_def_global_##name##_storage_type::weak_incrementer<dango_def_global_##name##_storage>; } \
+DANGO_DETAIL_DEFINE_GLOBAL_ACCESS(name)
 
-#else // (defined(DANGO_BUILDING_LIB) && defined(DANGO_PLATFORM_WINDOWS)) == true
+#else // (defined(DANGO_BUILDING_LIB) && defined(DANGO_PLATFORM_WINDOWS)) == 1
 
 #define DANGO_DEFINE_GLOBAL_INLINE(type_name, name, ...) \
 inline constexpr auto const name##_lib = \
