@@ -27,14 +27,24 @@ print
 }
 
 namespace
-global_test
+test
+{
+  DANGO_DEFINE_GLOBAL_EXTERN(s_global_printer_extern, { })
+}
+
+namespace
 {
 
 DANGO_UNIT_TEST_BEGIN(global_access_test)
 {
-  dango_access_global(test::s_global_printer, a_printer)
+  dango_access_global(test::s_global_printer_extern, a_printer)
   {
-    a_printer.print("global_access_test");
+    a_printer.print("extern global_access_test");
+  }
+
+  dango_access_global(test::s_global_printer_inline, a_printer)
+  {
+    a_printer.print("inline global_access_test");
   }
 }
 DANGO_UNIT_TEST_END
@@ -42,8 +52,8 @@ DANGO_UNIT_TEST_END
 #ifndef DANGO_NO_DEBUG
 DANGO_UNIT_TEST_BEGIN(inline_global_address_test)
 {
-  auto const a_extern = dango::detail::test::inline_global_address_extern();
   auto const a_inline = dango::detail::test::inline_global_address_inline();
+  auto const a_extern = dango::detail::test::inline_global_address_extern();
 
   test_print("inline_global_address_extern: %p\n", a_extern);
   test_print("inline_global_address_inline: %p\n", a_inline);
@@ -84,7 +94,6 @@ namespace
 }
 
 namespace
-global_test
 {
 
 DANGO_UNIT_TEST_BEGIN(thread_local_test)

@@ -444,7 +444,7 @@ inline constexpr auto const name##_lib = \
 #define DANGO_DECLARE_GLOBAL_EXTERN(type_name, name) \
 namespace dango_def_global_##name##_namespace{ \
   using dango_def_global_##name##_value_type = type_name; \
-  static_assert(dango::is_object_exclude_array<dango_def_global_##name##_value_type>); \
+  static_assert(dango::detail::global_storage_constraint_spec<dango_def_global_##name##_value_type>); \
   using dango_def_global_##name##_return_type = dango::remove_cv<dango_def_global_##name##_value_type>; \
   DANGO_EXPORT_ONLY auto dango_def_global_##name##_construct()noexcept->dango_def_global_##name##_return_type; \
   using dango_def_global_##name##_storage_type = dango::detail::global_storage<dango_def_global_##name##_value_type, dango_def_global_##name##_construct>; \

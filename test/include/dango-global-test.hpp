@@ -15,7 +15,9 @@ test
     void print(char const*)const noexcept;
   };
 
-  DANGO_DEFINE_GLOBAL_INLINE(global_printer const, s_global_printer, { })
+  DANGO_DECLARE_GLOBAL_EXTERN(global_printer const, s_global_printer_extern)
+
+  DANGO_DEFINE_GLOBAL_INLINE(global_printer const, s_global_printer_inline, { })
 }
 
 #endif
