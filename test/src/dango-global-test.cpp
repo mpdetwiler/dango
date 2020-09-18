@@ -27,13 +27,14 @@ print
 }
 
 namespace
+global_test
 {
 
 DANGO_UNIT_TEST_BEGIN(global_access_test)
 {
   dango_access_global(test::s_global_printer, a_printer)
   {
-    a_printer->print("global_access_test");
+    a_printer.print("global_access_test");
   }
 }
 DANGO_UNIT_TEST_END
@@ -76,11 +77,15 @@ namespace ns
 
 namespace
 {
+  struct incomplete
+  {
+    DANGO_TAG_TYPE(incomplete)
+  };
+}
 
-struct incomplete
+namespace
+global_test
 {
-  DANGO_TAG_TYPE(incomplete)
-};
 
 DANGO_UNIT_TEST_BEGIN(thread_local_test)
 {

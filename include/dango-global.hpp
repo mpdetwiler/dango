@@ -96,7 +96,8 @@ weak_incrementer
 final
 {
 public:
-  explicit weak_incrementer(DANGO_SRC_LOC_ARG(a_loc))noexcept
+  explicit
+  weak_incrementer(DANGO_SRC_LOC_ARG(a_loc))noexcept
   {
     if(tp_storage.try_increment())
     {
@@ -109,8 +110,10 @@ public:
   ~weak_incrementer()noexcept{ tp_storage.decrement(); }
 public:
   auto get()const noexcept->tp_type*{ return tp_storage.get(); }
-  auto operator -> ()const noexcept->tp_type*{ return tp_storage.get(); }
-  auto operator * ()const noexcept->tp_type&{ return *tp_storage.get(); }
+  auto begin()const noexcept->tp_type*{ return get(); }
+  auto end()const noexcept->void const volatile*{ return get() + dango::usize(1); }
+  auto operator -> ()const noexcept->tp_type*{ return get(); }
+  auto operator * ()const noexcept->tp_type&{ return *get(); }
 public:
   DANGO_UNMOVEABLE(weak_incrementer)
 };

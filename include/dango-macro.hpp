@@ -491,7 +491,7 @@ inline constexpr auto const name##_lib = \
 /*** access ***/
 
 #define dango_access_global(global_name, local_name) \
-if constexpr(auto const local_name = global_name(); true)
+for(auto& local_name : global_name())
 
 /*** DANGO_<DECLARE/DEFINE>_*_SCOPE_THREAD_LOCAL_<EXTERN_INLINE> (include dango-util.hpp before use) ***/
 
