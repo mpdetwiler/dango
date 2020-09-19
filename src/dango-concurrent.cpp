@@ -19,16 +19,15 @@ current_tick_and_suspend_bias
   DANGO_CACHE_LINE_START
   static auto const s_init = s_last;
 
-  auto a_guard = s_lock.lock();
+  auto a_current = tick_count_suspend_bias_help();
+  auto& [a_tick, a_bias] = a_current;
 
-    auto a_current = tick_count_suspend_bias_help();
-    auto& [a_tick, a_bias] = a_current;
-
+  dango_crit(s_lock)
+  {
     a_tick = dango::max(a_tick, s_last.first());
     a_bias = dango::max(a_bias, s_last.second());
     s_last = a_current;
-
-  a_guard.unlock();
+  }
 
   a_tick -= s_init.first();
   a_bias -= s_init.second();
