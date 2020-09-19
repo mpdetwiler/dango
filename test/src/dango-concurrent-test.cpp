@@ -11,18 +11,18 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test)
 
   auto const [a_tick1, a_bias1] = dango::tick_count_suspend_bias();
 
-  dango_assert_terminate(a_tick1 >= 0 && a_bias1 >= 0);
+  dango_assert_terminate(a_tick1 >= dango::ms_tick_count(0) && a_bias1 >= dango::ms_tick_count(0));
 
-  test_print("tick=%u bias=%u\n", u_int(a_tick1), u_int(a_bias1));
+  test_print("tick=%u bias=%u\n", u_int(dango::tick_count_ms(a_tick1)), u_int(dango::tick_count_ms(a_bias1)));
 
-  dango::thread::sleep_rel(100, HIGH_RES);
+  dango::thread::sleep_rel(dango::ms_tick_count(100), HIGH_RES);
 
   auto const [a_tick2, a_bias2] = dango::tick_count_suspend_bias();
 
-  dango_assert_terminate(a_tick2 >= a_tick1 + 100);
+  dango_assert_terminate(a_tick2 >= a_tick1 + dango::ms_tick_count(100));
   dango_assert_terminate(a_bias2 >= a_bias1);
 
-  test_print("tick=%u bias=%u\n", u_int(a_tick2), u_int(a_bias2));
+  test_print("tick=%u bias=%u\n", u_int(dango::tick_count_ms(a_tick2)), u_int(dango::tick_count_ms(a_bias2)));
 }
 DANGO_UNIT_TEST_END
 
@@ -33,9 +33,9 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test_mt)
 
   auto const [a_tick1, a_bias1] = dango::tick_count_suspend_bias();
 
-  dango_assert_terminate(a_tick1 >= 0 && a_bias1 >= 0);
+  dango_assert_terminate(dango::tick_count_ms(a_tick1) >= 0 && dango::tick_count_ms(a_bias1) >= 0);
 
-  test_print("tick=%u bias=%u\n", u_int(a_tick1), u_int(a_bias1));
+  test_print("tick=%u bias=%u\n", u_int(dango::tick_count_ms(a_tick1)), u_int(dango::tick_count_ms(a_bias1)));
 
   dango::thread a_threads[10];
 
@@ -53,16 +53,16 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test_mt)
         dango_assert_terminate(a_tick2 >= a_tick1);
         dango_assert_terminate(a_bias2 >= a_bias1);
 
-        test_print("id=%u tick=%u bias=%u\n", a_id, u_int(a_tick2), u_int(a_bias2));
+        test_print("id=%u tick=%u bias=%u\n", a_id, u_int(dango::tick_count_ms(a_tick2)), u_int(dango::tick_count_ms(a_bias2)));
 
-        dango::thread::sleep_rel(1'000, HIGH_RES);
+        dango::thread::sleep_rel(dango::ms_tick_count(1'000), HIGH_RES);
 
         auto const [a_tick3, a_bias3] = dango::tick_count_suspend_bias();
 
-        dango_assert_terminate(a_tick3 >= a_tick2 + 1'000);
+        dango_assert_terminate(a_tick3 >= a_tick2 + dango::ms_tick_count(1'000));
         dango_assert_terminate(a_bias3 >= a_bias2);
 
-        test_print("id=%u tick=%u bias=%u\n", a_id, u_int(a_tick3), u_int(a_bias3));
+        test_print("id=%u tick=%u bias=%u\n", a_id, u_int(dango::tick_count_ms(a_tick3)), u_int(dango::tick_count_ms(a_bias3)));
       }
     );
 
@@ -76,23 +76,13 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test_mt)
 
   auto const [a_tick2, a_bias2] = dango::tick_count_suspend_bias();
 
-  dango_assert_terminate(a_tick2 >= a_tick1 + 1'000);
+  dango_assert_terminate(a_tick2 >= a_tick1 + dango::ms_tick_count(1'000));
   dango_assert_terminate(a_bias2 >= a_bias1);
 
-  test_print("tick=%u bias=%u\n", uint(a_tick2), uint(a_bias2));
-
-  dango::tuple
-  a_tup
-  {
-    dango::forward_as_emplacer<dango::atomic<uint>>(dango::uint(2)),
-    dango::forward_as_emplacer<dango::atomic<ushort>>(dango::ushort(3)),
-    dango::forward_as_emplacer<dango::atomic<ubyte>>(dango::ubyte(4))
-  };
-
-  dango_assert_terminate(a_tup.first().load() == 2);
-  dango_assert_terminate(a_tup.second().load() == 3);
-  dango_assert_terminate(a_tup.third().load() == 4);
+  test_print("tick=%u bias=%u\n", u_int(dango::tick_count_ms(a_tick2)), u_int(dango::tick_count_ms(a_bias2)));
 }
 DANGO_UNIT_TEST_END
+
+
 
 }

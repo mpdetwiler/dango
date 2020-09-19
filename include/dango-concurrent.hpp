@@ -14,7 +14,88 @@
 namespace
 dango
 {
-  using tick_count_type = dango::slong;
+  enum class tick_count_type:dango::slong{ };
+
+  constexpr auto
+  operator +
+  (dango::tick_count_type const a_lhs, dango::tick_count_type a_rhs)noexcept->dango::tick_count_type
+  {
+    return dango::tick_count_type{ dango::integer::safe_add(dango::slong(a_lhs), dango::slong(a_rhs)) };
+  }
+
+  constexpr auto
+  operator -
+  (dango::tick_count_type const a_lhs, dango::tick_count_type a_rhs)noexcept->dango::tick_count_type
+  {
+    return dango::tick_count_type{ dango::integer::safe_sub(dango::slong(a_lhs), dango::slong(a_rhs)) };
+  }
+
+  constexpr auto
+  operator +=
+  (dango::tick_count_type& a_lhs, dango::tick_count_type const a_rhs)noexcept->dango::tick_count_type&
+  {
+    return (a_lhs = a_lhs + a_rhs);
+  }
+
+  constexpr auto
+  operator -=
+  (dango::tick_count_type& a_lhs, dango::tick_count_type const a_rhs)noexcept->dango::tick_count_type&
+  {
+    return (a_lhs = a_lhs - a_rhs);
+  }
+}
+
+namespace
+dango::custom
+{
+  template<>
+  struct
+  operator_compare
+  <dango::tick_count_type, dango::tick_count_type>
+  final
+  {
+    using arg_type = dango::tick_count_type;
+
+    static constexpr auto
+    compare
+    (arg_type const a_lhs, arg_type const a_rhs)noexcept->auto
+    {
+      return dango::compare(dango::slong(a_lhs), dango::slong(a_rhs));
+    }
+
+    DANGO_UNCONSTRUCTIBLE(operator_compare)
+  };
+}
+
+namespace
+dango
+{
+  constexpr auto
+  tick_count_ns
+  (dango::tick_count_type const a_count)noexcept->dango::slong{ return dango::slong(a_count) / dango::slong(1L); }
+  constexpr auto
+  tick_count_us
+  (dango::tick_count_type const a_count)noexcept->dango::slong{ return dango::slong(a_count) / dango::slong(1'000L); }
+  constexpr auto
+  tick_count_ms
+  (dango::tick_count_type const a_count)noexcept->dango::slong{ return dango::slong(a_count) / dango::slong(1'000'000L); }
+  constexpr auto
+  tick_count_sec
+  (dango::tick_count_type const a_count)noexcept->dango::slong{ return dango::slong(a_count) / dango::slong(1'000'000'000L); }
+
+  constexpr auto
+  ns_tick_count
+  (dango::slong const a_count)noexcept->auto{ return dango::tick_count_type{ a_count * dango::slong(1L) }; }
+  constexpr auto
+  us_tick_count
+  (dango::slong const a_count)noexcept->auto{ return dango::tick_count_type{ a_count * dango::slong(1'000L) }; }
+  constexpr auto
+  ms_tick_count
+  (dango::slong const a_count)noexcept->auto{ return dango::tick_count_type{ a_count * dango::slong(1'000'000L) }; }
+  constexpr auto
+  sec_tick_count
+  (dango::slong const a_count)noexcept->auto{ return dango::tick_count_type{ a_count * dango::slong(1'000'000'000L) }; }
+
   using tick_count_pair = dango::pair<dango::tick_count_type, dango::tick_count_type>;
 
   DANGO_EXPORT auto tick_count_suspend_bias()noexcept->dango::tick_count_pair;
@@ -37,9 +118,11 @@ dango::
 tick_count_suspend_aware
 ()noexcept->dango::tick_count_type
 {
-  auto const a_pair = dango::tick_count_suspend_bias();
+  auto a_pair = dango::tick_count_suspend_bias();
 
-  return a_pair.first() + a_pair.second();
+  a_pair.first() += a_pair.second();
+
+  return a_pair.first();
 }
 
 inline auto
@@ -111,7 +194,7 @@ public:
 protected:
   explicit constexpr timeout_base()noexcept;
 public:
-  virtual ~timeout_base()noexcept = default;
+  constexpr virtual ~timeout_base()noexcept = default;
 public:
   virtual auto is_high_res()const noexcept->bool = 0;
   virtual auto is_suspend_aware()const noexcept->bool = 0;
@@ -157,14 +240,7 @@ timeout_base::
 remaining
 ()const noexcept->value_type
 {
-  auto const a_now = this_tick_count();
-
-  if(a_now >= m_timeout)
-  {
-    return value_type(0);
-  }
-
-  return m_timeout - a_now;
+  return m_timeout - this_tick_count();
 }
 
 inline auto
@@ -194,9 +270,7 @@ timeout_base::
 set_rel
 (value_type const a_rel)noexcept
 {
-  auto const a_now = this_tick_count();
-
-  m_timeout = dango::integer::safe_add(a_now, a_rel);
+  m_timeout = (this_tick_count() + a_rel);
 }
 
 inline void
@@ -206,7 +280,7 @@ timeout_base::
 add
 (value_type const a_add)noexcept
 {
-  m_timeout = dango::integer::safe_add(m_timeout, a_add);
+  m_timeout += a_add;
 }
 
 /*** timeout_impl ***/
@@ -248,7 +322,7 @@ private:
   }
 public:
   explicit constexpr timeout_impl()noexcept:super_type{ }{ }
-  ~timeout_impl()noexcept override = default;
+  constexpr ~timeout_impl()noexcept override = default;
   auto is_high_res()const noexcept->bool override{ return c_high_res; }
   auto is_suspend_aware()const noexcept->bool override{ return c_suspend_aware; }
 private:
@@ -299,6 +373,7 @@ public:
   auto is_suspend_aware()const noexcept->bool{ return m_timeout->is_suspend_aware(); }
   auto has_expired()const noexcept->bool{ return m_timeout->has_expired(); }
   auto remaining()const noexcept->value_type{ return m_timeout->remaining(); }
+  auto remaining_ms()const noexcept->dango::ulong;
   auto get()const noexcept->value_type{ return m_timeout->get(); }
   void set(value_type const a_abs)noexcept{ m_timeout->set(a_abs); }
   void set_rel(value_type const a_rel)noexcept{ m_timeout->set_rel(a_rel); }
@@ -393,6 +468,38 @@ m_timeout{ construct_help(m_storage.get(), a_flags) }
   {
     m_timeout->set(a_value);
   }
+}
+
+inline auto
+dango::
+timeout::
+remaining_ms
+()const noexcept->dango::ulong
+{
+  using u64 = dango::ulong;
+
+  auto const a_rem = remaining();
+
+  if(a_rem <= dango::tick_count_type(0))
+  {
+    return u64(0);
+  }
+
+  auto const a_ns = u64(dango::tick_count_ns(a_rem));
+  auto const a_ms = a_ns / u64(1'000'000L);
+  auto const a_rm = a_ns % u64(1'000'000L);
+
+  if(is_high_res())
+  {
+    if(a_ms < u64(2))
+    {
+      return u64(0);
+    }
+
+    return a_ms - u64(1);
+  }
+
+  return a_ms + u64(a_rm != u64(0));
 }
 
 /*** mutex_base ***/

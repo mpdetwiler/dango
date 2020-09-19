@@ -19,25 +19,19 @@ tick_count_suspend_bias
   DANGO_CACHE_LINE_START
   static auto const s_init = s_last;
 
-  dango::tick_count_pair a_current{ };
+  auto a_guard = s_lock.lock();
 
-  auto& [a_tick, a_bias] = a_current;
+    auto a_current = tick_count_suspend_bias_help();
+    auto& [a_tick, a_bias] = a_current;
 
-  dango_crit(s_lock)
-  {
-    a_current = tick_count_suspend_bias_help();
     a_tick = dango::max(a_tick, s_last.first());
     a_bias = dango::max(a_bias, s_last.second());
     s_last = a_current;
-  }
 
-  auto const a_init = s_init;
+  a_guard.unlock();
 
-  dango_assert(a_tick >= a_init.first());
-  dango_assert(a_bias >= a_init.second());
-
-  a_tick -= a_init.first();
-  a_bias -= a_init.second();
+  a_tick -= s_init.first();
+  a_bias -= s_init.second();
 
   return a_current;
 }
@@ -540,8 +534,6 @@ namespace
   {
     using tc64 = dango::tick_count_type;
 
-    constexpr auto const c_div = tc64(10);
-
     tc64 a_mono;
     tc64 a_boot;
 
@@ -556,12 +548,12 @@ namespace
 
         a_temp = dango::detail::tick_count_boottime();
       }
-      while(a_boot != a_temp);
+      while(dango::tick_count_ms(a_boot) != dango::tick_count_ms(a_temp));
     }
 
-    auto const a_bias = dango::max(tc64(0), a_boot - a_mono);
+    auto const a_bias = dango::max(tc64{ 0 }, a_boot - a_mono);
 
-    return dango::tick_count_pair{ (a_mono / c_div) , (a_bias / c_div) };
+    return dango::tick_count_pair{ a_mono , a_bias };
   }
 }
 
@@ -673,9 +665,7 @@ wait
 {
   dango_assert_noassume(m_init.has_executed());
 
-  auto const a_rem = a_timeout.remaining();
-
-  if(a_rem == dango::tick_count_type(0))
+  if(a_timeout.remaining_ms() == dango::ulong(0))
   {
     return;
   }
@@ -684,7 +674,7 @@ wait
 
   a_registry.regist(this, a_timeout);
 
-  dango::detail::pthread_cond_wait(storage(), dango::detail::mutex_get_storage(mutex_ref()), a_rem);
+  dango::detail::pthread_cond_wait(storage(), dango::detail::mutex_get_storage(mutex_ref()), a_timeout.remaining_ms());
 
   a_registry.unregist(this, a_timeout);
 }
@@ -737,6 +727,8 @@ namespace
     a_bias /= tc64(10'000);
 
     return a_current;
+
+    return dango::detail::perf_count_suspend_bias();
   }
 }
 
@@ -848,9 +840,7 @@ wait
 {
   dango_assert_noassume(m_init.has_executed());
 
-  auto const a_rem = a_timeout.remaining();
-
-  if(a_rem == dango::tick_count_type(0))
+  if(a_timeout.remaining_ms() == dango::ulong(0))
   {
     return;
   }
@@ -863,7 +853,7 @@ wait
 
   a_manager.activate(a_timeout);
 
-  dango::detail::condition_variable_wait(storage(), dango::detail::mutex_get_storage(mutex_ref()), a_rem);
+  dango::detail::condition_variable_wait(storage(), dango::detail::mutex_get_storage(mutex_ref()), a_timeout.remaining_ms());
 
   a_manager.deactivate(a_timeout);
 

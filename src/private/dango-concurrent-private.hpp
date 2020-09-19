@@ -30,7 +30,7 @@ dango::detail
   void pthread_cond_signal(dango::detail::cond_var_storage&)noexcept;
   void pthread_cond_broadcast(dango::detail::cond_var_storage&)noexcept;
   void pthread_cond_wait(dango::detail::cond_var_storage&, dango::detail::mutex_storage&)noexcept;
-  void pthread_cond_wait(dango::detail::cond_var_storage&, dango::detail::mutex_storage&, dango::tick_count_type)noexcept;
+  void pthread_cond_wait(dango::detail::cond_var_storage&, dango::detail::mutex_storage&, dango::ulong)noexcept;
 }
 
 #endif // DANGO_PLATFORM_LINUX_OR_APPLE
@@ -40,7 +40,6 @@ dango::detail
 namespace
 dango::detail
 {
-  auto perf_freq()noexcept->dango::tick_count_type;
   auto perf_count_suspend_bias()noexcept->dango::tick_count_pair;
 
   void srw_lock_init(dango::detail::mutex_storage&)noexcept;
@@ -54,7 +53,7 @@ dango::detail
   void condition_variable_wake(dango::detail::cond_var_storage&)noexcept;
   void condition_variable_wake_all(dango::detail::cond_var_storage&)noexcept;
   void condition_variable_wait(dango::detail::cond_var_storage&, dango::detail::mutex_storage&)noexcept;
-  void condition_variable_wait(dango::detail::cond_var_storage&, dango::detail::mutex_storage&, dango::tick_count_type)noexcept;
+  void condition_variable_wait(dango::detail::cond_var_storage&, dango::detail::mutex_storage&, dango::ulong)noexcept;
 
   void time_begin_period()noexcept;
   void time_end_period()noexcept;
