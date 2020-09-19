@@ -7,10 +7,6 @@
 #include <pthread.h>
 #include <sys/time.h>
 
-#ifdef DANGO_PLATFORM_APPLE
-#include <mach/mach_time.h>
-#endif
-
 static_assert(sizeof(dango::detail::mutex_storage) >= sizeof(::pthread_mutex_t));
 static_assert(alignof(dango::detail::mutex_storage) >= alignof(::pthread_mutex_t));
 static_assert(sizeof(dango::detail::cond_var_storage) >= sizeof(::pthread_cond_t));
@@ -391,7 +387,8 @@ namespace
   (bool const a_biased)noexcept->dango::tick_count_type
 #ifdef DANGO_PLATFORM_LINUX
   {
-    ::clockid_t const a_clock = a_biased ? CLOCK_BOOTTIME : CLOCK_MONOTONIC;
+    ::clockid_t const a_clock =
+      a_biased ? CLOCK_BOOTTIME : CLOCK_MONOTONIC;
 
     ::timespec a_spec;
 
@@ -409,35 +406,10 @@ namespace
   }
 #else
   {
-    static constexpr auto const c_get_info =
-      []()noexcept->auto
-      {
-        ::mach_timebase_info_data_t a_result;
+    ::clockid_t const a_clock =
+      a_biased ? CLOCK_MONOTONIC_RAW : CLOCK_UPTIME_RAW;
 
-        auto const a_ret = ::mach_timebase_info(&a_result);
-
-        dango_assert(a_ret == KERN_SUCCESS);
-
-        return dango::make_pair(a_result.numer, a_result.denom);
-      };
-
-    static auto const s_timebase_info = c_get_info();
-
-    using u64 = dango::ulong;
-
-    u64 a_result;
-
-    if(a_biased)
-    {
-      a_result = ::mach_continuous_time();
-    }
-    else
-    {
-      a_result = ::mach_absolute_time();
-    }
-
-    a_result *= u64(s_timebase_info.first());
-    a_result /= u64(s_timebase_info.second());
+    auto const a_result = ::clock_gettime_nsec_np(a_clock);
 
     return dango::tick_count_type{ dango::slong(a_result) };
   }

@@ -252,7 +252,7 @@ acquire
   auto const a_cond =
     [this, a_in]()noexcept->bool{ return m_out.load<acquire>() != a_in; };
 
-  dango::busy_wait_while(a_cond, dango::uint(16));
+  dango::busy_wait_while(a_cond, dango::uint(32));
 
   return this;
 }
