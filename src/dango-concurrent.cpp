@@ -717,7 +717,11 @@ namespace
   tick_count_suspend_bias_help
   ()noexcept->dango::tick_count_pair
   {
-    return dango::detail::perf_count_suspend_bias();
+    auto a_current = dango::detail::perf_count_suspend_bias();
+
+    a_current.first() -= a_current.second();
+
+    return a_current;
   }
 }
 
