@@ -525,6 +525,7 @@ namespace
   ()noexcept->dango::tick_count_pair
   {
     using dango::tick::to_milli;
+    using dango::tick::from_milli;
     using dango::tick::zero;
     using tc64 = dango::tick_count_type;
 
@@ -536,18 +537,18 @@ namespace
 
       do
       {
-        a_boot = dango::detail::tick_count_boottime();
+        a_temp = dango::detail::tick_count_boottime();
 
         a_mono = dango::detail::tick_count_monotonic();
 
-        a_temp = dango::detail::tick_count_boottime();
+        a_boot = dango::detail::tick_count_boottime();
       }
-      while(to_milli(a_boot) != to_milli(a_temp));
+      while(to_milli(a_boot - a_temp) != dango::slong(0));
     }
 
-    auto const a_bias = dango::max(zero, a_boot - a_mono);
+    auto const a_bias = to_milli(dango::max(zero, a_boot - a_mono));
 
-    return dango::tick_count_pair{ a_mono , a_bias };
+    return dango::tick_count_pair{ a_mono , from_milli(a_bias) };
   }
 }
 
