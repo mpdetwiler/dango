@@ -9,7 +9,7 @@ namespace
 
 auto
 dango::
-tick_count_suspend_bias
+current_tick_and_suspend_bias
 ()noexcept->dango::tick_count_pair
 {
   DANGO_CACHE_LINE_START
@@ -229,9 +229,9 @@ thread_func
       break;
     }
 
-    auto a_bias = dango::suspend_bias();
+    auto [a_tick, a_bias] = dango::current_tick_and_suspend_bias();
 
-    auto a_timeout = dango::timeout::make_rel(dango::tick_count_type(0));
+    auto a_timeout = dango::timeout::make(a_tick);
 
     while(poll_bias(a_bias, a_timeout));
   }
@@ -313,7 +313,7 @@ poll_bias
 
       if(a_timeout.has_expired())
       {
-        a_timeout.add(dango::tick_count_type(1'000));
+        a_timeout.add(dango::tick::from_sec(1));
 
         break;
       }
@@ -353,13 +353,13 @@ cond_var_registry::
 bias_okay
 (dango::tick_count_type& a_prev_bias)noexcept->bool
 {
-  auto const a_bias = dango::suspend_bias();
+  auto const a_bias = dango::current_suspend_bias();
 
-  auto const a_delta = a_bias - a_prev_bias;
+  auto const a_delta = dango::tick::to_milli(a_bias - a_prev_bias);
 
   a_prev_bias = a_bias;
 
-  return a_delta < dango::tick_count_type(4);
+  return a_delta <= dango::slong(1);
 }
 
 auto
@@ -532,6 +532,8 @@ namespace
   tick_count_suspend_bias_help
   ()noexcept->dango::tick_count_pair
   {
+    using dango::tick::to_milli;
+    using dango::tick::zero;
     using tc64 = dango::tick_count_type;
 
     tc64 a_mono;
@@ -548,10 +550,10 @@ namespace
 
         a_temp = dango::detail::tick_count_boottime();
       }
-      while(dango::tick_count_ms(a_boot) != dango::tick_count_ms(a_temp));
+      while(to_milli(a_boot) != to_milli(a_temp));
     }
 
-    auto const a_bias = dango::max(tc64{ 0 }, a_boot - a_mono);
+    auto const a_bias = dango::max(zero, a_boot - a_mono);
 
     return dango::tick_count_pair{ a_mono , a_bias };
   }
@@ -1020,7 +1022,7 @@ thread_func
     }
 
     auto const a_timeout =
-      dango::timeout::make_rel(dango::tick_count_type(60'000));
+      dango::timeout::make_rel(dango::tick::from_sec(60));
 
     if(timed_wait(a_timeout))
     {

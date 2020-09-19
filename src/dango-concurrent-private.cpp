@@ -556,11 +556,11 @@ perf_count_suspend_bias
 
     do
     {
-      a_bias = u64(s_bias_ref);
+      a_bias = s_bias_ref;
 
       a_tick = perf_count();
 
-      a_temp = u64(s_bias_ref);
+      a_temp = s_bias_ref;
     }
     while(a_bias != a_temp);
   }
@@ -574,7 +574,9 @@ perf_count_suspend_bias
   a_tick = a_sec * c_bil + (a_rem * c_bil) / a_freq;
   a_bias *= u64(100L);
 
-  return dango::tick_count_pair{ dango::ns_tick_count(a_tick), dango::ns_tick_count(a_bias) };
+  using dango::tick::from_nano;
+
+  return dango::tick_count_pair{ from_nano(a_tick), from_nano(a_bias) };
 }
 
 /*****************************/

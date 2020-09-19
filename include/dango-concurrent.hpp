@@ -68,57 +68,63 @@ dango::custom
 }
 
 namespace
-dango
+dango::tick
 {
+  inline constexpr auto const zero = dango::tick_count_type{ 0 };
+
   constexpr auto
-  tick_count_ns
+  to_nano
   (dango::tick_count_type const a_count)noexcept->dango::slong{ return dango::slong(a_count) / dango::slong(1L); }
   constexpr auto
-  tick_count_us
+  tp_micro
   (dango::tick_count_type const a_count)noexcept->dango::slong{ return dango::slong(a_count) / dango::slong(1'000L); }
   constexpr auto
-  tick_count_ms
+  to_milli
   (dango::tick_count_type const a_count)noexcept->dango::slong{ return dango::slong(a_count) / dango::slong(1'000'000L); }
   constexpr auto
-  tick_count_sec
+  to_sec
   (dango::tick_count_type const a_count)noexcept->dango::slong{ return dango::slong(a_count) / dango::slong(1'000'000'000L); }
 
   constexpr auto
-  ns_tick_count
+  from_nano
   (dango::slong const a_count)noexcept->auto{ return dango::tick_count_type{ a_count * dango::slong(1L) }; }
   constexpr auto
-  us_tick_count
+  from_micro
   (dango::slong const a_count)noexcept->auto{ return dango::tick_count_type{ a_count * dango::slong(1'000L) }; }
   constexpr auto
-  ms_tick_count
+  from_milli
   (dango::slong const a_count)noexcept->auto{ return dango::tick_count_type{ a_count * dango::slong(1'000'000L) }; }
   constexpr auto
-  sec_tick_count
+  from_sec
   (dango::slong const a_count)noexcept->auto{ return dango::tick_count_type{ a_count * dango::slong(1'000'000'000L) }; }
+}
 
+namespace
+dango
+{
   using tick_count_pair = dango::pair<dango::tick_count_type, dango::tick_count_type>;
 
-  DANGO_EXPORT auto tick_count_suspend_bias()noexcept->dango::tick_count_pair;
+  DANGO_EXPORT auto current_tick_and_suspend_bias()noexcept->dango::tick_count_pair;
 
-  auto tick_count()noexcept->dango::tick_count_type;
-  auto tick_count_suspend_aware()noexcept->dango::tick_count_type;
-  auto suspend_bias()noexcept->dango::tick_count_type;
+  auto current_tick()noexcept->dango::tick_count_type;
+  auto current_tick_sa()noexcept->dango::tick_count_type;
+  auto current_suspend_bias()noexcept->dango::tick_count_type;
 }
 
 inline auto
 dango::
-tick_count
+current_tick
 ()noexcept->dango::tick_count_type
 {
-  return dango::tick_count_suspend_bias().first();
+  return dango::current_tick_and_suspend_bias().first();
 }
 
 inline auto
 dango::
-tick_count_suspend_aware
+current_tick_sa
 ()noexcept->dango::tick_count_type
 {
-  auto a_pair = dango::tick_count_suspend_bias();
+  auto a_pair = dango::current_tick_and_suspend_bias();
 
   a_pair.first() += a_pair.second();
 
@@ -127,10 +133,10 @@ tick_count_suspend_aware
 
 inline auto
 dango::
-suspend_bias
+current_suspend_bias
 ()noexcept->dango::tick_count_type
 {
-  return dango::tick_count_suspend_bias().second();
+  return dango::current_tick_and_suspend_bias().second();
 }
 
 /*** timeout ***/
@@ -313,11 +319,11 @@ private:
   {
     if constexpr(c_suspend_aware)
     {
-      return dango::tick_count_suspend_aware();
+      return dango::current_tick_sa();
     }
     else
     {
-      return dango::tick_count();
+      return dango::current_tick();
     }
   }
 public:
@@ -480,12 +486,12 @@ remaining_ms
 
   auto const a_rem = remaining();
 
-  if(a_rem <= dango::tick_count_type(0))
+  if(a_rem <= dango::tick::zero)
   {
     return u64(0);
   }
 
-  auto const a_ns = u64(dango::tick_count_ns(a_rem));
+  auto const a_ns = u64(dango::tick::to_nano(a_rem));
   auto const a_ms = a_ns / u64(1'000'000L);
   auto const a_rm = a_ns % u64(1'000'000L);
 
@@ -2033,7 +2039,7 @@ dango::detail
   [[maybe_unused]] inline bool const
   s_concurrent_init_bool =
   (
-    void(dango::tick_count_suspend_bias()),
+    void(dango::current_suspend_bias()),
     void(dango::thread::self()),
     false
   );
@@ -2084,7 +2090,7 @@ public:
   void thread_func()noexcept;
 private:
   constexpr cond_var_registry()noexcept;
-  ~cond_var_registry()noexcept = default;
+  constexpr ~cond_var_registry()noexcept = default;
 private:
   void add(cond_type*)noexcept;
   auto wait_empty()noexcept->bool;
@@ -2196,7 +2202,7 @@ public:
   void thread_func()noexcept;
 private:
   constexpr windows_timer_res_manager()noexcept;
-  ~windows_timer_res_manager()noexcept = default;
+  constexpr ~windows_timer_res_manager()noexcept = default;
 private:
   auto wait()noexcept->bool;
   auto timed_wait(dango::timeout const&)noexcept->bool;
