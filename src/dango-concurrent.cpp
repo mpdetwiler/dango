@@ -12,22 +12,15 @@ dango::
 current_tick_and_suspend_bias
 ()noexcept->dango::tick_count_pair
 {
-  DANGO_CACHE_LINE_START
-  static constinit dango::spin_mutex s_lock{ };
-  DANGO_CACHE_LINE_START
-  static auto s_last = tick_count_suspend_bias_help();
-  DANGO_CACHE_LINE_START
-  static auto const s_init = s_last;
+  static auto const s_init = tick_count_suspend_bias_help();
+  static thread_local auto t_last = s_init;
 
   auto a_current = tick_count_suspend_bias_help();
   auto& [a_tick, a_bias] = a_current;
 
-  dango_crit(s_lock)
-  {
-    a_tick = dango::max(a_tick, s_last.first());
-    a_bias = dango::max(a_bias, s_last.second());
-    s_last = a_current;
-  }
+  a_tick = dango::max(a_tick, t_last.first());
+  a_bias = dango::max(a_bias, t_last.second());
+  t_last = a_current;
 
   a_tick -= s_init.first();
   a_bias -= s_init.second();
@@ -717,8 +710,11 @@ namespace
   ()noexcept->dango::tick_count_pair
   {
     auto a_current = dango::detail::perf_count_suspend_bias();
+    auto& [a_tick, a_bias] = a_current;
 
-    a_current.first() -= a_current.second();
+    dango_assert(a_tick >= a_bias);
+
+    a_tick -= a_bias;
 
     return a_current;
   }

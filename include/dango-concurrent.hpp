@@ -124,11 +124,9 @@ dango::
 current_tick_sa
 ()noexcept->dango::tick_count_type
 {
-  auto a_pair = dango::current_tick_and_suspend_bias();
+  auto const a_pair = dango::current_tick_and_suspend_bias();
 
-  a_pair.first() += a_pair.second();
-
-  return a_pair.first();
+  return a_pair.first() + a_pair.second();
 }
 
 inline auto
