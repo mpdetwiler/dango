@@ -715,19 +715,6 @@ namespace
   tick_count_suspend_bias_help
   ()noexcept->dango::tick_count_pair
   {
-    using tc64 = dango::tick_count_type;
-
-    auto const a_freq = dango::detail::perf_freq();
-
-    auto a_current = dango::detail::perf_count_suspend_bias();
-
-    auto& [a_perf, a_bias] = a_current;
-
-    a_perf = (a_perf * tc64(1'000)) / a_freq;
-    a_bias /= tc64(10'000);
-
-    return a_current;
-
     return dango::detail::perf_count_suspend_bias();
   }
 }

@@ -574,7 +574,7 @@ perf_count_suspend_bias
   a_tick = a_sec * c_bil + (a_rem * c_bil) / a_freq;
   a_bias *= u64(100L);
 
-  return dango::tick_count_pair{ dango::slong(a_tick), dango::slong(a_bias) };
+  return dango::tick_count_pair{ dango::ns_tick_count(a_tick), dango::ns_tick_count(a_bias) };
 }
 
 /*****************************/
@@ -708,18 +708,20 @@ void
 dango::
 detail::
 condition_variable_wait
-(dango::detail::cond_var_storage& a_storage, dango::detail::mutex_storage& a_lock_storage, dango::tick_count_type const a_interval)noexcept
+(dango::detail::cond_var_storage& a_storage, dango::detail::mutex_storage& a_lock_storage, dango::ulong const a_ms)noexcept
 {
   using type = ::CONDITION_VARIABLE;
   using lock_type = ::SRWLOCK;
+  using u64 = dango::ulong;
 
-  using tc64 = dango::tick_count_type;
+  if(a_ms == u64(0))
+  {
+    return;
+  }
 
-  dango_assert(a_interval >= tc64(0));
+  static constexpr auto const c_max_interval = u64(DWORD(INFINITE) - DWORD(1));
 
-  static constexpr auto const c_max_interval = tc64(DWORD(INFINITE) - DWORD(1));
-
-  auto const a_spec = dango::min(a_interval, c_max_interval);
+  auto const a_spec = dango::min(a_ms, c_max_interval);
 
   dango_assert(DWORD(a_spec) != DWORD(INFINITE));
 
