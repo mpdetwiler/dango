@@ -1,5 +1,6 @@
 #include "dango-concurrent.hpp"
 #include "dango-test-print.hpp"
+#include "dango-thread.hpp"
 
 namespace
 {

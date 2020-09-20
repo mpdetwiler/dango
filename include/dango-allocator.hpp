@@ -2,7 +2,7 @@
 #define DANGO_ALLOCATOR_HPP_INCLUDED
 
 #include "dango-concepts.hpp"
-#include "dango-concurrent-base.hpp"
+#include "dango-concurrent.hpp"
 #include "dango-hash.hpp"
 #include "dango-mem.hpp"
 

@@ -1,7 +1,7 @@
 #ifndef DANGO_GLOBAL_HPP_INCLUDED
 #define DANGO_GLOBAL_HPP_INCLUDED
 
-#include "dango-concurrent-base.hpp"
+#include "dango-concurrent.hpp"
 #include "dango-mem.hpp"
 
 /*** globals ***/

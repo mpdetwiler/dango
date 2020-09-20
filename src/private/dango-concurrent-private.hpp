@@ -1,7 +1,8 @@
 #ifndef DANGO_PRIVATE_CONCURRENT_HPP_INCLUDED
 #define DANGO_PRIVATE_CONCURRENT_HPP_INCLUDED
 
-#include "dango-private.hpp"
+#include "dango-mutex.hpp"
+#include "dango-cond-var.hpp"
 
 namespace
 dango::detail
