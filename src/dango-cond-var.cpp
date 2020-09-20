@@ -1,5 +1,6 @@
 #include "dango-cond-var.hpp"
 
+#include "dango-concurrent-private.hpp"
 #include "dango-mutex.hpp"
 #include "dango-thread.hpp"
 
@@ -759,8 +760,6 @@ dango::detail
 #endif // DANGO_PLATFORM_WINDOWS
 
 /*** platform specific ***/
-
-#include "dango-concurrent-private.hpp"
 
 #ifdef DANGO_PLATFORM_LINUX_OR_APPLE
 

@@ -515,10 +515,10 @@ namespace dango_def_thread_local_##name##_namespace{ \
   auto dango_def_thread_local_##name##_try_access \
   ()noexcept->dango_def_thread_local_##name##_ptr_type{ \
     static thread_local dango_def_thread_local_##name##_value_type dango_def_thread_local_##name##_object __VA_ARGS__ ; \
-    static thread_local constinit bool dango_def_thread_local_##name##_alive = true; \
+    static thread_local auto dango_def_thread_local_##name##_ptr = dango::addressof(dango_def_thread_local_##name##_object); \
     static thread_local auto const dango_def_thread_local_##name##_finally = \
-    dango::make_finally([]()noexcept->void{ dango_def_thread_local_##name##_alive = false; }); \
-    if(dango_def_thread_local_##name##_alive){ return dango::addressof(dango_def_thread_local_##name##_object); } return dango::null; } }
+    dango::make_finally([]()noexcept->void{ dango_def_thread_local_##name##_ptr = dango::null; }); \
+    return dango_def_thread_local_##name##_ptr; } }
 
 #define DANGO_DEFINE_FUNC_SCOPE_THREAD_LOCAL(type_name, name, ...) \
   DANGO_DETAIL_DEFINE_THREAD_LOCAL_HELP(static, type_name, name, __VA_ARGS__)
@@ -543,10 +543,10 @@ spec constexpr auto const name##_try_access = \
   static_assert(dango::is_object<dango_def_thread_local_##name##_value_type>); \
   static_assert(dango::is_noexcept_destructible<dango_def_thread_local_##name##_value_type>); \
   static thread_local dango_def_thread_local_##name##_value_type dango_def_thread_local_##name##_object __VA_ARGS__ ; \
-  static thread_local constinit bool dango_def_thread_local_##name##_alive = true; \
+  static thread_local auto dango_def_thread_local_##name##_ptr = dango::addressof(dango_def_thread_local_##name##_object); \
   static thread_local auto const dango_def_thread_local_##name##_finally = \
-  dango::make_finally([]()noexcept->void{ dango_def_thread_local_##name##_alive = false; }); \
-  if(dango_def_thread_local_##name##_alive){ return dango::addressof(dango_def_thread_local_##name##_object); } return dango::null; }; \
+  dango::make_finally([]()noexcept->void{ dango_def_thread_local_##name##_ptr = dango::null; }); \
+  return dango_def_thread_local_##name##_ptr; }; \
 spec constexpr auto const name = \
 []()noexcept->auto&{ auto const dango_def_thread_local_##name##_ptr = name##_try_access(); \
   dango_assert_nonnull_terminate_msg(dango_def_thread_local_##name##_ptr, u8"attempt to access already-destroyed thread_local \"name\""); \

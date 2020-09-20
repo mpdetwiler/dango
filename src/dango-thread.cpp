@@ -342,13 +342,12 @@ thread::
 thread_self_init
 (bool const a_daemon)noexcept->dango::thread const*
 {
-  static thread_local auto const t_daemon = a_daemon;
+  static thread_local thread const t_thread{ construct_tag{ }, a_daemon };
+  static thread_local notifier const t_notifier{ t_thread };
+  static thread_local auto t_thread_ptr = &t_thread;
+  static thread_local auto const t_finally = dango::make_finally([]()noexcept->void{ t_thread_ptr = dango::null; });
 
-  DANGO_DEFINE_FUNC_SCOPE_THREAD_LOCAL(dango::thread const, t_thread, { construct_tag{ }, t_daemon });
-
-  static thread_local notifier const t_notifier{ t_thread() };
-
-  return t_thread_try_access();
+  return t_thread_ptr;
 }
 
 auto

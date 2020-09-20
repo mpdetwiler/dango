@@ -1,4 +1,5 @@
 #include "dango-mutex.hpp"
+#include "dango-concurrent-private.hpp"
 
 auto
 dango::
@@ -10,8 +11,6 @@ mutex_get_storage
 }
 
 /*** platform specific ***/
-
-#include "dango-concurrent-private.hpp"
 
 #ifdef DANGO_PLATFORM_LINUX_OR_APPLE
 
