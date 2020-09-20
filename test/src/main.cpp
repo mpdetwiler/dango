@@ -10,7 +10,7 @@ main
 {
   test_print("main entered\n");
 
-  dango::tick_count_pair a_pairs[100];
+  dango::tick_count_pair a_pairs[10];
 
   test_print("sleep:\n");
 

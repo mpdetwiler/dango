@@ -2,7 +2,7 @@
 #include "dango-test-print.hpp"
 #include "dango-thread.hpp"
 
-namespace
+namespace ct
 {
 
 DANGO_UNIT_TEST_BEGIN(tick_count_test)
@@ -61,12 +61,12 @@ DANGO_UNIT_TEST_BEGIN(tick_count_test_mt)
       {
         auto a_timeout = dango::timeout::make(a_tick1, HIGH_RES);
 
-        //auto const [a_tick2, a_bias2] = dango::current_tick_and_suspend_bias();
+        auto const [a_tick2, a_bias2] = dango::current_tick_and_suspend_bias();
 
-        //dango_assert_terminate(a_tick2 >= a_tick1);
-        //dango_assert_terminate(a_bias2 >= a_bias1);
+        dango_assert_terminate(a_tick2 >= a_tick1);
+        dango_assert_terminate(a_bias2 >= a_bias1);
 
-        //test_print("id=%u tick=%u bias=%u\n", a_id, u_int(to_milli(a_tick2)), u_int(to_milli(a_bias2)));
+        test_print("id=%u tick=%u bias=%u\n", a_id, u_int(to_milli(a_tick2)), u_int(to_milli(a_bias2)));
 
         a_timeout.add(from_milli(1'000));
 
