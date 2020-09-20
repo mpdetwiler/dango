@@ -12,6 +12,37 @@ static_assert(alignof(dango::detail::mutex_storage) >= alignof(::pthread_mutex_t
 static_assert(sizeof(dango::detail::cond_var_storage) >= sizeof(::pthread_cond_t));
 static_assert(alignof(dango::detail::cond_var_storage) >= alignof(::pthread_cond_t));
 
+void
+dango::
+thread_yield
+(bool const a_hard)noexcept
+{
+  if(!a_hard)
+  {
+    ::sched_yield();
+
+    return;
+  }
+
+  ::timespec a_req{ 0, 1'000'000L };
+
+  ::timespec a_rem;
+
+  auto a_req_ptr = &a_req;
+  auto a_rem_ptr = &a_rem;
+
+#ifdef DANGO_PLATFORM_LINUX
+  while(::clock_nanosleep(CLOCK_MONOTONIC, 0, a_req_ptr, a_rem_ptr))
+#else
+  while(::nanosleep(a_req_ptr, a_rem_ptr))
+#endif
+  {
+    dango_assert(errno == EINTR);
+
+    dango::swap(a_req_ptr, a_rem_ptr);
+  }
+}
+
 namespace
 {
   template
@@ -74,44 +105,6 @@ noexcept->bool
   dango::busy_wait_while([&a_starting]()noexcept->bool{ return a_starting.load<acquire>(); }, dango::uint(128));
 
   return true;
-}
-
-void
-dango::
-detail::
-thread_sleep
-(dango::uint const a_ms)noexcept
-{
-  if(a_ms == dango::uint(0))
-  {
-    ::sched_yield();
-
-    return;
-  }
-
-  auto const a_div = a_ms / dango::uint(1'000);
-  auto const a_mod = a_ms % dango::uint(1'000);
-
-  ::timespec a_req;
-
-  a_req.tv_sec = a_div;
-  a_req.tv_nsec = a_mod * dango::uint(1'000'000);
-
-  ::timespec a_rem;
-
-  auto a_req_ptr = &a_req;
-  auto a_rem_ptr = &a_rem;
-
-#ifdef DANGO_PLATFORM_LINUX
-  while(::clock_nanosleep(CLOCK_MONOTONIC, 0, a_req_ptr, a_rem_ptr))
-#else
-  while(::nanosleep(a_req_ptr, a_rem_ptr))
-#endif
-  {
-    dango_assert(errno == EINTR);
-
-    dango::swap(a_req_ptr, a_rem_ptr);
-  }
 }
 
 auto
@@ -428,6 +421,14 @@ static_assert(alignof(dango::detail::mutex_storage) >= alignof(::SRWLOCK));
 static_assert(sizeof(dango::detail::cond_var_storage) >= sizeof(::CONDITION_VARIABLE));
 static_assert(alignof(dango::detail::cond_var_storage) >= alignof(::CONDITION_VARIABLE));
 
+void
+dango::
+thread_yield
+(bool const a_hard)noexcept
+{
+  ::Sleep(DWORD(a_hard));
+}
+
 namespace
 {
   template
@@ -498,15 +499,6 @@ noexcept->bool
   dango::busy_wait_while([&a_starting]()noexcept->bool{ return a_starting.load<acquire>(); }, dango::uint(128));
 
   return true;
-}
-
-void
-dango::
-detail::
-thread_sleep
-(dango::uint const a_ms)noexcept
-{
-  ::Sleep(DWORD(a_ms));
 }
 
 auto

@@ -200,7 +200,7 @@ thread::
 yield
 ()noexcept
 {
-  dango::thread_yield_soft();
+  dango::thread_yield(false);
 }
 
 inline auto

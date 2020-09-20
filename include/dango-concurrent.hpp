@@ -8,19 +8,12 @@
 #include "dango-tuple.hpp"
 #include "dango-util.hpp"
 
-/*** thread_yeld_soft thread_yield_hard ***/
-
-namespace
-dango::detail
-{
-  DANGO_EXPORT void thread_sleep(dango::uint)noexcept;
-}
+/*** thread_yeld ***/
 
 namespace
 dango
 {
-  inline void thread_yield_soft()noexcept{ dango::detail::thread_sleep(dango::uint(0)); }
-  inline void thread_yield_hard()noexcept{ dango::detail::thread_sleep(dango::uint(1)); }
+  DANGO_EXPORT void thread_yield(bool)noexcept;
 }
 
 /*** busy_wait_while ***/
@@ -62,14 +55,14 @@ noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
 
     if(a_soft_yields < dango::uint(4))
     {
-      dango::thread_yield_soft();
+      dango::thread_yield(false);
 
       ++a_soft_yields;
 
       continue;
     }
 
-    dango::thread_yield_hard();
+    dango::thread_yield(true);
   }
 }
 #else
@@ -88,14 +81,14 @@ noexcept(dango::is_noexcept_callable_ret<bool, tp_cond>)
   {
     if(a_soft_yields < dango::uint(4))
     {
-      dango::thread_yield_soft();
+      dango::thread_yield(false);
 
       ++a_soft_yields;
 
       continue;
     }
 
-    dango::thread_yield_hard();
+    dango::thread_yield(true);
   }
 }
 #endif
