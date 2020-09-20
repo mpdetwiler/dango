@@ -1188,7 +1188,7 @@ remaining_ms
   auto const a_rm = a_ns % u64(1'000'000L);
 
 #ifdef DANGO_PLATFORM_APPLE
-  constexpr auto const c_thresh = u64(1);
+  constexpr auto const c_thresh = u64(2);
 #else
   constexpr auto const c_thresh = u64(1);
 #endif

@@ -400,8 +400,7 @@ namespace
 #else
   {
     ::clockid_t const a_clock =
-      //a_biased ? CLOCK_MONOTONIC_RAW : CLOCK_UPTIME_RAW;
-      a_biased ? CLOCK_MONOTONIC : CLOCK_UPTIME;
+      a_biased ? CLOCK_MONOTONIC_RAW : CLOCK_UPTIME_RAW;
 
     auto const a_result = ::clock_gettime_nsec_np(a_clock);
 
