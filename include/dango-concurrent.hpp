@@ -1187,14 +1187,20 @@ remaining_ms
   auto const a_ms = a_ns / u64(1'000'000L);
   auto const a_rm = a_ns % u64(1'000'000L);
 
+#ifdef DANGO_PLATFORM_APPLE
+  constexpr auto const c_thresh = u64(2);
+#else
+  constexpr auto const c_thresh = u64(1);
+#endif
+
   if(is_high_res())
   {
-    if(a_ms < u64(2))
+    if(a_ms <= c_thresh)
     {
       return u64(0);
     }
 
-    return a_ms - u64(1);
+    return a_ms - c_thresh;
   }
 
   return a_ms + u64(a_rm != u64(0));

@@ -12,27 +12,6 @@ main
 
   dango::tick_count_pair a_pairs[100];
 
-  test_print("yield:\n");
-
-  for(auto& a_pair : a_pairs)
-  {
-    a_pair = dango::current_tick_and_suspend_bias();
-
-    dango::thread_yield(true);
-  }
-
-  for(auto const& a_pair : a_pairs)
-  {
-    auto const& [a_tick, a_bias] = a_pair;
-
-    test_print
-    (
-      "[%lld, %lld]\n",
-      dango::integer::s_longlong(dango::tick::to_milli(a_tick)),
-      dango::integer::s_longlong(dango::tick::to_milli(a_bias))
-    );
-  }
-
   test_print("sleep:\n");
 
   auto a_timeout =
@@ -42,7 +21,7 @@ main
   {
     a_pair = dango::current_tick_and_suspend_bias();
 
-    a_timeout.add(dango::tick::from_milli(1));
+    a_timeout.add(dango::tick::from_milli(10));
 
     dango::thread::sleep(a_timeout);
   }
