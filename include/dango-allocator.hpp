@@ -299,6 +299,14 @@ dango
   template
   <bool tp_noexcept = dango::c_operator_new_noexcept>
   using mem_resource_guard = typename dango::polymorphic_allocator<tp_noexcept>::guard_type;
+
+  template
+  <typename tp_mr, bool tp_noexcept>
+  concept mem_resource_storage_constraint_spec =
+    dango::is_class<tp_mr> && !dango::is_const_or_volatile<tp_mr> &&
+    dango::is_base_of<dango::mem_resource<tp_noexcept>, tp_mr> &&
+    dango::is_convertible_arg<tp_mr*, dango::mem_resource<tp_noexcept>*> &&
+    dango::is_noexcept_destructible<tp_mr>;
 }
 
 template
@@ -308,6 +316,13 @@ dango::
 polymorphic_allocator
 final
 {
+private:
+  struct
+  privacy_tag
+  final
+  {
+    DANGO_TAG_TYPE(privacy_tag)
+  };
 public:
   class mem_resource;
   class mem_resource_ptr;
@@ -319,31 +334,19 @@ public:
   using guard_type = mem_resource*;
 #endif
   template
-  <typename tp_mr>
+  <dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr>
   class mem_resource_storage;
 
   template
-  <typename tp_mr>
+  <dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr>
+  requires(dango::is_trivial_destructible<tp_mr>)
   class mem_resource_storage_static;
-private:
-  struct
-  privacy_tag
-  final
-  {
-    DANGO_TAG_TYPE(privacy_tag)
-  };
 public:
   static auto lock(handle_type const&)noexcept->guard_type;
 
   template
-  <dango::is_derived_from<dango::mem_resource<tp_noexcept>> tp_mr, typename... tp_args>
-  requires
-  (
-    !dango::is_const_or_volatile<tp_mr> &&
-    dango::is_brace_constructible<tp_mr, tp_args...> &&
-    dango::is_noexcept_destructible<tp_mr> &&
-    dango::is_convertible_arg<tp_mr*, dango::mem_resource<tp_noexcept>*>
-  )
+  <dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr, typename... tp_args>
+  requires(dango::is_brace_constructible<tp_mr, tp_args...>)
   static auto
   make
   (tp_args&&... a_args)
@@ -353,14 +356,8 @@ public:
   }
 
   template
-  <dango::is_derived_from<dango::mem_resource<tp_noexcept>> tp_mr, typename... tp_args>
-  requires
-  (
-    !dango::is_const_or_volatile<tp_mr> &&
-    dango::is_noexcept_brace_constructible<tp_mr, tp_args...> &&
-    dango::is_trivial_destructible<tp_mr> &&
-    dango::is_convertible_arg<tp_mr*, dango::mem_resource<tp_noexcept>*>
-  )
+  <dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr, typename... tp_args>
+  requires(dango::is_trivial_destructible<tp_mr> && dango::is_noexcept_brace_constructible<tp_mr, tp_args...>)
   static constexpr auto
   make_static
   (tp_args&&... a_args)noexcept->mem_resource_storage_static<tp_mr>
@@ -371,11 +368,12 @@ private:
   class control_base;
 
   template
-  <typename tp_mr>
+  <dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr>
   class control_dynamic;
 
   template
-  <typename tp_mr>
+  <dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr>
+  requires(dango::is_trivial_destructible<tp_mr>)
   class control_static;
 public:
   DANGO_UNCONSTRUCTIBLE(polymorphic_allocator)
@@ -483,7 +481,7 @@ public:
 template
 <bool tp_noexcept>
 template
-<typename tp_mr>
+<dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr>
 class
 dango::
 polymorphic_allocator<tp_noexcept>::
@@ -498,8 +496,6 @@ private:
   using storage_type = dango::aligned_union<resource_type, dango::cache_align_type>;
   using destroy_func = typename super_type::destroy_func;
 #endif
-  static_assert(!dango::is_const_or_volatile<resource_type>);
-  static_assert(dango::is_noexcept_destructible<resource_type>);
 public:
   DANGO_DEFINE_CLASS_OPERATOR_NEW_DELETE(control_dynamic)
 public:
@@ -520,6 +516,7 @@ public:
   m_resource{ dango::forward<tp_args>(a_args)... }
   { }
 #endif
+
   ~control_dynamic()noexcept = default;
 #ifndef DANGO_NO_DEBUG
 public:
@@ -552,11 +549,12 @@ public:
 
     return c_destroy;
   }
+#endif
 private:
+#ifndef DANGO_NO_DEBUG
   storage_type m_storage;
   dango::atomic_ref_count_ws m_count;
 #else
-private:
   resource_type m_resource;
 #endif
 public:
@@ -567,7 +565,8 @@ public:
 template
 <bool tp_noexcept>
 template
-<typename tp_mr>
+<dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr>
+requires(dango::is_trivial_destructible<tp_mr>)
 class
 dango::
 polymorphic_allocator<tp_noexcept>::
@@ -578,8 +577,6 @@ public control_base
 private:
   using super_type = control_base;
   using resource_type = tp_mr;
-  static_assert(!dango::is_const_or_volatile<resource_type>);
-  static_assert(dango::is_trivial_destructible<resource_type>);
 public:
   DANGO_DELETE_CLASS_OPERATOR_NEW_DELETE
 public:
@@ -603,7 +600,7 @@ public:
 template
 <bool tp_noexcept>
 template
-<typename tp_mr>
+<dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr>
 class
 dango::
 polymorphic_allocator<tp_noexcept>::
@@ -618,9 +615,9 @@ public:
   <typename... tp_args>
   explicit
   mem_resource_storage
-  (privacy_tag const, tp_args&&... a_args)
+  (privacy_tag const a_tag, tp_args&&... a_args)
   dango_new_noexcept_and(dango::is_noexcept_brace_constructible<resource_type, tp_args...>):
-  m_control{ new control_type{ privacy_tag{ }, dango::forward<tp_args>(a_args)... } }
+  m_control{ new control_type{ a_tag, dango::forward<tp_args>(a_args)... } }
   { }
 
   ~mem_resource_storage()noexcept
@@ -649,7 +646,8 @@ public:
 template
 <bool tp_noexcept>
 template
-<typename tp_mr>
+<dango::mem_resource_storage_constraint_spec<tp_noexcept> tp_mr>
+requires(dango::is_trivial_destructible<tp_mr>)
 class
 dango::
 polymorphic_allocator<tp_noexcept>::
@@ -664,8 +662,8 @@ public:
   <typename... tp_args>
   explicit constexpr
   mem_resource_storage_static
-  (privacy_tag const, tp_args&&... a_args)noexcept:
-  m_control{ privacy_tag{ }, dango::forward<tp_args>(a_args)... }
+  (privacy_tag const a_tag, tp_args&&... a_args)noexcept:
+  m_control{ a_tag, dango::forward<tp_args>(a_args)... }
   { }
 
   constexpr ~mem_resource_storage_static()noexcept = default;
