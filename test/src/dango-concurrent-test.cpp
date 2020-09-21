@@ -1,6 +1,8 @@
 #include "dango-concurrent.hpp"
 #include "dango-test-print.hpp"
 #include "dango-thread.hpp"
+#include "dango-mutex.hpp"
+#include "dango-cond-var.hpp"
 
 namespace ct
 {

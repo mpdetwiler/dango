@@ -1,15 +1,6 @@
 #include "dango-mutex.hpp"
 #include "dango-concurrent-private.hpp"
 
-auto
-dango::
-detail::
-mutex_get_storage
-(dango::detail::mutex_base const& a_mutex)noexcept->dango::detail::mutex_storage&
-{
-  return a_mutex.get_control()->storage();
-}
-
 /*** platform specific ***/
 
 #ifdef DANGO_PLATFORM_LINUX_OR_APPLE

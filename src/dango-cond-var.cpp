@@ -32,10 +32,10 @@ auto
 dango::
 detail::
 cond_var_control::
-make_reference
-()noexcept->dango::cond_var
+make_shared
+()noexcept->dango::shared_cond_var
 {
-  return dango::cond_var{ dango::cond_var::increment_tag{ }, this };
+  return dango::shared_cond_var{ dango::detail::sync_private::tag{ }, *this };
 }
 
 /*** cond_var_registry ***/
@@ -361,7 +361,7 @@ pop_internal
 
     add(a_cond_control);
 
-    auto a_cond = a_cond_control->make_reference();
+    auto const a_cond = a_cond_control->make_shared();
 
   a_guard.unlock();
 
@@ -792,7 +792,11 @@ wait
 {
   dango_assert_noassume(m_init.has_executed());
 
-  dango::detail::pthread_cond_wait(storage(), dango::detail::mutex_get_storage(mutex_ref()));
+  using tag = dango::detail::sync_private::tag;
+
+  auto& a_mutex_storage = mutex_ref().get_control(tag{ })->storage();
+
+  dango::detail::pthread_cond_wait(storage(), a_mutex_storage);
 }
 
 void
@@ -802,6 +806,8 @@ cond_var_control::
 wait
 (dango::timeout const& a_timeout)noexcept
 {
+  using tag = dango::detail::sync_private::tag;
+
   dango_assert_noassume(m_init.has_executed());
 
   if(a_timeout.remaining_ms() == dango::ulong(0))
@@ -813,7 +819,11 @@ wait
 
   c_registry.regist(this, a_timeout);
 
-  dango::detail::pthread_cond_wait(storage(), dango::detail::mutex_get_storage(mutex_ref()), a_timeout.remaining_ms());
+  using tag = dango::detail::sync_private::tag;
+
+  auto& a_mutex_storage = mutex_ref().get_control(tag{ })->storage();
+
+  dango::detail::pthread_cond_wait(storage(), a_mutex_storage, a_timeout.remaining_ms());
 
   c_registry.unregist(this, a_timeout);
 }
@@ -875,7 +885,11 @@ wait
 {
   dango_assert_noassume(m_init.has_executed());
 
-  dango::detail::condition_variable_wait(storage(), dango::detail::mutex_get_storage(mutex_ref()));
+  using tag = dango::detail::sync_private::tag;
+
+  auto& a_mutex_storage = mutex_ref().get_control(tag{ })->storage();
+
+  dango::detail::condition_variable_wait(storage(), a_mutex_storage);
 }
 
 void
@@ -900,7 +914,11 @@ wait
 
   c_manager.activate(a_timeout);
 
-  dango::detail::condition_variable_wait(storage(), dango::detail::mutex_get_storage(mutex_ref()), a_timeout.remaining_ms());
+  using tag = dango::detail::sync_private::tag;
+
+  auto& a_mutex_storage = mutex_ref().get_control(tag{ })->storage();
+
+  dango::detail::condition_variable_wait(storage(), a_mutex_storage, a_timeout.remaining_ms());
 
   c_manager.deactivate(a_timeout);
 

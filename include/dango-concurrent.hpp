@@ -163,24 +163,24 @@ private:
   using super_type = dango::crit_section;
 private:
   explicit
-  locker(spin_mutex* const a_lock)noexcept:
+  locker(spin_mutex* const a_mutex)noexcept:
   super_type{ },
-  m_lock{ a_lock->acquire() }
+  m_mutex{ a_mutex->acquire() }
   { }
 public:
-  ~locker()noexcept{ unlock(); }
+  ~locker()noexcept{ if(is_locked()){ m_mutex->release(); } }
 public:
   void
   unlock()noexcept
   {
-    if(m_lock)
+    if(is_locked())
     {
-      m_lock->release();
-      m_lock = dango::null;
+      dango::exchange(m_mutex, dango::null)->release();
     }
   }
+  auto is_locked()const noexcept->bool{ return !dango::is_null(m_mutex); }
 private:
-  spin_mutex* m_lock;
+  spin_mutex* m_mutex;
 public:
   DANGO_DELETE_DEFAULT(locker)
   DANGO_UNMOVEABLE(locker)
@@ -198,26 +198,26 @@ private:
   using super_type = dango::crit_section;
 private:
   explicit
-  try_locker(spin_mutex* const a_lock)noexcept:
+  try_locker(spin_mutex* const a_mutex)noexcept:
   super_type{ },
-  m_lock{ a_lock->try_acquire() }
+  m_mutex{ a_mutex->try_acquire() }
   { }
 public:
-  ~try_locker()noexcept{ unlock(); }
+  ~try_locker()noexcept{ if(is_locked()){ m_mutex->release(); } }
+public:
+  explicit operator bool()const{ return is_locked(); }
 public:
   void
   unlock()noexcept
   {
-    if(m_lock)
+    if(is_locked())
     {
-      m_lock->release();
-      m_lock = dango::null;
+      dango::exchange(m_mutex, dango::null)->release();
     }
   }
-public:
-  explicit operator bool()const{ return m_lock != dango::null; }
+  auto is_locked()const noexcept->bool{ return !dango::is_null(m_mutex); }
 private:
-  spin_mutex* m_lock;
+  spin_mutex* m_mutex;
 public:
   DANGO_DELETE_DEFAULT(try_locker)
   DANGO_UNMOVEABLE(try_locker)
