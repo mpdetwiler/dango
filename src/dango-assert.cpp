@@ -1,4 +1,5 @@
-#include "dango.hpp"
+#include "dango-assert.hpp"
+#include "dango-atomic.hpp"
 
 #include <cstdio>
 #include <exception>

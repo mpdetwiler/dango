@@ -1,4 +1,3 @@
-#include "dango.hpp"
 #include "dango-global-test.hpp"
 #include "dango-test-print.hpp"
 #include "dango-concurrent.hpp"

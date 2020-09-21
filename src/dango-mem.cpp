@@ -1,4 +1,6 @@
-#include "dango.hpp"
+#include "dango-allocator.hpp"
+#include "dango-mem.hpp"
+#include "dango-global.hpp"
 
 #include <new>
 

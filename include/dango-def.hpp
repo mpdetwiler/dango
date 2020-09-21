@@ -2,6 +2,7 @@
 #define DANGO_DEF_HPP_INCLUDED
 
 #include "dango-macro.hpp"
+#include "dango-standard-headers.hpp"
 
 namespace
 dango::integer

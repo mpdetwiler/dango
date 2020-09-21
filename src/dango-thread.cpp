@@ -1,7 +1,6 @@
-#include "dango-thread.hpp"
-
 #include "dango-mutex.hpp"
 #include "dango-cond-var.hpp"
+#include "dango-thread.hpp"
 
 /*** construct_tag ***/
 
