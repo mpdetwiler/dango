@@ -428,7 +428,8 @@ inline constexpr auto const name = \
 [](DANGO_SRC_LOC_ARG_DEFAULT(a_loc))noexcept->dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type \
 { static dango_def_global_##name##_namespace::dango_def_global_##name##_strong_type const dango_def_global_##name##_strong_func_scope{ }; \
   return dango_def_global_##name##_namespace::dango_def_global_##name##_weak_type{ DANGO_SRC_LOC_ARG_FORWARD(a_loc) }; }; \
-namespace dango_def_global_##name##_namespace{ inline bool const dango_def_global_##name##_bool{ (void(name()), false) }; }
+namespace dango_def_global_##name##_namespace{ inline bool const dango_def_global_##name##_init_bool{ (void(name()), false) }; \
+  static dango_def_global_##name##_strong_type const dango_def_global_##name##_strong_namespace_scope{ }; }
 
 #else // DANGO_BUILDING_LIB
 

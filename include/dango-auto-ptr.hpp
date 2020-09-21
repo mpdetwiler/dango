@@ -546,15 +546,16 @@ public:
   auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_ptr); }
 
   template
-  <typename tp_del>
+  <dango::is_object_exclude_array tp_elem, typename tp_del>
   requires
   (
-    dango::is_noexcept_swappable<deleter_type&> &&
-    dango::is_same<deleter_type, dango::decay<tp_del>>
+    dango::is_same<deleter_type, dango::decay<tp_del>> &&
+    dango::is_noexcept_swappable<ptr_type&, tp_elem*&> &&
+    dango::is_noexcept_swappable<deleter_type&>
   )
   constexpr void
   dango_operator_swap
-  (dango::auto_ptr<elem_type, tp_del>& a_ptr)& noexcept
+  (dango::auto_ptr<tp_elem, tp_del>& a_ptr)& noexcept
   {
     dango::swap(m_ptr, a_ptr.m_ptr);
     dango::swap(m_deleter, a_ptr.m_deleter);
@@ -958,9 +959,12 @@ public:
 
   auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_ptr); }
 
+  template
+  <dango::is_object_exclude_array tp_elem>
+  requires(dango::is_noexcept_swappable<ptr_type&, elem_type*&>)
   constexpr void
   dango_operator_swap
-  (auto_ptr& a_ptr)& noexcept
+  (dango::auto_ptr<tp_elem, allocator_type>& a_ptr)& noexcept
   {
     dango::swap(m_ptr, a_ptr.m_ptr);
     dango::swap(m_control, a_ptr.m_control);
