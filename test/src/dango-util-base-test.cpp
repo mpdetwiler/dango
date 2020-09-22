@@ -2,38 +2,38 @@
 #include "dango-assert.hpp"
 #include "dango-test-print.hpp"
 
-static_assert(dango::is_convertible_arg<dango::compare_val_strong, std::strong_ordering>);
-static_assert(dango::is_convertible_arg<dango::compare_val_strong, std::weak_ordering>);
-static_assert(dango::is_convertible_arg<dango::compare_val_strong, std::partial_ordering>);
-static_assert(dango::is_convertible_arg<dango::compare_val_strong, dango::compare_val_strong>);
-static_assert(dango::is_convertible_arg<dango::compare_val_strong, dango::compare_val_weak>);
-static_assert(dango::is_convertible_arg<dango::compare_val_strong, dango::compare_val_partial>);
+static_assert( dango::is_convertible_arg<dango::compare_val_s, std::strong_ordering>);
+static_assert( dango::is_convertible_arg<dango::compare_val_s, std::weak_ordering>);
+static_assert( dango::is_convertible_arg<dango::compare_val_s, std::partial_ordering>);
+static_assert( dango::is_convertible_arg<dango::compare_val_s, dango::compare_val_s>);
+static_assert( dango::is_convertible_arg<dango::compare_val_s, dango::compare_val_w>);
+static_assert( dango::is_convertible_arg<dango::compare_val_s, dango::compare_val_p>);
 
-static_assert(!dango::is_convertible_arg<dango::compare_val_weak, std::strong_ordering>);
-static_assert(dango::is_convertible_arg<dango::compare_val_weak, std::weak_ordering>);
-static_assert(dango::is_convertible_arg<dango::compare_val_weak, std::partial_ordering>);
-static_assert(!dango::is_convertible_arg<dango::compare_val_weak, dango::compare_val_strong>);
-static_assert(dango::is_convertible_arg<dango::compare_val_weak, dango::compare_val_weak>);
-static_assert(dango::is_convertible_arg<dango::compare_val_weak, dango::compare_val_partial>);
+static_assert(!dango::is_convertible_arg<dango::compare_val_w, std::strong_ordering>);
+static_assert( dango::is_convertible_arg<dango::compare_val_w, std::weak_ordering>);
+static_assert( dango::is_convertible_arg<dango::compare_val_w, std::partial_ordering>);
+static_assert(!dango::is_convertible_arg<dango::compare_val_w, dango::compare_val_s>);
+static_assert( dango::is_convertible_arg<dango::compare_val_w, dango::compare_val_w>);
+static_assert( dango::is_convertible_arg<dango::compare_val_w, dango::compare_val_p>);
 
-static_assert(!dango::is_convertible_arg<dango::compare_val_partial, std::strong_ordering>);
-static_assert(!dango::is_convertible_arg<dango::compare_val_partial, std::weak_ordering>);
-static_assert(dango::is_convertible_arg<dango::compare_val_partial, std::partial_ordering>);
-static_assert(!dango::is_convertible_arg<dango::compare_val_partial, dango::compare_val_strong>);
-static_assert(!dango::is_convertible_arg<dango::compare_val_partial, dango::compare_val_weak>);
-static_assert(dango::is_convertible_arg<dango::compare_val_partial, dango::compare_val_partial>);
+static_assert(!dango::is_convertible_arg<dango::compare_val_p, std::strong_ordering>);
+static_assert(!dango::is_convertible_arg<dango::compare_val_p, std::weak_ordering>);
+static_assert( dango::is_convertible_arg<dango::compare_val_p, std::partial_ordering>);
+static_assert(!dango::is_convertible_arg<dango::compare_val_p, dango::compare_val_s>);
+static_assert(!dango::is_convertible_arg<dango::compare_val_p, dango::compare_val_w>);
+static_assert( dango::is_convertible_arg<dango::compare_val_p, dango::compare_val_p>);
 
-static_assert(dango::is_convertible_arg<std::strong_ordering, dango::compare_val_strong>);
-static_assert(dango::is_convertible_arg<std::strong_ordering, dango::compare_val_weak>);
-static_assert(dango::is_convertible_arg<std::strong_ordering, dango::compare_val_partial>);
+static_assert( dango::is_convertible_arg<std::strong_ordering, dango::compare_val_s>);
+static_assert( dango::is_convertible_arg<std::strong_ordering, dango::compare_val_w>);
+static_assert( dango::is_convertible_arg<std::strong_ordering, dango::compare_val_p>);
 
-static_assert(!dango::is_convertible_arg<std::weak_ordering, dango::compare_val_strong>);
-static_assert(dango::is_convertible_arg<std::weak_ordering, dango::compare_val_weak>);
-static_assert(dango::is_convertible_arg<std::weak_ordering, dango::compare_val_partial>);
+static_assert(!dango::is_convertible_arg<std::weak_ordering, dango::compare_val_s>);
+static_assert( dango::is_convertible_arg<std::weak_ordering, dango::compare_val_w>);
+static_assert( dango::is_convertible_arg<std::weak_ordering, dango::compare_val_p>);
 
-static_assert(!dango::is_convertible_arg<std::partial_ordering, dango::compare_val_strong>);
-static_assert(!dango::is_convertible_arg<std::partial_ordering, dango::compare_val_weak>);
-static_assert(dango::is_convertible_arg<std::partial_ordering, dango::compare_val_partial>);
+static_assert(!dango::is_convertible_arg<std::partial_ordering, dango::compare_val_s>);
+static_assert(!dango::is_convertible_arg<std::partial_ordering, dango::compare_val_w>);
+static_assert( dango::is_convertible_arg<std::partial_ordering, dango::compare_val_p>);
 
 
 static_assert(dango::equals("hello", "hello"));

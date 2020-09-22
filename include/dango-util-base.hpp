@@ -1247,7 +1247,7 @@ dango
               return ret_type::less;
             }
 
-            if constexpr(dango::is_same<ret_type, dango::compare_val_partial>)
+            if constexpr(dango::is_same<ret_type, dango::compare_val_p>)
             {
               if(!(a_lhs > a_rhs))
               {
@@ -1267,7 +1267,7 @@ dango
         }
         else // no <=> operator assume type is strongly ordered
         {
-          using ret_type = dango::compare_val_strong;
+          using ret_type = dango::compare_val_s;
 
           if(a_lhs == a_rhs)
           {
@@ -1313,13 +1313,15 @@ final
     if(dango::in_constexpr_context())
     {
     #ifdef DANGO_USING_GCC
-      return dango::compare_val{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
+      return dango::compare_val_s{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
     #else
       return dango::comparison::strongest(a_lhs <=> a_rhs);
     #endif
     }
-
-    return dango::comparison::strongest(dango::ptr_as_uint(a_lhs) <=> dango::ptr_as_uint(a_rhs));
+    else
+    {
+      return dango::comparison::strongest(dango::ptr_as_uint(a_lhs) <=> dango::ptr_as_uint(a_rhs));
+    }
   }
 
   DANGO_UNCONSTRUCTIBLE(operator_compare)
