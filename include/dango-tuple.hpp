@@ -2,6 +2,7 @@
 #define DANGO_TUPLE_HPP_INCLUDED
 
 #include "dango-util.hpp"
+#include "dango-hash.hpp"
 
 /*** helpers ***/
 
@@ -125,152 +126,6 @@ final
   using type = pack_type;
 
   DANGO_UNCONSTRUCTIBLE(tuple_pack_reverse_help)
-};
-
-/*** clamp ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_pack, dango::usize tp_size, typename... tp_types>
-  struct tuple_pack_clamp_help;
-
-  template
-  <typename... tp_pack, dango::usize tp_size, typename tp_first, typename... tp_next>
-  struct
-  tuple_pack_clamp_help
-  <dango::detail::tuple_pack<tp_pack...>, tp_size, tp_first, tp_next...>;
-  template
-  <typename... tp_pack, typename tp_first, typename... tp_next>
-  struct
-  tuple_pack_clamp_help
-  <dango::detail::tuple_pack<tp_pack...>, dango::usize(0), tp_first, tp_next...>;
-  template
-  <typename... tp_pack>
-  struct
-  tuple_pack_clamp_help
-  <dango::detail::tuple_pack<tp_pack...>, dango::usize(0)>;
-
-  template
-  <dango::usize tp_size, typename... tp_types>
-  requires(tp_size <= sizeof...(tp_types))
-  using tuple_pack_clamp =
-    typename dango::detail::tuple_pack_clamp_help<dango::detail::tuple_pack<>, tp_size, tp_types...>::type;
-}
-
-template
-<typename... tp_pack, dango::usize tp_size, typename tp_first, typename... tp_next>
-struct
-dango::
-detail::
-tuple_pack_clamp_help
-<dango::detail::tuple_pack<tp_pack...>, tp_size, tp_first, tp_next...>
-final
-{
-  using pack_type = dango::detail::tuple_pack<tp_pack...>;
-
-  using type =
-    typename dango::detail::tuple_pack_clamp_help<dango::detail::tuple_pack_append<tp_first, pack_type>, tp_size - dango::usize(1), tp_next...>::type;
-
-  DANGO_UNCONSTRUCTIBLE(tuple_pack_clamp_help)
-};
-
-template
-<typename... tp_pack, typename tp_first, typename... tp_next>
-struct
-dango::
-detail::
-tuple_pack_clamp_help
-<dango::detail::tuple_pack<tp_pack...>, dango::usize(0), tp_first, tp_next...>
-final
-{
-  using pack_type = dango::detail::tuple_pack<tp_pack...>;
-
-  using type = pack_type;
-
-  DANGO_UNCONSTRUCTIBLE(tuple_pack_clamp_help)
-};
-
-template
-<typename... tp_pack>
-struct
-dango::
-detail::
-tuple_pack_clamp_help
-<dango::detail::tuple_pack<tp_pack...>, dango::usize(0)>
-final
-{
-  using pack_type = dango::detail::tuple_pack<tp_pack...>;
-
-  using type = pack_type;
-
-  DANGO_UNCONSTRUCTIBLE(tuple_pack_clamp_help)
-};
-
-/*** tuple_is_comparable ***/
-
-namespace
-dango::detail
-{
-  template
-  <typename tp_pack1, typename tp_pack2>
-  struct tuple_is_comparable_help;
-  template
-  <typename... tp_pack1, typename... tp_pack2>
-  struct
-  tuple_is_comparable_help
-  <dango::detail::tuple_pack<tp_pack1...>, dango::detail::tuple_pack<tp_pack2...>>;
-
-  template
-  <typename tp_pack1, typename tp_pack2>
-  concept tuple_is_comparable =
-    dango::detail::tuple_is_comparable_help<tp_pack1, tp_pack2>::value;
-
-  template
-  <typename tp_pack1, typename tp_pack2>
-  concept tuple_is_noexcept_comparable =
-    dango::detail::tuple_is_comparable<tp_pack1, tp_pack2> &&
-    dango::detail::tuple_is_comparable_help<tp_pack1, tp_pack2>::value_noexcept;
-}
-
-template
-<typename... tp_pack1, typename... tp_pack2>
-struct
-dango::
-detail::
-tuple_is_comparable_help
-<dango::detail::tuple_pack<tp_pack1...>, dango::detail::tuple_pack<tp_pack2...>>
-final
-{
-private:
-  static inline constexpr dango::usize const c_size = dango::min(sizeof...(tp_pack1), sizeof...(tp_pack2));
-
-  using pack_clamped1 = dango::detail::tuple_pack_clamp<c_size, tp_pack1...>;
-  using pack_clamped2 = dango::detail::tuple_pack_clamp<c_size, tp_pack2...>;
-
-  template
-  <typename... tp_clamped1, typename... tp_clamped2>
-  static constexpr auto
-  check
-  (dango::detail::tuple_pack<tp_clamped1...> const, dango::detail::tuple_pack<tp_clamped2...> const)noexcept->bool
-  {
-    return ( ... && dango::is_comparable<tp_clamped1, tp_clamped2>);
-  }
-
-  template
-  <typename... tp_clamped1, typename... tp_clamped2>
-  static constexpr auto
-  check_noexcept
-  (dango::detail::tuple_pack<tp_clamped1...> const, dango::detail::tuple_pack<tp_clamped2...> const)noexcept->bool
-  {
-    return ( ... && dango::is_noexcept_comparable<tp_clamped1, tp_clamped2>);
-  }
-public:
-  static inline constexpr bool const value = check(pack_clamped1{ }, pack_clamped2{ });
-  static inline constexpr bool const value_noexcept = check_noexcept(pack_clamped1{ }, pack_clamped2{ });
-public:
-  DANGO_UNCONSTRUCTIBLE(tuple_is_comparable_help)
 };
 
 /*** tuple constraint ***/
@@ -2126,7 +1981,7 @@ final
   DANGO_UNCONSTRUCTIBLE(operator_get)
 };
 
-/*** equals and compare for tuples ***/
+/*** equals, compare, and hash for tuples ***/
 
 namespace
 dango::custom
@@ -2144,16 +1999,14 @@ dango::custom
 
   template
   <typename... tp_lhs, typename... tp_rhs>
-  requires
-  (
-    dango::detail::tuple_is_comparable
-    <
-      dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model const&, tp_lhs>...>,
-      dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model const&, tp_rhs>...>
-    >
-  )
   struct
   operator_compare<dango::tuple<tp_lhs...>, dango::tuple<tp_rhs...>>;
+
+  template
+  <typename... tp_types>
+  requires(( ... && dango::is_hashable<dango::tuple_get_type<dango::tuple_model const&, tp_types>>))
+  struct
+  operator_hash<dango::tuple<tp_types...>>;
 }
 
 template
@@ -2210,14 +2063,6 @@ final
 
 template
 <typename... tp_lhs, typename... tp_rhs>
-requires
-(
-  dango::detail::tuple_is_comparable
-  <
-    dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model const&, tp_lhs>...>,
-    dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model const&, tp_rhs>...>
-  >
-)
 struct
 dango::
 custom::
@@ -2228,23 +2073,20 @@ private:
   using tuple_lhs = dango::tuple<tp_lhs...>;
   using tuple_rhs = dango::tuple<tp_rhs...>;
 
-  static inline constexpr bool const c_noexcept =
-    dango::detail::tuple_is_noexcept_comparable
-    <
-      dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model const&, tp_lhs>...>,
-      dango::detail::tuple_pack<dango::tuple_get_type<dango::tuple_model const&, tp_rhs>...>
-    >;
+  static inline constexpr auto const c_size = dango::min(sizeof...(tp_lhs), sizeof...(tp_rhs));
 
   template
   <dango::usize... tp_indices>
+  requires(requires{ { ( ... , void(dango::compare(dango::get<tp_indices>(dango::declval<tuple_lhs const&>()), dango::get<tp_indices>(dango::declval<tuple_rhs const&>())))) }; })
   static constexpr auto
   compare_help
-  (dango::index_seq<tp_indices...> const, tuple_lhs const& a_lhs, tuple_rhs const& a_rhs)noexcept(c_noexcept)->auto
+  (dango::index_seq<tp_indices...> const, tuple_lhs const& a_lhs, tuple_rhs const& a_rhs)
+  noexcept(requires{ { ( ... , void(dango::compare(dango::get<tp_indices>(dango::declval<tuple_lhs const&>()), dango::get<tp_indices>(dango::declval<tuple_rhs const&>())))) }noexcept; })->auto
   {
     using ret_type =
       dango::comparison::common_type<decltype(dango::compare(dango::get<tp_indices>(a_lhs), dango::get<tp_indices>(a_rhs)))...>;
 
-    ret_type a_ret{ 0 };
+    ret_type a_ret{ dango::ssize(0) };
 
     [[maybe_unused]] bool const a_temp =
       ( ... && (a_ret = ret_type{ dango::compare(dango::get<tp_indices>(a_lhs), dango::get<tp_indices>(a_rhs)) }).is_eq());
@@ -2254,10 +2096,10 @@ private:
 public:
   static constexpr auto
   compare
-  (tuple_lhs const& a_lhs, tuple_rhs const& a_rhs)noexcept(c_noexcept)->auto
+  (tuple_lhs const& a_lhs, tuple_rhs const& a_rhs)
+  noexcept(requires{ { compare_help(dango::make_index_seq<c_size>{ }, a_lhs, a_rhs) }noexcept; })->auto
+  requires(requires{ { compare_help(dango::make_index_seq<c_size>{ }, a_lhs, a_rhs) }; })
   {
-    constexpr auto const c_size = dango::min(sizeof...(tp_lhs), sizeof...(tp_rhs));
-
     auto a_ret = compare_help(dango::make_index_seq<c_size>{ }, a_lhs, a_rhs);
 
     using ret_type = decltype(a_ret);
@@ -2271,6 +2113,40 @@ public:
   }
 
   DANGO_UNCONSTRUCTIBLE(operator_compare)
+};
+
+template
+<typename... tp_types>
+requires(( ... && dango::is_hashable<dango::tuple_get_type<dango::tuple_model const&, tp_types>>))
+struct
+dango::
+custom::
+operator_hash<dango::tuple<tp_types...>>
+final
+{
+private:
+  using tuple_type = dango::tuple<tp_types...>;
+
+  static inline constexpr bool const c_noexcept =
+    ( ... && dango::has_noexcept_hash<dango::tuple_get_type<dango::tuple_model const&, tp_types>>);
+
+  template
+  <dango::usize... tp_indices>
+  static constexpr auto
+  hash_help
+  (dango::index_seq<tp_indices...> const, tuple_type const& a_tup)noexcept(c_noexcept)->dango::hash_val
+  {
+    return dango::multi_hash(dango::get<tp_indices>(a_tup)...);
+  }
+public:
+  static constexpr auto
+  hash
+  (tuple_type const& a_tup)noexcept(c_noexcept)->dango::hash_val
+  {
+    return hash_help(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
+  }
+
+  DANGO_UNCONSTRUCTIBLE(operator_hash)
 };
 
 /*** structured bindings ***/

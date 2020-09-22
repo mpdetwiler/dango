@@ -27,6 +27,7 @@ public:
 public:
   constexpr auto as_int()const noexcept->value_type{ return m_value; }
   constexpr auto as_int_mod(value_type const a_mod)const noexcept->value_type;
+  constexpr void combine_with(dango::hash_val const&)noexcept;
 private:
   value_type m_value;
 };
@@ -68,13 +69,36 @@ as_int_mod
   return m_value % a_mod;
 }
 
+constexpr void
+dango::
+hash_val::
+combine_with
+(dango::hash_val const& a_val)noexcept
+{
+  auto const a_ls = value_type(as_int() << value_type(6));
+  auto const a_rs = value_type(as_int() >> value_type(2));
+
+  if constexpr(dango::bit_width<value_type> <= dango::usize(32))
+  {
+    constexpr auto const c_num = dango::uint(0x9E'37'79'B9LU);
+
+    m_value ^= value_type(a_val.as_int() + c_num + a_ls + a_rs);
+  }
+  else
+  {
+    constexpr auto const c_num = dango::ulong(0x9E'37'79'B9'7F'4A'7C'16LLU);
+
+    m_value ^= value_type(a_val.as_int() + c_num + a_ls + a_rs);
+  }
+}
+
 /*** hash ***/
 
 namespace
 dango::custom
 {
   template
-  <typename tp_type DANGO_GCC_BUG_81043_WORKAROUND>
+  <typename tp_type>
   struct operator_hash;
 }
 
@@ -143,74 +167,133 @@ dango
 {
   template
   <typename tp_type>
-  concept is_hashable =
-    dango::is_equatable<tp_type, tp_type> &&
+  concept has_hash =
+    dango::is_referenceable_ignore_ref<tp_type> &&
     requires(tp_type a_arg)
     { { dango::detail::hash_help(dango::detail::hash_help_prio{ }, dango::forward<tp_type>(a_arg)) }->dango::is_same<dango::hash_val>; };
 
   template
   <typename tp_type>
-  concept is_noexcept_hashable =
-    dango::is_hashable<tp_type> &&
-    dango::is_noexcept_equatable<tp_type, tp_type> &&
+  concept has_noexcept_hash =
+    dango::has_hash<tp_type> &&
     requires(tp_type a_arg)
     { { dango::detail::hash_help(dango::detail::hash_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept; };
+
+  template
+  <typename tp_type>
+  concept is_hashable =
+    dango::has_hash<tp_type> &&
+    dango::is_equatable<tp_type>;
+
+  template
+  <typename tp_type>
+  concept is_noexcept_hashable =
+    dango::is_hashable<tp_type> &&
+    dango::has_noexcept_hash<tp_type> &&
+    dango::is_noexcept_equatable<tp_type>;
 
   inline constexpr auto const hash =
     []<typename tp_arg>
     (tp_arg const& a_arg)constexpr
-    noexcept(dango::is_noexcept_hashable<tp_arg const&>)->dango::hash_val
+    noexcept(dango::has_noexcept_hash<tp_arg const&>)->dango::hash_val
     requires(dango::is_hashable<tp_arg const&>)
     {
       return dango::detail::hash_help(dango::detail::hash_help_prio{ }, a_arg);
     };
-}
 
-// TODO placeholder implementations
+  inline constexpr auto const multi_hash =
+    []<typename... tp_args>
+    (tp_args const&... a_args)constexpr
+    noexcept(( ... && dango::has_noexcept_hash<tp_args const&>))->dango::hash_val
+    requires(( ... && dango::is_hashable<tp_args const&>))
+    {
+      dango::hash_val a_ret{ dango::usize(0) };
+
+      ( ... , void(a_ret.combine_with(dango::hash(a_args))));
+
+      return a_ret;
+    };
+}
 
 namespace
 dango::custom
 {
-  template
-  <dango::is_integral tp_type>
+  template<>
   struct
-  operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_type)>;
+  operator_hash<bool>
+  final
+  {
+    static constexpr auto
+    hash
+    (bool const a_val)noexcept->dango::hash_val
+    {
+      return dango::hash_val{ dango::usize(a_val) };
+    }
+  };
 
-  template
-  <dango::is_float tp_type>
+#define DANGO_DEFINE_INTEGRAL_HASH(type) \
+  template<> struct operator_hash<type> final \
+  { \
+    using uint_type = dango::make_uint<type>; \
+    static constexpr auto \
+    hash(type const a_val)noexcept->dango::hash_val \
+    { return dango::hash_val{ uint_type(a_val) }; } \
+    DANGO_UNCONSTRUCTIBLE(operator_hash) \
+  };
+
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::u_char)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::u_short)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::u_int)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::u_long)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::u_longlong)
+
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::s_char)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::s_short)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::s_int)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::s_long)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::integer::s_longlong)
+
+  DANGO_DEFINE_INTEGRAL_HASH(char)
+  DANGO_DEFINE_INTEGRAL_HASH(wchar_t)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::bchar)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::wchar)
+  DANGO_DEFINE_INTEGRAL_HASH(dango::dchar)
+
+#undef DANGO_DEFINE_INTEGRAL_HASH
+
+  template<>
   struct
-  operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_type)>;
+  operator_hash<float>;
+
+  template<>
+  struct
+  operator_hash<double>;
+
+  template<>
+  struct
+  operator_hash<dango::real>;
 
   template
   <typename tp_type>
   struct
   operator_hash<tp_type*>;
+
+  template
+  <typename tp_ret, typename... tp_args, bool tp_noexcept>
+  struct
+  operator_hash<tp_ret(*)(tp_args...)noexcept(tp_noexcept)>;
+
+  template
+  <typename tp_type, dango::usize tp_size>
+  struct
+  operator_hash<tp_type[tp_size]>;
 }
 
-template
-<dango::is_integral tp_type>
+template<>
 struct
 dango::
 custom::
-operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_type)>
-final
-{
-  static constexpr auto
-  hash
-  (tp_type const a_val)noexcept->dango::hash_val
-  {
-    return dango::hash_val{ static_cast<dango::make_uint<tp_type>>(a_val) };
-  }
-
-  DANGO_UNCONSTRUCTIBLE(operator_hash)
-};
-
-template
-<dango::is_float tp_type>
-struct
-dango::
-custom::
-operator_hash<tp_type DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_type)>
+operator_hash<float>
 final
 {
   static auto
@@ -231,6 +314,16 @@ final
     return dango::hash_val{ a_ret };
   }
 
+  DANGO_UNCONSTRUCTIBLE(operator_hash)
+};
+
+template<>
+struct
+dango::
+custom::
+operator_hash<double>
+final
+{
   static auto
   hash
   (double const a_val)noexcept->dango::hash_val
@@ -249,6 +342,16 @@ final
     return dango::hash_val{ a_ret };
   }
 
+  DANGO_UNCONSTRUCTIBLE(operator_hash)
+};
+
+template<>
+struct
+dango::
+custom::
+operator_hash<dango::real>
+final
+{
   static auto
   hash
   (dango::real const a_val)noexcept->dango::hash_val
@@ -285,6 +388,60 @@ final
   (void const volatile* const a_val)noexcept->dango::hash_val
   {
     return dango::hash_val{ dango::ptr_as_uint(a_val) };
+  }
+
+  DANGO_UNCONSTRUCTIBLE(operator_hash)
+};
+
+template
+<typename tp_ret, typename... tp_args, bool tp_noexcept>
+struct
+dango::
+custom::
+operator_hash<tp_ret(*)(tp_args...)noexcept(tp_noexcept)>
+{
+  using ptr_type = tp_ret(*)(tp_args...)noexcept(tp_noexcept);
+
+  static auto
+  hash
+  (ptr_type const a_val)noexcept->dango::hash_val
+  {
+    dango::uptr a_ret{ };
+
+    static_assert(sizeof(a_val) == sizeof(a_ret));
+
+    dango::mem_copy(&a_ret, &a_val, sizeof(a_val));
+
+    return dango::hash_val{ a_ret };
+  }
+
+  DANGO_UNCONSTRUCTIBLE(operator_hash)
+};
+
+template
+<typename tp_elem, dango::usize tp_size>
+struct
+dango::
+custom::
+operator_hash<tp_elem[tp_size]>
+final
+{
+  template
+  <dango::is_same_ignore_cv<tp_elem> tp_arg>
+  requires(dango::is_hashable<tp_arg const&>)
+  static constexpr auto
+  hash
+  (tp_arg const(& a_vals)[tp_size])
+  noexcept(dango::has_noexcept_hash<tp_arg const&>)->dango::hash_val
+  {
+    dango::hash_val a_ret{ dango::usize(0) };
+
+    for(auto const& a_val : a_vals)
+    {
+      a_ret.combine_with(dango::hash(a_val));
+    }
+
+    return a_ret;
   }
 
   DANGO_UNCONSTRUCTIBLE(operator_hash)

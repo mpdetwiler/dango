@@ -531,24 +531,24 @@ dango::custom
 {
   template
   <typename tp_lhs, typename tp_rhs, dango::usize tp_size>
-  requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
   struct
-  operator_swap
-  <tp_lhs[tp_size], tp_rhs[tp_size]>;
+  operator_swap<tp_lhs[tp_size], tp_rhs[tp_size]>;
 }
 
 template
 <typename tp_lhs, typename tp_rhs, dango::usize tp_size>
-requires(dango::is_swappable<tp_lhs&, tp_rhs&>)
 struct
 dango::
 custom::
-operator_swap
-<tp_lhs[tp_size], tp_rhs[tp_size]>
+operator_swap<tp_lhs[tp_size], tp_rhs[tp_size]>
 final
 {
+  template
+  <dango::is_same_ignore_cv<tp_lhs> tp_arg1, dango::is_same_ignore_cv<tp_rhs> tp_arg2>
+  requires(dango::is_swappable<tp_arg1&, tp_arg2&>)
   static constexpr void
-  swap(tp_lhs(& a_lhs)[tp_size], tp_rhs(& a_rhs)[tp_size])noexcept(dango::is_noexcept_swappable<tp_lhs&, tp_rhs&>)
+  swap(tp_arg1(& a_lhs)[tp_size], tp_arg2(& a_rhs)[tp_size])
+  noexcept(dango::is_noexcept_swappable<tp_arg1&, tp_arg2&>)
   {
     for(auto a_i = dango::usize(0); a_i < tp_size; ++a_i)
     {
@@ -926,24 +926,25 @@ dango::custom
 {
   template
   <typename tp_lhs, dango::usize tp_lsz, typename tp_rhs, dango::usize tp_rsz>
-  requires(dango::is_equatable<tp_lhs const&, tp_rhs const&>)
   struct
   operator_equals<tp_lhs[tp_lsz], tp_rhs[tp_rsz]>;
 }
 
 template
 <typename tp_lhs, dango::usize tp_lsz, typename tp_rhs, dango::usize tp_rsz>
-requires(dango::is_equatable<tp_lhs const&, tp_rhs const&>)
 struct
 dango::
 custom::
 operator_equals<tp_lhs[tp_lsz], tp_rhs[tp_rsz]>
 final
 {
+  template
+  <dango::is_same_ignore_cv<tp_lhs> tp_arg1, dango::is_same_ignore_cv<tp_rhs> tp_arg2>
+  requires(dango::is_equatable<tp_arg1 const&, tp_arg2 const&>)
   static constexpr auto
   equals
-  (tp_lhs const(& a_lhs)[tp_lsz], tp_rhs const(& a_rhs)[tp_rsz])
-  noexcept(dango::is_noexcept_equatable<tp_lhs const&, tp_rhs const&>)->bool
+  (tp_arg1 const(& a_lhs)[tp_lsz], tp_arg2 const(& a_rhs)[tp_rsz])
+  noexcept(dango::is_noexcept_equatable<tp_arg1 const&, tp_arg2 const&>)->bool
   {
     if constexpr(tp_lsz != tp_rsz)
     {
@@ -1554,14 +1555,12 @@ dango::custom
 {
   template
   <typename tp_lhs, dango::usize tp_lsz, typename tp_rhs, dango::usize tp_rsz>
-  requires(dango::is_comparable<tp_lhs const&, tp_rhs const&>)
   struct
   operator_compare<tp_lhs[tp_lsz], tp_rhs[tp_rsz]>;
 }
 
 template
 <typename tp_lhs, dango::usize tp_lsz, typename tp_rhs, dango::usize tp_rsz>
-requires(dango::is_comparable<tp_lhs const&, tp_rhs const&>)
 struct
 dango::
 custom::
@@ -1571,10 +1570,13 @@ final
   using ret_type =
     decltype(dango::compare(dango::declval<tp_lhs const&>(), dango::declval<tp_rhs const&>()));
 
+  template
+  <dango::is_same_ignore_cv<tp_lhs> tp_arg1, dango::is_same_ignore_cv<tp_rhs> tp_arg2>
+  requires(dango::is_comparable<tp_arg1 const&, tp_arg2 const&>)
   static constexpr auto
   compare
-  (tp_lhs const(& a_lhs)[tp_lsz], tp_rhs const(& a_rhs)[tp_rsz])
-  noexcept(dango::is_noexcept_comparable<tp_lhs const&, tp_rhs const&>)->ret_type
+  (tp_arg1 const(& a_lhs)[tp_lsz], tp_arg2 const(& a_rhs)[tp_rsz])
+  noexcept(dango::is_noexcept_comparable<tp_arg1 const&, tp_arg2 const&>)->ret_type
   {
     constexpr auto const c_size = dango::min(tp_lsz, tp_rsz);
 

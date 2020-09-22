@@ -36,9 +36,10 @@ detail::
 compare_val_base:
 public tp_cat
 {
+public:
+  using int_type = dango::ssize;
 protected:
   using super_type = tp_cat;
-  using int_type = dango::ssize;
   using category_strong = std::strong_ordering;
   using category_weak = std::weak_ordering;
   using category_partial = std::partial_ordering;
@@ -66,7 +67,7 @@ protected:
 protected:
   template
   <dango::is_sint tp_int = int_type>
-  constexpr auto as_integer()const noexcept->int_type{ return tp_int(*this > 0) - tp_int(*this < 0); }
+  constexpr auto as_integer()const noexcept->int_type{ return tp_int(is_gt()) - tp_int(is_lt()); }
 public:
   constexpr compare_val_base(compare_val_base const&)noexcept = default;
   constexpr compare_val_base(compare_val_base&&)noexcept = default;
@@ -123,10 +124,10 @@ public:
   constexpr auto mirror()const noexcept->compare_val_s{ return compare_val_s{ -(as_integer()) }; }
 };
 
-inline constexpr dango::compare_val_s const dango::compare_val_s::equal = compare_val_s{ category_type::equal };
+inline constexpr dango::compare_val_s const dango::compare_val_s::equal      = compare_val_s{ category_type::equal };
 inline constexpr dango::compare_val_s const dango::compare_val_s::equivalent = compare_val_s{ category_type::equivalent };
-inline constexpr dango::compare_val_s const dango::compare_val_s::less = compare_val_s{ category_type::less };
-inline constexpr dango::compare_val_s const dango::compare_val_s::greater = compare_val_s{ category_type::greater };
+inline constexpr dango::compare_val_s const dango::compare_val_s::less       = compare_val_s{ category_type::less };
+inline constexpr dango::compare_val_s const dango::compare_val_s::greater    = compare_val_s{ category_type::greater };
 
 class
 dango::
@@ -168,8 +169,8 @@ public:
 };
 
 inline constexpr dango::compare_val_w const dango::compare_val_w::equivalent = compare_val_w{ category_type::equivalent };
-inline constexpr dango::compare_val_w const dango::compare_val_w::less = compare_val_w{ category_type::less };
-inline constexpr dango::compare_val_w const dango::compare_val_w::greater = compare_val_w{ category_type::greater };
+inline constexpr dango::compare_val_w const dango::compare_val_w::less       = compare_val_w{ category_type::less };
+inline constexpr dango::compare_val_w const dango::compare_val_w::greater    = compare_val_w{ category_type::greater };
 
 class
 dango::
@@ -206,9 +207,9 @@ public:
 };
 
 inline constexpr dango::compare_val_p const dango::compare_val_p::equivalent = compare_val_p{ category_type::equivalent };
-inline constexpr dango::compare_val_p const dango::compare_val_p::less = compare_val_p{ category_type::less };
-inline constexpr dango::compare_val_p const dango::compare_val_p::greater = compare_val_p{ category_type::greater };
-inline constexpr dango::compare_val_p const dango::compare_val_p::unordered = compare_val_p{ category_type::unordered };
+inline constexpr dango::compare_val_p const dango::compare_val_p::less       = compare_val_p{ category_type::less };
+inline constexpr dango::compare_val_p const dango::compare_val_p::greater    = compare_val_p{ category_type::greater };
+inline constexpr dango::compare_val_p const dango::compare_val_p::unordered  = compare_val_p{ category_type::unordered };
 
 constexpr auto
 dango::
@@ -335,11 +336,11 @@ dango::comparison
   using common_type =
     dango::common_type<dango::compare_val_s, dango::remove_cv<tp_types>...>;
 
-  constexpr auto is_eq  (dango::compare_val_p const a_val)noexcept->bool{ return   a_val.is_eq(); }
-  constexpr auto is_neq (dango::compare_val_p const a_val)noexcept->bool{ return  a_val.is_neq(); }
-  constexpr auto is_lt  (dango::compare_val_p const a_val)noexcept->bool{ return   a_val.is_lt(); }
+  constexpr auto is_eq  (dango::compare_val_p const a_val)noexcept->bool{ return a_val.is_eq();   }
+  constexpr auto is_neq (dango::compare_val_p const a_val)noexcept->bool{ return a_val.is_neq();  }
+  constexpr auto is_lt  (dango::compare_val_p const a_val)noexcept->bool{ return a_val.is_lt();   }
   constexpr auto is_lteq(dango::compare_val_p const a_val)noexcept->bool{ return a_val.is_lteq(); }
-  constexpr auto is_gt  (dango::compare_val_p const a_val)noexcept->bool{ return   a_val.is_gt(); }
+  constexpr auto is_gt  (dango::compare_val_p const a_val)noexcept->bool{ return a_val.is_gt();   }
   constexpr auto is_gteq(dango::compare_val_p const a_val)noexcept->bool{ return a_val.is_gteq(); }
 
   constexpr auto mirror(dango::compare_val_s const a_val)noexcept->auto{ return a_val.mirror(); }
