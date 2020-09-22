@@ -17,18 +17,18 @@ hash_val
 final
 {
 public:
-  using int_type = dango::usize;
+  using value_type = dango::usize;
 public:
   template
   <dango::is_uint tp_uint>
   constexpr hash_val(tp_uint)noexcept;
   DANGO_ALL_DEFAULT_CONSTEXPR_NOEXCEPT(hash_val, true)
-  explicit constexpr operator int_type()const noexcept{ return m_value; }
+  explicit constexpr operator value_type()const noexcept{ return m_value; }
 public:
-  constexpr auto as_int()const noexcept->int_type{ return m_value; }
-  constexpr auto as_int_mod(dango::usize const a_mod)const noexcept->int_type;
+  constexpr auto as_int()const noexcept->value_type{ return m_value; }
+  constexpr auto as_int_mod(value_type const a_mod)const noexcept->value_type;
 private:
-  int_type m_value;
+  value_type m_value;
 };
 
 template
@@ -38,10 +38,10 @@ dango::
 hash_val::
 hash_val
 (tp_uint const a_val)noexcept:
-m_value{ int_type(a_val) }
+m_value{ value_type(a_val) }
 {
   constexpr auto const c_arg_width = dango::bit_width<tp_uint>;
-  constexpr auto const c_int_width = dango::bit_width<int_type>;
+  constexpr auto const c_int_width = dango::bit_width<value_type>;
 
   if constexpr(c_arg_width > c_int_width)
   {
@@ -58,9 +58,9 @@ constexpr auto
 dango::
 hash_val::
 as_int_mod
-(dango::usize const a_mod)const noexcept->int_type
+(value_type const a_mod)const noexcept->value_type
 {
-  if(a_mod == int_type(0))
+  if(a_mod == value_type(0))
   {
     return m_value;
   }
@@ -86,26 +86,26 @@ dango
   concept has_operator_hash_struct =
     dango::is_object_ignore_ref<tp_type> &&
     requires(tp_type a_arg)
-    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }->dango::is_convertible_ret<dango::hash_val>; };
+    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }->dango::is_noexcept_convertible_ret<dango::hash_val>; };
 
   template
   <typename tp_type>
   concept has_noexcept_operator_hash_struct =
     dango::has_operator_hash_struct<tp_type> &&
     requires(tp_type a_arg)
-    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }noexcept->dango::is_noexcept_convertible_ret<dango::hash_val>; };
+    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }noexcept; };
 
   template
   <typename tp_type>
   concept has_operator_hash_method =
     dango::is_class_or_union_ignore_ref<tp_type> &&
-    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }->dango::is_convertible_ret<dango::hash_val>; };
+    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }->dango::is_noexcept_convertible_ret<dango::hash_val>; };
 
   template
   <typename tp_type>
   concept has_noexcept_operator_hash_method =
     dango::has_operator_hash_method<tp_type> &&
-    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }noexcept->dango::is_noexcept_convertible_ret<dango::hash_val>; };
+    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }noexcept; };
 }
 
 namespace
@@ -146,7 +146,7 @@ dango
   concept is_hashable =
     dango::is_equatable<tp_type, tp_type> &&
     requires(tp_type a_arg)
-    { { dango::detail::hash_help(dango::detail::hash_help_prio{ }, dango::forward<tp_type>(a_arg)) }->dango::is_convertible_ret<dango::hash_val>; };
+    { { dango::detail::hash_help(dango::detail::hash_help_prio{ }, dango::forward<tp_type>(a_arg)) }->dango::is_same<dango::hash_val>; };
 
   template
   <typename tp_type>
@@ -154,7 +154,7 @@ dango
     dango::is_hashable<tp_type> &&
     dango::is_noexcept_equatable<tp_type, tp_type> &&
     requires(tp_type a_arg)
-    { { dango::detail::hash_help(dango::detail::hash_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept->dango::is_noexcept_convertible_ret<dango::hash_val>; };
+    { { dango::detail::hash_help(dango::detail::hash_help_prio{ }, dango::forward<tp_type>(a_arg)) }noexcept; };
 
   inline constexpr auto const hash =
     []<typename tp_arg>

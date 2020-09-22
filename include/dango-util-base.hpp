@@ -1130,7 +1130,7 @@ dango::detail
     {
       {
         dango::detail::compare_help(dango::detail::compare_help_prio{ }, dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs))
-      }->dango::comparison::is_convertible;
+      }->dango::is_compare_val;
     };
 
   template
@@ -1217,11 +1217,6 @@ dango
     (!dango::detail::has_compare_help<tp_lhs, tp_rhs> && dango::has_noexcept_comparison_ops<tp_lhs, tp_rhs>));
 
 // GCC <=> is currently bugged in constexpr (GCC 10.2.1). the workaround is to avoid actually evaluating <=> expressions when in constexpr.
-// this means it will have incorrect behavior at compile time for partially ordered types (float types for example). shouldnt affect strongly orderd types.
-// for weakly ordered types it depends. it will still behave correctly at runtime for all types though. also note: if you have a type whose boolean
-// comparison operators are implemented in terms of <=> (they are defaulted for example) then this workaround will fail (probably, havent tested). if you
-// write a .dango_operator_compare(...) or dango::custom::operator_compare<..., ...> for a type and use the <=> operator in its implementation, the workaround
-// will fail, so use dango::compare(..., ...) instead of ... <=> ...
 
   inline constexpr auto compare =
     []<typename tp_lhs, typename tp_rhs>
@@ -1237,19 +1232,54 @@ dango
       {
         if constexpr(dango::has_spaceship_op<tp_lhs const&, tp_rhs const&>)
         {
-        #ifdef DANGO_USING_GCC
+#ifdef DANGO_USING_GCC
           if(dango::in_constexpr_context())
           {
             using ret_type = decltype(dango::comparison::strongest(a_lhs <=> a_rhs));
 
-            return ret_type{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
+            if(a_lhs == a_rhs)
+            {
+              return ret_type::equivalent;
+            }
+
+            if(a_lhs < a_rhs)
+            {
+              return ret_type::less;
+            }
+
+            if constexpr(dango::is_same<ret_type, dango::compare_val_partial>)
+            {
+              if(!(a_lhs > a_rhs))
+              {
+                return ret_type::unordered;
+              }
+            }
+
+            return ret_type::greater;
           }
-        #endif
+          else
+          {
+            return dango::comparison::strongest(a_lhs <=> a_rhs);
+          }
+#else // !DANGO_USING_GCC
           return dango::comparison::strongest(a_lhs <=> a_rhs);
+#endif // DANGO_USING_GCC
         }
-        else
+        else // no <=> operator assume type is strongly ordered
         {
-          return dango::compare_val{ dango::sint(a_lhs > a_rhs) - dango::sint(a_lhs < a_rhs) };
+          using ret_type = dango::compare_val_strong;
+
+          if(a_lhs == a_rhs)
+          {
+            return ret_type::equal;
+          }
+
+          if(a_lhs < a_rhs)
+          {
+            return ret_type::less;
+          }
+
+          return ret_type::greater;
         }
       }
     };
