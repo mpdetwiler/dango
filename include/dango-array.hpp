@@ -108,6 +108,19 @@ public:
 };
 
 namespace
+dango
+{
+  template
+  <typename... tp_args>
+  requires(requires{ typename dango::common_type<tp_args...>; })
+  array(tp_args&&...)->array<dango::common_type<tp_args...>, sizeof...(tp_args)>;
+
+  template
+  <typename tp_elem, dango::usize tp_size>
+  array(tp_elem(&)[tp_size])->array<tp_elem, tp_size>;
+}
+
+namespace
 dango::custom
 {
   template
