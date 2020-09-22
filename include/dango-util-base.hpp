@@ -944,7 +944,7 @@ final
   static constexpr auto
   equals
   (tp_arg1 const(& a_lhs)[tp_lsz], tp_arg2 const(& a_rhs)[tp_rsz])
-  noexcept(dango::is_noexcept_equatable<tp_arg1 const&, tp_arg2 const&>)->bool
+  noexcept((tp_lsz != tp_rsz) || dango::is_noexcept_equatable<tp_arg1 const&, tp_arg2 const&>)->bool
   {
     if constexpr(tp_lsz != tp_rsz)
     {
