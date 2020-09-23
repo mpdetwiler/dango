@@ -55,6 +55,11 @@ static_assert(dango::tuple_get<3>("hello") == 'l');
 static_assert(dango::tuple_get<4>("hello") == 'o');
 static_assert(dango::tuple_get<5>("hello") == '\0');
 
+static_assert(dango::tuple_size<int[4]> == 4);
+static_assert(dango::is_same<dango::tuple_elem<0, int[4]>, int>);
+static_assert(dango::is_same<dango::tuple_elem<1, int const[4]>, int const>);
+static_assert(dango::is_tuple_like<int[4]>);
+
 namespace ns
 {
   struct

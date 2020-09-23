@@ -1,5 +1,6 @@
 #include "dango-tuple.hpp"
 #include "dango-assert.hpp"
+#include "dango-test-print.hpp"
 
 namespace
 {
@@ -77,6 +78,9 @@ DANGO_UNIT_TEST_BEGIN(tuple_swap_test)
 
   auto const t1 = dango::tie_as_tuple(x, y, z);
   auto const t2 = dango::tie_as_tuple(a, b, c);
+
+  test_print("%llu\n", dango::integer::u_longlong(dango::hash(t1).as_int()));
+  test_print("%llu\n", dango::integer::u_longlong(dango::hash(t2).as_int()));
 
   dango_assert_terminate(dango::tuple_get<0>(t1) == 5);
   dango_assert_terminate(dango::tuple_get<1>(t1) == 7);

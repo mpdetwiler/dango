@@ -17,6 +17,20 @@ static_assert(dango::array{ 1, 2, 3L, 4u } < dango::array{ 1, 2, 4 });
 static_assert(dango::array{ "hello" }.size() == 6);
 static_assert(sizeof(decltype(dango::array{ "hello" })) == 6);
 
+static_assert( dango::tuple_size<dango::array<int, 0>> == 0);
+static_assert(!dango::has_tuple_elem<dango::array<int, 0>, 0>);
+static_assert(!dango::has_tuple_get<dango::array<int, 0>, 0>);
+static_assert( dango::is_tuple_like<dango::array<int, 0>>);
+
+static_assert(dango::tuple_size<dango::array<int, 4>> == 4);
+static_assert(dango::has_tuple_elem<dango::array<int, 4>, 0>);
+static_assert(dango::has_tuple_get<dango::array<int, 4>, 0>);
+static_assert(dango::is_tuple_like<dango::array<int, 4>>);
+static_assert(dango::is_same<dango::tuple_elem<0, dango::array<int, 4>>, int>);
+static_assert(dango::is_same<dango::tuple_elem<0, dango::array<int, 4> const>, int const>);
+static_assert(dango::is_same<dango::tuple_elem<0, dango::array<int volatile, 4> const>, int const volatile>);
+static_assert(dango::is_same<typename std::tuple_element<0, dango::array<int, 4> const>::type, int const>);
+
 namespace
 {
 
