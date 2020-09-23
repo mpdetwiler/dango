@@ -48,12 +48,12 @@ static_assert(dango::max(16.0, 32.0) == 32.0);
 static_assert(dango::min(5, 4, 3, 2, 1, 1, 1, 2, 3, 4, 5) == 1);
 static_assert(dango::max(1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1) == 5);
 
-static_assert(dango::get<0>("hello") == 'h');
-static_assert(dango::get<1>("hello") == 'e');
-static_assert(dango::get<2>("hello") == 'l');
-static_assert(dango::get<3>("hello") == 'l');
-static_assert(dango::get<4>("hello") == 'o');
-static_assert(dango::get<5>("hello") == '\0');
+static_assert(dango::tuple_get<0>("hello") == 'h');
+static_assert(dango::tuple_get<1>("hello") == 'e');
+static_assert(dango::tuple_get<2>("hello") == 'l');
+static_assert(dango::tuple_get<3>("hello") == 'l');
+static_assert(dango::tuple_get<4>("hello") == 'o');
+static_assert(dango::tuple_get<5>("hello") == '\0');
 
 namespace ns
 {

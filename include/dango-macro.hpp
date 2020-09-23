@@ -153,12 +153,16 @@ static_assert(false, u8"dango requires GCC or clang to compile");
   using dango::operators::operator >=  ; \
   using dango::operators::operator <=> ;
 
+#define DANGO_USING_STRUCTURED_BINDING_OPERATORS \
+  using dango::operators::get;
+
 #define DANGO_USING_RANGE_BASED_FOR_OPERATORS \
   using dango::operators::begin;              \
   using dango::operators::end;
 
-#define DANGO_USING_ALL_OPERATORS       \
-  DANGO_USING_COMPARISON_OPERATORS      \
+#define DANGO_USING_ALL_OPERATORS          \
+  DANGO_USING_COMPARISON_OPERATORS         \
+  DANGO_USING_STRUCTURED_BINDING_OPERATORS \
   DANGO_USING_RANGE_BASED_FOR_OPERATORS
 
 /*** DANGO_UNIT_TEST_BEGIN DANGO_UNIT_TEST_END (include dango-assert.hpp before use) ***/

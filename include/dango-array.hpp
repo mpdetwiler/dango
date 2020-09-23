@@ -150,7 +150,7 @@ dango::custom
   template
   <typename tp_elem, dango::usize tp_size>
   struct
-  operator_get<dango::array<tp_elem, tp_size>>;
+  operator_tuple<dango::array<tp_elem, tp_size>>;
 
   template
   <typename tp_elem, dango::usize tp_size>
@@ -296,22 +296,29 @@ template
 struct
 dango::
 custom::
-operator_get<dango::array<tp_elem, tp_size>>
+operator_tuple<dango::array<tp_elem, tp_size>>
 final
 {
   using array_type = dango::array<tp_elem, tp_size>;
 
+  static inline constexpr auto const size = tp_size;
+
   template
-  <dango::usize tp_index, dango::is_same_ignore_cvref<array_type> tp_arg>
-  requires(tp_index < tp_size)
+  <dango::usize tp_index, dango::is_same_ignore_cv<array_type> tp_array>
+  requires(tp_index < size)
+  using elem_type = dango::copy_cv<tp_array, tp_elem>;
+
+  template
+  <dango::usize tp_index, dango::is_same_ignore_cvref<array_type> tp_array>
+  requires(tp_index < size)
   static constexpr auto
   get
-  (tp_arg&& a_array)noexcept->decltype(auto)
+  (tp_array&& a_array)noexcept->decltype(auto)
   {
-    return dango::forward<tp_arg>(a_array)[tp_index];
+    return dango::forward<tp_array>(a_array)[tp_index];
   }
 
-  DANGO_UNCONSTRUCTIBLE(operator_get)
+  DANGO_UNCONSTRUCTIBLE(operator_tuple)
 };
 
 template

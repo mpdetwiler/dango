@@ -44,6 +44,23 @@ priority_tag<dango::uint(0)>
   DANGO_TAG_TYPE(priority_tag)
 };
 
+/*** type_tag ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  struct
+  type_tag
+  final
+  {
+    using type = tp_type;
+
+    DANGO_TAG_TYPE(type_tag)
+  };
+}
+
 /*** type_identity ***/
 
 namespace

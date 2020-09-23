@@ -498,7 +498,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && dango::is_ref<value_type>)
   constexpr auto
-  get()const noexcept->value_type
+  at()const noexcept->value_type
   {
     return dango::forward<value_type>(m_value);
   }
@@ -507,7 +507,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
-  get()& noexcept->value_type&
+  at()& noexcept->value_type&
   {
     return m_value;
   }
@@ -516,7 +516,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
-  get()&& noexcept->value_type&&
+  at()&& noexcept->value_type&&
   {
     return dango::move(m_value);
   }
@@ -525,7 +525,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
-  get()const& noexcept->value_type const&
+  at()const& noexcept->value_type const&
   {
     return m_value;
   }
@@ -534,7 +534,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
-  get()const&& noexcept->value_type const&&
+  at()const&& noexcept->value_type const&&
   {
     return dango::move(m_value);
   }
@@ -635,7 +635,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && dango::is_ref<value_type>)
   constexpr auto
-  get()const noexcept->value_type
+  at()const noexcept->value_type
   {
     return dango::forward<value_type>(m_value);
   }
@@ -644,7 +644,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
-  get()& noexcept->value_type&
+  at()& noexcept->value_type&
   {
     return m_value;
   }
@@ -653,7 +653,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
-  get()&& noexcept->value_type&&
+  at()&& noexcept->value_type&&
   {
     return dango::move(m_value);
   }
@@ -662,7 +662,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
-  get()const& noexcept->value_type const&
+  at()const& noexcept->value_type const&
   {
     return m_value;
   }
@@ -671,7 +671,7 @@ public:
   <dango::usize tp_index>
   requires((tp_index == dango::usize(0)) && !dango::is_ref<value_type>)
   constexpr auto
-  get()const&& noexcept->value_type const&&
+  at()const&& noexcept->value_type const&&
   {
     return dango::move(m_value);
   }
@@ -680,36 +680,36 @@ public:
   <dango::usize tp_index>
   requires(tp_index != dango::usize(0))
   constexpr auto
-  get()& noexcept->decltype(auto)
+  at()& noexcept->decltype(auto)
   {
-    return static_cast<super_type&>(*this).template get<tp_index - dango::usize(1)>();
+    return static_cast<super_type&>(*this).template at<tp_index - dango::usize(1)>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index != dango::usize(0))
   constexpr auto
-  get()&& noexcept->decltype(auto)
+  at()&& noexcept->decltype(auto)
   {
-    return static_cast<super_type&&>(*this).template get<tp_index - dango::usize(1)>();
+    return static_cast<super_type&&>(*this).template at<tp_index - dango::usize(1)>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index != dango::usize(0))
   constexpr auto
-  get()const& noexcept->decltype(auto)
+  at()const& noexcept->decltype(auto)
   {
-    return static_cast<super_type const&>(*this).template get<tp_index - dango::usize(1)>();
+    return static_cast<super_type const&>(*this).template at<tp_index - dango::usize(1)>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index != dango::usize(0))
   constexpr auto
-  get()const&& noexcept->decltype(auto)
+  at()const&& noexcept->decltype(auto)
   {
-    return static_cast<super_type const&&>(*this).template get<tp_index - dango::usize(1)>();
+    return static_cast<super_type const&&>(*this).template at<tp_index - dango::usize(1)>();
   }
 private:
   value_type m_value;
@@ -859,51 +859,51 @@ public:
   <dango::usize tp_index>
   requires(tp_index < sizeof...(tp_types))
   constexpr auto
-  get()& noexcept->decltype(auto)
+  at()& noexcept->decltype(auto)
   {
-    return m_storage.template get<sizeof...(tp_types) - dango::usize(1) - tp_index>();
+    return m_storage.template at<sizeof...(tp_types) - dango::usize(1) - tp_index>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index < sizeof...(tp_types))
   constexpr auto
-  get()&& noexcept->decltype(auto)
+  at()&& noexcept->decltype(auto)
   {
-    return dango::move(m_storage).template get<sizeof...(tp_types) - dango::usize(1) - tp_index>();
+    return dango::move(m_storage).template at<sizeof...(tp_types) - dango::usize(1) - tp_index>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index < sizeof...(tp_types))
   constexpr auto
-  get()const& noexcept->decltype(auto)
+  at()const& noexcept->decltype(auto)
   {
-    return m_storage.template get<sizeof...(tp_types) - dango::usize(1) - tp_index>();
+    return m_storage.template at<sizeof...(tp_types) - dango::usize(1) - tp_index>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index < sizeof...(tp_types))
   constexpr auto
-  get()const&& noexcept->decltype(auto)
+  at()const&& noexcept->decltype(auto)
   {
-    return dango::move(m_storage).template get<sizeof...(tp_types) - dango::usize(1) - tp_index>();
+    return dango::move(m_storage).template at<sizeof...(tp_types) - dango::usize(1) - tp_index>();
   }
 
 #define DANGO_TUPLE_DEFINE_NAMED_GET(index, name) \
   constexpr auto name()& noexcept->decltype(auto) \
   requires(dango::usize(index) < sizeof...(tp_types)) \
-  { return static_cast<tuple&>(*this).get<dango::usize(index)>(); } \
+  { return static_cast<tuple&>(*this).at<dango::usize(index)>(); } \
   constexpr auto name()&& noexcept->decltype(auto) \
   requires(dango::usize(index) < sizeof...(tp_types)) \
-  { return static_cast<tuple&&>(*this).get<dango::usize(index)>(); } \
+  { return static_cast<tuple&&>(*this).at<dango::usize(index)>(); } \
   constexpr auto name()const& noexcept->decltype(auto) \
   requires(dango::usize(index) < sizeof...(tp_types)) \
-  { return static_cast<tuple const&>(*this).get<dango::usize(index)>(); } \
+  { return static_cast<tuple const&>(*this).at<dango::usize(index)>(); } \
   constexpr auto name()const&& noexcept->decltype(auto) \
   requires(dango::usize(index) < sizeof...(tp_types)) \
-  { return static_cast<tuple const&&>(*this).get<dango::usize(index)>(); }
+  { return static_cast<tuple const&&>(*this).at<dango::usize(index)>(); }
 
   DANGO_TUPLE_DEFINE_NAMED_GET(0, first)
   DANGO_TUPLE_DEFINE_NAMED_GET(1, second)
@@ -929,7 +929,7 @@ private:
   (dango::index_seq<tp_indices...> const, tuple<tp_args...> const& a_tup)
   noexcept(tp_noexcept)->storage_type
   {
-    return dango::detail::make_tuple_storage<storage_type, tp_noexcept>(a_tup.template get<tp_indices>()...);
+    return dango::detail::make_tuple_storage<storage_type, tp_noexcept>(a_tup.template at<tp_indices>()...);
   }
 
   template
@@ -939,7 +939,7 @@ private:
   (dango::index_seq<tp_indices...> const, tuple<tp_args...>&& a_tup)
   noexcept(tp_noexcept)->storage_type
   {
-    return dango::detail::make_tuple_storage<storage_type, tp_noexcept>(dango::move(a_tup).template get<tp_indices>()...);
+    return dango::detail::make_tuple_storage<storage_type, tp_noexcept>(dango::move(a_tup).template at<tp_indices>()...);
   }
 
 public:
@@ -1043,7 +1043,7 @@ private:
   assign_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)& noexcept(tp_noexcept)->tuple&
   {
-    ( ... , void(get<tp_indices>() = a_tup.template get<tp_indices>()));
+    ( ... , void(at<tp_indices>() = a_tup.template at<tp_indices>()));
 
     return *this;
   }
@@ -1054,7 +1054,7 @@ private:
   assign_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_tup)& noexcept(tp_noexcept)->tuple&
   {
-    ( ... , void(get<tp_indices>() = dango::move(a_tup).template get<tp_indices>()));
+    ( ... , void(at<tp_indices>() = dango::move(a_tup).template at<tp_indices>()));
 
     return *this;
   }
@@ -1111,7 +1111,7 @@ private:
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)&
   noexcept(tp_noexcept)->decltype(auto)
   {
-    return dango::forward<tp_func>(a_func)(static_cast<tuple&>(*this).get<tp_indices>()...);
+    return dango::forward<tp_func>(a_func)(static_cast<tuple&>(*this).at<tp_indices>()...);
   }
 
   template
@@ -1121,7 +1121,7 @@ private:
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)&&
   noexcept(tp_noexcept)->decltype(auto)
   {
-    return dango::forward<tp_func>(a_func)(static_cast<tuple&&>(*this).get<tp_indices>()...);
+    return dango::forward<tp_func>(a_func)(static_cast<tuple&&>(*this).at<tp_indices>()...);
   }
 
   template
@@ -1131,7 +1131,7 @@ private:
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)const&
   noexcept(tp_noexcept)->decltype(auto)
   {
-    return dango::forward<tp_func>(a_func)(static_cast<tuple const&>(*this).get<tp_indices>()...);
+    return dango::forward<tp_func>(a_func)(static_cast<tuple const&>(*this).at<tp_indices>()...);
   }
 
   template
@@ -1141,7 +1141,7 @@ private:
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)const&&
   noexcept(tp_noexcept)->decltype(auto)
   {
-    return dango::forward<tp_func>(a_func)(static_cast<tuple const&&>(*this).get<tp_indices>()...);
+    return dango::forward<tp_func>(a_func)(static_cast<tuple const&&>(*this).at<tp_indices>()...);
   }
 
 public:
@@ -1207,7 +1207,7 @@ private:
   swap_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>& a_tup)& noexcept(tp_noexcept)
   {
-    ( ... , (dango::swap(get<tp_indices>(), a_tup.template get<tp_indices>())));
+    ( ... , (dango::swap(at<tp_indices>(), a_tup.template at<tp_indices>())));
   }
 
 public:
@@ -1285,51 +1285,51 @@ public:
   <dango::usize tp_index>
   requires(tp_index < sizeof...(tp_types))
   constexpr auto
-  get()& noexcept->decltype(auto)
+  at()& noexcept->decltype(auto)
   {
-    return m_storage.template get<sizeof...(tp_types) - dango::usize(1) - tp_index>();
+    return m_storage.template at<sizeof...(tp_types) - dango::usize(1) - tp_index>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index < sizeof...(tp_types))
   constexpr auto
-  get()&& noexcept->decltype(auto)
+  at()&& noexcept->decltype(auto)
   {
-    return dango::move(m_storage).template get<sizeof...(tp_types) - dango::usize(1) - tp_index>();
+    return dango::move(m_storage).template at<sizeof...(tp_types) - dango::usize(1) - tp_index>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index < sizeof...(tp_types))
   constexpr auto
-  get()const& noexcept->decltype(auto)
+  at()const& noexcept->decltype(auto)
   {
-    return m_storage.template get<sizeof...(tp_types) - dango::usize(1) - tp_index>();
+    return m_storage.template at<sizeof...(tp_types) - dango::usize(1) - tp_index>();
   }
 
   template
   <dango::usize tp_index>
   requires(tp_index < sizeof...(tp_types))
   constexpr auto
-  get()const&& noexcept->decltype(auto)
+  at()const&& noexcept->decltype(auto)
   {
-    return dango::move(m_storage).template get<sizeof...(tp_types) - dango::usize(1) - tp_index>();
+    return dango::move(m_storage).template at<sizeof...(tp_types) - dango::usize(1) - tp_index>();
   }
 
 #define DANGO_TUPLE_DEFINE_NAMED_GET(index, name) \
   constexpr auto name()& noexcept->decltype(auto) \
   requires(dango::usize(index) < sizeof...(tp_types)) \
-  { return static_cast<tuple&>(*this).get<dango::usize(index)>(); } \
+  { return static_cast<tuple&>(*this).at<dango::usize(index)>(); } \
   constexpr auto name()&& noexcept->decltype(auto) \
   requires(dango::usize(index) < sizeof...(tp_types)) \
-  { return static_cast<tuple&&>(*this).get<dango::usize(index)>(); } \
+  { return static_cast<tuple&&>(*this).at<dango::usize(index)>(); } \
   constexpr auto name()const& noexcept->decltype(auto) \
   requires(dango::usize(index) < sizeof...(tp_types)) \
-  { return static_cast<tuple const&>(*this).get<dango::usize(index)>(); } \
+  { return static_cast<tuple const&>(*this).at<dango::usize(index)>(); } \
   constexpr auto name()const&& noexcept->decltype(auto) \
   requires(dango::usize(index) < sizeof...(tp_types)) \
-  { return static_cast<tuple const&&>(*this).get<dango::usize(index)>(); }
+  { return static_cast<tuple const&&>(*this).at<dango::usize(index)>(); }
 
   DANGO_TUPLE_DEFINE_NAMED_GET(0, first)
   DANGO_TUPLE_DEFINE_NAMED_GET(1, second)
@@ -1355,7 +1355,7 @@ private:
   (dango::index_seq<tp_indices...> const, tuple<tp_args...> const& a_tup)
   noexcept(tp_noexcept)->storage_type
   {
-    return dango::detail::make_tuple_storage<storage_type, tp_noexcept>(a_tup.template get<tp_indices>()...);
+    return dango::detail::make_tuple_storage<storage_type, tp_noexcept>(a_tup.template at<tp_indices>()...);
   }
 
   template
@@ -1365,7 +1365,7 @@ private:
   (dango::index_seq<tp_indices...> const, tuple<tp_args...>&& a_tup)
   noexcept(tp_noexcept)->storage_type
   {
-    return dango::detail::make_tuple_storage<storage_type, tp_noexcept>(dango::move(a_tup).template get<tp_indices>()...);
+    return dango::detail::make_tuple_storage<storage_type, tp_noexcept>(dango::move(a_tup).template at<tp_indices>()...);
   }
 
 public:
@@ -1469,7 +1469,7 @@ private:
   assign_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)& noexcept(tp_noexcept)->tuple&
   {
-    ( ... , void(get<tp_indices>() = a_tup.template get<tp_indices>()));
+    ( ... , void(at<tp_indices>() = a_tup.template at<tp_indices>()));
 
     return *this;
   }
@@ -1480,7 +1480,7 @@ private:
   assign_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)const& noexcept(tp_noexcept)->tuple const&
   {
-    ( ... , void(get<tp_indices>() = a_tup.template get<tp_indices>()));
+    ( ... , void(at<tp_indices>() = a_tup.template at<tp_indices>()));
 
     return *this;
   }
@@ -1491,7 +1491,7 @@ private:
   assign_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_tup)& noexcept(tp_noexcept)->tuple&
   {
-    ( ... , void(get<tp_indices>() = dango::move(a_tup).template get<tp_indices>()));
+    ( ... , void(at<tp_indices>() = dango::move(a_tup).template at<tp_indices>()));
 
     return *this;
   }
@@ -1502,7 +1502,7 @@ private:
   assign_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_tup)const& noexcept(tp_noexcept)->tuple const&
   {
-    ( ... , void(get<tp_indices>() = dango::move(a_tup).template get<tp_indices>()));
+    ( ... , void(at<tp_indices>() = dango::move(a_tup).template at<tp_indices>()));
 
     return *this;
   }
@@ -1729,7 +1729,7 @@ private:
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)&
   noexcept(tp_noexcept)->decltype(auto)
   {
-    return dango::forward<tp_func>(a_func)(static_cast<tuple&>(*this).get<tp_indices>()...);
+    return dango::forward<tp_func>(a_func)(static_cast<tuple&>(*this).at<tp_indices>()...);
   }
 
   template
@@ -1739,7 +1739,7 @@ private:
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)&&
   noexcept(tp_noexcept)->decltype(auto)
   {
-    return dango::forward<tp_func>(a_func)(static_cast<tuple&&>(*this).get<tp_indices>()...);
+    return dango::forward<tp_func>(a_func)(static_cast<tuple&&>(*this).at<tp_indices>()...);
   }
 
   template
@@ -1749,7 +1749,7 @@ private:
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)const&
   noexcept(tp_noexcept)->decltype(auto)
   {
-    return dango::forward<tp_func>(a_func)(static_cast<tuple const&>(*this).get<tp_indices>()...);
+    return dango::forward<tp_func>(a_func)(static_cast<tuple const&>(*this).at<tp_indices>()...);
   }
 
   template
@@ -1759,7 +1759,7 @@ private:
   (dango::index_seq<tp_indices...> const, tp_func&& a_func)const&&
   noexcept(tp_noexcept)->decltype(auto)
   {
-    return dango::forward<tp_func>(a_func)(static_cast<tuple const&&>(*this).get<tp_indices>()...);
+    return dango::forward<tp_func>(a_func)(static_cast<tuple const&&>(*this).at<tp_indices>()...);
   }
 
 public:
@@ -1825,7 +1825,7 @@ private:
   swap_help
   (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_tup)const& noexcept(tp_noexcept)
   {
-    ( ... , (dango::swap(get<tp_indices>(), a_tup.template get<tp_indices>())));
+    ( ... , (dango::swap(at<tp_indices>(), a_tup.template at<tp_indices>())));
   }
 
 public:
@@ -1948,14 +1948,54 @@ dango
   }
 }
 
-/*** get for tuple ***/
+/*** operator_tuple ***/
+
+namespace
+dango::detail
+{
+  template
+  <dango::usize tp_index, typename tp_first, typename... tp_next>
+  struct tuple_element_help;
+
+  template
+  <typename tp_first, typename... tp_next>
+  struct
+  tuple_element_help<dango::usize(0), tp_first, tp_next...>;
+}
+
+template
+<dango::usize tp_index, typename tp_first, typename... tp_next>
+struct
+dango::
+detail::
+tuple_element_help
+final
+{
+  using type =
+    typename dango::detail::tuple_element_help<tp_index - dango::usize(1), tp_next...>::type;
+
+  DANGO_UNCONSTRUCTIBLE(tuple_element_help)
+};
+
+template
+<typename tp_first, typename... tp_next>
+struct
+dango::
+detail::
+tuple_element_help<dango::usize(0), tp_first, tp_next...>
+final
+{
+  using type = tp_first;
+
+  DANGO_UNCONSTRUCTIBLE(tuple_element_help)
+};
 
 namespace
 dango::custom
 {
   template
   <typename... tp_types>
-  struct operator_get<dango::tuple<tp_types...>>;
+  struct operator_tuple<dango::tuple<tp_types...>>;
 }
 
 template
@@ -1963,22 +2003,30 @@ template
 struct
 dango::
 custom::
-operator_get<dango::tuple<tp_types...>>
+operator_tuple<dango::tuple<tp_types...>>
 final
 {
   using tuple_type = dango::tuple<tp_types...>;
 
+  static inline constexpr auto const size = sizeof...(tp_types);
+
+  template
+  <dango::usize tp_index, dango::is_same_ignore_cv<tuple_type> tp_tuple>
+  requires(tp_index < size)
+  using elem_type =
+    dango::copy_cv<tp_tuple, typename dango::detail::tuple_element_help<tp_index, tp_types...>::type>;
+
   template
   <dango::usize tp_index, dango::is_same_ignore_cvref<tuple_type> tp_tuple>
-  requires(tp_index < sizeof...(tp_types))
+  requires(tp_index < size)
   static constexpr auto
   get
   (tp_tuple&& a_tup)noexcept->decltype(auto)
   {
-    return dango::forward<tp_tuple>(a_tup).template get<tp_index>();
+    return dango::forward<tp_tuple>(a_tup).template at<tp_index>();
   }
 
-  DANGO_UNCONSTRUCTIBLE(operator_get)
+  DANGO_UNCONSTRUCTIBLE(operator_tuple)
 };
 
 /*** equals, compare, and hash for tuples ***/
@@ -2030,7 +2078,7 @@ private:
   equals_help
   (dango::index_seq<tp_indices...> const, tuple_type const& a_lhs, tuple_type const& a_rhs)noexcept(c_noexcept)->bool
   {
-    return ( ... && dango::equals(dango::get<tp_indices>(a_lhs), dango::get<tp_indices>(a_rhs)));
+    return ( ... && dango::equals(dango::tuple_get<tp_indices>(a_lhs), dango::tuple_get<tp_indices>(a_rhs)));
   }
 public:
   static constexpr auto
@@ -2077,19 +2125,19 @@ private:
 
   template
   <dango::usize... tp_indices>
-  requires(requires{ { ( ... , void(dango::compare(dango::get<tp_indices>(dango::declval<tuple_lhs const&>()), dango::get<tp_indices>(dango::declval<tuple_rhs const&>())))) }; })
+  requires(requires{ { ( ... , void(dango::compare(dango::tuple_get<tp_indices>(dango::declval<tuple_lhs const&>()), dango::tuple_get<tp_indices>(dango::declval<tuple_rhs const&>())))) }; })
   static constexpr auto
   compare_help
   (dango::index_seq<tp_indices...> const, tuple_lhs const& a_lhs, tuple_rhs const& a_rhs)
-  noexcept(requires{ { ( ... , void(dango::compare(dango::get<tp_indices>(dango::declval<tuple_lhs const&>()), dango::get<tp_indices>(dango::declval<tuple_rhs const&>())))) }noexcept; })->auto
+  noexcept(requires{ { ( ... , void(dango::compare(dango::tuple_get<tp_indices>(dango::declval<tuple_lhs const&>()), dango::tuple_get<tp_indices>(dango::declval<tuple_rhs const&>())))) }noexcept; })->auto
   {
     using ret_type =
-      dango::comparison::common_type<decltype(dango::compare(dango::get<tp_indices>(a_lhs), dango::get<tp_indices>(a_rhs)))...>;
+      dango::comparison::common_type<decltype(dango::compare(dango::tuple_get<tp_indices>(a_lhs), dango::tuple_get<tp_indices>(a_rhs)))...>;
 
     ret_type a_ret{ dango::ssize(0) };
 
     [[maybe_unused]] bool const a_temp =
-      ( ... && (a_ret = ret_type{ dango::compare(dango::get<tp_indices>(a_lhs), dango::get<tp_indices>(a_rhs)) }).is_eq());
+      ( ... && (a_ret = ret_type{ dango::compare(dango::tuple_get<tp_indices>(a_lhs), dango::tuple_get<tp_indices>(a_rhs)) }).is_eq());
 
     return a_ret;
   }
@@ -2136,7 +2184,7 @@ private:
   hash_help
   (dango::index_seq<tp_indices...> const, tuple_type const& a_tup)noexcept(c_noexcept)->dango::hash_val
   {
-    return dango::multi_hash(dango::get<tp_indices>(a_tup)...);
+    return dango::multi_hash(dango::tuple_get<tp_indices>(a_tup)...);
   }
 public:
   static constexpr auto
@@ -2148,81 +2196,5 @@ public:
 
   DANGO_UNCONSTRUCTIBLE(operator_hash)
 };
-
-/*** structured bindings ***/
-
-namespace
-dango::detail
-{
-  template
-  <dango::usize tp_index, typename tp_first, typename... tp_next>
-  struct tuple_element_help;
-
-  template
-  <typename tp_first, typename... tp_next>
-  struct
-  tuple_element_help<dango::usize(0), tp_first, tp_next...>;
-}
-
-template
-<dango::usize tp_index, typename tp_first, typename... tp_next>
-struct
-dango::
-detail::
-tuple_element_help
-final
-{
-  using type =
-    typename dango::detail::tuple_element_help<tp_index - dango::usize(1), tp_next...>::type;
-
-  DANGO_UNCONSTRUCTIBLE(tuple_element_help)
-};
-
-template
-<typename tp_first, typename... tp_next>
-struct
-dango::
-detail::
-tuple_element_help<dango::usize(0), tp_first, tp_next...>
-final
-{
-  using type = tp_first;
-
-  DANGO_UNCONSTRUCTIBLE(tuple_element_help)
-};
-
-namespace
-std
-{
-  template
-  <typename... tp_types>
-  struct
-  tuple_size<dango::tuple<tp_types...>>
-  {
-    static inline constexpr dango::usize const value = sizeof...(tp_types);
-
-    DANGO_UNCONSTRUCTIBLE(tuple_size)
-  };
-
-  template
-  <dango::usize tp_index, typename... tp_types>
-  struct
-  tuple_element
-  <tp_index, dango::tuple<tp_types...>>
-  {
-    using type =
-      typename dango::detail::tuple_element_help<tp_index, tp_types...>::type;
-
-    DANGO_UNCONSTRUCTIBLE(tuple_element)
-  };
-
-  template
-  <dango::usize tp_index>
-  struct
-  tuple_element<tp_index, dango::tuple<>>
-  {
-    DANGO_UNCONSTRUCTIBLE(tuple_element)
-  };
-}
 
 #endif // DANGO_TUPLE_HPP_INCLUDED
