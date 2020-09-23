@@ -2226,7 +2226,7 @@ dango::detail
   constexpr auto
   common_type_test
   (dango::priority_tag<dango::uint(3)>)
-  noexcept->tp_result;
+  noexcept->dango::type_tag<tp_result>;
 
   template
   <typename tp_type1, typename tp_type2, typename tp_result = typename dango::custom::common_type<dango::decay<tp_type2>, dango::decay<tp_type1>>::type>
@@ -2239,21 +2239,21 @@ dango::detail
   constexpr auto
   common_type_test
   (dango::priority_tag<dango::uint(2)>)
-  noexcept->tp_result;
+  noexcept->dango::type_tag<tp_result>;
 
   template
   <typename tp_type1, typename tp_type2>
   constexpr auto
   common_type_test
   (dango::priority_tag<dango::uint(1)>)
-  noexcept->dango::decay<decltype(false ? dango::declval<tp_type1>() : dango::declval<tp_type2>())>;
+  noexcept->dango::type_tag<dango::decay<decltype(false ? dango::declval<tp_type1>() : dango::declval<tp_type2>())>>;
 
   template
   <typename tp_type1, typename tp_type2>
   constexpr auto
   common_type_test
   (dango::priority_tag<dango::uint(0)>)
-  noexcept->dango::decay<decltype(false ? dango::declval<dango::remove_ref<tp_type1> const&>() : dango::declval<dango::remove_ref<tp_type2> const&>())>;
+  noexcept->dango::type_tag<dango::decay<decltype(false ? dango::declval<dango::remove_ref<tp_type1> const&>() : dango::declval<dango::remove_ref<tp_type2> const&>())>>;
 }
 
 namespace
@@ -2316,7 +2316,7 @@ dango::detail
   final
   {
     using type =
-      decltype(dango::detail::common_type_test<tp_type1, tp_type2>(dango::detail::common_type_prio{ }));
+      typename decltype(dango::detail::common_type_test<tp_type1, tp_type2>(dango::detail::common_type_prio{ }))::type;
 
     DANGO_UNCONSTRUCTIBLE(common_type_help)
   };

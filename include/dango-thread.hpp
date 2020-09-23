@@ -65,7 +65,7 @@ public:
   (
     (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
     (dango::in_exception_safe_order<tp_func, tp_args...> || (dango::is_copy_constructible<dango::decay<tp_func>> && ... && dango::is_copy_constructible<dango::decay<tp_args>>)) &&
-    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
+    dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_at_type<dango::tuple_model<dango::decay<tp_args>>&>...>
   )
   static auto
   create(bool, tp_func&&, tp_args&&...)noexcept(false)->dango::thread;
@@ -308,7 +308,7 @@ requires
 (
   (dango::is_noexcept_destructible<dango::decay<tp_func>> && ... && dango::is_noexcept_destructible<dango::decay<tp_args>>) &&
   (dango::in_exception_safe_order<tp_func, tp_args...> || (dango::is_copy_constructible<dango::decay<tp_func>> && ... && dango::is_copy_constructible<dango::decay<tp_args>>)) &&
-  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_get_type<dango::tuple_model&, dango::decay<tp_args>>...>
+  dango::is_callable_ret<void, dango::decay<tp_func>&, dango::tuple_at_type<dango::tuple_model<dango::decay<tp_args>>&>...>
 )
 auto
 dango::

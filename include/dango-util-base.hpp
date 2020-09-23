@@ -1605,12 +1605,12 @@ dango::detail
 {
   template
   <typename tp_type, dango::usize tp_index>
-  using operator_tuple_struct_elem_type =
-    typename dango::custom::operator_tuple<dango::remove_cvref<tp_type>>::template elem_type<tp_index, dango::remove_ref<tp_type>>;
+  using operator_tuple_struct_elem =
+    typename dango::custom::operator_tuple<dango::remove_cvref<tp_type>>::template elem<tp_index, dango::remove_ref<tp_type>>;
 
   template
   <typename tp_type, dango::usize tp_index>
-  using operator_tuple_elem_type_member =
+  using operator_tuple_elem_member =
     typename dango::remove_cvref<tp_type>::template dango_operator_tuple_elem<tp_index, dango::remove_ref<tp_type>>;
 }
 
@@ -1633,13 +1633,13 @@ dango
   <typename tp_type, dango::usize tp_index>
   concept has_operator_tuple_struct_elem_type =
     dango::is_object_ignore_ref<tp_type> &&
-    requires{ typename dango::detail::operator_tuple_struct_elem_type<tp_type, tp_index>; };
+    requires{ typename dango::detail::operator_tuple_struct_elem<tp_type, tp_index>; };
 
   template
   <typename tp_type, dango::usize tp_index>
   concept has_operator_tuple_elem_type_member =
     dango::is_class_or_union_ignore_ref<tp_type> &&
-    requires{ typename dango::detail::operator_tuple_elem_type_member<tp_type, tp_index>; };
+    requires{ typename dango::detail::operator_tuple_elem_member<tp_type, tp_index>; };
 
   template
   <typename tp_type, dango::usize tp_index>
@@ -1699,17 +1699,17 @@ dango::detail
   <typename tp_type, dango::usize tp_index>
   requires(dango::has_operator_tuple_struct_elem_type<tp_type, tp_index>)
   constexpr auto
-  tuple_elem_type_help
+  tuple_elem_help
   (dango::priority_tag<dango::uint(1)> const)
-  noexcept->dango::type_tag<dango::detail::operator_tuple_struct_elem_type<tp_type, tp_index>>;
+  noexcept->dango::type_tag<dango::detail::operator_tuple_struct_elem<tp_type, tp_index>>;
 
   template
   <typename tp_type, dango::usize tp_index>
   requires(dango::has_operator_tuple_elem_type_member<tp_type, tp_index>)
   constexpr auto
-  tuple_elem_type_help
+  tuple_elem_help
   (dango::priority_tag<dango::uint(0)> const)
-  noexcept->dango::type_tag<dango::detail::operator_tuple_elem_type_member<tp_type, tp_index>>;
+  noexcept->dango::type_tag<dango::detail::operator_tuple_elem_member<tp_type, tp_index>>;
 
   template
   <dango::usize tp_index, typename tp_type>
@@ -1747,9 +1747,9 @@ dango
 
   template
   <typename tp_type, dango::usize tp_index>
-  concept has_tuple_elem_type =
+  concept has_tuple_elem =
     dango::is_object_ignore_ref<tp_type> &&
-    requires{ { dango::detail::tuple_elem_type_help<tp_type, tp_index>(dango::detail::tuple_help_prio{ }) }noexcept; };
+    requires{ { dango::detail::tuple_elem_help<tp_type, tp_index>(dango::detail::tuple_help_prio{ }) }noexcept; };
 
   template
   <typename tp_type, dango::usize tp_index>
@@ -1765,13 +1765,13 @@ dango
 
   template
   <dango::has_tuple_size tp_type>
-  inline constexpr dango::usize const tuple_size =
+  inline constexpr auto const tuple_size =
     dango::detail::tuple_size_help<tp_type>(dango::detail::tuple_help_prio{ });
 
   template
-  <dango::usize tp_index, dango::has_tuple_elem_type<tp_index> tp_type>
-  using tuple_elem_type =
-    typename decltype(dango::detail::tuple_elem_type_help<tp_type, tp_index>(dango::detail::tuple_help_prio{ }))::type;
+  <dango::usize tp_index, dango::has_tuple_elem<tp_index> tp_type>
+  using tuple_elem =
+    typename decltype(dango::detail::tuple_elem_help<tp_type, tp_index>(dango::detail::tuple_help_prio{ }))::type;
 
   template
   <dango::usize tp_index>
@@ -1796,7 +1796,7 @@ dango::detail
   is_tuple_like_help
   (dango::index_seq<tp_indices...> const)noexcept->bool
   {
-    return ( ... && (dango::has_tuple_elem_type<tp_type, tp_indices> && dango::has_tuple_get<tp_type, tp_indices>));
+    return ( ... && (dango::has_tuple_elem<tp_type, tp_indices> && dango::has_tuple_get<tp_type, tp_indices>));
   }
 }
 
@@ -1831,7 +1831,7 @@ std
   struct
   tuple_element<tp_index, tp_type>
   {
-    using type = dango::tuple_elem_type<tp_index, tp_type>;
+    using type = dango::tuple_elem<tp_index, tp_type>;
 
     DANGO_UNCONSTRUCTIBLE(tuple_element)
   };
@@ -1883,7 +1883,7 @@ final
   template
   <dango::usize tp_index, dango::is_same_ignore_cv<array_type> tp_array>
   requires(tp_index < size)
-  using elem_type = dango::remove_array<tp_array>;
+  using elem = dango::remove_array<tp_array>;
 
   template
   <dango::usize tp_index, dango::is_same_ignore_cv<tp_elem> tp_arg>

@@ -183,11 +183,13 @@ dango
   concept is_tuple = dango::detail::is_tuple_help<dango::remove_cv<tp_type>>;
 }
 
-/*** tuple_get_type ***/
+/*** tuple_at_type ***/
 
 namespace
 dango
 {
+  template
+  <typename tp_type>
   struct
   tuple_model
   {
@@ -199,104 +201,143 @@ namespace
 dango::detail
 {
   template
-  <typename tp_model, dango::tuple_constraint_spec tp_value_type>
-  struct tuple_get_type_help;
-
-  template
-  <dango::tuple_constraint_spec tp_value_type>
+  <typename tp_model>
   struct
-  tuple_get_type_help<dango::tuple_model&&, tp_value_type>
+  tuple_at_type_help
   final
   {
-    using type = dango::conditional<dango::is_ref<tp_value_type>, tp_value_type, tp_value_type&&>;
-
-    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
   };
 
   template
-  <dango::tuple_constraint_spec tp_value_type>
+  <dango::tuple_constraint_spec tp_type>
   struct
-  tuple_get_type_help<dango::tuple_model const&&, tp_value_type>
+  tuple_at_type_help<dango::tuple_model<tp_type>&&>
   final
   {
-    using type = dango::conditional<dango::is_ref<tp_value_type>, tp_value_type, tp_value_type const&&>;
+    using type = dango::conditional<dango::is_ref<tp_type>, tp_type, tp_type&&>;
 
-    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
   };
 
   template
-  <dango::tuple_constraint_spec tp_value_type>
-  struct tuple_get_type_help<dango::tuple_model volatile&&, tp_value_type>;
-  template
-  <dango::tuple_constraint_spec tp_value_type>
-  struct tuple_get_type_help<dango::tuple_model const volatile&&, tp_value_type>;
-
-  template
-  <dango::tuple_constraint_spec tp_value_type>
+  <dango::tuple_constraint_spec tp_type>
   struct
-  tuple_get_type_help<dango::tuple_model, tp_value_type>
+  tuple_at_type_help<dango::tuple_model<tp_type> const&&>
   final
   {
-    using type = typename dango::detail::tuple_get_type_help<dango::tuple_model&&, tp_value_type>::type;
+    using type = dango::conditional<dango::is_ref<tp_type>, tp_type, tp_type const&&>;
 
-    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
   };
 
   template
-  <dango::tuple_constraint_spec tp_value_type>
+  <dango::tuple_constraint_spec tp_type>
   struct
-  tuple_get_type_help<dango::tuple_model const, tp_value_type>
+  tuple_at_type_help<dango::tuple_model<tp_type> volatile&&>
   final
   {
-    using type = typename dango::detail::tuple_get_type_help<dango::tuple_model const&&, tp_value_type>::type;
-
-    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
   };
 
   template
-  <dango::tuple_constraint_spec tp_value_type>
-  struct tuple_get_type_help<dango::tuple_model volatile, tp_value_type>;
-  template
-  <dango::tuple_constraint_spec tp_value_type>
-  struct tuple_get_type_help<dango::tuple_model const volatile, tp_value_type>;
-
-  template
-  <dango::tuple_constraint_spec tp_value_type>
+  <dango::tuple_constraint_spec tp_type>
   struct
-  tuple_get_type_help<dango::tuple_model&, tp_value_type>
+  tuple_at_type_help<dango::tuple_model<tp_type> const volatile&&>
   final
   {
-    using type = dango::conditional<dango::is_ref<tp_value_type>, tp_value_type, tp_value_type&>;
-
-    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
   };
 
   template
-  <dango::tuple_constraint_spec tp_value_type>
+  <dango::tuple_constraint_spec tp_type>
   struct
-  tuple_get_type_help<dango::tuple_model const&, tp_value_type>
+  tuple_at_type_help<dango::tuple_model<tp_type>>
   final
   {
-    using type = dango::conditional<dango::is_ref<tp_value_type>, tp_value_type, tp_value_type const&>;
+    using type = typename dango::detail::tuple_at_type_help<dango::tuple_model<tp_type>&&>::type;
 
-    DANGO_UNCONSTRUCTIBLE(tuple_get_type_help)
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
   };
 
   template
-  <dango::tuple_constraint_spec tp_value_type>
-  struct tuple_get_type_help<dango::tuple_model volatile&, tp_value_type>;
+  <dango::tuple_constraint_spec tp_type>
+  struct
+  tuple_at_type_help<dango::tuple_model<tp_type> const>
+  final
+  {
+    using type = typename dango::detail::tuple_at_type_help<dango::tuple_model<tp_type> const&&>::type;
+
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
+  };
+
   template
-  <dango::tuple_constraint_spec tp_value_type>
-  struct tuple_get_type_help<dango::tuple_model const volatile&, tp_value_type>;
+  <dango::tuple_constraint_spec tp_type>
+  struct
+  tuple_at_type_help<dango::tuple_model<tp_type> volatile>
+  final
+  {
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
+  };
+
+  template
+  <dango::tuple_constraint_spec tp_type>
+  struct
+  tuple_at_type_help<dango::tuple_model<tp_type> const volatile>
+  final
+  {
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
+  };
+
+  template
+  <dango::tuple_constraint_spec tp_type>
+  struct
+  tuple_at_type_help<dango::tuple_model<tp_type>&>
+  final
+  {
+    using type = dango::conditional<dango::is_ref<tp_type>, tp_type, tp_type&>;
+
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
+  };
+
+  template
+  <dango::tuple_constraint_spec tp_type>
+  struct
+  tuple_at_type_help<dango::tuple_model<tp_type> const&>
+  final
+  {
+    using type = dango::conditional<dango::is_ref<tp_type>, tp_type, tp_type const&>;
+
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
+  };
+
+  template
+  <dango::tuple_constraint_spec tp_type>
+  struct
+  tuple_at_type_help<dango::tuple_model<tp_type> volatile&>
+  final
+  {
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
+  };
+
+  template
+  <dango::tuple_constraint_spec tp_type>
+  struct
+  tuple_at_type_help<dango::tuple_model<tp_type> const volatile&>
+  final
+  {
+    DANGO_UNCONSTRUCTIBLE(tuple_at_type_help)
+  };
 }
 
 namespace
 dango
 {
   template
-  <typename tp_model, typename tp_type>
-  using tuple_get_type =
-    typename dango::detail::tuple_get_type_help<tp_model, tp_type>::type;
+  <typename tp_model>
+  requires(requires{ typename dango::detail::tuple_at_type_help<tp_model>::type; })
+  using tuple_at_type =
+    typename dango::detail::tuple_at_type_help<tp_model>::type;
 }
 
 /*** init tags ***/
@@ -947,7 +988,7 @@ public:
 /*** converting copy-construct ***/
 
 #define DANGO_TUPLE_SPEC(noex, cvref) \
-  ( ... && dango::detail::tuple_is##noex##constructible<tp_types, dango::tuple_get_type<dango::tuple_model cvref, tp_args>>)
+  ( ... && dango::detail::tuple_is##noex##constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> cvref>>)
 
   template
   <typename... tp_args>
@@ -958,7 +999,7 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, const&)
   )
-  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
+  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_at_type<dango::tuple_model<tp_args> const&>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...> const& a_tup)
@@ -979,7 +1020,7 @@ public:
     !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
     !( ... && dango::is_convertible_arg<dango::tuple<tp_args...> const&, tp_types>)
   )
-  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
+  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_at_type<dango::tuple_model<tp_args> const&>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...> const& a_tup)
@@ -1000,7 +1041,7 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, &&)
   )
-  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
+  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_at_type<dango::tuple_model<tp_args>&&>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...>&& a_tup)
@@ -1021,7 +1062,7 @@ public:
     !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
     !( ... && dango::is_convertible_arg<dango::tuple<tp_args...>&&, tp_types>)
   )
-  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
+  explicit(!( ... && dango::detail::tuple_is_convertible<dango::tuple_at_type<dango::tuple_model<tp_args>&&>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...>&& a_tup)
@@ -1064,7 +1105,7 @@ public:
 /*** converting assign ***/
 
 #define DANGO_TUPLE_SPEC(noex, lcvref, rcvref) \
-  ( ... && dango::is##noex##assignable<dango::tuple_get_type<dango::tuple_model lcvref, tp_types>, dango::tuple_get_type<dango::tuple_model rcvref, tp_args>>)
+  ( ... && dango::is##noex##assignable<dango::tuple_at_type<dango::tuple_model<tp_types> lcvref>, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>)
 
   template
   <typename... tp_args>
@@ -1149,7 +1190,7 @@ public:
 /*** operator ->* ***/
 
 #define DANGO_TUPLE_SPEC(noex, cvref) \
-  dango::is##noex##callable<tp_func, dango::tuple_get_type<dango::tuple_model cvref, tp_types>...>
+  dango::is##noex##callable<tp_func, dango::tuple_at_type<dango::tuple_model<tp_types> cvref>...>
 
   template
   <typename tp_func>
@@ -1213,7 +1254,7 @@ private:
 public:
 
 #define DANGO_TUPLE_SPEC(noex, lcvref, rcvref) \
-  ( ... && dango::is##noex##swappable<dango::tuple_get_type<dango::tuple_model lcvref, tp_types>, dango::tuple_get_type<dango::tuple_model rcvref, tp_args>>)
+  ( ... && dango::is##noex##swappable<dango::tuple_at_type<dango::tuple_model<tp_types> lcvref>, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>)
 
   template
   <typename... tp_args>
@@ -1373,7 +1414,7 @@ public:
 /*** converting copy-construct ***/
 
 #define DANGO_TUPLE_SPEC(noex, cvref) \
-  ( ... && dango::is##noex##brace_constructible<tp_types, dango::tuple_get_type<dango::tuple_model cvref, tp_args>>)
+  ( ... && dango::is##noex##brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> cvref>>)
 
   template
   <typename... tp_args>
@@ -1384,7 +1425,7 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, const&)
   )
-  explicit(!( ... && dango::is_convertible_arg<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<dango::tuple_at_type<dango::tuple_model<tp_args> const&>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...> const& a_tup)
@@ -1405,7 +1446,7 @@ public:
     !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...> const&>) &&
     !( ... && dango::is_convertible_arg<dango::tuple<tp_args...> const&, tp_types>)
   )
-  explicit(!( ... && dango::is_convertible_arg<dango::tuple_get_type<dango::tuple_model const&, tp_args>, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<dango::tuple_at_type<dango::tuple_model<tp_args> const&>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...> const& a_tup)
@@ -1426,7 +1467,7 @@ public:
     !( ... && dango::is_same<tp_args, tp_types>) &&
     DANGO_TUPLE_SPEC(_, &&)
   )
-  explicit(!( ... && dango::is_convertible_arg<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<dango::tuple_at_type<dango::tuple_model<tp_args>&&>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...>&& a_tup)
@@ -1447,7 +1488,7 @@ public:
     !( ... && dango::is_brace_constructible<tp_types, dango::tuple<tp_args...>&&>) &&
     !( ... && dango::is_convertible_arg<dango::tuple<tp_args...>&&, tp_types>)
   )
-  explicit(!( ... && dango::is_convertible_arg<dango::tuple_get_type<dango::tuple_model&&, tp_args>, tp_types>))
+  explicit(!( ... && dango::is_convertible_arg<dango::tuple_at_type<dango::tuple_model<tp_args>&&>, tp_types>))
   constexpr
   tuple
   (dango::tuple<tp_args...>&& a_tup)
@@ -1512,7 +1553,7 @@ public:
 /*** assign ***/
 
 #define DANGO_TUPLE_SPEC(noex, lcvref, rcvref) \
-  ( ... && dango::is##noex##assignable<dango::tuple_get_type<dango::tuple_model lcvref, tp_types>, dango::tuple_get_type<dango::tuple_model rcvref, tp_args>>)
+  ( ... && dango::is##noex##assignable<dango::tuple_at_type<dango::tuple_model<tp_types> lcvref>, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>)
 
   template
   <typename... tp_args>
@@ -1767,7 +1808,7 @@ public:
 /*** operator ->* ***/
 
 #define DANGO_TUPLE_SPEC(noex, cvref) \
-  dango::is##noex##callable<tp_func, dango::tuple_get_type<dango::tuple_model cvref, tp_types>...>
+  dango::is##noex##callable<tp_func, dango::tuple_at_type<dango::tuple_model<tp_types> cvref>...>
 
   template
   <typename tp_func>
@@ -1831,7 +1872,7 @@ private:
 public:
 
 #define DANGO_TUPLE_SPEC(noex, lcvref, rcvref) \
-  ( ... && dango::is##noex##swappable<dango::tuple_get_type<dango::tuple_model lcvref, tp_types>, dango::tuple_get_type<dango::tuple_model rcvref, tp_args>>)
+  ( ... && dango::is##noex##swappable<dango::tuple_at_type<dango::tuple_model<tp_types> lcvref>, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>)
 
   template
   <typename... tp_args>
@@ -1954,8 +1995,13 @@ namespace
 dango::detail
 {
   template
-  <dango::usize tp_index, typename tp_first, typename... tp_next>
+  <dango::usize tp_index, typename... tp_types>
   struct tuple_element_help;
+
+  template
+  <dango::usize tp_index, typename tp_first, typename... tp_next>
+  struct
+  tuple_element_help<tp_index, tp_first, tp_next...>;
 
   template
   <typename tp_first, typename... tp_next>
@@ -1968,7 +2014,7 @@ template
 struct
 dango::
 detail::
-tuple_element_help
+tuple_element_help<tp_index, tp_first, tp_next...>
 final
 {
   using type =
@@ -2013,7 +2059,7 @@ final
   template
   <dango::usize tp_index, dango::is_same_ignore_cv<tuple_type> tp_tuple>
   requires(tp_index < size)
-  using elem_type =
+  using elem =
     dango::copy_cv<tp_tuple, typename dango::detail::tuple_element_help<tp_index, tp_types...>::type>;
 
   template
@@ -2036,7 +2082,7 @@ dango::custom
 {
   template
   <typename... tp_types>
-  requires(( ... && dango::is_equatable<dango::tuple_get_type<dango::tuple_model const&, tp_types>, dango::tuple_get_type<dango::tuple_model const&, tp_types>>))
+  requires(( ... && dango::is_equatable<dango::tuple_at_type<dango::tuple_model<tp_types> const&>, dango::tuple_at_type<dango::tuple_model<tp_types> const&>>))
   struct
   operator_equals<dango::tuple<tp_types...>, dango::tuple<tp_types...>>;
 
@@ -2052,14 +2098,14 @@ dango::custom
 
   template
   <typename... tp_types>
-  requires(( ... && dango::is_hashable<dango::tuple_get_type<dango::tuple_model const&, tp_types>>))
+  requires(( ... && dango::is_hashable<dango::tuple_at_type<dango::tuple_model<tp_types> const&>>))
   struct
   operator_hash<dango::tuple<tp_types...>>;
 }
 
 template
 <typename... tp_types>
-requires(( ... && dango::is_equatable<dango::tuple_get_type<dango::tuple_model const&, tp_types>, dango::tuple_get_type<dango::tuple_model const&, tp_types>>))
+requires(( ... && dango::is_equatable<dango::tuple_at_type<dango::tuple_model<tp_types> const&>, dango::tuple_at_type<dango::tuple_model<tp_types> const&>>))
 struct
 dango::
 custom::
@@ -2070,7 +2116,7 @@ private:
   using tuple_type = dango::tuple<tp_types...>;
 
   static inline constexpr bool const c_noexcept =
-    ( ... && dango::is_noexcept_equatable<dango::tuple_get_type<dango::tuple_model const&, tp_types>, dango::tuple_get_type<dango::tuple_model const&, tp_types>>);
+    ( ... && dango::is_noexcept_equatable<dango::tuple_at_type<dango::tuple_model<tp_types> const&>, dango::tuple_at_type<dango::tuple_model<tp_types> const&>>);
 
   template
   <dango::usize... tp_indices>
@@ -2165,7 +2211,7 @@ public:
 
 template
 <typename... tp_types>
-requires(( ... && dango::is_hashable<dango::tuple_get_type<dango::tuple_model const&, tp_types>>))
+requires(( ... && dango::is_hashable<dango::tuple_at_type<dango::tuple_model<tp_types> const&>>))
 struct
 dango::
 custom::
@@ -2176,22 +2222,13 @@ private:
   using tuple_type = dango::tuple<tp_types...>;
 
   static inline constexpr bool const c_noexcept =
-    ( ... && dango::has_noexcept_hash<dango::tuple_get_type<dango::tuple_model const&, tp_types>>);
-
-  template
-  <dango::usize... tp_indices>
-  static constexpr auto
-  hash_help
-  (dango::index_seq<tp_indices...> const, tuple_type const& a_tup)noexcept(c_noexcept)->dango::hash_val
-  {
-    return dango::multi_hash(dango::tuple_get<tp_indices>(a_tup)...);
-  }
+    ( ... && dango::has_noexcept_hash<dango::tuple_at_type<dango::tuple_model<tp_types> const&>>);
 public:
   static constexpr auto
   hash
   (tuple_type const& a_tup)noexcept(c_noexcept)->dango::hash_val
   {
-    return hash_help(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
+    return a_tup->*dango::multi_hash;
   }
 
   DANGO_UNCONSTRUCTIBLE(operator_hash)

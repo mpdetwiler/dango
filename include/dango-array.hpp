@@ -306,7 +306,7 @@ final
   template
   <dango::usize tp_index, dango::is_same_ignore_cv<array_type> tp_array>
   requires(tp_index < size)
-  using elem_type = dango::copy_cv<tp_array, tp_elem>;
+  using elem = dango::copy_cv<tp_array, tp_elem>;
 
   template
   <dango::usize tp_index, dango::is_same_ignore_cvref<array_type> tp_array>

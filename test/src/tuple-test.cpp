@@ -59,6 +59,12 @@ static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&&,       da
 static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&>&&>);
 static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&&,       dango::tuple<int&, float&, bool&>&&>);
 
+static_assert( dango::has_tuple_size<dango::tuple<>>);
+static_assert( dango::tuple_size<dango::tuple<>> == 0);
+static_assert(!dango::has_tuple_elem<dango::tuple<>, 0>);
+static_assert(!dango::has_tuple_get<dango::tuple<>, 0>);
+static_assert( dango::is_tuple_like<dango::tuple<>>);
+
 #include <cstdio>
 
 namespace
