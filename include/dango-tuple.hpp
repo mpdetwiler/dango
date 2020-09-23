@@ -840,7 +840,8 @@ private:
   using storage_type =
     dango::detail::tuple_storage<dango::detail::tuple_pack_reverse<tp_types...>>;
 public:
-  static constexpr auto size()noexcept->dango::usize{ return sizeof...(tp_types); }
+  constexpr auto size()const noexcept->dango::usize{ return sizeof...(tp_types); }
+  constexpr auto is_empty()const noexcept->bool{ return false; }
 public:
   constexpr tuple()noexcept = delete;
   constexpr
@@ -1291,7 +1292,8 @@ private:
   using storage_type =
     dango::detail::tuple_storage<dango::detail::tuple_pack_reverse<tp_types...>>;
 public:
-  static constexpr auto size()noexcept->dango::usize{ return sizeof...(tp_types); }
+  constexpr auto size()const noexcept->dango::usize{ return sizeof...(tp_types); }
+  constexpr auto is_empty()const noexcept->bool{ return false; }
 public:
   constexpr tuple()noexcept = delete;
 
@@ -1903,11 +1905,8 @@ dango::
 tuple<>
 {
 public:
-  static constexpr auto
-  size()noexcept->dango::usize
-  {
-    return dango::usize(0);
-  }
+  constexpr auto size()const noexcept->dango::usize{ return dango::usize(0); }
+  constexpr auto is_empty()const noexcept->bool{ return true; }
 public:
   DANGO_ALL_DEFAULT_CONSTEXPR_NOEXCEPT(tuple, false)
 public:
@@ -1943,6 +1942,25 @@ dango
   noexcept(( ... && dango::is_noexcept_brace_constructible<dango::emplacer_return_type_decay<tp_args>, tp_args>))->auto
   {
     return dango::tuple<dango::emplacer_return_type_decay<tp_args>...>{ dango::forward<tp_args>(a_args)... };
+  }
+
+  template
+  <typename tp_elem, dango::usize tp_size>
+  requires(dango::is_brace_constructible<dango::decay<tp_elem>, tp_elem&>)
+  constexpr auto
+  make_tuple_from_array
+  (tp_elem(& a_arg)[tp_size])
+  noexcept(dango::is_noexcept_brace_constructible<dango::decay<tp_elem>, tp_elem&>)->auto
+  {
+    constexpr auto const c_make =
+      []<dango::usize... tp_indices>
+      (dango::index_seq<tp_indices...> const, tp_elem* const a_array)
+      noexcept(dango::is_noexcept_brace_constructible<dango::decay<tp_elem>, tp_elem&>)->auto
+      {
+        return dango::make_tuple(a_array[tp_indices]...);
+      };
+
+    return c_make(dango::make_index_seq<tp_size>{ }, a_arg);
   }
 
   template

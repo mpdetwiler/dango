@@ -1,4 +1,5 @@
 #include "dango-array.hpp"
+#include "dango-fixed-array.hpp"
 #include "dango-test-print.hpp"
 
 template class dango::array<float, 4>;

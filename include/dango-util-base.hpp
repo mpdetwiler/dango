@@ -1734,7 +1734,7 @@ dango::detail
   }
 }
 
-/*** has_tuple_size/elem_type/get tuple_size/elem_type/get etc ***/
+/*** has_tuple_size/elem/get tuple_size/elem/get ***/
 
 namespace
 dango
