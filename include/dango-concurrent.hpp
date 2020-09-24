@@ -380,7 +380,7 @@ noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool
 
   dango_crit(m_lock)
   {
-    if(dango::likely(m_executed.load<relaxed>()))
+    if(m_executed.load<relaxed>())
     {
       return false;
     }
@@ -412,7 +412,7 @@ noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool
 
   dango_crit(m_lock)
   {
-    if(dango::likely(m_executed.load<relaxed>()))
+    if(m_executed.load<relaxed>())
     {
       return false;
     }
