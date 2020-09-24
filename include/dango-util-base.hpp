@@ -173,12 +173,12 @@ dango
   <dango::is_uint tp_uint>
   constexpr auto
   next_multiple
-  (tp_uint const a_arg1, tp_uint const a_arg2)noexcept->tp_uint
+  (tp_uint const a_numer, tp_uint const a_denom)noexcept->tp_uint
   {
-    tp_uint const a_div = a_arg1 / a_arg2;
-    tp_uint const a_mod = a_arg1 % a_arg2;
+    tp_uint const a_div = a_numer / a_denom;
+    tp_uint const a_mod = a_numer % a_denom;
 
-    return (a_mod != tp_uint(0)) ? (a_arg2 * (a_div + tp_uint(1))) : a_arg1;
+    return a_denom * (a_div + tp_uint(a_mod != tp_uint(0)));
   }
 }
 
