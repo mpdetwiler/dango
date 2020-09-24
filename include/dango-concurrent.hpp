@@ -129,7 +129,7 @@ public:
   class try_locker;
 public:
   explicit constexpr spin_mutex()noexcept;
-  ~spin_mutex()noexcept = default;
+  constexpr ~spin_mutex()noexcept = default;
 public:
   [[nodiscard]] auto lock()noexcept->locker;
   [[nodiscard]] auto try_lock()noexcept->try_locker;
@@ -326,7 +326,7 @@ final
 {
 public:
   explicit constexpr exec_once()noexcept;
-  ~exec_once()noexcept = default;
+  constexpr ~exec_once()noexcept = default;
 public:
   template
   <typename tp_func, typename... tp_args>
@@ -371,9 +371,11 @@ exec
 (tp_func&& a_func, tp_args&&... a_args)
 noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool
 {
+  using dango::mem_order::acquire;
+  using dango::mem_order::release;
   using dango::mem_order::relaxed;
 
-  if(dango::likely(m_executed.load<relaxed>()))
+  if(dango::likely(m_executed.load<acquire>()))
   {
     return false;
   }
@@ -387,7 +389,7 @@ noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool
 
     dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
 
-    m_executed.store<relaxed>(true);
+    m_executed.store<release>(true);
   }
 
   return true;
@@ -403,9 +405,11 @@ exec
 (tp_func&& a_func, tp_args&&... a_args)
 noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool
 {
+  using dango::mem_order::acquire;
+  using dango::mem_order::release;
   using dango::mem_order::relaxed;
 
-  if(dango::likely(m_executed.load<relaxed>()))
+  if(dango::likely(m_executed.load<acquire>()))
   {
     return false;
   }
@@ -422,7 +426,7 @@ noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool
       return false;
     }
 
-    m_executed.store<relaxed>(true);
+    m_executed.store<release>(true);
   }
 
   return true;
@@ -434,17 +438,7 @@ exec_once::
 has_executed
 ()const noexcept->bool
 {
-  using dango::mem_order::relaxed;
-
-  if(dango::likely(m_executed.load<relaxed>()))
-  {
-    return true;
-  }
-
-  dango_crit(m_lock)
-  {
-    return m_executed.load<relaxed>();
-  }
+  return dango::likely(m_executed.load<dango::mem_order::acquire>());
 }
 
 /*** atomic_ref_count ***/
