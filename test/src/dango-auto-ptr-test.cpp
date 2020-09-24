@@ -122,7 +122,7 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   auto a_ptr_int4 = dango::auto_ptr<int, decltype(a_deleter)>{ new int{ 4 } };
   auto a_ptr_int5 = dango::auto_ptr{ new int{ 5 }, a_deleter };
   auto a_ptr_int7 = dango::make_auto_ptr<int, dango::basic_allocator>(7);
-  auto a_ptr_int8 = dango::make_auto_ptr<int const volatile, dango::polymorphic_allocator<>>(dango::allocator_arg, dango::default_mem_resource_ptr(), 8);
+  auto a_ptr_int8 = dango::make_auto_ptr<int const volatile, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 8);
   auto a_ptr_int9 = dango::make_auto_ptr<int const, dango::polymorphic_allocator<>>(9);
 
   auto a_ptr_ptr_int =
@@ -151,10 +151,10 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   static_assert(sizeof(a_ptr_ptr_int) == 2 * sizeof(int*));
 
   auto a_ptr_void1 = dango::make_auto_ptr<void>(64, 64);
-  auto a_ptr_void2 = dango::make_auto_ptr<void const, dango::polymorphic_allocator<>>(dango::allocator_arg, dango::default_mem_resource_ptr(), 64, 64);
+  auto a_ptr_void2 = dango::make_auto_ptr<void const, dango::polymorphic_allocator<>>(dango::default_mem_resource_ptr(), 64, 64);
   auto a_ptr_void3 = dango::make_auto_ptr<void volatile, dango::polymorphic_allocator<>>(64, 64);
   auto a_ptr_void4 = dango::auto_ptr{ 64, 64 };
-  auto a_ptr_void5 = dango::auto_ptr{ dango::allocator_arg, dango::default_mem_resource_ptr(), 64, 64 };
+  auto a_ptr_void5 = dango::auto_ptr{ dango::default_mem_resource_ptr(), 64, 64 };
 
   dango_assert_terminate(a_ptr_void2.get_allocator_handle() == a_ptr_void3.get_allocator_handle());
   dango_assert_terminate(a_ptr_void2.get_allocator_handle() == a_ptr_void5.get_allocator_handle());
@@ -192,9 +192,9 @@ auto_ptr_contstexpr_test(int const a_val)noexcept(false)->int
 
   auto a_ptr4 = dango::make_auto_ptr<int const, dango::basic_allocator>(*a_ptr3);
 
-  dango::mem_resource_ptr<> a_null{ null };
+  dango::mem_resource_ptr<> a_null = null;
 
-  auto a_ptr5 = dango::make_auto_ptr<int, dango::polymorphic_allocator<>>(dango::allocator_arg, a_null, *a_ptr4);
+  auto a_ptr5 = dango::make_auto_ptr<int, dango::polymorphic_allocator<>>(a_null, *a_ptr4);
 
   return *a_ptr5;
 }
