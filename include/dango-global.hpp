@@ -29,7 +29,7 @@ dango::detail
 
 template
 <dango::detail::global_storage_constraint_spec tp_type, dango::detail::global_storage_construct_ref<tp_type> tp_construct>
-class alignas(dango::cache_align_type)
+class
 dango::
 detail::
 global_storage
@@ -53,9 +53,8 @@ private:
   void decrement()noexcept;
 private:
   tp_type* m_ptr;
-  dango::aligned_union<tp_type, dango::cache_align_type> m_storage;
   dango::exec_once m_init;
-  DANGO_CACHE_LINE_START
+  dango::aligned_union<tp_type, dango::cache_align_type> m_storage;
   dango::spin_mutex m_lock;
   dango::usize m_ref_count;
 private:
@@ -129,8 +128,8 @@ global_storage<tp_type, tp_construct>::
 global_storage
 ()noexcept:
 m_ptr{ dango::null },
-m_storage{ },
 m_init{ },
+m_storage{ },
 m_lock{ },
 m_ref_count{ dango::usize(0) }
 {

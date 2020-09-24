@@ -343,10 +343,9 @@ public:
   noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool;
 public:
   auto has_executed()const noexcept->bool;
-  void reset()noexcept;
 private:
   mutable dango::spin_mutex m_lock;
-  bool m_executed;
+  dango::atomic<bool> m_executed;
 public:
   DANGO_UNMOVEABLE(exec_once)
 };
@@ -372,16 +371,23 @@ exec
 (tp_func&& a_func, tp_args&&... a_args)
 noexcept(dango::is_noexcept_callable_ret<void, tp_func, tp_args...>)->bool
 {
+  using dango::mem_order::relaxed;
+
+  if(dango::likely(m_executed.load<relaxed>()))
+  {
+    return false;
+  }
+
   dango_crit(m_lock)
   {
-    if(dango::likely(m_executed))
+    if(dango::likely(m_executed.load<relaxed>()))
     {
       return false;
     }
 
     dango::forward<tp_func>(a_func)(dango::forward<tp_args>(a_args)...);
 
-    m_executed = true;
+    m_executed.store<relaxed>(true);
   }
 
   return true;
@@ -397,9 +403,16 @@ exec
 (tp_func&& a_func, tp_args&&... a_args)
 noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool
 {
+  using dango::mem_order::relaxed;
+
+  if(dango::likely(m_executed.load<relaxed>()))
+  {
+    return false;
+  }
+
   dango_crit(m_lock)
   {
-    if(dango::likely(m_executed))
+    if(dango::likely(m_executed.load<relaxed>()))
     {
       return false;
     }
@@ -409,7 +422,7 @@ noexcept(dango::is_noexcept_callable_ret<bool, tp_func, tp_args...>)->bool
       return false;
     }
 
-    m_executed = true;
+    m_executed.store<relaxed>(true);
   }
 
   return true;
@@ -421,21 +434,16 @@ exec_once::
 has_executed
 ()const noexcept->bool
 {
-  dango_crit(m_lock)
-  {
-    return m_executed;
-  }
-}
+  using dango::mem_order::relaxed;
 
-inline void
-dango::
-exec_once::
-reset
-()noexcept
-{
+  if(dango::likely(m_executed.load<relaxed>()))
+  {
+    return true;
+  }
+
   dango_crit(m_lock)
   {
-    m_executed = false;
+    return m_executed.load<relaxed>();
   }
 }
 

@@ -71,7 +71,7 @@ public:
   using super_type::super_type;
 };
 
-class alignas(dango::cache_align_type)
+class
 dango::
 detail::
 mutex_control

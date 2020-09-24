@@ -53,8 +53,8 @@ public:
   (mutex_type& a_mutex)noexcept:
   super_type{ },
   m_suspend_aware_count{ count_type(0) },
-  m_init{ },
   m_mutex{ &a_mutex },
+  m_init{ },
   m_storage{ }
   { }
   constexpr ~cond_var_control()noexcept = default;
@@ -79,9 +79,8 @@ public:
 private:
   count_type m_suspend_aware_count;
   DANGO_CACHE_LINE_START
-  dango::exec_once m_init;
-  DANGO_CACHE_LINE_START
   mutex_type* const m_mutex;
+  dango::exec_once m_init;
   dango::detail::cond_var_storage m_storage;
 public:
   DANGO_DELETE_DEFAULT(cond_var_control)
