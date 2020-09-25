@@ -1438,17 +1438,17 @@ public:
   ( \
     (sizeof...(tp_args) == sizeof...(tp_types)) && \
     !( ... && dango::is_same<tp_args, tp_types>) && \
-    ( ... && dango::is_assignable<dango::tuple_at_type<dango::tuple_model<tp_types> lcvref>, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>) \
+    ( ... && dango::is_assignable<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>) \
   ) \
   constexpr auto \
   operator = \
   (dango::tuple<tp_args...> rcvref a_tup)lcvref \
-  noexcept(( ... && dango::is_noexcept_assignable<dango::tuple_at_type<dango::tuple_model<tp_types> lcvref>, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>))->ret \
+  noexcept(( ... && dango::is_noexcept_assignable<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>))->ret \
   { \
     constexpr auto const c_assign = \
     []<dango::usize... tp_indices> \
     (dango::index_seq<tp_indices...> const, tuple lcvref a_this, dango::tuple<tp_args...> rcvref a_arg)constexpr \
-    noexcept(( ... && dango::is_noexcept_assignable<dango::tuple_at_type<dango::tuple_model<tp_types> lcvref>, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>))->void \
+    noexcept(( ... && dango::is_noexcept_assignable<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>))->void \
     { \
       ( ... , void(static_cast<tuple lcvref>(a_this).at<tp_indices>() = static_cast<dango::tuple<tp_args...> rcvref>(a_arg).template at<tp_indices>())); \
     }; \
