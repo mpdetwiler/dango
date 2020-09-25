@@ -11,7 +11,7 @@ dango
   template
   <typename tp_elem>
   concept array_constraint_spec =
-    dango::is_object<tp_elem> &&
+    dango::is_object_exclude_array<tp_elem> &&
     dango::is_noexcept_destructible<tp_elem>;
 
   template

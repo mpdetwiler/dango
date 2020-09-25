@@ -895,6 +895,10 @@ dango
     dango::is_same_ignore_cv<dango::remove_ref<tp_type1>, dango::remove_ref<tp_type2>>;
 }
 
+#define DANGO_TRAITS_DEFINE_IGNORE_REF(name) \
+  template<typename tp_type> \
+  concept name##_ignore_ref = dango::name<tp_type> || dango::name<dango::remove_ref<tp_type>>;
+
 /*** is_void ***/
 
 namespace
@@ -913,6 +917,8 @@ dango
   template
   <typename tp_type>
   concept is_null_tag = dango::is_same_ignore_cv<tp_type, dango::null_tag>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_null_tag)
 }
 
 /*** is_bool ***/
@@ -923,6 +929,8 @@ dango
   template
   <typename tp_type>
   concept is_bool = dango::is_same_ignore_cv<tp_type, bool>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_bool)
 }
 
 /*** is_uint ***/
@@ -938,6 +946,8 @@ dango
     dango::is_same_ignore_cv<tp_type, dango::integer::u_int> ||
     dango::is_same_ignore_cv<tp_type, dango::integer::u_long> ||
     dango::is_same_ignore_cv<tp_type, dango::integer::u_longlong>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_uint)
 }
 
 /*** is_sint ***/
@@ -953,6 +963,8 @@ dango
     dango::is_same_ignore_cv<tp_type, dango::integer::s_int> ||
     dango::is_same_ignore_cv<tp_type, dango::integer::s_long> ||
     dango::is_same_ignore_cv<tp_type, dango::integer::s_longlong>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_sint)
 }
 
 /*** is_int ***/
@@ -964,6 +976,8 @@ dango
   <typename tp_type>
   concept is_int =
     dango::is_uint<tp_type> || dango::is_sint<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_int)
 }
 
 /*** is_char ***/
@@ -979,6 +993,8 @@ dango
     dango::is_same_ignore_cv<tp_type, dango::bchar> ||
     dango::is_same_ignore_cv<tp_type, dango::wchar> ||
     dango::is_same_ignore_cv<tp_type, dango::dchar>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_char)
 }
 
 /*** is_integral_exclude_bool ***/
@@ -990,6 +1006,8 @@ dango
   <typename tp_type>
   concept is_integral_exclude_bool =
     dango::is_int<tp_type> || dango::is_char<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_integral_exclude_bool)
 }
 
 /* is_integral */
@@ -1001,6 +1019,8 @@ dango
   <typename tp_type>
   concept is_integral =
     dango::is_integral_exclude_bool<tp_type> || dango::is_bool<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_integral)
 }
 
 /*** is_float ***/
@@ -1014,6 +1034,8 @@ dango
     dango::is_same_ignore_cv<tp_type, float> ||
     dango::is_same_ignore_cv<tp_type, double> ||
     dango::is_same_ignore_cv<tp_type, dango::real>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_float)
 }
 
 /*** is_num ***/
@@ -1025,6 +1047,8 @@ dango
   <typename tp_type>
   concept is_num =
     dango::is_int<tp_type> || dango::is_float<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_num)
 }
 
 /*** is_array is_array_unknown_bound is_array_known_bound ***/
@@ -1060,6 +1084,10 @@ dango
   <typename tp_type>
   concept is_array =
     dango::is_array_unknown_bound<tp_type> || dango::is_array_known_bound<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_array_unknown_bound)
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_array_known_bound)
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_array)
 }
 
 /*** array_rank ***/
@@ -1119,11 +1147,7 @@ dango
   <typename tp_type>
   concept is_enum = bool(__is_enum(tp_type));
 
-  template
-  <typename tp_type>
-  concept is_enum_ignore_ref =
-    dango::is_enum<tp_type> ||
-    dango::is_enum<dango::remove_ref<tp_type>>;
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_enum)
 }
 
 /*** is_union ***/
@@ -1135,11 +1159,7 @@ dango
   <typename tp_type>
   concept is_union = bool(__is_union(tp_type));
 
-  template
-  <typename tp_type>
-  concept is_union_ignore_ref =
-    dango::is_union<tp_type> ||
-    dango::is_union<dango::remove_ref<tp_type>>;
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_union)
 }
 
 /*** is_class ***/
@@ -1151,11 +1171,7 @@ dango
   <typename tp_type>
   concept is_class = bool(__is_class(tp_type));
 
-  template
-  <typename tp_type>
-  concept is_class_ignore_ref =
-    dango::is_class<tp_type> ||
-    dango::is_class<dango::remove_ref<tp_type>>;
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_class)
 }
 
 /*** is_class_or_union ***/
@@ -1168,11 +1184,7 @@ dango
   concept is_class_or_union =
     dango::is_class<tp_type> || dango::is_union<tp_type>;
 
-  template
-  <typename tp_type>
-  concept is_class_or_union_ignore_ref =
-    dango::is_class_or_union<tp_type> ||
-    dango::is_class_or_union<dango::remove_ref<tp_type>>;
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_class_or_union)
 }
 
 /*** is_user_defined ***/
@@ -1185,11 +1197,7 @@ dango
   concept is_user_defined =
     dango::is_class_or_union<tp_type> || dango::is_enum<tp_type>;
 
-  template
-  <typename tp_type>
-  concept is_user_defined_ignore_ref =
-    dango::is_user_defined<tp_type> ||
-    dango::is_user_defined<dango::remove_ref<tp_type>>;
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_user_defined)
 }
 
 /*** is_lvalue_ref is_rvalue_ref is_ref ***/
@@ -1238,6 +1246,8 @@ dango
   <typename tp_type>
   concept is_func =
     !dango::is_ref<tp_type> && dango::is_same<tp_type const volatile, dango::remove_cv<tp_type>>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_func)
 }
 
 /*** is_unqualified_func ***/
@@ -1258,6 +1268,8 @@ dango
   <typename tp_type>
   concept is_unqualified_func =
     dango::is_func<tp_type> && dango::detail::is_unqualified_func_help<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_unqualified_func)
 }
 
 /*** is_qualified_func ***/
@@ -1291,6 +1303,8 @@ dango
   template
   <typename tp_type>
   concept is_ptr = dango::detail::is_ptr_help<dango::remove_cv<tp_type>>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_ptr)
 }
 
 /*** is_func_ptr ***/
@@ -1302,6 +1316,8 @@ dango
   <typename tp_type>
   concept is_func_ptr =
     dango::is_ptr<tp_type> && dango::is_func<dango::remove_ptr<tp_type>>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_func_ptr)
 }
 
 /*** is_void_ptr ***/
@@ -1313,6 +1329,8 @@ dango
   <typename tp_type>
   concept is_void_ptr =
     dango::is_ptr<tp_type> && dango::is_void<dango::remove_ptr<tp_type>>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_void_ptr)
 }
 
 /*** is_object_ptr ***/
@@ -1324,6 +1342,8 @@ dango
   <typename tp_type>
   concept is_object_ptr =
     dango::is_ptr<tp_type> && !dango::is_func_ptr<tp_type> && !dango::is_void_ptr<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_object_ptr)
 }
 
 /*** is_member_ptr ***/
@@ -1346,6 +1366,8 @@ dango
   template
   <typename tp_type>
   concept is_member_ptr = dango::detail::is_member_ptr_help<dango::remove_cv<tp_type>>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_member_ptr)
 }
 
 /*** is_member_func_ptr ***/
@@ -1368,6 +1390,8 @@ namespace dango
   <typename tp_type>
   concept is_member_func_ptr =
     dango::is_member_ptr<tp_type> && dango::detail::is_member_func_ptr_help<dango::remove_cv<tp_type>>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_member_func_ptr)
 }
 
 /*** is_member_object_ptr ***/
@@ -1379,6 +1403,8 @@ dango
   <typename tp_type>
   concept is_member_object_ptr =
     dango::is_member_ptr<tp_type> && !dango::is_member_func_ptr<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_member_object_ptr)
 }
 
 /*** is_arithmetic_exclude_bool ***/
@@ -1390,6 +1416,8 @@ dango
   <typename tp_type>
   concept is_arithmetic_exclude_bool =
     dango::is_integral_exclude_bool<tp_type> || dango::is_float<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_arithmetic_exclude_bool)
 }
 
 /*** is_arithmetic ***/
@@ -1401,6 +1429,8 @@ dango
   <typename tp_type>
   concept is_arithmetic =
     dango::is_arithmetic_exclude_bool<tp_type> || dango::is_bool<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_arithmetic)
 }
 
 /*** is_arithmetic_include_ptr ***/
@@ -1412,6 +1442,8 @@ dango
   <typename tp_type>
   concept is_arithmetic_include_ptr =
     dango::is_arithmetic<tp_type> || dango::is_object_ptr<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_arithmetic_include_ptr)
 }
 
 /*** is_fundamnetal is_compound ***/
@@ -1426,9 +1458,13 @@ dango
     dango::is_null_tag<tp_type> ||
     dango::is_arithmetic<tp_type>;
 
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_fundamental)
+
   template
   <typename tp_type>
   concept is_compound = !dango::is_fundamental<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_compound)
 }
 
 /*** is_scalar ***/
@@ -1444,6 +1480,8 @@ dango
     dango::is_ptr<tp_type> ||
     dango::is_member_ptr<tp_type> ||
     dango::is_null_tag<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_scalar)
 }
 
 /*** is_object_exclude_array ***/
@@ -1456,11 +1494,7 @@ dango
   concept is_object_exclude_array =
     dango::is_scalar<tp_type> || dango::is_class_or_union<tp_type>;
 
-  template
-  <typename tp_type>
-  concept is_object_exclude_array_ignore_ref =
-    dango::is_object_exclude_array<tp_type> ||
-    dango::is_object_exclude_array<dango::remove_ref<tp_type>>;
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_object_exclude_array)
 }
 
 /*** is_object ***/
@@ -1473,11 +1507,7 @@ dango
   concept is_object =
     dango::is_object_exclude_array<tp_type> || dango::is_array<tp_type>;
 
-  template
-  <typename tp_type>
-  concept is_object_ignore_ref =
-    dango::is_object<tp_type> ||
-    dango::is_object<dango::remove_ref<tp_type>>;
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_object)
 }
 
 /*** is_referenceable ***/
@@ -1506,11 +1536,7 @@ dango
   concept is_pointable =
     dango::is_void<tp_type> || dango::is_object<tp_type> || dango::is_unqualified_func<tp_type>;
 
-  template
-  <typename tp_type>
-  concept is_pointable_ignore_ref =
-    dango::is_pointable<tp_type> ||
-    dango::is_pointable<dango::remove_ref<tp_type>>;
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_pointable)
 }
 
 /*** is_const ***/
@@ -1533,6 +1559,8 @@ dango
   template
   <typename tp_type>
   concept is_const = dango::detail::is_const_help<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_const)
 }
 
 /*** is_volatile ***/
@@ -1555,6 +1583,8 @@ dango
   template
   <typename tp_type>
   concept is_volatile = dango::detail::is_volatile_help<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_volatile)
 }
 
 /*** is_const_or_volatile is_const_and_volatile ***/
@@ -1567,20 +1597,14 @@ dango
   concept is_const_or_volatile =
     dango::is_const<tp_type> || dango::is_volatile<tp_type>;
 
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_const_or_volatile)
+
   template
   <typename tp_type>
   concept is_const_and_volatile =
     dango::is_const<tp_type> && dango::is_volatile<tp_type>;
-}
 
-/*** is_trivial ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  concept is_trivial = bool(__is_trivial(tp_type));
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_const_and_volatile)
 }
 
 /*** is_trivial_copyable ***/
@@ -1590,7 +1614,23 @@ dango
 {
   template
   <typename tp_type>
-  concept is_trivial_copyable = bool(__is_trivially_copyable(tp_type));
+  concept is_trivial_copyable =
+    dango::is_object<tp_type> && bool(__is_trivially_copyable(tp_type));
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_trivial_copyable)
+}
+
+/*** is_trivial ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_trivial =
+    dango::is_trivial_copyable<tp_type> && bool(__is_trivial(tp_type));
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_trivial)
 }
 
 /*** is_standard_layout ***/
@@ -1600,7 +1640,10 @@ dango
 {
   template
   <typename tp_type>
-  concept is_standard_layout = bool(__is_standard_layout(tp_type));
+  concept is_standard_layout =
+    dango::is_object<tp_type> && bool(__is_standard_layout(tp_type));
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_standard_layout)
 }
 
 /*** is_empty ***/
@@ -1610,7 +1653,10 @@ dango
 {
   template
   <typename tp_type>
-  concept is_empty = bool(__is_empty(tp_type));
+  concept is_empty =
+    dango::is_class<tp_type> && bool(__is_empty(tp_type));
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_empty)
 }
 
 /*** is_polymorphic ***/
@@ -1620,7 +1666,10 @@ dango
 {
   template
   <typename tp_type>
-  concept is_polymorphic = bool(__is_polymorphic(tp_type));
+  concept is_polymorphic =
+    dango::is_class<tp_type> && bool(__is_polymorphic(tp_type));
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_polymorphic)
 }
 
 /*** is_abstract ***/
@@ -1630,7 +1679,10 @@ dango
 {
   template
   <typename tp_type>
-  concept is_abstract = bool(__is_abstract(tp_type));
+  concept is_abstract =
+    dango::is_polymorphic<tp_type> && bool(__is_abstract(tp_type));
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_abstract)
 }
 
 /*** is_signed ***/
@@ -1652,7 +1704,10 @@ dango
 {
   template
   <typename tp_type>
-  concept is_signed = dango::detail::is_signed_help<dango::remove_cv<tp_type>>;
+  concept is_signed =
+    dango::is_arithmetic<tp_type> && dango::detail::is_signed_help<dango::remove_cv<tp_type>>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_signed)
 }
 
 /*** is_unsigned ***/
@@ -1664,7 +1719,11 @@ dango
   <typename tp_type>
   concept is_unsigned =
     dango::is_arithmetic<tp_type> && !dango::is_signed<tp_type>;
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_unsigned)
 }
+
+#undef DANGO_TRAITS_DEFINE_IGNORE_REF
 
 /*** is_base_of ***/
 
@@ -1673,7 +1732,16 @@ dango
 {
   template
   <typename tp_base, typename tp_derived>
-  concept is_base_of = bool(__is_base_of(tp_base, tp_derived));
+  concept is_base_of =
+    dango::is_class<tp_base> &&
+    dango::is_class<tp_derived> &&
+    bool(__is_base_of(tp_base, tp_derived));
+
+  template
+  <typename tp_base, typename tp_derived>
+  concept is_base_of_ignore_ref =
+    dango::is_base_of<tp_base, tp_derived> ||
+    dango::is_base_of<dango::remove_ref<tp_base>, dango::remove_ref<tp_derived>>;
 }
 
 /*** is_derived_from ***/
@@ -1684,6 +1752,11 @@ dango
   template
   <typename tp_derived, typename tp_base>
   concept is_derived_from = dango::is_base_of<tp_base, tp_derived>;
+
+  template
+  <typename tp_derived, typename tp_base>
+  concept is_derived_from_ignore_ref =
+    dango::is_base_of_ignore_ref<tp_base, tp_derived>;
 }
 
 /*** sizeof_with_default alignof_with_default ***/
@@ -1745,7 +1818,7 @@ dango::detail
   };
 
   template
-  <dango::is_referenceable tp_type, typename tp_default>
+  <dango::is_referenceable_ignore_ref tp_type, typename tp_default>
   struct
   add_rvalue_ref_help<tp_type, tp_default>
   final
@@ -2471,28 +2544,28 @@ dango::detail
     DANGO_UNCONSTRUCTIBLE(make_uint_help)
   };
 
-#define DANGO_DEFINE_INT_MAPPING(type1, type2) \
+#define DANGO_TRAITS_DEFINE_INT_MAPPING(type1, type2) \
   template<> struct make_uint_help<type1> \
   final{ using type = type2; DANGO_UNCONSTRUCTIBLE(make_uint_help) };
 
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_char,     dango::integer::u_char)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_short,    dango::integer::u_short)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_int,      dango::integer::u_int)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_long,     dango::integer::u_long)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::s_longlong, dango::integer::u_longlong)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::s_char,     dango::integer::u_char)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::s_short,    dango::integer::u_short)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::s_int,      dango::integer::u_int)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::s_long,     dango::integer::u_long)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::s_longlong, dango::integer::u_longlong)
 
-  DANGO_DEFINE_INT_MAPPING(char,         dango::integer::u_char)
-  DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::ubyte)
-  DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::ushort)
-  DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::uint)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(char,         dango::integer::u_char)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::bchar, dango::ubyte)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::wchar, dango::ushort)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::dchar, dango::uint)
 
 #ifdef DANGO_PLATFORM_WINDOWS
-  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::ushort)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(wchar_t,      dango::ushort)
 #else
-  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::uint)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(wchar_t,      dango::uint)
 #endif
 
-#undef DANGO_DEFINE_INT_MAPPING
+#undef DANGO_TRAITS_DEFINE_INT_MAPPING
 }
 
 namespace
@@ -2520,28 +2593,28 @@ dango::detail
     DANGO_UNCONSTRUCTIBLE(make_sint_help)
   };
 
-#define DANGO_DEFINE_INT_MAPPING(type1, type2) \
+#define DANGO_TRAITS_DEFINE_INT_MAPPING(type1, type2) \
   template<> struct make_sint_help<type1> \
   final{ using type = type2; DANGO_UNCONSTRUCTIBLE(make_sint_help) };
 
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_char,     dango::integer::s_char)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_short,    dango::integer::s_short)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_int,      dango::integer::s_int)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_long,     dango::integer::s_long)
-  DANGO_DEFINE_INT_MAPPING(dango::integer::u_longlong, dango::integer::s_longlong)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::u_char,     dango::integer::s_char)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::u_short,    dango::integer::s_short)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::u_int,      dango::integer::s_int)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::u_long,     dango::integer::s_long)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::integer::u_longlong, dango::integer::s_longlong)
 
-  DANGO_DEFINE_INT_MAPPING(char,         dango::integer::s_char)
-  DANGO_DEFINE_INT_MAPPING(dango::bchar, dango::sbyte)
-  DANGO_DEFINE_INT_MAPPING(dango::wchar, dango::sshort)
-  DANGO_DEFINE_INT_MAPPING(dango::dchar, dango::sint)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(char,         dango::integer::s_char)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::bchar, dango::sbyte)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::wchar, dango::sshort)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(dango::dchar, dango::sint)
 
 #ifdef DANGO_PLATFORM_WINDOWS
-  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::sshort)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(wchar_t,      dango::sshort)
 #else
-  DANGO_DEFINE_INT_MAPPING(wchar_t,      dango::sint)
+  DANGO_TRAITS_DEFINE_INT_MAPPING(wchar_t,      dango::sint)
 #endif
 
-#undef DANGO_DEFINE_INT_MAPPING
+#undef DANGO_TRAITS_DEFINE_INT_MAPPING
 }
 
 namespace
@@ -2595,9 +2668,13 @@ namespace
 dango
 {
   template
-  <dango::is_integral_exclude_bool tp_int>
+  <dango::is_integral tp_int>
   inline constexpr auto const bit_width =
     dango::detail::bit_width_help<dango::remove_cv<tp_int>>();
+
+  template
+  <dango::is_bool tp_int>
+  inline constexpr auto const bit_width<tp_int> = dango::usize(1);
 }
 
 /*** constexpr_check ***/
