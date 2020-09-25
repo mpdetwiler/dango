@@ -456,6 +456,10 @@ dango
         }
       );
   }
+
+  template
+  <dango::is_default_constructible tp_type>
+  inline constexpr auto const default_emplacer_for = dango::forward_as_emplacer<tp_type>();
 }
 
 namespace
