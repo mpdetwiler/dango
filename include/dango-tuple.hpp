@@ -1533,34 +1533,29 @@ public:
 
 /*** dango_operator_swap ***/
 
-#define DANGO_TUPLE_SPEC(noex, lcvref, rcvref) \
-  ( ... && dango::is##noex##swappable<dango::tuple_at_type<dango::tuple_model<tp_types> lcvref>, dango::tuple_at_type<dango::tuple_model<tp_args> rcvref>>)
-
   template
   <typename... tp_args>
   requires
   (
     (sizeof...(tp_args) == sizeof...(tp_types)) &&
     ( ... && dango::is_ref<tp_args>) &&
-    DANGO_TUPLE_SPEC(_, const&, const&)
+    ( ... && dango::is_swappable<tp_types, tp_args>)
   )
   constexpr void
   dango_operator_swap
   (dango::tuple<tp_args...> const& a_tup)const
-  noexcept(DANGO_TUPLE_SPEC(_noexcept_, const&, const&))
+  noexcept(( ... && dango::is_noexcept_swappable<tp_types, tp_args>))
   {
     constexpr auto const c_swap =
       []<dango::usize... tp_indices>
       (dango::index_seq<tp_indices...> const, tuple const& a_this, dango::tuple<tp_args...> const& a_arg)constexpr
-      noexcept(DANGO_TUPLE_SPEC(_noexcept_, const&, const&))->void
+      noexcept(( ... && dango::is_noexcept_swappable<tp_types, tp_args>))->void
       {
         ( ... , void(dango::swap(a_this.at<tp_indices>(), a_arg.template at<tp_indices>())));
       };
 
     c_swap(dango::make_index_seq<sizeof...(tp_types)>{ }, *this, a_tup);
   }
-
-#undef DANGO_TUPLE_SPEC
 
 private:
   storage_type m_storage;
