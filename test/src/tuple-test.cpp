@@ -31,6 +31,12 @@ static_assert(dango::make_tuple_from_array("abc") > dango::make_tuple_from_array
 static_assert(dango::tuple<>{ } == dango::tuple<>{ });
 static_assert(dango::tuple<>{ } != dango::tuple<int>{ });
 
+static_assert( dango::has_tuple_size<dango::tuple<>>);
+static_assert( dango::tuple_size<dango::tuple<>> == 0);
+static_assert(!dango::has_tuple_elem<dango::tuple<>, 0>);
+static_assert(!dango::has_tuple_get<dango::tuple<>, 0>);
+static_assert( dango::is_tuple_like<dango::tuple<>>);
+
 static_assert( dango::is_copy_constructible<dango::tuple<int&, float&, bool&>>);
 static_assert( dango::is_move_constructible<dango::tuple<int&, float&, bool&>>);
 static_assert( dango::is_trivial_copy_constructible<dango::tuple<int&, float&, bool&>>);
@@ -61,11 +67,29 @@ static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&&,       da
 static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&>&&>);
 static_assert( dango::is_swappable<dango::tuple<int&, float&, bool&>&&,       dango::tuple<int&, float&, bool&>&&>);
 
-static_assert( dango::has_tuple_size<dango::tuple<>>);
-static_assert( dango::tuple_size<dango::tuple<>> == 0);
-static_assert(!dango::has_tuple_elem<dango::tuple<>, 0>);
-static_assert(!dango::has_tuple_get<dango::tuple<>, 0>);
-static_assert( dango::is_tuple_like<dango::tuple<>>);
+static_assert( dango::is_assignable<dango::tuple<int, float, bool>&,           dango::tuple<int, float, bool>&>);
+static_assert(!dango::is_assignable<dango::tuple<int, float, bool> const&,     dango::tuple<int, float, bool>&>);
+static_assert( dango::is_assignable<dango::tuple<int, float, bool>&,           dango::tuple<int, float, bool> const&>);
+static_assert(!dango::is_assignable<dango::tuple<int, float, bool> const&,     dango::tuple<int, float, bool> const&>);
+static_assert(!dango::is_assignable<dango::tuple<int, float, bool>&&,          dango::tuple<int, float, bool>&>);
+static_assert( dango::is_assignable<dango::tuple<int, float, bool>&,           dango::tuple<int, float, bool>&&>);
+static_assert(!dango::is_assignable<dango::tuple<int, float, bool>&&,          dango::tuple<int, float, bool>&&>);
+
+static_assert(!dango::is_assignable<dango::tuple<int&, float, bool>&,           dango::tuple<int&, float, bool>&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float, bool> const&,     dango::tuple<int&, float, bool>&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float, bool>&,           dango::tuple<int&, float, bool> const&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float, bool> const&,     dango::tuple<int&, float, bool> const&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float, bool>&&,          dango::tuple<int&, float, bool>&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float, bool>&,           dango::tuple<int&, float, bool>&&>);
+static_assert(!dango::is_assignable<dango::tuple<int&, float, bool>&&,          dango::tuple<int&, float, bool>&&>);
+
+static_assert( dango::is_assignable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&>&>);
+static_assert( dango::is_assignable<dango::tuple<int&, float&, bool&> const&,  dango::tuple<int&, float&, bool&>&>);
+static_assert( dango::is_assignable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&> const&>);
+static_assert( dango::is_assignable<dango::tuple<int&, float&, bool&> const&,  dango::tuple<int&, float&, bool&> const&>);
+static_assert( dango::is_assignable<dango::tuple<int&, float&, bool&>&&,       dango::tuple<int&, float&, bool&>&>);
+static_assert( dango::is_assignable<dango::tuple<int&, float&, bool&>&,        dango::tuple<int&, float&, bool&>&&>);
+static_assert( dango::is_assignable<dango::tuple<int&, float&, bool&>&&,       dango::tuple<int&, float&, bool&>&&>);
 
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<double, double, double>, dango::tuple<float, float, float>&>);
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<double, double, double>, dango::tuple<float, float, float> const&>);
@@ -82,13 +106,23 @@ static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<f
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<float>>, dango::tuple<float>&&>);
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<float>>, dango::tuple<float> const&&>);
 
-static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<dango::tuple<float>>>, float const&>);
-static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<dango::tuple<float>>>&, float const&>);
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<float>>&, dango::tuple<float>&>);
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<float>>&, dango::tuple<float> const&>);
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<float>>&, dango::tuple<float>&&>);
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<float>>&, dango::tuple<float> const&&>);
 
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<double>>, dango::tuple<float>&>);
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<double>>, dango::tuple<float> const&>);
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<double>>, dango::tuple<float>&&>);
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<double>>, dango::tuple<float> const&&>);
+
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<double>>&, dango::tuple<float>&>);
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<double>>&, dango::tuple<float> const&>);
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<double>>&, dango::tuple<float>&&>);
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<double>>&, dango::tuple<float> const&&>);
+
+static_assert(dango::is_noexcept_brace_constructible<dango::tuple<dango::tuple<dango::tuple<float>>>, float const&>);
+static_assert(dango::is_noexcept_assignable<dango::tuple<dango::tuple<dango::tuple<float>>>&, float const&>);
 
 namespace
 {
@@ -101,6 +135,7 @@ namespace
 }
 
 static_assert(dango::is_noexcept_brace_constructible<dango::tuple<unmoveable>, decltype(dango::default_emplacer)>);
+static_assert(dango::is_noexcept_brace_constructible<dango::tuple<unmoveable, unmoveable, unmoveable>, decltype(dango::default_emplacer), decltype(dango::default_emplacer), decltype(dango::default_emplacer)>);
 
 namespace
 {
