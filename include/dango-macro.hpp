@@ -350,7 +350,7 @@ static_assert(false, u8"unit tests should only be enabled when building executab
   ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type)) type __VA_OPT__(__VA_ARGS__)
 
 #define dango_placement_new_array(addr, type, count) \
-  ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type)) type[dango::usize(count)]
+  ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type), dango::usize(count)) type[dango::usize(count)]
 
 /*** dango_crit ***/
 

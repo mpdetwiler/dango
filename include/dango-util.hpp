@@ -89,7 +89,7 @@ dango
     dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
     dango::is_noexcept_destructible<dango::decay<tp_func>>
   )
-  [[nodiscard]] auto
+  [[nodiscard]] constexpr auto
   make_guard
   (tp_func&& a_func)
   noexcept(dango::is_noexcept_brace_constructible<dango::detail::scope_guard<dango::decay<tp_func>>, tp_func>)->auto
@@ -166,7 +166,7 @@ dango
     dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
     dango::is_noexcept_destructible<dango::decay<tp_func>>
   )
-  [[nodiscard]] auto
+  [[nodiscard]] constexpr auto
   make_finally
   (tp_func&& a_func)
   noexcept(dango::is_noexcept_brace_constructible<dango::detail::finally_guard<dango::decay<tp_func>>, tp_func>)->auto

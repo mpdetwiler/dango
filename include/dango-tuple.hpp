@@ -699,23 +699,6 @@ tuple
 private:
   using storage_type =
     dango::detail::tuple_storage<dango::detail::tuple_pack_reverse<tp_types...>>;
-
-  template
-  <bool tp_noexcept>
-  struct
-  private_construct_tag
-  final
-  {
-    DANGO_TAG_TYPE(private_construct_tag)
-  };
-private:
-  template
-  <bool tp_noexcept, typename... tp_args>
-  explicit constexpr
-  tuple
-  (private_construct_tag<tp_noexcept> const, tp_args&&... a_args)noexcept(tp_noexcept):
-  m_storage{ dango::detail::make_tuple_storage<storage_type, tp_noexcept>(dango::forward<tp_args>(a_args)...) }
-  { }
 private:
   using construct_help_prio = dango::priority_tag<dango::uint(2)>;
 
@@ -725,13 +708,13 @@ private:
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(2)> const, tp_args&&... a_args)
-  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, tp_args>))->tuple
+  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, tp_args>))->storage_type
   requires(( ... && dango::is_brace_constructible<tp_types, tp_args>))
   {
     constexpr bool const c_noexcept =
       ( ... && dango::is_noexcept_brace_constructible<tp_types, tp_args>);
 
-    return tuple{ private_construct_tag<c_noexcept>{ }, dango::forward<tp_args>(a_args)... };
+    return dango::detail::make_tuple_storage<storage_type, c_noexcept>(dango::forward<tp_args>(a_args)...);
   }
 
   template
@@ -740,7 +723,7 @@ private:
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(1)> const, dango::tuple<tp_args...> const& a_tup)
-  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> const&>>))->tuple
+  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> const&>>))->storage_type
   requires(( ... && dango::is_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> const&>>))
   {
     constexpr bool const c_noexcept =
@@ -749,9 +732,9 @@ private:
     constexpr auto const c_make =
       []<dango::usize... tp_indices>
       (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_arg)constexpr
-      noexcept(c_noexcept)->tuple
+      noexcept(c_noexcept)->storage_type
       {
-        return tuple{ private_construct_tag<c_noexcept>{ }, a_arg.template at<tp_indices>()... };
+        return dango::detail::make_tuple_storage<storage_type, c_noexcept>(a_arg.template at<tp_indices>()...);
       };
 
     return c_make(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
@@ -763,7 +746,7 @@ private:
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(1)> const, dango::tuple<tp_args...>&& a_tup)
-  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args>&&>>))->tuple
+  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args>&&>>))->storage_type
   requires(( ... && dango::is_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args>&&>>))
   {
     constexpr bool const c_noexcept =
@@ -772,9 +755,9 @@ private:
     constexpr auto const c_make =
       []<dango::usize... tp_indices>
       (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_arg)constexpr
-      noexcept(c_noexcept)->tuple
+      noexcept(c_noexcept)->storage_type
       {
-        return tuple{ private_construct_tag<c_noexcept>{ }, dango::move(a_arg).template at<tp_indices>()... };
+        return dango::detail::make_tuple_storage<storage_type, c_noexcept>(dango::move(a_arg).template at<tp_indices>()...);
       };
 
     return c_make(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup));
@@ -853,7 +836,7 @@ public:
   (tp_args&&... a_args)
   noexcept(requires{ { construct_help(construct_help_prio{ }, dango::declval<tp_args>()...) }noexcept; })
   requires(requires{ { construct_help(construct_help_prio{ }, dango::declval<tp_args>()...) }; }):
-  tuple{ construct_help(construct_help_prio{ }, dango::forward<tp_args>(a_args)...) }
+  m_storage{ construct_help(construct_help_prio{ }, dango::forward<tp_args>(a_args)...) }
   { }
 
   constexpr tuple()noexcept = delete;
@@ -1091,23 +1074,6 @@ tuple<tp_types...>
 private:
   using storage_type =
     dango::detail::tuple_storage<dango::detail::tuple_pack_reverse<tp_types...>>;
-
-  template
-  <bool tp_noexcept>
-  struct
-  private_construct_tag
-  final
-  {
-    DANGO_TAG_TYPE(private_construct_tag)
-  };
-private:
-  template
-  <bool tp_noexcept, typename... tp_args>
-  explicit constexpr
-  tuple
-  (private_construct_tag<tp_noexcept> const, tp_args&&... a_args)noexcept(tp_noexcept):
-  m_storage{ dango::detail::make_tuple_storage<storage_type, tp_noexcept>(dango::forward<tp_args>(a_args)...) }
-  { }
 private:
   using construct_help_prio = dango::priority_tag<dango::uint(2)>;
 
@@ -1117,13 +1083,13 @@ private:
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(2)> const, tp_args&&... a_args)
-  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, tp_args>))->tuple
+  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, tp_args>))->storage_type
   requires(( ... && dango::is_brace_constructible<tp_types, tp_args>))
   {
     constexpr bool const c_noexcept =
       ( ... && dango::is_noexcept_brace_constructible<tp_types, tp_args>);
 
-    return tuple{ private_construct_tag<c_noexcept>{ }, dango::forward<tp_args>(a_args)... };
+    return dango::detail::make_tuple_storage<storage_type, c_noexcept>(dango::forward<tp_args>(a_args)...);
   }
 
   template
@@ -1132,7 +1098,7 @@ private:
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(1)> const, dango::tuple<tp_args...> const& a_tup)
-  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> const&>>))->tuple
+  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> const&>>))->storage_type
   requires(( ... && dango::is_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args> const&>>))
   {
     constexpr bool const c_noexcept =
@@ -1141,9 +1107,9 @@ private:
     constexpr auto const c_make =
       []<dango::usize... tp_indices>
       (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...> const& a_arg)constexpr
-      noexcept(c_noexcept)->tuple
+      noexcept(c_noexcept)->storage_type
       {
-        return tuple{ private_construct_tag<c_noexcept>{ }, a_arg.template at<tp_indices>()... };
+        return dango::detail::make_tuple_storage<storage_type, c_noexcept>(a_arg.template at<tp_indices>()...);
       };
 
     return c_make(dango::make_index_seq<sizeof...(tp_types)>{ }, a_tup);
@@ -1155,7 +1121,7 @@ private:
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(1)> const, dango::tuple<tp_args...>&& a_tup)
-  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args>&&>>))->tuple
+  noexcept(( ... && dango::is_noexcept_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args>&&>>))->storage_type
   requires(( ... && dango::is_brace_constructible<tp_types, dango::tuple_at_type<dango::tuple_model<tp_args>&&>>))
   {
     constexpr bool const c_noexcept =
@@ -1164,9 +1130,9 @@ private:
     constexpr auto const c_make =
       []<dango::usize... tp_indices>
       (dango::index_seq<tp_indices...> const, dango::tuple<tp_args...>&& a_arg)constexpr
-      noexcept(c_noexcept)->tuple
+      noexcept(c_noexcept)->storage_type
       {
-        return tuple{ private_construct_tag<c_noexcept>{ }, dango::move(a_arg).template at<tp_indices>()... };
+        return dango::detail::make_tuple_storage<storage_type, c_noexcept>(dango::move(a_arg).template at<tp_indices>()...);
       };
 
     return c_make(dango::make_index_seq<sizeof...(tp_types)>{ }, dango::move(a_tup));
@@ -1245,7 +1211,7 @@ public:
   (tp_args&&... a_args)
   noexcept(requires{ { construct_help(construct_help_prio{ }, dango::declval<tp_args>()...) }noexcept; })
   requires(requires{ { construct_help(construct_help_prio{ }, dango::declval<tp_args>()...) }; }):
-  tuple{ construct_help(construct_help_prio{ }, dango::forward<tp_args>(a_args)...) }
+  m_storage{ construct_help(construct_help_prio{ }, dango::forward<tp_args>(a_args)...) }
   { }
 
   constexpr tuple()noexcept = delete;

@@ -189,4 +189,10 @@ DANGO_UNIT_TEST_END
 
 #undef dango_offset
 
+DANGO_UNIT_TEST_BEGIN(tuple_unmoveable_test)
+{
+  dango::tuple<unmoveable> a_tup{ dango::default_emplacer_for<unmoveable> };
+}
+DANGO_UNIT_TEST_END
+
 }
