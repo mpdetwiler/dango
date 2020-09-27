@@ -69,9 +69,13 @@ static_assert(dango::fixed_array<float, dango::polymorphic_allocator<>>{ }.size(
 
 DANGO_UNIT_TEST_BEGIN(fixed_array_test1)
 {
-  dango::fixed_array<float, dango::basic_allocator> a_test{ };
+  dango::fixed_array<float, dango::basic_allocator> a_test1{ };
 
-  test_print("size: %u\n", dango::integer::u_int(a_test.size()));
+  test_print("size: %u\n", dango::integer::u_int(a_test1.size()));
+
+  dango::fixed_array<float, dango::polymorphic_allocator<>> a_test2{ };
+
+  test_print("size: %u\n", dango::integer::u_int(a_test2.size()));
 }
 DANGO_UNIT_TEST_END
 

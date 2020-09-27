@@ -37,7 +37,7 @@ requires
   dango::is_noexcept_destructible<tp_header> && dango::is_noexcept_destructible<tp_elem> &&
   dango::is_pow_two(tp_align)
 )
-class alignas(alignof(tp_elem) > tp_align ? alignof(tp_elem) : tp_align)
+class alignas(dango::aligned_union<tp_elem, dango::aligned_storage<tp_align>>)
 dango::
 detail::
 flex_array
@@ -298,7 +298,7 @@ public:
 
   constexpr ~fixed_array_header()noexcept = default;
 public:
-  constexpr void launder_begin()noexcept{ m_begin = dango::launder(m_begin); }
+  constexpr void launder()noexcept{ m_begin = dango::launder(m_begin); }
   constexpr auto begin()const noexcept->ptr_type{ return m_begin; }
   constexpr auto end()const noexcept->ptr_type{ return m_end; }
 private:
@@ -337,7 +337,7 @@ public:
 
   constexpr ~fixed_array_header()noexcept = default;
 public:
-  constexpr void launder_begin()noexcept{ m_begin = dango::launder(m_begin); }
+  constexpr void launder()noexcept{ m_begin = dango::launder(m_begin); }
   constexpr auto begin()const noexcept->ptr_type{ return m_begin; }
   constexpr auto end()const noexcept->ptr_type{ return m_end; }
 
