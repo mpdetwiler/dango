@@ -174,19 +174,21 @@ dango
   array_destroy
   (tp_type const volatile* const a_array, dango::usize const a_count)noexcept->void
   {
-    dango_assert(a_array != dango::null);
+    dango_assert_nonnull(a_array);
 
-    if(a_count == dango::usize(0))
+    if constexpr(!dango::is_trivial_destructible<tp_type>)
     {
-      return;
-    }
+      if(a_count == dango::usize(0))
+      {
+        return;
+      }
 
-    auto const a_end = a_array + a_count;
-    auto a_cur = a_array;
+      auto const a_end = a_array + a_count;
 
-    while(a_cur != a_end)
-    {
-      dango::destructor(a_cur++);
+      for(auto a_cur = a_array; a_cur != a_end; ++a_cur)
+      {
+        dango::destructor_as<tp_type>(a_cur);
+      }
     }
   }
 

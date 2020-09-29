@@ -258,75 +258,98 @@ public:
 };
 
 namespace
+dango
+{
+  template
+  <dango::is_object_exclude_array tp_first, dango::is_object_exclude_array... tp_next>
+  struct
+  struct_of_array
+  final
+  {
+    DANGO_TAG_TYPE(struct_of_array)
+  };
+}
+
+namespace
 dango::detail
 {
   template
-  <typename tp_elem, typename tp_allocator DANGO_GCC_BUG_81043_WORKAROUND>
+  <typename tp_allocator, typename tp_elem DANGO_GCC_BUG_81043_WORKAROUND>
+  class fixed_array_header_base;
+
+  template
+  <dango::is_nohandle_allocator tp_allocator, typename tp_elem>
+  class fixed_array_header_base<tp_allocator, tp_elem DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_elem, tp_allocator)>;
+
+  template
+  <dango::is_handle_based_allocator tp_allocator, typename tp_elem>
+  class fixed_array_header_base<tp_allocator, tp_elem DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_elem, tp_allocator)>;
+
+  template
+  <typename tp_allocator, typename tp_elem>
   class fixed_array_header;
 
   template
-  <typename tp_elem, dango::is_nohandle_allocator tp_allocator>
-  class fixed_array_header<tp_elem, tp_allocator DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_elem, tp_allocator)>;
-
-  template
-  <typename tp_elem, dango::is_handle_based_allocator tp_allocator>
-  class fixed_array_header<tp_elem, tp_allocator DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_elem, tp_allocator)>;
+  <dango::is_allocator tp_allocator, typename tp_first, typename... tp_next>
+  class fixed_array_header<tp_allocator, dango::struct_of_array<tp_first, tp_next...>>;
 }
 
 template
-<typename tp_elem, dango::is_nohandle_allocator tp_allocator>
+<dango::is_nohandle_allocator tp_allocator, typename tp_elem>
 class
 dango::
 detail::
-fixed_array_header<tp_elem, tp_allocator DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_elem, tp_allocator)>
+fixed_array_header_base<tp_allocator, tp_elem DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_elem, tp_allocator)>
 {
-private:
+public:
   using elem_type = tp_elem;
-  using ptr_type = tp_elem*;
+  using ptr_type = elem_type*;
+  using size_type = dango::usize;
 public:
   explicit constexpr
-  fixed_array_header
+  fixed_array_header_base
   (
     ptr_type const a_begin,
     ptr_type const a_end,
-    ptr_type const
+    dango::null_tag const
   )
   noexcept:
   m_begin{ a_begin },
   m_end{ a_end }
   { }
 
-  constexpr ~fixed_array_header()noexcept = default;
+  constexpr ~fixed_array_header_base()noexcept = default;
 public:
-  constexpr void launder()noexcept{ m_begin = dango::launder(m_begin); }
   constexpr auto begin()const noexcept->ptr_type{ return m_begin; }
   constexpr auto end()const noexcept->ptr_type{ return m_end; }
+  constexpr auto size()const noexcept->size_type{ return size_type(end() - begin()); }
+  constexpr auto is_empty()const noexcept->bool{ return begin() == end(); }
 private:
-  ptr_type m_begin;
-  ptr_type m_end;
+  ptr_type const m_begin;
+  ptr_type const m_end;
 public:
-  DANGO_DELETE_DEFAULT(fixed_array_header)
-  DANGO_UNMOVEABLE(fixed_array_header)
+  DANGO_DELETE_DEFAULT(fixed_array_header_base)
+  DANGO_UNMOVEABLE(fixed_array_header_base)
 };
 
 template
-<typename tp_elem, dango::is_handle_based_allocator tp_allocator>
+<dango::is_handle_based_allocator tp_allocator, typename tp_elem>
 class
 dango::
 detail::
-fixed_array_header<tp_elem, tp_allocator DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_elem, tp_allocator)>
+fixed_array_header_base<tp_allocator, tp_elem DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_elem, tp_allocator)>
 {
-private:
+public:
   using elem_type = tp_elem;
-  using ptr_type = tp_elem*;
+  using ptr_type = elem_type*;
   using handle_type = typename tp_allocator::handle_type;
+  using size_type = dango::usize;
 public:
   explicit constexpr
-  fixed_array_header
+  fixed_array_header_base
   (
     ptr_type const a_begin,
     ptr_type const a_end,
-    ptr_type const,
     handle_type&& a_alloc_ptr
   )
   noexcept:
@@ -335,11 +358,12 @@ public:
   m_alloc_ptr{ dango::move(a_alloc_ptr) }
   { }
 
-  constexpr ~fixed_array_header()noexcept = default;
+  constexpr ~fixed_array_header_base()noexcept = default;
 public:
-  constexpr void launder()noexcept{ m_begin = dango::launder(m_begin); }
   constexpr auto begin()const noexcept->ptr_type{ return m_begin; }
   constexpr auto end()const noexcept->ptr_type{ return m_end; }
+  constexpr auto size()const noexcept->size_type{ return size_type(end() - begin()); }
+  constexpr auto is_empty()const noexcept->bool{ return begin() == end(); }
 
   auto
   allocator_handle()noexcept->handle_type&
@@ -347,9 +371,96 @@ public:
     return m_alloc_ptr;
   }
 private:
-  ptr_type m_begin;
-  ptr_type m_end;
+  ptr_type const m_begin;
+  ptr_type const m_end;
   handle_type m_alloc_ptr;
+public:
+  DANGO_DELETE_DEFAULT(fixed_array_header_base)
+  DANGO_UNMOVEABLE(fixed_array_header_base)
+};
+
+template
+<dango::is_allocator tp_allocator, typename tp_first, typename... tp_next>
+class
+dango::
+detail::
+fixed_array_header<tp_allocator, dango::struct_of_array<tp_first, tp_next...>>:
+public dango::detail::fixed_array_header_base<tp_allocator, tp_first>
+{
+public:
+  using super_type = dango::detail::fixed_array_header_base<tp_allocator, tp_first>;
+  using ptr_type = typename super_type::ptr_type;
+  using size_type = typename super_type::size_type;
+  using tuple_type = dango::tuple<tp_next*...>;
+public:
+  using super_type::begin;
+  using super_type::end;
+  using super_type::size;
+public:
+  explicit constexpr
+  fixed_array_header
+  (
+    ptr_type const a_begin,
+    ptr_type const a_end,
+    ptr_type const,
+    dango::allocator_handle_type<tp_allocator, dango::null_tag const&>&& a_alloc_ptr
+  )
+  noexcept
+  requires(sizeof...(tp_next) == size_type(0)):
+  super_type{ a_begin, a_end, dango::move(a_alloc_ptr) },
+  m_next{ }
+  { }
+
+  explicit constexpr
+  fixed_array_header
+  (
+    ptr_type const a_begin,
+    ptr_type const a_end,
+    ptr_type const,
+    dango::allocator_handle_type<tp_allocator, dango::null_tag const&>&& a_alloc_ptr,
+    tuple_type const& a_next
+  )
+  noexcept
+  requires(sizeof...(tp_next) != size_type(0)):
+  super_type{ a_begin, a_end, dango::move(a_alloc_ptr) },
+  m_next{ a_next }
+  { }
+
+  constexpr ~fixed_array_header()noexcept = default;
+public:
+  template
+  <size_type tp_index>
+  requires(tp_index < (sizeof...(tp_next) + size_type(1)))
+  constexpr auto
+  begin_at()const noexcept->auto
+  {
+    if constexpr(tp_index == size_type(0))
+    {
+      return begin();
+    }
+    else
+    {
+      return m_next.template at<tp_index - size_type(1)>();
+    }
+  }
+
+  template
+  <size_type tp_index>
+  requires(tp_index < (sizeof...(tp_next) + size_type(1)))
+  constexpr auto
+  end_at()const noexcept->auto
+  {
+    if constexpr(tp_index == size_type(0))
+    {
+      return end();
+    }
+    else
+    {
+      return m_next.template at<tp_index - size_type(1)>() + size();
+    }
+  }
+private:
+  tuple_type const m_next [[no_unique_address]];
 public:
   DANGO_DELETE_DEFAULT(fixed_array_header)
   DANGO_UNMOVEABLE(fixed_array_header)
@@ -382,7 +493,7 @@ public:
 private:
   using elem_type_intern = dango::remove_cv<elem_type>;
   using ptr_type_intern = elem_type_intern*;
-  using header = dango::detail::fixed_array_header<elem_type_intern, allocator_type>;
+  using header = dango::detail::fixed_array_header<allocator_type, dango::struct_of_array<elem_type_intern>>;
   using header_ptr = header*;
   using array_type = dango::detail::flex_array<header, elem_type_intern, alignof(dango::cache_align_type)>;
   using array_type_constexpr = dango::detail::flex_array_constexpr<header, elem_type_intern>;
@@ -397,11 +508,11 @@ private:
       {
         auto const a_array = new elem_type_intern[size_type(0)];
 
-        return array_type_constexpr::allocate(a_array, size_type(0));
+        return array_type_constexpr::allocate(a_array, size_type(0), dango::null);
       }
       else
       {
-        return array_type::template allocate<allocator_type>(size_type(0));
+        return array_type::template allocate<allocator_type>(size_type(0), dango::null);
       }
     }
     else
@@ -410,7 +521,7 @@ private:
       {
         auto const a_array = new elem_type_intern[size_type(0)];
 
-        return array_type_constexpr::allocate(a_array, size_type(0), allocator_handle_type{ dango::null });
+        return array_type_constexpr::allocate(a_array, size_type(0), dango::null);
       }
       else
       {
@@ -429,6 +540,20 @@ public:
   { }
 
   constexpr
+  fixed_array
+  (dango::null_tag const)noexcept:
+  m_header{ dango::null }
+  { }
+
+  constexpr fixed_array(fixed_array const&)noexcept = delete;
+
+  constexpr
+  fixed_array
+  (fixed_array&& a_array)noexcept:
+  m_header{ dango::exchange(a_array.m_header, dango::null) }
+  { }
+
+  constexpr
   ~fixed_array()noexcept
   {
     if(!m_header)
@@ -442,6 +567,8 @@ public:
     }
     else
     {
+      dango::array_destroy(m_header->begin(), size());
+
       if constexpr(dango::is_void<allocator_handle_type>)
       {
         array_type::template deallocate<allocator_type>(m_header, size());
@@ -454,12 +581,19 @@ public:
       }
     }
   }
+
+  DANGO_DEFINE_NULL_SWAP_ASSIGN(fixed_array, constexpr, true)
+
+  constexpr auto operator = (fixed_array const&)& noexcept = delete;
+
+  DANGO_DEFINE_MOVE_SWAP_ASSIGN(fixed_array, constexpr, true)
 public:
   constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_header); }
 
+  constexpr void dango_operator_swap(fixed_array& a_array)& noexcept{ dango::swap(m_header, a_array.m_header); }
 public:
-  constexpr auto size()const noexcept->size_type{ dango_assert_nonnull(*this); return size_type(m_header->end() - m_header->begin()); }
-  constexpr auto is_empty()const noexcept->bool{ dango_assert_nonnull(*this); return m_header->begin() == m_header->end(); }
+  constexpr auto size()const noexcept->size_type{ dango_assert_nonnull(*this); return m_header->size(); }
+  constexpr auto is_empty()const noexcept->bool{ dango_assert_nonnull(*this); return m_header->is_empty(); }
 private:
   header_ptr m_header;
 };
