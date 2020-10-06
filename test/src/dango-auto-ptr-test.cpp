@@ -170,6 +170,8 @@ DANGO_UNIT_TEST_BEGIN(auto_ptr_test2)
   dango_assert_terminate(*a_ptr_int7 == 7);
   dango_assert_terminate(*a_ptr_int8 == 8);
   dango_assert_terminate(*a_ptr_int9 == 9);
+
+  dango::auto_ptr a_array_ptr{ new int[3], dango::array_delete };
 }
 DANGO_UNIT_TEST_END
 
@@ -196,6 +198,8 @@ auto_ptr_contstexpr_test(int const a_val)noexcept(false)->int
 
   auto a_ptr5 = dango::make_auto_ptr<int, dango::polymorphic_allocator<>>(a_null, *a_ptr4);
 
+  dango::auto_ptr a_array_ptr{ new int[3], dango::array_delete };
+
   return *a_ptr5;
 }
 
@@ -212,12 +216,12 @@ struct poly_derived_nv:poly_base_nv
 
 };
 
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv* const&>);
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv*&&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv* const&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_base_nv*&&>);
 static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv> const&>);
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv>&&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, dango::auto_ptr<poly_base_nv>&&>);
 static_assert(!dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_base_nv> const&>);
-static_assert(dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_base_nv>&&>);
+static_assert( dango::is_assignable<dango::auto_ptr<poly_base_nv>&, dango::auto_ptr<poly_base_nv>&&>);
 
 static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_derived_nv* const&>);
 static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base_nv>, poly_derived_nv*&&>);
@@ -242,19 +246,33 @@ struct poly_derived:poly_base
   }
 };
 
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_base* const&>);
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_base*&&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_base* const&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_base*&&>);
 static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base> const&>);
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base>&&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_base>&&>);
 static_assert(!dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_base> const&>);
-static_assert(dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_base>&&>);
+static_assert( dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_base>&&>);
 
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_derived* const&>);
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_derived*&&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_derived* const&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base>, poly_derived*&&>);
 static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived> const&>);
-static_assert(dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived>&&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base>, dango::auto_ptr<poly_derived>&&>);
 static_assert(!dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_derived> const&>);
-static_assert(dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_derived>&&>);
+static_assert( dango::is_assignable<dango::auto_ptr<poly_base>&, dango::auto_ptr<poly_derived>&&>);
+
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base, dango::array_delete_type>, poly_base* const&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base, dango::array_delete_type>, poly_base*&&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base, dango::array_delete_type>, dango::auto_ptr<poly_base, dango::array_delete_type> const&>);
+static_assert( dango::is_brace_constructible<dango::auto_ptr<poly_base, dango::array_delete_type>, dango::auto_ptr<poly_base, dango::array_delete_type>&&>);
+static_assert(!dango::is_assignable<dango::auto_ptr<poly_base, dango::array_delete_type>&, dango::auto_ptr<poly_base, dango::array_delete_type> const&>);
+static_assert( dango::is_assignable<dango::auto_ptr<poly_base, dango::array_delete_type>&, dango::auto_ptr<poly_base, dango::array_delete_type>&&>);
+
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base, dango::array_delete_type>, poly_derived* const&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base, dango::array_delete_type>, poly_derived*&&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base, dango::array_delete_type>, dango::auto_ptr<poly_derived, dango::array_delete_type> const&>);
+static_assert(!dango::is_brace_constructible<dango::auto_ptr<poly_base, dango::array_delete_type>, dango::auto_ptr<poly_derived, dango::array_delete_type>&&>);
+static_assert(!dango::is_assignable<dango::auto_ptr<poly_base, dango::array_delete_type>&, dango::auto_ptr<poly_derived, dango::array_delete_type> const&>);
+static_assert(!dango::is_assignable<dango::auto_ptr<poly_base, dango::array_delete_type>&, dango::auto_ptr<poly_derived, dango::array_delete_type>&&>);
 
 DANGO_UNIT_TEST_BEGIN(auto_ptr_polymorphic_test)
 {

@@ -337,16 +337,19 @@ final
   begin
   (tp_arg&& a_array)noexcept->auto
   {
-    return a_array.data();
+    return dango::forward<tp_arg>(a_array).data();
   }
 
+  template
+  <dango::is_same_ignore_cvref<array_type> tp_arg>
   static constexpr auto
   end
-  (array_type const& a_array)noexcept->void const volatile*
+  (tp_arg&& a_array)
+  noexcept->dango::copy_cv<dango::remove_ref<tp_arg>, dango::copy_cv<tp_elem, void>>*
   {
     if constexpr(tp_size != dango::usize(0))
     {
-      return a_array.data() + tp_size;
+      return dango::forward<tp_arg>(a_array).data() + tp_size;
     }
     else
     {

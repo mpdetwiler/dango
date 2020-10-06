@@ -1952,7 +1952,7 @@ dango
     dango::is_class<tp_type> && dango::is_destructible<tp_type> && bool(__has_virtual_destructor(tp_type));
 }
 
-/*** is_convertible is_noexcept_convertible is_convertible_ret is_noexcept_convertible_ret ***/
+/*** is_convertible_arg is_noexcept_convertible_arg is_convertible_ret is_noexcept_convertible_ret ***/
 
 namespace
 dango::detail
@@ -2012,6 +2012,25 @@ dango
   concept is_noexcept_convertible_ret =
     dango::is_convertible_ret<tp_fr, tp_to> &&
     (dango::detail::is_noexcept_convertible_ret_help<tp_fr, tp_to> || dango::is_noexcept_convertible_arg<tp_fr, tp_to>);
+}
+
+/*** is_static_castable is_noexcept_static_castable ***/
+
+namespace
+dango
+{
+  template
+  <typename tp_fr, typename tp_to>
+  concept is_static_castable =
+    dango::is_referenceable_ignore_ref<tp_fr> &&
+    dango::is_object_ignore_ref<tp_to> &&
+    requires{ { static_cast<tp_to>(dango::declval<tp_fr>()) }; };
+
+  template
+  <typename tp_fr, typename tp_to>
+  concept is_noexcept_static_castable =
+    dango::is_static_castable<tp_fr, tp_to> &&
+    requires{ { static_cast<tp_to>(dango::declval<tp_fr>()) }noexcept; };
 }
 
 /*** is_callable is_noexcept_callable is_callable_ret is_noexcept_callable_ret ***/

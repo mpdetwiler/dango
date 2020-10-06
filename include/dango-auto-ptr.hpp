@@ -29,6 +29,18 @@ dango
   using plain_delete_type =
     dango::remove_const<decltype(dango::plain_delete)>;
 
+  inline constexpr auto const array_delete =
+    []<dango::is_object_exclude_array tp_elem>
+    (tp_elem const volatile* const a_ptr)constexpr noexcept->void
+    {
+      static_assert(requires{ { delete[] a_ptr }noexcept; });
+
+      delete[] a_ptr;
+    };
+
+  using array_delete_type =
+    dango::remove_const<decltype(dango::array_delete)>;
+
   template
   <typename tp_type>
   using auto_ptr_default_deleter =
@@ -49,10 +61,27 @@ dango::custom
   deleter_traits<dango::plain_delete_type, tp_elem>
   final
   {
+    static inline constexpr bool const allow_polymorphic = true;
     static inline constexpr bool const polymorphic_requires_virtual_destruct = true;
 
     static constexpr auto get_default_instance()noexcept->auto const&{ return dango::plain_delete; }
     static constexpr auto get_null_instance()noexcept->auto const&{ return dango::plain_delete; }
+
+    DANGO_UNCONSTRUCTIBLE(deleter_traits)
+  };
+
+  template
+  <typename tp_elem>
+  requires(dango::is_deleter<dango::array_delete_type, tp_elem>)
+  struct
+  deleter_traits<dango::array_delete_type, tp_elem>
+  final
+  {
+    static inline constexpr bool const allow_polymorphic = false;
+    static inline constexpr bool const polymorphic_requires_virtual_destruct = false;
+
+    static constexpr auto get_default_instance()noexcept->auto const&{ return dango::array_delete; }
+    static constexpr auto get_null_instance()noexcept->auto const&{ return dango::array_delete; }
 
     DANGO_UNCONSTRUCTIBLE(deleter_traits)
   };
@@ -63,6 +92,7 @@ dango::custom
   struct
   deleter_traits<tp_deleter, tp_elem DANGO_GCC_BUG_81043_WORKAROUND_ID(0, tp_deleter, tp_elem)>
   {
+    static inline constexpr bool const allow_polymorphic = true;
     static inline constexpr bool const polymorphic_requires_virtual_destruct = true;
 
     static constexpr auto get_default_instance()noexcept->tp_deleter{ return tp_deleter{ }; }
@@ -77,6 +107,7 @@ dango::custom
   struct
   deleter_traits<tp_deleter, tp_elem DANGO_GCC_BUG_81043_WORKAROUND_ID(1, tp_deleter, tp_elem)>
   {
+    static inline constexpr bool const allow_polymorphic = true;
     static inline constexpr bool const polymorphic_requires_virtual_destruct = true;
 
     static constexpr auto get_null_instance()noexcept->tp_deleter{ return dango::null; }
@@ -90,13 +121,15 @@ dango::detail
 {
   template
   <typename tp_deleter, typename tp_elem>
-  concept auto_ptr_deleter_prvd_exists =
-    requires{ { dango::constexpr_check<bool, dango::custom::deleter_traits<tp_deleter, tp_elem>::polymorphic_requires_virtual_destruct>{ } }noexcept; };
+  concept auto_ptr_deleter_ap_value =
+    requires{ { dango::constexpr_check<bool, dango::custom::deleter_traits<tp_deleter, tp_elem>::allow_polymorphic>{ } }noexcept; } &&
+    bool(dango::custom::deleter_traits<tp_deleter, tp_elem>::allow_polymorphic);
 
   template
   <typename tp_deleter, typename tp_elem>
   concept auto_ptr_deleter_prvd_value =
-    dango::detail::auto_ptr_deleter_prvd_exists<tp_deleter, tp_elem> &&
+    dango::detail::auto_ptr_deleter_ap_value<tp_deleter, tp_elem> &&
+    requires{ { dango::constexpr_check<bool, dango::custom::deleter_traits<tp_deleter, tp_elem>::polymorphic_requires_virtual_destruct>{ } }noexcept; } &&
     bool(dango::custom::deleter_traits<tp_deleter, tp_elem>::polymorphic_requires_virtual_destruct);
 
   template
@@ -119,21 +152,30 @@ dango::detail
   template
   <typename tp_lhs, typename tp_rhs>
   concept auto_ptr_valid_conversion =
-    (dango::is_same_ignore_cv<tp_lhs, tp_rhs> || dango::is_base_of<tp_lhs, tp_rhs>) &&
-    dango::is_noexcept_destructible<tp_lhs> &&
     dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs* const&> &&
     dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs*&&> &&
     dango::is_noexcept_convertible_arg<tp_rhs* const&, tp_lhs*> &&
     dango::is_noexcept_convertible_arg<tp_rhs*&&, tp_lhs*>;
 
   template
+  <typename tp_deleter, typename tp_lhs, typename tp_rhs>
+  concept auto_ptr_valid_conversion_deleter =
+    (dango::is_same_ignore_cv<tp_lhs, tp_rhs> || (dango::detail::auto_ptr_deleter_ap_value<tp_deleter, tp_lhs> && dango::is_base_of<tp_lhs, tp_rhs>)) &&
+    dango::is_noexcept_destructible<tp_lhs> &&
+    dango::detail::auto_ptr_valid_conversion<tp_lhs, tp_rhs>;
+
+  template
+  <typename tp_lhs, typename tp_rhs>
+  concept auto_ptr_valid_conversion_allocator =
+    (dango::is_same_ignore_cv<tp_lhs, tp_rhs> || dango::is_base_of<tp_lhs, tp_rhs>) &&
+    dango::is_noexcept_destructible<tp_lhs> &&
+    dango::detail::auto_ptr_valid_conversion<tp_lhs, tp_rhs>;
+
+  template
   <typename tp_lhs, typename tp_rhs>
   concept auto_ptr_valid_conversion_void =
-    dango::is_void<tp_rhs> &&
-    dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs* const&> &&
-    dango::is_noexcept_brace_constructible<tp_lhs*, tp_rhs*&&> &&
-    dango::is_noexcept_convertible_arg<tp_rhs* const&, tp_lhs*> &&
-    dango::is_noexcept_convertible_arg<tp_rhs*&&, tp_lhs*>;
+    dango::is_void<tp_lhs> && dango::is_void<tp_rhs> &&
+    dango::detail::auto_ptr_valid_conversion<tp_lhs, tp_rhs>;
 
   template
   <typename tp_elem, typename... tp_args>
@@ -332,9 +374,8 @@ public:
   <typename tp_elem>
   requires
   (
-    dango::detail::auto_ptr_deleter_prvd_exists<deleter_type, elem_type> &&
     dango::detail::auto_ptr_deleter_default_instance_exists<deleter_type, elem_type> &&
-    dango::detail::auto_ptr_valid_conversion<elem_type, tp_elem> &&
+    dango::detail::auto_ptr_valid_conversion_deleter<deleter_type, elem_type, tp_elem> &&
     dango::detail::auto_ptr_deleter_prvd_test<deleter_type, elem_type, tp_elem>
   )
   explicit constexpr
@@ -348,8 +389,7 @@ public:
   <typename tp_elem, typename tp_deleter_arg>
   requires
   (
-    dango::detail::auto_ptr_deleter_prvd_exists<deleter_type, elem_type> &&
-    dango::detail::auto_ptr_valid_conversion<elem_type, tp_elem> &&
+    dango::detail::auto_ptr_valid_conversion_deleter<deleter_type, elem_type, tp_elem> &&
     dango::detail::auto_ptr_deleter_prvd_test<deleter_type, elem_type, tp_elem> &&
     dango::is_noexcept_brace_constructible<deleter_type, tp_deleter_arg>
   )
@@ -393,14 +433,7 @@ public:
   {
     if(m_ptr)
     {
-      if(dango::in_constexpr_context())
-      {
-        delete m_ptr;
-      }
-      else
-      {
-        m_deleter(dango::as_const(m_ptr));
-      }
+      m_deleter(dango::as_const(m_ptr));
     }
   }
 
@@ -465,10 +498,9 @@ public:
   requires
   (
     dango::is_noexcept_move_constructible<deleter_type> &&
-    dango::detail::auto_ptr_deleter_prvd_exists<deleter_type, elem_type> &&
     !(dango::is_same<elem_type, tp_elem> && dango::is_same<deleter_type, tp_del>) &&
     dango::is_same<deleter_type, dango::decay<tp_del>> &&
-    dango::detail::auto_ptr_valid_conversion<elem_type, tp_elem> &&
+    dango::detail::auto_ptr_valid_conversion_deleter<deleter_type, elem_type, tp_elem> &&
     dango::detail::auto_ptr_deleter_prvd_test<deleter_type, elem_type, tp_elem>
   )
   constexpr
@@ -484,10 +516,9 @@ public:
   (
     dango::is_noexcept_move_constructible<deleter_type> &&
     dango::is_noexcept_swappable<deleter_type&> &&
-    dango::detail::auto_ptr_deleter_prvd_exists<deleter_type, elem_type> &&
     !(dango::is_same<elem_type, tp_elem> && dango::is_same<deleter_type, tp_del>) &&
     dango::is_same<deleter_type, dango::decay<tp_del>> &&
-    dango::detail::auto_ptr_valid_conversion<elem_type, tp_elem> &&
+    dango::detail::auto_ptr_valid_conversion_deleter<deleter_type, elem_type, tp_elem> &&
     dango::detail::auto_ptr_deleter_prvd_test<deleter_type, elem_type, tp_elem>
   )
   constexpr auto
@@ -871,7 +902,7 @@ public:
   template
   <typename tp_elem>
   requires
-  (!dango::is_same<elem_type, tp_elem> && dango::detail::auto_ptr_valid_conversion<elem_type, tp_elem>)
+  (!dango::is_same<elem_type, tp_elem> && dango::detail::auto_ptr_valid_conversion_allocator<elem_type, tp_elem>)
   constexpr
   auto_ptr
   (dango::auto_ptr<tp_elem, allocator_type>&& a_ptr)noexcept:
@@ -881,7 +912,7 @@ public:
 
   template
   <typename tp_elem>
-  requires(!dango::is_same<elem_type, tp_elem> && dango::detail::auto_ptr_valid_conversion<elem_type, tp_elem>)
+  requires(!dango::is_same<elem_type, tp_elem> && dango::detail::auto_ptr_valid_conversion_allocator<elem_type, tp_elem>)
   constexpr auto
   operator =
   (dango::auto_ptr<tp_elem, allocator_type>&& a_ptr)& noexcept->auto_ptr&

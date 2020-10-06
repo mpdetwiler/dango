@@ -2056,7 +2056,8 @@ dango
   concept is_iterable =
     dango::has_iter_begin<tp_type> &&
     dango::has_iter_end<tp_type> &&
-    dango::is_noexcept_equatable<dango::iter_begin_type<tp_type>, dango::iter_end_type<tp_type>>;
+    dango::is_noexcept_equatable<dango::iter_begin_type<tp_type>, dango::iter_end_type<tp_type>> &&
+    dango::is_noexcept_static_castable<dango::iter_end_type<tp_type>, dango::iter_begin_type<tp_type>>;
 
   template
   <typename tp_type>
@@ -2161,9 +2162,11 @@ final
     return a_array;
   }
 
+  template
+  <dango::is_same_ignore_cv<tp_elem> tp_arg>
   static constexpr auto
   end
-  (tp_elem const volatile* const a_array)noexcept->void const volatile*
+  (tp_arg* const a_array)noexcept->dango::copy_cv<tp_arg, void>*
   {
     return a_array + tp_size;
   }
