@@ -14,7 +14,7 @@ static_assert((dango::array{ "hello" } <=> dango::array{ "hellu" }).is_lt());
 static_assert(dango::tuple_get<4>(dango::array{ "hello" }) == 'o');
 static_assert(dango::array{ 1, 2, 3 } == dango::array{ 1, 2, 3 });
 static_assert(dango::array{ 1, 2, 3 } < dango::array{ 1, 2, 4 });
-static_assert(dango::array{ 1, 2, 3L, 4u } < dango::array{ 1, 2, 4 });
+static_assert(dango::array{ 1, 2, 3LL, 4U } < dango::array{ 1, 2, 4 });
 static_assert(dango::array{ "hello" }.size() == 6);
 static_assert(sizeof(decltype(dango::array{ "hello" })) == 6);
 
