@@ -100,13 +100,13 @@ private:
       dango::make_tuple(dango::forward<tp_func>(a_func)(a_capacity * sizeof(tp_next), dango::max(tp_align, alignof(tp_next)))...);
 
     auto const a_array_tuple =
-      a_void_tuple->*[](auto&... a_arg)noexcept->auto
+      a_void_tuple->*[](auto const&... a_arg)noexcept->auto
       {
         return dango::make_tuple(reinterpret_cast<tp_next*>(dango_placement_new_array(a_arg.get(), dango::byte, a_arg.size()))...);
       };
 
     auto const a_ptr =
-      dango_placement_new(a_bytes, flex_array, { a_array, a_size_init, a_capacity, a_array_tuple, dango::forward<tp_args>(a_args)... });
+      dango_placement_new(a_bytes, flex_array, { a_array, a_array_tuple, a_size_init, a_capacity, dango::forward<tp_args>(a_args)... });
 
     a_void_tuple->*[](auto&... a_arg)noexcept->void{ (void(a_arg.release()) , ... ); };
 
@@ -235,9 +235,9 @@ private:
   flex_array
   (
     ptr_type const a_array,
+    tuple_type const& a_next,
     size_type const a_size,
     size_type const a_capacity,
-    tuple_type const& a_next,
     tp_args&&... a_args
   )
   noexcept(dango::is_noexcept_brace_constructible<super_type, tp_args...>):
@@ -338,32 +338,77 @@ public:
 public:
   template
   <typename... tp_args>
-  requires((sizeof...(tp_next) != size_type(0)) && dango::is_brace_constructible<super_type, tp_args...>)
+  requires
+  (
+    (dango::is_default_constructible<elem_type> && ... && dango::is_default_constructible<tp_next>) &&
+    dango::is_brace_constructible<super_type, tp_args...>
+  )
   static constexpr auto
-  allocate
-  (ptr_type const a_array, size_type const a_init_size, size_type const a_requested, tuple_type const& a_next, tp_args&&... a_args)
-  noexcept(dango::is_noexcept_brace_constructible<super_type, tp_args...>)->super_type*
+  allocate_n
+  (size_type const a_init_size, size_type const a_capacity, tp_args&&... a_args)
+  noexcept
+  (
+    (dango::is_noexcept_default_constructible<elem_type> && ... && dango::is_noexcept_default_constructible<tp_next>) &&
+    dango::is_noexcept_brace_constructible<super_type, tp_args...>
+  )->super_type*
   {
-    dango_assert(a_init_size <= a_requested);
+    dango_assert(a_init_size <= a_capacity);
+
+    dango::auto_ptr a_array{ new elem_type[a_capacity], dango::array_delete };
+
+    auto a_array_tuple =
+      dango::make_tuple(dango::auto_ptr{ new tp_next[a_capacity], dango::array_delete }...);
+
+    auto const a_next =
+      a_array_tuple->*[](auto const&... a_arg)noexcept->tuple_type
+      {
+        return tuple_type{ a_arg.get()... };
+      };
 
     auto const a_ptr =
-      new flex_array_constexpr{ a_array, a_init_size, a_requested, a_next, dango::forward<tp_args>(a_args)... };
+      new flex_array_constexpr{ a_array.get(), a_next, a_init_size, a_capacity, dango::forward<tp_args>(a_args)... };
+
+    a_array_tuple->*[](auto&... a_arg)noexcept->void{ (void(a_arg.release()) , ... ); };
+
+    a_array.release();
 
     return a_ptr;
   }
 
   template
-  <typename... tp_args>
-  requires((sizeof...(tp_next) == size_type(0)) && dango::is_brace_constructible<super_type, tp_args...>)
+  <typename... tp_init, typename... tp_args>
+  requires
+  (
+    (sizeof...(tp_next) == size_type(0)) &&
+    ( ... && dango::is_ref<tp_init>) &&
+    ( ... && dango::is_brace_constructible<elem_type, tp_init>) &&
+    dango::is_brace_constructible<super_type, tp_args...>
+  )
   static constexpr auto
-  allocate
-  (ptr_type const a_array, size_type const a_init_size, size_type const a_requested, tp_args&&... a_args)
-  noexcept(dango::is_noexcept_brace_constructible<super_type, tp_args...>)->super_type*
+  allocate_init
+  (dango::tuple<tp_init...> const& a_init, size_type const a_capacity, tp_args&&... a_args)
+  noexcept
+  (
+    ( ... && dango::is_noexcept_brace_constructible<elem_type, tp_init>) &&
+    dango::is_noexcept_brace_constructible<super_type, tp_args...>
+  )->super_type*
   {
-    dango_assert(a_init_size <= a_requested);
+    constexpr auto const c_init_size = sizeof...(tp_init);
+
+    dango_assert(c_init_size <= a_capacity);
+
+    auto a_array =
+      a_init->*[a_capacity]<typename... tp_init_arg>
+      (tp_init_arg&&... a_arg)
+      noexcept(( ... && dango::is_noexcept_brace_constructible<elem_type, tp_init>))->auto
+      {
+        return dango::auto_ptr{ new elem_type[a_capacity]{ dango::forward<tp_init_arg>(a_arg)... }, dango::array_delete };
+      };
 
     auto const a_ptr =
-      new flex_array_constexpr{ a_array, a_init_size, a_requested, tuple_type{ }, dango::forward<tp_args>(a_args)... };
+      new flex_array_constexpr{ a_array.get(), tuple_type{ }, c_init_size, a_capacity, dango::forward<tp_args>(a_args)... };
+
+    a_array.release();
 
     return a_ptr;
   }
@@ -384,9 +429,9 @@ private:
   flex_array_constexpr
   (
     ptr_type const a_array,
+    tuple_type const& a_next,
     size_type const a_size,
     size_type const a_capacity,
-    tuple_type const& a_next,
     tp_args&&... a_args
   )
   noexcept(dango::is_noexcept_brace_constructible<super_type, tp_args...>):
@@ -465,11 +510,86 @@ public:
 private:
   ptr_type const m_array;
   ptr_type const m_capacity;
-  ptr_type const m_size;
+  ptr_type m_size;
   tuple_type const m_next [[no_unique_address]];
 public:
   DANGO_DELETE_DEFAULT(flex_array_constexpr)
   DANGO_UNMOVEABLE(flex_array_constexpr)
+};
+
+namespace
+dango::detail
+{
+  template
+  <dango::is_class tp_header, dango::is_derived_from<tp_header> tp_array, dango::is_derived_from<tp_header> tp_array_constexpr>
+  class flex_array_dispatcher;
+}
+
+template
+<dango::is_class tp_header, dango::is_derived_from<tp_header> tp_array, dango::is_derived_from<tp_header> tp_array_constexpr>
+class
+dango::
+detail::
+flex_array_dispatcher
+final
+{
+public:
+  using header_type = tp_header;
+  using array_type = tp_array;
+  using array_type_constexpr = tp_array_constexpr;
+public:
+
+#define DANGO_CONTAINER_DEFINE_DISPATCH(name) \
+  static constexpr auto \
+  name \
+  (header_type const* const a_header)noexcept->auto \
+  { \
+    dango_assert_nonnull(a_header); \
+    if(dango::in_constexpr_context()) \
+    { \
+      return static_cast<array_type_constexpr const*>(a_header)->name(); \
+    } \
+    else \
+    { \
+      return static_cast<array_type const*>(a_header)->name(); \
+    } \
+  }
+
+  DANGO_CONTAINER_DEFINE_DISPATCH(begin)
+  DANGO_CONTAINER_DEFINE_DISPATCH(end)
+  DANGO_CONTAINER_DEFINE_DISPATCH(capacity_end)
+  DANGO_CONTAINER_DEFINE_DISPATCH(size)
+  DANGO_CONTAINER_DEFINE_DISPATCH(capacity)
+  DANGO_CONTAINER_DEFINE_DISPATCH(is_empty)
+
+#undef DANGO_CONTAINER_DEFINE_DISPATCH
+
+#define DANGO_CONTAINER_DEFINE_DISPATCH(name) \
+  template \
+  <dango::usize tp_index> \
+  static constexpr auto \
+  name \
+  (header_type const* const a_header)noexcept->auto \
+  { \
+    dango_assert_nonnull(a_header); \
+    if(dango::in_constexpr_context()) \
+    { \
+      return static_cast<array_type_constexpr const*>(a_header)->template name<tp_index>(); \
+    } \
+    else \
+    { \
+      return static_cast<array_type const*>(a_header)->template name<tp_index>(); \
+    } \
+  }
+
+  DANGO_CONTAINER_DEFINE_DISPATCH(begin_at)
+  DANGO_CONTAINER_DEFINE_DISPATCH(end_at)
+  DANGO_CONTAINER_DEFINE_DISPATCH(capacity_end_at)
+
+#undef DANGO_CONTAINER_DEFINE_DISPATCH
+
+public:
+  DANGO_UNCONSTRUCTIBLE(flex_array_dispatcher)
 };
 
 #endif

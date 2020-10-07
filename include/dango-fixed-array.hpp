@@ -47,6 +47,13 @@ public:
   explicit constexpr fixed_array_header(handle_type&& a_alloc_ptr)noexcept:
   m_alloc_ptr{ dango::move(a_alloc_ptr) }
   { }
+
+  explicit constexpr
+  fixed_array_header
+  ()noexcept:
+  fixed_array_header{ handle_type{ dango::null } }
+  { }
+
   constexpr ~fixed_array_header()noexcept = default;
 public:
   auto
@@ -57,7 +64,6 @@ public:
 private:
   handle_type m_alloc_ptr;
 public:
-  DANGO_DELETE_DEFAULT(fixed_array_header)
   DANGO_UNMOVEABLE(fixed_array_header)
 };
 
@@ -92,31 +98,21 @@ private:
   using header_ptr = header*;
   using array_type = dango::detail::flex_array<header, dango::struct_of_array<elem_type_intern>, dango::usize(16)>;
   using array_type_constexpr = dango::detail::flex_array_constexpr<header, dango::struct_of_array<elem_type_intern>>;
+  using dispatcher_type = dango::detail::flex_array_dispatcher<header, array_type, array_type_constexpr>;
 private:
   static constexpr auto
   default_construct_help()
   noexcept(dango::is_noexcept_allocator<allocator_type>)->header_ptr
   {
-    if constexpr(dango::is_void<allocator_handle_type>)
+    if(dango::in_constexpr_context())
     {
-      if(dango::in_constexpr_context())
-      {
-        auto const a_array = new elem_type_intern[size_type(0)];
-
-        return array_type_constexpr::allocate(a_array, size_type(0), size_type(0));
-      }
-      else
-      {
-        return array_type::template allocate<allocator_type>(size_type(0), size_type(0));
-      }
+      return array_type_constexpr::allocate_n(size_type(0), size_type(0));
     }
     else
     {
-      if(dango::in_constexpr_context())
+      if constexpr(dango::is_void<allocator_handle_type>)
       {
-        auto const a_array = new elem_type_intern[size_type(0)];
-
-        return array_type_constexpr::allocate(a_array, size_type(0), size_type(0), dango::null);
+        return array_type::template allocate<allocator_type>(size_type(0), size_type(0));
       }
       else
       {
@@ -162,7 +158,7 @@ public:
     }
     else
     {
-      dango::array_destroy(static_cast<array_type*>(m_header)->begin(), size());
+      dango::array_destroy(dispatcher_type::begin(m_header), size());
 
       if constexpr(dango::is_void<allocator_handle_type>)
       {
@@ -187,35 +183,8 @@ public:
 
   constexpr void dango_operator_swap(fixed_array& a_array)& noexcept{ dango::swap(m_header, a_array.m_header); }
 public:
-  constexpr auto
-  size()const noexcept->size_type
-  {
-    dango_assert_nonnull(*this);
-
-    if(dango::in_constexpr_context())
-    {
-      return static_cast<array_type_constexpr*>(m_header)->size();
-    }
-    else
-    {
-      return static_cast<array_type*>(m_header)->size();
-    }
-  }
-
-  constexpr auto
-  is_empty()const noexcept->bool
-  {
-    dango_assert_nonnull(*this);
-
-    if(dango::in_constexpr_context())
-    {
-      return static_cast<array_type_constexpr*>(m_header)->is_empty();
-    }
-    else
-    {
-      return static_cast<array_type*>(m_header)->is_empty();
-    }
-  }
+  constexpr auto size()const noexcept->size_type{ return dispatcher_type::size(m_header); }
+  constexpr auto is_empty()const noexcept->bool{ return dispatcher_type::is_empty(m_header); }
 private:
   header_ptr m_header;
 };
