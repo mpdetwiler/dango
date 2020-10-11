@@ -17,7 +17,479 @@ dango
   {
     DANGO_TAG_TYPE(struct_of_array)
   };
+
+  template
+  <dango::is_object_exclude_array tp_type>
+  struct
+  stable_adaptor
+  final
+  {
+    DANGO_TAG_TYPE(stable_adaptor)
+  };
+
+  template
+  <dango::is_object_exclude_array tp_type>
+  struct
+  ref_adaptor
+  final
+  {
+    DANGO_TAG_TYPE(ref_adaptor)
+  };
+
+  template
+  <dango::is_object_exclude_array tp_type>
+  struct
+  stable_ref_adaptor
+  final
+  {
+    DANGO_TAG_TYPE(stable_ref_adaptor)
+  };
 }
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_type>
+  inline constexpr bool const is_struct_of_array_help = false;
+  template
+  <typename... tp_types>
+  inline constexpr bool const is_struct_of_array_help<dango::struct_of_array<tp_types...>> = true;
+
+  template
+  <typename tp_type>
+  inline constexpr bool const is_stable_adaptor_help = false;
+  template
+  <typename tp_type>
+  inline constexpr bool const is_stable_adaptor_help<dango::stable_adaptor<tp_type>> = true;
+
+  template
+  <typename tp_type>
+  inline constexpr bool const is_ref_adaptor_help = false;
+  template
+  <typename tp_type>
+  inline constexpr bool const is_ref_adaptor_help<dango::ref_adaptor<tp_type>> = true;
+
+  template
+  <typename tp_type>
+  inline constexpr bool const is_stable_ref_adaptor_help = false;
+  template
+  <typename tp_type>
+  inline constexpr bool const is_stable_ref_adaptor_help<dango::stable_ref_adaptor<tp_type>> = true;
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_type>
+  concept is_struct_of_array =
+    !dango::is_const_or_volatile<tp_type> && dango::detail::is_struct_of_array_help<tp_type>;
+  template
+  <typename tp_type>
+  concept is_bad_struct_of_array =
+    dango::is_const_or_volatile<tp_type> &&
+    dango::detail::is_struct_of_array_help<dango::remove_cv<tp_type>>;
+
+  template
+  <typename tp_type>
+  concept is_stable_adaptor =
+    !dango::is_const_or_volatile<tp_type> && dango::detail::is_stable_adaptor_help<tp_type>;
+  template
+  <typename tp_type>
+  concept is_bad_stable_adaptor =
+    dango::is_const_or_volatile<tp_type> &&
+    dango::detail::is_stable_adaptor_help<dango::remove_cv<tp_type>>;
+
+  template
+  <typename tp_type>
+  concept is_ref_adaptor =
+    !dango::is_const_or_volatile<tp_type> && dango::detail::is_ref_adaptor_help<tp_type>;
+  template
+  <typename tp_type>
+  concept is_bad_ref_adaptor =
+    dango::is_const_or_volatile<tp_type> &&
+    dango::detail::is_ref_adaptor_help<dango::remove_cv<tp_type>>;
+
+  template
+  <typename tp_type>
+  concept is_stable_ref_adaptor =
+    !dango::is_const_or_volatile<tp_type> && dango::detail::is_stable_ref_adaptor_help<tp_type>;
+  template
+  <typename tp_type>
+  concept is_bad_stable_ref_adaptor =
+    dango::is_const_or_volatile<tp_type> &&
+    dango::detail::is_stable_ref_adaptor_help<dango::remove_cv<tp_type>>;
+}
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_elem, dango::usize tp_align>
+  struct alignas(tp_align)
+  stable_element
+  final
+  {
+  public:
+    using elem_type = tp_elem;
+    using size_type = dango::usize;
+  public:
+    template
+    <typename... tp_args>
+    requires(dango::is_brace_constructible<elem_type, tp_args...>)
+    constexpr
+    stable_element
+    (size_type const a_index, tp_args&&... a_args)
+    noexcept(dango::is_noexcept_brace_constructible<elem_type, tp_args...>):
+    m_elem{ dango::forward<tp_args>(a_args)... },
+    m_index{ a_index }
+    { }
+    constexpr ~stable_element()noexcept = default;
+  public:
+    elem_type m_elem;
+    size_type m_index;
+  public:
+    DANGO_UNMOVEABLE(stable_element)
+  };
+
+  template
+  <typename tp_type, dango::usize tp_align>
+  struct container_elem_type;
+
+  template
+  <typename tp_type, dango::usize tp_align>
+  struct container_elem_type<dango::stable_adaptor<tp_type>, tp_align>;
+
+  template
+  <typename tp_type, dango::usize tp_align>
+  struct container_elem_type<dango::ref_adaptor<tp_type>, tp_align>;
+
+  template
+  <typename tp_type, dango::usize tp_align>
+  struct container_elem_type<dango::stable_ref_adaptor<tp_type>, tp_align>;
+}
+
+
+template
+<typename tp_type, dango::usize tp_align>
+struct
+dango::
+detail::
+container_elem_type
+final
+{
+  using elem_type = tp_type;
+  using elem_type_intern = dango::remove_cv<elem_type>;
+  using size_type = dango::usize;
+
+  template
+  <dango::is_nohandle_allocator tp_allocator, typename... tp_args>
+  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  static constexpr auto
+  construct
+  (size_type const, tp_args&&... a_args)
+  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
+  {
+    return elem_type_intern{ dango::forward<tp_args>(a_args)... };
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_allocator, typename... tp_args>
+  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  static constexpr auto
+  construct
+  (size_type const, dango::allocator_handle_type<tp_allocator> const&, tp_args&&... a_args)
+  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
+  {
+    return elem_type_intern{ dango::forward<tp_args>(a_args)... };
+  }
+
+  template
+  <dango::is_nohandle_allocator tp_allocator>
+  static constexpr void
+  destroy
+  (elem_type_intern& a_elem)noexcept
+  {
+    dango::destructor_as<elem_type_intern>(&a_elem);
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_allocator>
+  static constexpr void
+  destroy
+  (dango::allocator_handle_type<tp_allocator> const&, elem_type_intern& a_elem)noexcept
+  {
+    dango::destructor_as<elem_type_intern>(&a_elem);
+  }
+
+  template
+  <typename... tp_args>
+  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  static constexpr auto
+  construct_constexpr
+  (size_type const, tp_args&&... a_args)
+  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
+  {
+    return elem_type_intern{ dango::forward<tp_args>(a_args)... };
+  }
+
+  static constexpr void
+  destroy_constexpr
+  (elem_type_intern&)noexcept
+  {
+
+  }
+
+  DANGO_UNCONSTRUCTIBLE(container_elem_type)
+};
+
+template
+<typename tp_type, dango::usize tp_align>
+struct
+dango::
+detail::
+container_elem_type<dango::stable_adaptor<tp_type>, tp_align>
+final
+{
+  using elem_type = tp_type;
+  using elem_storage = dango::detail::stable_element<dango::remove_cv<elem_type>, tp_align>;
+  using elem_type_intern = elem_storage*;
+  using size_type = dango::usize;
+
+  template
+  <dango::is_nohandle_allocator tp_allocator, typename... tp_args>
+  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  static constexpr auto
+  construct
+  (size_type const a_index, tp_args&&... a_args)
+  noexcept(dango::is_noexcept_nohandle_allocator<tp_allocator> && dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
+  {
+    auto a_void = dango::make_auto_ptr<void, tp_allocator>(sizeof(elem_storage), alignof(elem_storage));
+
+    auto const a_elem = dango_placement_new(a_void.get(), elem_storage, { a_index, dango::forward<tp_args>(a_args)... });
+
+    a_void.release();
+
+    return a_elem;
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_allocator, typename... tp_args>
+  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  static constexpr auto
+  construct
+  (size_type const a_index, dango::allocator_handle_type<tp_allocator> const& a_handle, tp_args&&... a_args)
+  noexcept(dango::is_noexcept_handle_based_allocator<tp_allocator> && dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
+  {
+    auto a_void = dango::make_auto_ptr<void, tp_allocator>(a_handle, sizeof(elem_storage), alignof(elem_storage));
+
+    auto const a_elem = dango_placement_new(a_void.get(), elem_storage, { a_index, dango::forward<tp_args>(a_args)... });
+
+    a_void.release();
+
+    return a_elem;
+  }
+
+  template
+  <dango::is_nohandle_allocator tp_allocator>
+  static constexpr void
+  destroy
+  (elem_type_intern& a_elem)noexcept
+  {
+    dango::destructor_as<elem_storage>(a_elem);
+
+    tp_allocator::dealloc(a_elem, sizeof(elem_storage), alignof(elem_storage));
+
+    dango::destructor_as<elem_type_intern>(&a_elem);
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_allocator>
+  static constexpr void
+  destroy
+  (dango::allocator_handle_type<tp_allocator> const& a_handle, elem_type_intern& a_elem)noexcept
+  {
+    dango::destructor_as<elem_storage>(a_elem);
+
+    a_handle->dealloc(a_elem, sizeof(elem_storage), alignof(elem_storage));
+
+    dango::destructor_as<elem_type_intern>(&a_elem);
+  }
+
+  template
+  <typename... tp_args>
+  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  static constexpr auto
+  construct_constexpr
+  (size_type const a_index, tp_args&&... a_args)
+  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
+  {
+    return new elem_storage{ a_index, dango::forward<tp_args>(a_args)... };
+  }
+
+  static constexpr void
+  destroy_constexpr
+  (elem_type_intern& a_elem)noexcept
+  {
+    delete a_elem;
+  }
+
+  DANGO_UNCONSTRUCTIBLE(container_elem_type)
+};
+
+template
+<typename tp_type, dango::usize tp_align>
+struct
+dango::
+detail::
+container_elem_type<dango::ref_adaptor<tp_type>, tp_align>
+final
+{
+  using elem_type = tp_type;
+  using elem_type_intern = elem_type*;
+  using size_type = dango::usize;
+
+  template
+  <dango::is_nohandle_allocator tp_allocator>
+  static constexpr auto
+  construct
+  (size_type const, elem_type& a_arg)noexcept->elem_type_intern
+  {
+    return elem_type_intern{ dango::addressof(a_arg) };
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_allocator>
+  static constexpr auto
+  construct
+  (size_type const, dango::allocator_handle_type<tp_allocator> const&, elem_type& a_arg)noexcept->elem_type_intern
+  {
+    return elem_type_intern{ dango::addressof(a_arg) };
+  }
+
+  template
+  <dango::is_nohandle_allocator tp_allocator>
+  static constexpr void
+  destroy
+  (elem_type_intern& a_elem)noexcept
+  {
+    dango::destructor_as<elem_type_intern>(&a_elem);
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_allocator>
+  static constexpr void
+  destroy
+  (dango::allocator_handle_type<tp_allocator> const&, elem_type_intern& a_elem)noexcept
+  {
+    dango::destructor_as<elem_type_intern>(&a_elem);
+  }
+
+  static constexpr auto
+  construct_constexpr
+  (size_type const, elem_type& a_arg)noexcept->elem_type_intern
+  {
+    return elem_type_intern{ dango::addressof(a_arg) };
+  }
+
+  static constexpr void
+  destroy_constexpr
+  (elem_type_intern&)noexcept
+  {
+
+  }
+
+  DANGO_UNCONSTRUCTIBLE(container_elem_type)
+};
+
+template
+<typename tp_type, dango::usize tp_align>
+struct
+dango::
+detail::
+container_elem_type<dango::stable_ref_adaptor<tp_type>, tp_align>
+final
+{
+  using elem_type = tp_type;
+  using elem_storage = dango::detail::stable_element<elem_type* const, tp_align>;
+  using elem_type_intern = elem_storage*;
+  using size_type = dango::usize;
+
+  template
+  <dango::is_nohandle_allocator tp_allocator>
+  static constexpr auto
+  construct
+  (size_type const a_index, elem_type& a_arg)
+  noexcept(dango::is_noexcept_nohandle_allocator<tp_allocator>)->elem_type_intern
+  {
+    auto a_void = dango::make_auto_ptr<void, tp_allocator>(sizeof(elem_storage), alignof(elem_storage));
+
+    auto const a_elem = dango_placement_new(a_void.get(), elem_storage, { a_index, dango::addressof(a_arg) });
+
+    a_void.release();
+
+    return a_elem;
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_allocator>
+  static constexpr auto
+  construct
+  (size_type const a_index, dango::allocator_handle_type<tp_allocator> const& a_handle, elem_type& a_arg)
+  noexcept(dango::is_noexcept_handle_based_allocator<tp_allocator>)->elem_type_intern
+  {
+    auto a_void = dango::make_auto_ptr<void, tp_allocator>(a_handle, sizeof(elem_storage), alignof(elem_storage));
+
+    auto const a_elem = dango_placement_new(a_void.get(), elem_storage, { a_index, dango::addressof(a_arg) });
+
+    a_void.release();
+
+    return a_elem;
+  }
+
+  template
+  <dango::is_nohandle_allocator tp_allocator>
+  static constexpr void
+  destroy
+  (elem_type_intern& a_elem)noexcept
+  {
+    dango::destructor_as<elem_storage>(a_elem);
+
+    tp_allocator::dealloc(a_elem, sizeof(elem_storage), alignof(elem_storage));
+
+    dango::destructor_as<elem_type_intern>(&a_elem);
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_allocator>
+  static constexpr void
+  destroy
+  (dango::allocator_handle_type<tp_allocator> const& a_handle, elem_type_intern& a_elem)noexcept
+  {
+    dango::destructor_as<elem_storage>(a_elem);
+
+    a_handle->dealloc(a_elem, sizeof(elem_storage), alignof(elem_storage));
+
+    dango::destructor_as<elem_type_intern>(&a_elem);
+  }
+
+  static constexpr auto
+  construct_constexpr
+  (size_type const a_index, elem_type& a_arg)noexcept->elem_type_intern
+  {
+    return new elem_storage{ a_index, dango::addressof(a_arg) };
+  }
+
+  static constexpr void
+  destroy_constexpr
+  (elem_type_intern& a_elem)noexcept
+  {
+    delete a_elem;
+  }
+
+  DANGO_UNCONSTRUCTIBLE(container_elem_type)
+};
 
 namespace
 dango::detail

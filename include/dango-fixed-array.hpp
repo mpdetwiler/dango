@@ -71,12 +71,31 @@ namespace
 dango
 {
   template
-  <dango::is_object_exclude_array tp_elem, dango::is_allocator tp_allocator = dango::polymorphic_allocator<>>
+  <typename tp_elem>
+  concept fixed_array_constraint_spec =
+    dango::is_object_exclude_array<tp_elem> &&
+    !dango::is_bad_struct_of_array<tp_elem> &&
+    !dango::is_bad_stable_adaptor<tp_elem> &&
+    !dango::is_bad_ref_adaptor<tp_elem> &&
+    !dango::is_bad_stable_ref_adaptor<tp_elem>;
+
+  template
+  <dango::fixed_array_constraint_spec tp_elem, dango::is_allocator tp_allocator = dango::polymorphic_allocator<>>
   class fixed_array;
+
+  template
+  <typename tp_elem>
+  concept fixed_array_constraint_spec_soa =
+    dango::fixed_array_constraint_spec<tp_elem> &&
+    !dango::is_struct_of_array<tp_elem>;
+
+  template
+  <dango::fixed_array_constraint_spec_soa tp_first, dango::fixed_array_constraint_spec_soa... tp_next, dango::is_allocator tp_allocator>
+  class fixed_array<dango::struct_of_array<tp_first, tp_next...>, tp_allocator>;
 }
 
 template
-<dango::is_object_exclude_array tp_elem, dango::is_allocator tp_allocator>
+<dango::fixed_array_constraint_spec tp_elem, dango::is_allocator tp_allocator>
 class
 dango::
 fixed_array
