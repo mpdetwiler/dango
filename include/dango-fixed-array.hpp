@@ -80,7 +80,8 @@ dango
     !dango::is_bad_stable_ref_adaptor<tp_elem>;
 
   template
-  <dango::fixed_array_constraint_spec tp_elem, dango::is_allocator tp_allocator = dango::polymorphic_allocator<>>
+  <dango::fixed_array_constraint_spec tp_elem, dango::is_allocator tp_allocator = dango::polymorphic_allocator<>, dango::usize tp_align = dango::usize(16)>
+  requires(dango::is_pow_two(tp_align))
   class fixed_array;
 
   template
@@ -90,12 +91,13 @@ dango
     !dango::is_struct_of_array<tp_elem>;
 
   template
-  <dango::fixed_array_constraint_spec_soa tp_first, dango::fixed_array_constraint_spec_soa... tp_next, dango::is_allocator tp_allocator>
-  class fixed_array<dango::struct_of_array<tp_first, tp_next...>, tp_allocator>;
+  <dango::fixed_array_constraint_spec_soa tp_first, dango::fixed_array_constraint_spec_soa... tp_next, dango::is_allocator tp_allocator, dango::usize tp_align>
+  class fixed_array<dango::struct_of_array<tp_first, tp_next...>, tp_allocator, tp_align>;
 }
 
 template
-<dango::fixed_array_constraint_spec tp_elem, dango::is_allocator tp_allocator>
+<dango::fixed_array_constraint_spec tp_elem, dango::is_allocator tp_allocator, dango::usize tp_align>
+requires(dango::is_pow_two(tp_align))
 class
 dango::
 fixed_array
@@ -111,12 +113,13 @@ public:
   using allocator_handle_type = dango::allocator_handle_type<allocator_type, void>;
   using size_type = dango::usize;
 private:
-  using elem_type_intern = dango::remove_cv<elem_type>;
-  using ptr_type_intern = elem_type_intern*;
   using header = dango::detail::fixed_array_header<allocator_type>;
   using header_ptr = header*;
-  using array_type = dango::detail::flex_array<header, dango::struct_of_array<elem_type_intern>, dango::usize(16)>;
-  using array_type_constexpr = dango::detail::flex_array_constexpr<header, dango::struct_of_array<elem_type_intern>>;
+  using elem_type_adaptor = dango::detail::container_elem_type<elem_type, tp_align>;
+  using array_type = dango::detail::flex_array<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
+  using array_type_constexpr = dango::detail::flex_array_constexpr<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
+  using array_allocator = typename array_type::template allocator<allocator_type>;
+  using array_allocator_constexpr = typename array_type_constexpr::allocator;
   using dispatcher_type = dango::detail::flex_array_dispatcher<header, array_type, array_type_constexpr>;
 private:
   static constexpr auto
@@ -125,19 +128,19 @@ private:
   {
     if(dango::in_constexpr_context())
     {
-      return array_type_constexpr::allocate_n(size_type(0), size_type(0));
+      return array_allocator_constexpr::allocate_n(size_type(0), size_type(0));
     }
     else
     {
       if constexpr(dango::is_void<allocator_handle_type>)
       {
-        return array_type::template allocate<allocator_type>(size_type(0), size_type(0));
+        return array_allocator::allocate_n(size_type(0), size_type(0));
       }
       else
       {
         auto a_alloc_ptr = dango::current_allocator_or_default<allocator_type>();
 
-        return array_type::template allocate<allocator_type>(a_alloc_ptr, size_type(0), size_type(0), dango::move(a_alloc_ptr));
+        return array_allocator::allocate_n(a_alloc_ptr, size_type(0), size_type(0), dango::move(a_alloc_ptr));
       }
     }
   }
@@ -171,23 +174,39 @@ public:
       return;
     }
 
+    auto const a_begin = dispatcher_type::begin(m_header);
+    auto const a_end = dispatcher_type::end(m_header);
+
     if(dango::in_constexpr_context())
     {
-      array_type_constexpr::deallocate(m_header);
+      for(auto a_current = a_begin; a_current != a_end; ++a_current)
+      {
+        elem_type_adaptor::destroy_constexpr(*a_current);
+      }
+
+      array_allocator_constexpr::deallocate(m_header);
     }
     else
     {
-      dango::array_destroy(dispatcher_type::begin(m_header), size());
-
       if constexpr(dango::is_void<allocator_handle_type>)
       {
-        array_type::template deallocate<allocator_type>(m_header);
+        for(auto a_current = a_begin; a_current != a_end; ++a_current)
+        {
+          elem_type_adaptor::template destroy<allocator_type>(*a_current);
+        }
+
+        array_allocator::deallocate(m_header);
       }
       else
       {
         auto const a_alloc_ptr = dango::move(m_header->allocator_handle());
 
-        array_type::template deallocate<allocator_type>(a_alloc_ptr, m_header);
+        for(auto a_current = a_begin; a_current != a_end; ++a_current)
+        {
+          elem_type_adaptor::template destroy<allocator_type>(a_alloc_ptr, *a_current);
+        }
+
+        array_allocator::deallocate(a_alloc_ptr, m_header);
       }
     }
   }
@@ -199,7 +218,6 @@ public:
   DANGO_DEFINE_MOVE_SWAP_ASSIGN(fixed_array, constexpr, true)
 public:
   constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_header); }
-
   constexpr void dango_operator_swap(fixed_array& a_array)& noexcept{ dango::swap(m_header, a_array.m_header); }
 public:
   constexpr auto size()const noexcept->size_type{ return dispatcher_type::size(m_header); }

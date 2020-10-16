@@ -117,15 +117,6 @@ dango
   concept is_noexcept_allocator =
     dango::is_allocator<tp_alloc> &&
     (dango::is_noexcept_handle_based_allocator<tp_alloc> || dango::is_noexcept_nohandle_allocator<tp_alloc>);
-
-  struct
-  allocator_arg_tag
-  final
-  {
-    DANGO_TAG_TYPE(allocator_arg_tag)
-  };
-
-  inline constexpr allocator_arg_tag const allocator_arg{ };
 }
 
 namespace
@@ -161,6 +152,41 @@ dango
   <typename tp_alloc, typename tp_default = tp_alloc>
   using allocator_handle_type =
     typename dango::detail::allocator_handle_type_help<tp_alloc, tp_default>::type;
+}
+
+namespace
+dango::detail
+{
+  template
+  <typename tp_alloc, typename tp_default>
+  struct
+  allocator_guard_type_help
+  final
+  {
+    using type = tp_default;
+
+    DANGO_UNCONSTRUCTIBLE(allocator_guard_type_help)
+  };
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_default>
+  struct
+  allocator_guard_type_help<tp_alloc, tp_default>
+  final
+  {
+    using type = typename tp_alloc::guard_type;
+
+    DANGO_UNCONSTRUCTIBLE(allocator_guard_type_help)
+  };
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_alloc, typename tp_default = tp_alloc>
+  using allocator_guard_type =
+    typename dango::detail::allocator_guard_type_help<tp_alloc, tp_default>::type;
 }
 
 /*** allocator_traits ***/
