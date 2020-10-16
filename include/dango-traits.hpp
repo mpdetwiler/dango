@@ -2064,25 +2064,25 @@ dango
     requires{ { dango::declval<tp_func>()(dango::declval<tp_args>()...) }noexcept->dango::is_noexcept_convertible_ret<tp_ret>; };
 }
 
-/*** is_constructible is_trivial_constructible is_noexcept_constructible ***/
+/*** is_parenth_constructible ***/
 
 namespace
 dango::detail
 {
   template
   <typename tp_type, typename... tp_args>
-  concept is_constructible_help = bool(__is_constructible(tp_type, tp_args...));
+  concept is_parenth_constructible_help = bool(__is_constructible(tp_type, tp_args...));
 
   template
   <typename tp_type, typename... tp_args>
-  inline constexpr bool const is_noexcept_constructible_help = requires{ { tp_type(dango::declval<tp_args>()...) }noexcept; };
+  inline constexpr bool const is_noexcept_parenth_constructible_help = requires{ { tp_type(dango::declval<tp_args>()...) }noexcept; };
   template
   <dango::is_ref tp_type, typename... tp_args>
-  inline constexpr bool const is_noexcept_constructible_help<tp_type, tp_args...> = true;
+  inline constexpr bool const is_noexcept_parenth_constructible_help<tp_type, tp_args...> = true;
 
   template
   <typename tp_type, typename... tp_args>
-  concept is_trivial_constructible_help = bool(__is_trivially_constructible(tp_type, tp_args...));
+  concept is_trivial_parenth_constructible_help = bool(__is_trivially_constructible(tp_type, tp_args...));
 }
 
 namespace
@@ -2090,25 +2090,30 @@ dango
 {
   template
   <typename tp_type, typename... tp_args>
-  concept is_constructible =
-    dango::is_destructible<tp_type> && dango::detail::is_constructible_help<tp_type, tp_args...>;
+  concept is_parenth_constructible =
+    dango::is_destructible<tp_type> && dango::detail::is_parenth_constructible_help<tp_type, tp_args...>;
 
   template
   <typename tp_type, typename... tp_args>
-  concept is_noexcept_constructible =
+  concept is_noexcept_parenth_constructible =
     dango::is_noexcept_destructible<tp_type> &&
-    dango::is_constructible<tp_type, tp_args...> &&
-    dango::detail::is_noexcept_constructible_help<tp_type, tp_args...>;
+    dango::is_parenth_constructible<tp_type, tp_args...> &&
+    dango::detail::is_noexcept_parenth_constructible_help<tp_type, tp_args...>;
 
   template
   <typename tp_type, typename... tp_args>
-  concept is_trivial_constructible =
+  concept is_trivial_parenth_constructible =
     dango::is_trivial_destructible<tp_type> &&
-    dango::is_noexcept_constructible<tp_type, tp_args...> &&
-    dango::detail::is_trivial_constructible_help<tp_type, tp_args...>;
+    dango::is_noexcept_parenth_constructible<tp_type, tp_args...> &&
+    dango::detail::is_trivial_parenth_constructible_help<tp_type, tp_args...>;
+
+  template
+  <typename tp_type, typename... tp_args>
+  concept is_parenth_constructible_and_noexcept_destructible =
+    dango::is_parenth_constructible<tp_type, tp_args...> && dango::is_noexcept_destructible<tp_type>;
 }
 
-/*** is_brace_constructible is_noexcept_brace_constructible is_trivial_brace_constructible ***/
+/*** is_brace_constructible ***/
 
 namespace
 dango::detail
@@ -2119,13 +2124,6 @@ dango::detail
   template
   <dango::is_ref tp_type, typename... tp_args>
   inline constexpr bool const is_brace_constructible_help<tp_type, tp_args...> = true;
-
-  template
-  <typename tp_type, typename... tp_args>
-  inline constexpr bool const is_noexcept_brace_constructible_help = requires{ { tp_type{ dango::declval<tp_args>()... } }noexcept; };
-  template
-  <dango::is_ref tp_type, typename... tp_args>
-  inline constexpr bool const is_noexcept_brace_constructible_help<tp_type, tp_args...> = true;
 }
 
 namespace
@@ -2134,21 +2132,25 @@ dango
   template
   <typename tp_type, typename... tp_args>
   concept is_brace_constructible =
-    dango::is_constructible<tp_type, tp_args...> &&
+    dango::is_parenth_constructible<tp_type, tp_args...> &&
     dango::detail::is_brace_constructible_help<tp_type, tp_args...>;
 
   template
   <typename tp_type, typename... tp_args>
   concept is_noexcept_brace_constructible =
-    dango::is_noexcept_constructible<tp_type, tp_args...> &&
-    dango::is_brace_constructible<tp_type, tp_args...> &&
-    dango::detail::is_noexcept_brace_constructible_help<tp_type, tp_args...>;
+    dango::is_noexcept_parenth_constructible<tp_type, tp_args...> &&
+    dango::is_brace_constructible<tp_type, tp_args...>;
 
   template
   <typename tp_type, typename... tp_args>
   concept is_trivial_brace_constructible =
-    dango::is_trivial_constructible<tp_type, tp_args...> &&
+    dango::is_trivial_parenth_constructible<tp_type, tp_args...> &&
     dango::is_noexcept_brace_constructible<tp_type, tp_args...>;
+
+  template
+  <typename tp_type, typename... tp_args>
+  concept is_brace_constructible_and_noexcept_destructible =
+    dango::is_brace_constructible<tp_type, tp_args...> && dango::is_noexcept_destructible<tp_type>;
 }
 
 /*** is_default_constructible is_trivial_default_constructible is_noexcept_default_constructible ***/

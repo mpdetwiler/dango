@@ -137,7 +137,7 @@ dango::detail
   public:
     template
     <typename... tp_args>
-    requires(dango::is_brace_constructible<elem_type, tp_args...>)
+    requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type, tp_args...>)
     constexpr
     stable_element
     (size_type const a_index, tp_args&&... a_args)
@@ -179,15 +179,20 @@ detail::
 container_elem_type
 final
 {
+public:
   using elem_type = tp_type;
   using elem_type_intern = dango::remove_cv<elem_type>;
+private:
+  static inline constexpr bool const elem_type_constexpr_condition =
+    !dango::is_default_constructible<elem_type_intern> || !dango::is_move_assignable<elem_type_intern>;
+public:
   using elem_type_intern_constexpr =
-    dango::conditional<dango::is_trivial_default_constructible<elem_type_intern>, elem_type_intern, elem_type_intern*>;
+    dango::conditional<elem_type_constexpr_condition, elem_type_intern*, elem_type_intern>;
   using size_type = dango::usize;
-
+public:
   template
   <dango::is_nohandle_allocator tp_allocator, typename... tp_args>
-  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
   static constexpr auto
   construct
   (size_type const, tp_args&&... a_args)
@@ -198,7 +203,7 @@ final
 
   template
   <dango::is_handle_based_allocator tp_allocator, typename... tp_args>
-  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
   static constexpr auto
   construct
   (typename tp_allocator::handle_type const&, size_type const, tp_args&&... a_args)
@@ -227,13 +232,13 @@ final
 
   template
   <typename... tp_args>
-  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
   static constexpr auto
   construct_constexpr
   (size_type const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern_constexpr
   {
-    if constexpr(!dango::is_trivial_default_constructible<elem_type_intern>)
+    if constexpr(elem_type_constexpr_condition)
     {
       return new elem_type_intern{ dango::forward<tp_args>(a_args)... };
     }
@@ -247,7 +252,7 @@ final
   destroy_constexpr
   (elem_type_intern_constexpr& a_elem)noexcept
   {
-    if constexpr(!dango::is_trivial_default_constructible<elem_type_intern>)
+    if constexpr(elem_type_constexpr_condition)
     {
       delete a_elem;
     }
@@ -272,7 +277,7 @@ final
 
   template
   <dango::is_nohandle_allocator tp_allocator, typename... tp_args>
-  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
   static constexpr auto
   construct
   (size_type const a_index, tp_args&&... a_args)
@@ -289,7 +294,7 @@ final
 
   template
   <dango::is_handle_based_allocator tp_allocator, typename... tp_args>
-  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
   static constexpr auto
   construct
   (typename tp_allocator::handle_type const& a_handle, size_type const a_index, tp_args&&... a_args)
@@ -332,7 +337,7 @@ final
 
   template
   <typename... tp_args>
-  requires(dango::is_brace_constructible<elem_type_intern, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
   static constexpr auto
   construct_constexpr
   (size_type const a_index, tp_args&&... a_args)
@@ -568,7 +573,7 @@ public:
 private:
   template
   <typename... tp_args>
-  requires(dango::is_brace_constructible<super_type, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<super_type, tp_args...>)
   explicit constexpr
   flex_array
   (
@@ -856,7 +861,7 @@ private:
 public:
   template
   <dango::is_same<tp_allocator> tp_alloc = tp_allocator, typename... tp_args>
-  requires(dango::is_nohandle_allocator<tp_alloc> && dango::is_brace_constructible<super_type, tp_args...>)
+  requires(dango::is_nohandle_allocator<tp_alloc> && dango::is_brace_constructible_and_noexcept_destructible<super_type, tp_args...>)
   static auto
   allocate_n
   (size_type const a_size_init, size_type const a_requested, tp_args&&... a_args)
@@ -878,7 +883,7 @@ public:
 
   template
   <dango::is_same<tp_allocator> tp_alloc = tp_allocator, typename... tp_args>
-  requires(dango::is_handle_based_allocator<tp_alloc> && dango::is_brace_constructible<super_type, tp_args...>)
+  requires(dango::is_handle_based_allocator<tp_alloc> && dango::is_brace_constructible_and_noexcept_destructible<super_type, tp_args...>)
   static auto
   allocate_n
   (typename tp_alloc::handle_type const& a_handle, size_type const a_size_init, size_type const a_requested, tp_args&&... a_args)
@@ -1115,7 +1120,7 @@ public:
 private:
   template
   <typename... tp_args>
-  requires(dango::is_brace_constructible<super_type, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<super_type, tp_args...>)
   explicit constexpr
   flex_array_constexpr
   (
@@ -1281,7 +1286,7 @@ private:
 public:
   template
   <typename... tp_args>
-  requires(dango::is_brace_constructible<super_type, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<super_type, tp_args...>)
   static constexpr auto
   allocate_n
   (size_type const a_init_size, size_type const a_capacity, tp_args&&... a_args)
@@ -1322,7 +1327,7 @@ public:
   )->flex_array_constexpr*
   requires
   (
-    dango::is_brace_constructible<super_type, tp_args...> &&
+    dango::is_brace_constructible_and_noexcept_destructible<super_type, tp_args...> &&
     requires{ { allocate_init_help<tp_first, tp_next...>::outer(outer_index_seq{ }, a_init, a_capacity) }; }
   )
   {

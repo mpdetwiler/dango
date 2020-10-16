@@ -177,12 +177,6 @@ dango::detail
     dango::is_void<tp_lhs> && dango::is_void<tp_rhs> &&
     dango::detail::auto_ptr_valid_conversion<tp_lhs, tp_rhs>;
 
-  template
-  <typename tp_elem, typename... tp_args>
-  concept auto_ptr_deferred_construct_test =
-    dango::is_brace_constructible<tp_elem, tp_args...> &&
-    dango::is_noexcept_destructible<tp_elem>;
-
   class auto_ptr_control;
 
   template
@@ -735,7 +729,7 @@ private:
 
   template
   <dango::is_handle_based_allocator tp_alloc, dango::is_same_ignore_cvref<dango::allocator_handle_type<tp_alloc>> tp_handle, typename... tp_args>
-  requires(dango::detail::auto_ptr_deferred_construct_test<elem_type, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type, tp_args...>)
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(2)> const, tp_handle&& a_handle, tp_args&&... a_args)
@@ -761,7 +755,7 @@ private:
 
   template
   <dango::is_handle_based_allocator tp_alloc, typename... tp_args>
-  requires(dango::allocator_has_default_handle<tp_alloc> && dango::detail::auto_ptr_deferred_construct_test<elem_type, tp_args...>)
+  requires(dango::allocator_has_default_handle<tp_alloc> && dango::is_brace_constructible_and_noexcept_destructible<elem_type, tp_args...>)
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(1)> const, tp_args&&... a_args)
@@ -783,7 +777,7 @@ private:
 
   template
   <dango::is_nohandle_allocator tp_alloc, typename... tp_args>
-  requires(dango::detail::auto_ptr_deferred_construct_test<elem_type, tp_args...>)
+  requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type, tp_args...>)
   static constexpr auto
   construct_help
   (dango::priority_tag<dango::uint(0)> const, tp_args&&... a_args)

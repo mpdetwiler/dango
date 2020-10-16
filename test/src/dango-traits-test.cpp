@@ -550,16 +550,16 @@ static_assert(dango::is_noexcept_callable<unmoveable(int, float)noexcept, int, f
 static_assert(dango::is_callable_ret<unmoveable, unmoveable(int, float)noexcept, int, float>);
 static_assert(dango::is_noexcept_callable_ret<unmoveable, unmoveable(int, float)noexcept, int, float>);
 
-/*** is_constructible ***/
+/*** is_parenth_constructible ***/
 
-static_assert(dango::is_constructible<int>);
-static_assert(dango::is_constructible<int&, int&>);
-static_assert(!dango::is_constructible<unconstructible>);
-static_assert(dango::is_noexcept_constructible<unmoveable>);
-static_assert(dango::is_trivial_constructible<unmoveable>);
-static_assert(!dango::is_constructible<int[]>);
-static_assert(dango::is_constructible<int[4]>);
-static_assert(!dango::is_constructible<int[4], int, int, int, int, int>);
+static_assert( dango::is_parenth_constructible<int>);
+static_assert( dango::is_parenth_constructible<int&, int&>);
+static_assert(!dango::is_parenth_constructible<unconstructible>);
+static_assert( dango::is_noexcept_parenth_constructible<unmoveable>);
+static_assert( dango::is_trivial_parenth_constructible<unmoveable>);
+static_assert(!dango::is_parenth_constructible<int[]>);
+static_assert( dango::is_parenth_constructible<int[4]>);
+static_assert(!dango::is_parenth_constructible<int[4], int, int, int, int, int>);
 static_assert(!dango::is_copy_constructible<unmoveable>);
 static_assert(!dango::is_move_constructible<unmoveable>);
 
