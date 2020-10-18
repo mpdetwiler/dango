@@ -754,7 +754,7 @@ private:
       auto a_tuple =
         dango::make_tuple(inner<tp_elems, tp_indices>(dango::make_index_seq<sizeof...(tp_tuples)>{ }, a_init, a_mem, a_construct, a_destroy)...);
 
-      a_tuple->*[](auto&... a_ptr)noexcept->void{ (void(a_ptr.release()) , ... ); };
+      dango::tuple_foreach([](auto& a_ptr)noexcept->void{ a_ptr.release(); }, a_tuple);
     }
   public:
     DANGO_UNCONSTRUCTIBLE(allocate_init_help)
@@ -815,15 +815,19 @@ private:
       dango::make_tuple(a_alloc(a_capacity * sizeof(typename tp_next::elem_type_intern), dango::max(tp_align, alignof(typename tp_next::elem_type_intern)))...);
 
     auto const a_next =
-      a_void_tuple->*[](auto const&... a_ptr)noexcept->auto
-      {
-        return dango::make_tuple(reinterpret_cast<typename tp_next::elem_type_intern*>(dango_placement_new_array(a_ptr.get(), dango::byte, a_ptr.size()))...);
-      };
+      dango::tuple_apply
+      (
+        [](auto const&... a_ptr)noexcept->auto
+        {
+          return dango::make_tuple(reinterpret_cast<typename tp_next::elem_type_intern*>(dango_placement_new_array(a_ptr.get(), dango::byte, a_ptr.size()))...);
+        },
+        a_void_tuple
+      );
 
     auto const a_mem =
       dango_placement_new(a_bytes, flex_array, { a_array, a_next, a_size_init, a_capacity, dango::forward<tp_args>(a_args)... });
 
-    a_void_tuple->*[](auto&... a_ptr)noexcept->void{ (void(a_ptr.release()) , ... ); };
+    dango::tuple_reverse_foreach([](auto& a_ptr)noexcept->void{ a_ptr.release(); }, a_void_tuple);
 
     a_void.release();
 
@@ -847,12 +851,16 @@ private:
     auto const a_size =
       dango::next_multiple(sizeof(flex_array) + a_capacity * sizeof(elem_type), c_align);
 
-    auto const& a_next = a_mem->m_next;
-
-    a_next->*[&a_dealloc, a_capacity](auto const... a_arg)noexcept->void
-    {
-      (void(a_dealloc(a_arg, a_capacity * sizeof(typename tp_next::elem_type_intern), dango::max(tp_align, alignof(typename tp_next::elem_type_intern)))) , ... );
-    };
+    dango::tuple_reverse_foreach
+    (
+      [&a_dealloc, a_capacity]
+      <typename tp_elem>
+      (tp_elem* const a_ptr)noexcept->void
+      {
+        a_dealloc(a_ptr, a_capacity * sizeof(tp_elem), dango::max(tp_align, alignof(tp_elem)));
+      },
+      a_mem->m_next
+    );
 
     dango::destructor(a_mem);
 
@@ -1141,10 +1149,7 @@ public:
   constexpr
   ~flex_array_constexpr()noexcept
   {
-    m_next->*[](auto const... a_arg)noexcept->void
-    {
-      (void(delete[] a_arg) , ... );
-    };
+    dango::tuple_reverse_foreach([](auto const a_ptr)noexcept->void{ delete[] a_ptr; }, m_next);
 
     delete[] m_array;
   }
@@ -1300,15 +1305,19 @@ public:
       dango::make_tuple(dango::auto_ptr{ new typename tp_next::elem_type_intern_constexpr[a_capacity], dango::array_delete }...);
 
     auto const a_next =
-      a_array_tuple->*[](auto const&... a_ptr)noexcept->tuple_type
-      {
-        return tuple_type{ a_ptr.get()... };
-      };
+      dango::tuple_apply
+      (
+        [](auto const&... a_ptr)noexcept->tuple_type
+        {
+          return tuple_type{ a_ptr.get()... };
+        },
+        a_array_tuple
+      );
 
     auto const a_mem =
       new flex_array_constexpr{ a_array.get(), a_next, a_init_size, a_capacity, dango::forward<tp_args>(a_args)... };
 
-    a_array_tuple->*[](auto&... a_ptr)noexcept->void{ (void(a_ptr.release()) , ... ); };
+    dango::tuple_reverse_foreach([](auto& a_ptr)noexcept->void{ a_ptr.release(); }, a_array_tuple);
 
     a_array.release();
 
@@ -1349,7 +1358,7 @@ public:
     auto const a_mem =
       new flex_array_constexpr{ a_tuple.first().get(), a_next, c_size, a_capacity, dango::forward<tp_args>(a_args)... };
 
-    a_tuple->*[](auto&... a_ptr)noexcept->void{ (void(a_ptr.release()) , ... ); };
+    dango::tuple_reverse_foreach([](auto& a_ptr)noexcept->void{ a_ptr.release(); }, a_tuple);
 
     return a_mem;
   }

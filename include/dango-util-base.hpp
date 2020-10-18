@@ -1910,14 +1910,200 @@ final
   DANGO_UNCONSTRUCTIBLE(operator_tuple)
 };
 
-/*** tuple_apply tuple_foreach ***/
+/*** tuple_apply ***/
 
-// TODO
+namespace
+dango::detail
+{
+  template
+  <dango::usize... tp_indices, typename tp_func, typename tp_tuple>
+  requires(requires{ { dango::declval<tp_func>()(dango::tuple_get<tp_indices>(dango::declval<tp_tuple>())...) }; })
+  constexpr auto
+  tuple_apply_help
+  (dango::index_seq<tp_indices...> const, tp_func&& a_func, tp_tuple&& a_tup)
+  noexcept(requires{ { dango::declval<tp_func>()(dango::tuple_get<tp_indices>(dango::declval<tp_tuple>())...) }noexcept; })->decltype(auto)
+  {
+    return dango::forward<tp_func>(a_func)(dango::tuple_get<tp_indices>(dango::forward<tp_tuple>(a_tup))...);
+  }
+
+  template
+  <dango::usize... tp_indices, typename tp_func, typename tp_tuple>
+  requires(requires{ { dango::declval<tp_func>()(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::declval<tp_tuple>())...) }; })
+  constexpr auto
+  tuple_reverse_apply_help
+  (dango::index_seq<tp_indices...> const, tp_func&& a_func, tp_tuple&& a_tup)
+  noexcept(requires{ { dango::declval<tp_func>()(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::declval<tp_tuple>())...) }noexcept; })->decltype(auto)
+  {
+    return dango::forward<tp_func>(a_func)(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::forward<tp_tuple>(a_tup))...);
+  }
+}
 
 namespace
 dango
 {
+  template
+  <typename tp_tuple, typename tp_func>
+  concept tuple_is_applicable =
+    dango::is_tuple_like<tp_tuple> &&
+    dango::is_referenceable_ignore_ref<tp_func> &&
+    requires
+    { { dango::detail::tuple_apply_help
+        (dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::declval<tp_func>(), dango::declval<tp_tuple>()) }; };
 
+  template
+  <typename tp_tuple, typename tp_func>
+  concept tuple_is_noexcept_applicable =
+    dango::tuple_is_applicable<tp_tuple, tp_func> &&
+    requires
+    { { dango::detail::tuple_apply_help
+        (dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::declval<tp_func>(), dango::declval<tp_tuple>()) }noexcept; };
+
+  template
+  <typename tp_tuple, typename tp_func>
+  concept tuple_is_reverse_applicable =
+    dango::is_tuple_like<tp_tuple> &&
+    dango::is_referenceable_ignore_ref<tp_func> &&
+    requires
+    { { dango::detail::tuple_reverse_apply_help
+        (dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::declval<tp_func>(), dango::declval<tp_tuple>()) }; };
+
+  template
+  <typename tp_tuple, typename tp_func>
+  concept tuple_is_noexcept_reverse_applicable =
+    dango::tuple_is_reverse_applicable<tp_tuple, tp_func> &&
+    requires
+    { { dango::detail::tuple_reverse_apply_help
+        (dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::declval<tp_func>(), dango::declval<tp_tuple>()) }noexcept; };
+
+  inline constexpr auto const tuple_apply =
+    []<typename tp_func, typename tp_tuple>
+    (tp_func&& a_func, tp_tuple&& a_tup)
+    noexcept(dango::tuple_is_noexcept_applicable<tp_tuple, tp_func>)->decltype(auto)
+    requires(dango::tuple_is_applicable<tp_tuple, tp_func>)
+    {
+      return dango::detail::tuple_apply_help(dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::forward<tp_func>(a_func), dango::forward<tp_tuple>(a_tup));
+    };
+
+  inline constexpr auto const tuple_reverse_apply =
+    []<typename tp_func, typename tp_tuple>
+    (tp_func&& a_func, tp_tuple&& a_tup)
+    noexcept(dango::tuple_is_noexcept_reverse_applicable<tp_tuple, tp_func>)->decltype(auto)
+    requires(dango::tuple_is_reverse_applicable<tp_tuple, tp_func>)
+    {
+      return dango::detail::tuple_reverse_apply_help(dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::forward<tp_func>(a_func), dango::forward<tp_tuple>(a_tup));
+    };
+}
+
+/*** tuple_foreach ***/
+
+namespace
+dango::detail
+{
+  using tuple_foreach_help_prio = dango::priority_tag<dango::uint(1)>;
+
+  template
+  <dango::usize... tp_indices, typename tp_func, typename tp_tuple>
+  requires(requires{ { ( ... && bool(dango::declval<tp_func>()(dango::tuple_get<tp_indices>(dango::declval<tp_tuple>())))) }; })
+  constexpr void
+  tuple_foreach_help
+  (dango::priority_tag<dango::uint(1)> const, dango::index_seq<tp_indices...> const, tp_func&& a_func, tp_tuple&& a_tup)
+  noexcept(requires{ { ( ... && bool(dango::declval<tp_func>()(dango::tuple_get<tp_indices>(dango::declval<tp_tuple>())))) }noexcept; })
+  {
+    [[maybe_unused]] auto const a_temp =
+      ( ... && bool(dango::forward<tp_func>(a_func)(dango::tuple_get<tp_indices>(dango::forward<tp_tuple>(a_tup)))));
+  }
+
+  template
+  <dango::usize... tp_indices, typename tp_func, typename tp_tuple>
+  requires(requires{ { ( ... , void(dango::declval<tp_func>()(dango::tuple_get<tp_indices>(dango::declval<tp_tuple>())))) }; })
+  constexpr void
+  tuple_foreach_help
+  (dango::priority_tag<dango::uint(0)> const, dango::index_seq<tp_indices...> const, tp_func&& a_func, tp_tuple&& a_tup)
+  noexcept(requires{ { ( ... , void(dango::declval<tp_func>()(dango::tuple_get<tp_indices>(dango::declval<tp_tuple>())))) }noexcept; })
+  {
+    ( ... , void(dango::forward<tp_func>(a_func)(dango::tuple_get<tp_indices>(dango::forward<tp_tuple>(a_tup)))));
+  }
+
+  template
+  <dango::usize... tp_indices, typename tp_func, typename tp_tuple>
+  requires(requires{ { ( ... && bool(dango::declval<tp_func>()(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::declval<tp_tuple>())))) }; })
+  constexpr void
+  tuple_reverse_foreach_help
+  (dango::priority_tag<dango::uint(1)> const, dango::index_seq<tp_indices...> const, tp_func&& a_func, tp_tuple&& a_tup)
+  noexcept(requires{ { ( ... && bool(dango::declval<tp_func>()(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::declval<tp_tuple>())))) }noexcept; })
+  {
+    [[maybe_unused]] auto const a_temp =
+      ( ... && bool(dango::forward<tp_func>(a_func)(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::forward<tp_tuple>(a_tup)))));
+  }
+
+  template
+  <dango::usize... tp_indices, typename tp_func, typename tp_tuple>
+  requires(requires{ { ( ... , void(dango::declval<tp_func>()(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::declval<tp_tuple>())))) }; })
+  constexpr void
+  tuple_reverse_foreach_help
+  (dango::priority_tag<dango::uint(0)> const, dango::index_seq<tp_indices...> const, tp_func&& a_func, tp_tuple&& a_tup)
+  noexcept(requires{ { ( ... , void(dango::declval<tp_func>()(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::declval<tp_tuple>())))) }noexcept; })
+  {
+    ( ... , void(dango::forward<tp_func>(a_func)(dango::tuple_get<sizeof...(tp_indices) - dango::usize(1) - tp_indices>(dango::forward<tp_tuple>(a_tup)))));
+  }
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_tuple, typename tp_func>
+  concept tuple_is_foreachable =
+    dango::is_tuple_like<tp_tuple> &&
+    dango::is_referenceable_ignore_ref<tp_func> &&
+    requires
+    { { dango::detail::tuple_foreach_help
+        (dango::detail::tuple_foreach_help_prio{ }, dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::declval<tp_func>(), dango::declval<tp_tuple>()) }; };
+
+  template
+  <typename tp_tuple, typename tp_func>
+  concept tuple_is_noexcept_foreachable =
+    dango::tuple_is_foreachable<tp_tuple, tp_func> &&
+    requires
+    { { dango::detail::tuple_foreach_help
+        (dango::detail::tuple_foreach_help_prio{ }, dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::declval<tp_func>(), dango::declval<tp_tuple>()) }noexcept; };
+
+  template
+  <typename tp_tuple, typename tp_func>
+  concept tuple_is_reverse_foreachable =
+    dango::is_tuple_like<tp_tuple> &&
+    dango::is_referenceable_ignore_ref<tp_func> &&
+    requires
+    { { dango::detail::tuple_reverse_foreach_help
+        (dango::detail::tuple_foreach_help_prio{ }, dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::declval<tp_func>(), dango::declval<tp_tuple>()) }; };
+
+  template
+  <typename tp_tuple, typename tp_func>
+  concept tuple_is_noexcept_reverse_foreachable =
+    dango::tuple_is_reverse_foreachable<tp_tuple, tp_func> &&
+    requires
+    { { dango::detail::tuple_reverse_foreach_help
+        (dango::detail::tuple_foreach_help_prio{ }, dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::declval<tp_func>(), dango::declval<tp_tuple>()) }noexcept; };
+
+  inline constexpr auto const tuple_foreach =
+    []<typename tp_func, typename tp_tuple>
+    (tp_func&& a_func, tp_tuple&& a_tup)
+    noexcept(dango::tuple_is_noexcept_foreachable<tp_tuple, tp_func>)->void
+    requires(dango::tuple_is_foreachable<tp_tuple, tp_func>)
+    {
+      dango::detail::tuple_foreach_help
+      (dango::detail::tuple_foreach_help_prio{ }, dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::forward<tp_func>(a_func), dango::forward<tp_tuple>(a_tup));
+    };
+
+  inline constexpr auto const tuple_reverse_foreach =
+    []<typename tp_func, typename tp_tuple>
+    (tp_func&& a_func, tp_tuple&& a_tup)
+    noexcept(dango::tuple_is_noexcept_reverse_foreachable<tp_tuple, tp_func>)->void
+    requires(dango::tuple_is_reverse_foreachable<tp_tuple, tp_func>)
+    {
+      dango::detail::tuple_reverse_foreach_help
+      (dango::detail::tuple_foreach_help_prio{ }, dango::make_index_seq<dango::tuple_size<tp_tuple>>{ }, dango::forward<tp_func>(a_func), dango::forward<tp_tuple>(a_tup));
+    };
 }
 
 /*** iter_begin iter_end ***/
