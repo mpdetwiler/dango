@@ -107,29 +107,29 @@ dango
 {
   template
   <typename tp_type>
-  concept has_operator_hash_struct =
+  concept has_struct_operator_hash =
     dango::is_object_ignore_ref<tp_type> &&
     requires(tp_type a_arg)
-    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }->dango::is_noexcept_convertible_ret<dango::hash_val>; };
+    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }->dango::is_convertible_ret<dango::hash_val>; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_hash_struct =
-    dango::has_operator_hash_struct<tp_type> &&
+  concept has_noexcept_struct_operator_hash =
+    dango::has_struct_operator_hash<tp_type> &&
     requires(tp_type a_arg)
-    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }noexcept; };
+    { { dango::custom::operator_hash<dango::remove_cvref<tp_type>>::hash(dango::forward<tp_type>(a_arg)) }noexcept->dango::is_noexcept_convertible_ret<dango::hash_val>; };
 
   template
   <typename tp_type>
-  concept has_operator_hash_method =
+  concept has_method_operator_hash =
     dango::is_class_or_union_ignore_ref<tp_type> &&
-    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }->dango::is_noexcept_convertible_ret<dango::hash_val>; };
+    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }->dango::is_convertible_ret<dango::hash_val>; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_hash_method =
-    dango::has_operator_hash_method<tp_type> &&
-    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }noexcept; };
+  concept has_noexcept_method_operator_hash =
+    dango::has_method_operator_hash<tp_type> &&
+    requires(tp_type a_arg){ { dango::forward<tp_type>(a_arg).dango_operator_hash() }noexcept->dango::is_noexcept_convertible_ret<dango::hash_val>; };
 }
 
 namespace
@@ -139,22 +139,22 @@ dango::detail
 
   template
   <typename tp_type>
-  requires(dango::has_operator_hash_struct<tp_type const&>)
+  requires(dango::has_struct_operator_hash<tp_type const&>)
   constexpr auto
   hash_help
   (dango::priority_tag<dango::uint(1)> const, tp_type const& a_arg)
-  noexcept(dango::has_noexcept_operator_hash_struct<tp_type const&>)->dango::hash_val
+  noexcept(dango::has_noexcept_struct_operator_hash<tp_type const&>)->dango::hash_val
   {
     return dango::custom::operator_hash<dango::remove_cv<tp_type>>::hash(a_arg);
   }
 
   template
   <typename tp_type>
-  requires(dango::has_operator_hash_method<tp_type const&>)
+  requires(dango::has_method_operator_hash<tp_type const&>)
   constexpr auto
   hash_help
   (dango::priority_tag<dango::uint(0)> const, tp_type const& a_arg)
-  noexcept(dango::has_noexcept_operator_hash_method<tp_type const&>)->dango::hash_val
+  noexcept(dango::has_noexcept_method_operator_hash<tp_type const&>)->dango::hash_val
   {
     return a_arg.dango_operator_hash();
   }

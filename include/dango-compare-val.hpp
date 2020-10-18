@@ -321,12 +321,20 @@ dango::comparison
   <typename tp_type>
   concept is_convertible =
     dango::is_object_exclude_array_ignore_ref<tp_type> &&
+    requires{ { dango::detail::strongest_comparison_help(dango::detail::strongest_comparison_prio{ }, dango::declval<tp_type>()) }; };
+
+  template
+  <typename tp_type>
+  concept is_noexcept_convertible =
+    dango::comparison::is_convertible<tp_type> &&
     requires{ { dango::detail::strongest_comparison_help(dango::detail::strongest_comparison_prio{ }, dango::declval<tp_type>()) }noexcept; };
 
   template
-  <dango::comparison::is_convertible tp_arg>
+  <typename tp_arg>
+  requires(dango::comparison::is_convertible<tp_arg>)
   constexpr auto
-  strongest(tp_arg&& a_arg)noexcept->auto
+  strongest(tp_arg&& a_arg)
+  noexcept(dango::comparison::is_noexcept_convertible<tp_arg>)->auto
   {
     return dango::detail::strongest_comparison_help(dango::detail::strongest_comparison_prio{ }, dango::forward<tp_arg>(a_arg));
   }

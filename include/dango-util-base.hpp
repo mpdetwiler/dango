@@ -362,29 +362,37 @@ dango
 {
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_operator_swap_struct =
+  concept has_struct_operator_swap =
     dango::is_object_ignore_ref<tp_lhs> && dango::is_object_ignore_ref<tp_rhs> &&
     requires
-    { { dango::custom::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }->dango::is_convertible_ret<void>; };
+    {
+      {
+        dango::custom::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::declval<tp_lhs>(), dango::declval<tp_rhs>())
+      }->dango::is_convertible_ret<void>;
+    };
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_noexcept_operator_swap_struct =
-    dango::has_operator_swap_struct<tp_lhs, tp_rhs> &&
+  concept has_noexcept_struct_operator_swap =
+    dango::has_struct_operator_swap<tp_lhs, tp_rhs> &&
     requires
-    { { dango::custom::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }noexcept->dango::is_noexcept_convertible_ret<void>; };
+    {
+      {
+        dango::custom::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::declval<tp_lhs>(), dango::declval<tp_rhs>())
+      }noexcept->dango::is_noexcept_convertible_ret<void>;
+    };
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_operator_swap_method =
+  concept has_method_operator_swap =
     dango::is_class_or_union_ignore_ref<tp_lhs> && dango::is_object_ignore_ref<tp_rhs> &&
     requires
     { { dango::declval<tp_lhs>().dango_operator_swap(dango::declval<tp_rhs>()) }->dango::is_convertible_ret<void>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_noexcept_operator_swap_method =
-    dango::has_operator_swap_method<tp_lhs, tp_rhs> &&
+  concept has_noexcept_method_operator_swap =
+    dango::has_method_operator_swap<tp_lhs, tp_rhs> &&
     requires
     { { dango::declval<tp_lhs>().dango_operator_swap(dango::declval<tp_rhs>()) }noexcept->dango::is_noexcept_convertible_ret<void>; };
 }
@@ -396,44 +404,44 @@ dango::detail
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_swap_struct<tp_lhs, tp_rhs>)
+  requires(dango::has_struct_operator_swap<tp_lhs, tp_rhs>)
   constexpr void
   swap_help
   (dango::priority_tag<dango::uint(4)> const, tp_lhs&& a_lhs, tp_rhs&& a_rhs)
-  noexcept(dango::has_noexcept_operator_swap_struct<tp_lhs, tp_rhs>)
+  noexcept(dango::has_noexcept_struct_operator_swap<tp_lhs, tp_rhs>)
   {
     dango::custom::operator_swap<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::swap(dango::forward<tp_lhs>(a_lhs), dango::forward<tp_rhs>(a_rhs));
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_swap_struct<tp_rhs, tp_lhs>)
+  requires(dango::has_struct_operator_swap<tp_rhs, tp_lhs>)
   constexpr void
   swap_help
   (dango::priority_tag<dango::uint(3)> const, tp_lhs&& a_lhs, tp_rhs&& a_rhs)
-  noexcept(dango::has_noexcept_operator_swap_struct<tp_rhs, tp_lhs>)
+  noexcept(dango::has_noexcept_struct_operator_swap<tp_rhs, tp_lhs>)
   {
     dango::custom::operator_swap<dango::remove_cvref<tp_rhs>, dango::remove_cvref<tp_lhs>>::swap(dango::forward<tp_rhs>(a_rhs), dango::forward<tp_lhs>(a_lhs));
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_swap_method<tp_lhs, tp_rhs>)
+  requires(dango::has_method_operator_swap<tp_lhs, tp_rhs>)
   constexpr void
   swap_help
   (dango::priority_tag<dango::uint(2)> const, tp_lhs&& a_lhs, tp_rhs&& a_rhs)
-  noexcept(dango::has_noexcept_operator_swap_method<tp_lhs, tp_rhs>)
+  noexcept(dango::has_noexcept_method_operator_swap<tp_lhs, tp_rhs>)
   {
     dango::forward<tp_lhs>(a_lhs).dango_operator_swap(dango::forward<tp_rhs>(a_rhs));
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_swap_method<tp_rhs, tp_lhs>)
+  requires(dango::has_method_operator_swap<tp_rhs, tp_lhs>)
   constexpr void
   swap_help
   (dango::priority_tag<dango::uint(1)> const, tp_lhs&& a_lhs, tp_rhs&& a_rhs)
-  noexcept(dango::has_noexcept_operator_swap_method<tp_rhs, tp_lhs>)
+  noexcept(dango::has_noexcept_method_operator_swap<tp_rhs, tp_lhs>)
   {
     dango::forward<tp_rhs>(a_rhs).dango_operator_swap(dango::forward<tp_lhs>(a_lhs));
   }
@@ -475,14 +483,14 @@ dango
   concept is_swappable =
     dango::is_object_ignore_ref<tp_lhs> && dango::is_object_ignore_ref<tp_rhs> &&
     requires
-    { { dango::detail::swap_help(dango::detail::swap_help_prio{ }, dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }->dango::is_convertible_ret<void>; };
+    { { dango::detail::swap_help(dango::detail::swap_help_prio{ }, dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }->dango::is_same<void>; };
 
   template
   <typename tp_lhs, typename tp_rhs = tp_lhs>
   concept is_noexcept_swappable =
     dango::is_swappable<tp_lhs, tp_rhs> &&
     requires
-    { { dango::detail::swap_help(dango::detail::swap_help_prio{ }, dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }noexcept->dango::is_noexcept_convertible_ret<void>; };
+    { { dango::detail::swap_help(dango::detail::swap_help_prio{ }, dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }noexcept; };
 
   inline constexpr auto const swap =
     []<typename tp_lhs, typename tp_rhs>
@@ -608,33 +616,33 @@ dango
 {
   template
   <typename tp_type>
-  concept has_operator_is_null_struct =
+  concept has_struct_operator_is_null =
     dango::is_referenceable_ignore_ref<tp_type> &&
     requires
     { { dango::custom::operator_is_null<dango::remove_cvref<tp_type>>::is_null(dango::declval<tp_type>()) }->dango::is_convertible_ret<bool>; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_is_null_struct =
-    dango::has_operator_is_null_struct<tp_type> &&
+  concept has_noexcept_struct_operator_is_null =
+    dango::has_struct_operator_is_null<tp_type> &&
     requires
     { { dango::custom::operator_is_null<dango::remove_cvref<tp_type>>::is_null(dango::declval<tp_type>()) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
 
   template
   <typename tp_type>
-  concept has_operator_is_null_method =
+  concept has_method_operator_is_null =
     dango::is_class_or_union_ignore_ref<tp_type> &&
     requires{ { dango::declval<tp_type>().dango_operator_is_null() }->dango::is_convertible_ret<bool>; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_is_null_method =
-    dango::has_operator_is_null_method<tp_type> &&
+  concept has_noexcept_method_operator_is_null =
+    dango::has_method_operator_is_null<tp_type> &&
     requires{ { dango::declval<tp_type>().dango_operator_is_null() }noexcept->dango::is_noexcept_convertible_ret<bool>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_operator_equals_struct =
+  concept has_struct_operator_equals =
     dango::is_referenceable_ignore_ref<tp_lhs> && dango::is_referenceable_ignore_ref<tp_rhs> &&
     requires
     {
@@ -645,8 +653,8 @@ dango
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_noexcept_operator_equals_struct =
-    dango::has_operator_equals_struct<tp_lhs, tp_rhs> &&
+  concept has_noexcept_struct_operator_equals =
+    dango::has_struct_operator_equals<tp_lhs, tp_rhs> &&
     requires
     {
       {
@@ -656,21 +664,21 @@ dango
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_operator_equals_method =
+  concept has_method_operator_equals =
     dango::is_class_or_union_ignore_ref<tp_lhs> && dango::is_referenceable_ignore_ref<tp_rhs> &&
     requires
     { { dango::declval<tp_lhs>().dango_operator_equals(dango::declval<tp_rhs>()) }->dango::is_convertible_ret<bool>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_noexcept_operator_equals_method =
-    dango::has_operator_equals_method<tp_lhs, tp_rhs> &&
+  concept has_noexcept_method_operator_equals =
+    dango::has_method_operator_equals<tp_lhs, tp_rhs> &&
     requires
     { { dango::declval<tp_lhs>().dango_operator_equals(dango::declval<tp_rhs>()) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_operator_compare_struct =
+  concept has_struct_operator_compare =
     dango::is_referenceable_ignore_ref<tp_lhs> && dango::is_referenceable_ignore_ref<tp_rhs> &&
     requires
     {
@@ -681,24 +689,28 @@ dango
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_noexcept_operator_compare_struct =
-    dango::has_operator_compare_struct<tp_lhs, tp_rhs> &&
+  concept has_noexcept_struct_operator_compare =
+    dango::has_struct_operator_compare<tp_lhs, tp_rhs> &&
     requires
-    { { dango::custom::operator_compare<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::compare(dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }noexcept; };
+    {
+      {
+        dango::custom::operator_compare<dango::remove_cvref<tp_lhs>, dango::remove_cvref<tp_rhs>>::compare(dango::declval<tp_lhs>(), dango::declval<tp_rhs>())
+      }noexcept->dango::comparison::is_noexcept_convertible;
+    };
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_operator_compare_method =
+  concept has_method_operator_compare =
     dango::is_class_or_union_ignore_ref<tp_lhs> && dango::is_referenceable_ignore_ref<tp_rhs> &&
     requires
     { { dango::declval<tp_lhs>().dango_operator_compare(dango::declval<tp_rhs>()) }->dango::comparison::is_convertible; };
 
   template
   <typename tp_lhs, typename tp_rhs>
-  concept has_noexcept_operator_compare_method =
-    dango::has_operator_compare_method<tp_lhs, tp_rhs> &&
+  concept has_noexcept_method_operator_compare =
+    dango::has_method_operator_compare<tp_lhs, tp_rhs> &&
     requires
-    { { dango::declval<tp_lhs>().dango_operator_compare(dango::declval<tp_rhs>()) }noexcept; };
+    { { dango::declval<tp_lhs>().dango_operator_compare(dango::declval<tp_rhs>()) }noexcept->dango::comparison::is_noexcept_convertible; };
 }
 
 namespace
@@ -708,132 +720,132 @@ dango::detail
 
   template
   <typename tp_lhs>
-  requires(dango::has_operator_is_null_struct<tp_lhs const&>)
+  requires(dango::has_struct_operator_is_null<tp_lhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(11)> const, tp_lhs const& a_lhs, dango::null_tag const)
-  noexcept(dango::has_noexcept_operator_is_null_struct<tp_lhs const&>)->bool
+  noexcept(dango::has_noexcept_struct_operator_is_null<tp_lhs const&>)->bool
   {
     return dango::custom::operator_is_null<dango::remove_cv<tp_lhs>>::is_null(a_lhs);
   }
 
   template
   <typename tp_rhs>
-  requires(dango::has_operator_is_null_struct<tp_rhs const&>)
+  requires(dango::has_struct_operator_is_null<tp_rhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(10)> const, dango::null_tag const, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_is_null_struct<tp_rhs const&>)->bool
+  noexcept(dango::has_noexcept_struct_operator_is_null<tp_rhs const&>)->bool
   {
     return dango::custom::operator_is_null<dango::remove_cv<tp_rhs>>::is_null(a_rhs);
   }
 
   template
   <typename tp_lhs>
-  requires(dango::has_operator_is_null_method<tp_lhs const&>)
+  requires(dango::has_method_operator_is_null<tp_lhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(9)> const, tp_lhs const& a_lhs, dango::null_tag const)
-  noexcept(dango::has_noexcept_operator_is_null_method<tp_lhs const&>)->bool
+  noexcept(dango::has_noexcept_method_operator_is_null<tp_lhs const&>)->bool
   {
     return a_lhs.dango_operator_is_null();
   }
 
   template
   <typename tp_rhs>
-  requires(dango::has_operator_is_null_method<tp_rhs const&>)
+  requires(dango::has_method_operator_is_null<tp_rhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(8)> const, dango::null_tag const, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_is_null_method<tp_rhs const&>)->bool
+  noexcept(dango::has_noexcept_method_operator_is_null<tp_rhs const&>)->bool
   {
     return a_rhs.dango_operator_is_null();
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_equals_struct<tp_lhs const&, tp_rhs const&>)
+  requires(dango::has_struct_operator_equals<tp_lhs const&, tp_rhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(7)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_equals_struct<tp_lhs const&, tp_rhs const&>)->bool
+  noexcept(dango::has_noexcept_struct_operator_equals<tp_lhs const&, tp_rhs const&>)->bool
   {
     return dango::custom::operator_equals<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::equals(a_lhs, a_rhs);
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_equals_struct<tp_rhs const&, tp_lhs const&>)
+  requires(dango::has_struct_operator_equals<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(6)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_equals_struct<tp_rhs const&, tp_lhs const&>)->bool
+  noexcept(dango::has_noexcept_struct_operator_equals<tp_rhs const&, tp_lhs const&>)->bool
   {
     return dango::custom::operator_equals<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::equals(a_rhs, a_lhs);
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_equals_method<tp_lhs const&, tp_rhs const&>)
+  requires(dango::has_method_operator_equals<tp_lhs const&, tp_rhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(5)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_equals_method<tp_lhs const&, tp_rhs const&>)->bool
+  noexcept(dango::has_noexcept_method_operator_equals<tp_lhs const&, tp_rhs const&>)->bool
   {
     return a_lhs.dango_operator_equals(a_rhs);
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_equals_method<tp_rhs const&, tp_lhs const&>)
+  requires(dango::has_method_operator_equals<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(4)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_equals_method<tp_rhs const&, tp_lhs const&>)->bool
+  noexcept(dango::has_noexcept_method_operator_equals<tp_rhs const&, tp_lhs const&>)->bool
   {
     return a_rhs.dango_operator_equals(a_lhs);
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_compare_struct<tp_lhs const&, tp_rhs const&>)
+  requires(dango::has_struct_operator_compare<tp_lhs const&, tp_rhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(3)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_compare_struct<tp_lhs const&, tp_rhs const&>)->bool
+  noexcept(dango::has_noexcept_struct_operator_compare<tp_lhs const&, tp_rhs const&>)->bool
   {
     return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_lhs, a_rhs)).is_eq();
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_compare_struct<tp_rhs const&, tp_lhs const&>)
+  requires(dango::has_struct_operator_compare<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(2)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_compare_struct<tp_rhs const&, tp_lhs const&>)->bool
+  noexcept(dango::has_noexcept_struct_operator_compare<tp_rhs const&, tp_lhs const&>)->bool
   {
     return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::compare(a_rhs, a_lhs)).is_eq();
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_compare_method<tp_lhs const&, tp_rhs const&>)
+  requires(dango::has_method_operator_compare<tp_lhs const&, tp_rhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(1)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_compare_method<tp_lhs const&, tp_rhs const&>)->bool
+  noexcept(dango::has_noexcept_method_operator_compare<tp_lhs const&, tp_rhs const&>)->bool
   {
     return dango::comparison::strongest(a_lhs.dango_operator_compare(a_rhs)).is_eq();
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_compare_method<tp_rhs const&, tp_lhs const&>)
+  requires(dango::has_method_operator_compare<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   equals_help
   (dango::priority_tag<dango::uint(0)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_compare_method<tp_rhs const&, tp_lhs const&>)->bool
+  noexcept(dango::has_noexcept_method_operator_compare<tp_rhs const&, tp_lhs const&>)->bool
   {
     return dango::comparison::strongest(a_rhs.dango_operator_compare(a_lhs)).is_eq();
   }
@@ -843,14 +855,14 @@ dango::detail
   concept has_equals_help =
     dango::is_referenceable_ignore_ref<tp_lhs> && dango::is_referenceable_ignore_ref<tp_rhs> &&
     requires
-    { { dango::detail::equals_help(dango::detail::equals_help_prio{ }, dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }->dango::is_convertible_ret<bool>; };
+    { { dango::detail::equals_help(dango::detail::equals_help_prio{ }, dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }->dango::is_same<bool>; };
 
   template
   <typename tp_lhs, typename tp_rhs>
   concept has_noexcept_equals_help =
     dango::detail::has_equals_help<tp_lhs, tp_rhs> &&
     requires
-    { { dango::detail::equals_help(dango::detail::equals_help_prio{ }, dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }noexcept->dango::is_noexcept_convertible_ret<bool>; };
+    { { dango::detail::equals_help(dango::detail::equals_help_prio{ }, dango::declval<tp_lhs>(), dango::declval<tp_rhs>()) }noexcept; };
 }
 
 namespace
@@ -1058,7 +1070,7 @@ dango::detail
   <typename tp_lhs, typename tp_rhs>
   concept has_spaceship_op_help2 =
     !dango::has_noexcept_comparison_ops<tp_lhs, tp_rhs> ||
-    requires{ { dango::declval<tp_lhs>() <=> dango::declval<tp_rhs>() }noexcept; };
+    requires{ { dango::declval<tp_lhs>() <=> dango::declval<tp_rhs>() }noexcept->dango::comparison::is_noexcept_convertible; };
 }
 
 namespace
@@ -1080,44 +1092,44 @@ dango::detail
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_compare_struct<tp_lhs const&, tp_rhs const&>)
+  requires(dango::has_struct_operator_compare<tp_lhs const&, tp_rhs const&>)
   constexpr auto
   compare_help
   (dango::priority_tag<dango::uint(3)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_compare_struct<tp_lhs const&, tp_rhs const&>)->auto
+  noexcept(dango::has_noexcept_struct_operator_compare<tp_lhs const&, tp_rhs const&>)->auto
   {
     return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_lhs>, dango::remove_cv<tp_rhs>>::compare(a_lhs, a_rhs));
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_compare_struct<tp_rhs const&, tp_lhs const&>)
+  requires(dango::has_struct_operator_compare<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   compare_help
   (dango::priority_tag<dango::uint(2)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_compare_struct<tp_rhs const&, tp_lhs const&>)->auto
+  noexcept(dango::has_noexcept_struct_operator_compare<tp_rhs const&, tp_lhs const&>)->auto
   {
     return dango::comparison::strongest(dango::custom::operator_compare<dango::remove_cv<tp_rhs>, dango::remove_cv<tp_lhs>>::compare(a_rhs, a_lhs)).mirror();
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_compare_method<tp_lhs const&, tp_rhs const&>)
+  requires(dango::has_method_operator_compare<tp_lhs const&, tp_rhs const&>)
   constexpr auto
   compare_help
   (dango::priority_tag<dango::uint(1)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_compare_method<tp_lhs const&, tp_rhs const&>)->auto
+  noexcept(dango::has_noexcept_method_operator_compare<tp_lhs const&, tp_rhs const&>)->auto
   {
     return dango::comparison::strongest(a_lhs.dango_operator_compare(a_rhs));
   }
 
   template
   <typename tp_lhs, typename tp_rhs>
-  requires(dango::has_operator_compare_method<tp_rhs const&, tp_lhs const&>)
+  requires(dango::has_method_operator_compare<tp_rhs const&, tp_lhs const&>)
   constexpr auto
   compare_help
   (dango::priority_tag<dango::uint(0)> const, tp_lhs const& a_lhs, tp_rhs const& a_rhs)
-  noexcept(dango::has_noexcept_operator_compare_method<tp_rhs const&, tp_lhs const&>)->auto
+  noexcept(dango::has_noexcept_method_operator_compare<tp_rhs const&, tp_lhs const&>)->auto
   {
     return dango::comparison::strongest(a_rhs.dango_operator_compare(a_lhs)).mirror();
   }
@@ -1605,12 +1617,12 @@ dango::detail
 {
   template
   <typename tp_type, dango::usize tp_index>
-  using operator_tuple_struct_elem =
+  using struct_operator_tuple_elem =
     typename dango::custom::operator_tuple<dango::remove_cvref<tp_type>>::template elem<tp_index, dango::remove_ref<tp_type>>;
 
   template
   <typename tp_type, dango::usize tp_index>
-  using operator_tuple_elem_member =
+  using member_operator_tuple_elem =
     typename dango::remove_cvref<tp_type>::template dango_operator_tuple_elem<tp_index, dango::remove_ref<tp_type>>;
 }
 
@@ -1619,53 +1631,53 @@ dango
 {
   template
   <typename tp_type>
-  concept has_operator_tuple_struct_size =
+  concept has_struct_operator_tuple_size =
     dango::is_object_ignore_ref<tp_type> &&
     requires{ { dango::constexpr_check<dango::usize, dango::custom::operator_tuple<dango::remove_cvref<tp_type>>::size>{ } }noexcept; };
 
   template
   <typename tp_type>
-  concept has_operator_tuple_size_member =
+  concept has_member_operator_tuple_size =
     dango::is_class_or_union_ignore_ref<tp_type> &&
     requires{ { dango::constexpr_check<dango::usize, dango::remove_cvref<tp_type>::dango_operator_tuple_size>{ } }noexcept; };
 
   template
   <typename tp_type, dango::usize tp_index>
-  concept has_operator_tuple_struct_elem_type =
+  concept has_struct_operator_tuple_elem =
     dango::is_object_ignore_ref<tp_type> &&
-    requires{ typename dango::detail::operator_tuple_struct_elem<tp_type, tp_index>; };
+    requires{ typename dango::detail::struct_operator_tuple_elem<tp_type, tp_index>; };
 
   template
   <typename tp_type, dango::usize tp_index>
-  concept has_operator_tuple_elem_type_member =
+  concept has_member_operator_tuple_elem =
     dango::is_class_or_union_ignore_ref<tp_type> &&
-    requires{ typename dango::detail::operator_tuple_elem_member<tp_type, tp_index>; };
+    requires{ typename dango::detail::member_operator_tuple_elem<tp_type, tp_index>; };
 
   template
   <typename tp_type, dango::usize tp_index>
-  concept has_operator_tuple_struct_get =
+  concept has_struct_operator_tuple_get =
     dango::is_object_ignore_ref<tp_type> &&
     requires
     { { dango::custom::operator_tuple<dango::remove_cvref<tp_type>>::template get<tp_index>(dango::declval<tp_type>()) }; };
 
   template
   <typename tp_type, dango::usize tp_index>
-  concept has_noexcept_operator_tuple_struct_get =
-    dango::has_operator_tuple_struct_get<tp_type, tp_index> &&
+  concept has_noexcept_struct_operator_tuple_get =
+    dango::has_struct_operator_tuple_get<tp_type, tp_index> &&
     requires
     { { dango::custom::operator_tuple<dango::remove_cvref<tp_type>>::template get<tp_index>(dango::declval<tp_type>()) }noexcept; };
 
   template
   <typename tp_type, dango::usize tp_index>
-  concept has_operator_tuple_get_method =
+  concept has_method_operator_tuple_get =
     dango::is_class_or_union_ignore_ref<tp_type> &&
     requires
     { { dango::declval<tp_type>().template dango_operator_tuple_get<tp_index>() }; };
 
   template
   <typename tp_type, dango::usize tp_index>
-  concept has_noexcept_operator_tuple_get_method =
-    dango::has_operator_tuple_get_method<tp_type, tp_index> &&
+  concept has_noexcept_method_operator_tuple_get =
+    dango::has_method_operator_tuple_get<tp_type, tp_index> &&
     requires
     { { dango::declval<tp_type>().template dango_operator_tuple_get<tp_index>() }noexcept; };
 }
@@ -1677,7 +1689,7 @@ dango::detail
 
   template
   <typename tp_type>
-  requires(dango::has_operator_tuple_struct_size<tp_type>)
+  requires(dango::has_struct_operator_tuple_size<tp_type>)
   constexpr auto
   tuple_size_help
   (dango::priority_tag<dango::uint(1)> const)noexcept->dango::usize
@@ -1687,7 +1699,7 @@ dango::detail
 
   template
   <typename tp_type>
-  requires(dango::has_operator_tuple_size_member<tp_type>)
+  requires(dango::has_member_operator_tuple_size<tp_type>)
   constexpr auto
   tuple_size_help
   (dango::priority_tag<dango::uint(0)> const)noexcept->dango::usize
@@ -1697,38 +1709,38 @@ dango::detail
 
   template
   <typename tp_type, dango::usize tp_index>
-  requires(dango::has_operator_tuple_struct_elem_type<tp_type, tp_index>)
+  requires(dango::has_struct_operator_tuple_elem<tp_type, tp_index>)
   constexpr auto
   tuple_elem_help
   (dango::priority_tag<dango::uint(1)> const)
-  noexcept->dango::type_tag<dango::detail::operator_tuple_struct_elem<tp_type, tp_index>>;
+  noexcept->dango::type_tag<dango::detail::struct_operator_tuple_elem<tp_type, tp_index>>;
 
   template
   <typename tp_type, dango::usize tp_index>
-  requires(dango::has_operator_tuple_elem_type_member<tp_type, tp_index>)
+  requires(dango::has_member_operator_tuple_elem<tp_type, tp_index>)
   constexpr auto
   tuple_elem_help
   (dango::priority_tag<dango::uint(0)> const)
-  noexcept->dango::type_tag<dango::detail::operator_tuple_elem_member<tp_type, tp_index>>;
+  noexcept->dango::type_tag<dango::detail::member_operator_tuple_elem<tp_type, tp_index>>;
 
   template
   <dango::usize tp_index, typename tp_type>
-  requires(dango::has_operator_tuple_struct_get<tp_type, tp_index>)
+  requires(dango::has_struct_operator_tuple_get<tp_type, tp_index>)
   constexpr auto
   tuple_get_help
   (dango::priority_tag<dango::uint(1)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_tuple_struct_get<tp_type, tp_index>)->decltype(auto)
+  noexcept(dango::has_noexcept_struct_operator_tuple_get<tp_type, tp_index>)->decltype(auto)
   {
     return dango::custom::operator_tuple<dango::remove_cvref<tp_type>>::template get<tp_index>(dango::forward<tp_type>(a_arg));
   }
 
   template
   <dango::usize tp_index, typename tp_type>
-  requires(dango::has_operator_tuple_get_method<tp_type, tp_index>)
+  requires(dango::has_method_operator_tuple_get<tp_type, tp_index>)
   constexpr auto
   tuple_get_help
   (dango::priority_tag<dango::uint(0)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_tuple_get_method<tp_type, tp_index>)->decltype(auto)
+  noexcept(dango::has_noexcept_method_operator_tuple_get<tp_type, tp_index>)->decltype(auto)
   {
     return dango::forward<tp_type>(a_arg).template dango_operator_tuple_get<tp_index>();
   }
@@ -1898,6 +1910,16 @@ final
   DANGO_UNCONSTRUCTIBLE(operator_tuple)
 };
 
+/*** tuple_apply tuple_foreach ***/
+
+// TODO
+
+namespace
+dango
+{
+
+}
+
 /*** iter_begin iter_end ***/
 
 namespace
@@ -1913,27 +1935,27 @@ dango
 {
   template
   <typename tp_type>
-  concept has_operator_iter_struct_begin =
+  concept has_struct_operator_iter_begin =
     dango::is_object_ignore_ref<tp_type> &&
     requires{ { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::begin(dango::declval<tp_type>()) }; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_iter_struct_begin =
-    dango::has_operator_iter_struct_begin<tp_type> &&
+  concept has_noexcept_struct_operator_iter_begin =
+    dango::has_struct_operator_iter_begin<tp_type> &&
     requires{ { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::begin(dango::declval<tp_type>()) }noexcept; };
 
   template
   <typename tp_type>
-  concept has_operator_iter_method_begin =
+  concept has_method_operator_iter_begin =
     dango::is_class_or_union_ignore_ref<tp_type> &&
-    requires{ { dango::declval<tp_type>().dango_operator_begin() }; };
+    requires{ { dango::declval<tp_type>().dango_operator_iter_begin() }; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_iter_method_begin =
-    dango::has_operator_iter_method_begin<tp_type> &&
-    requires{ { dango::declval<tp_type>().dango_operator_begin() }noexcept; };
+  concept has_noexcept_method_operator_iter_begin =
+    dango::has_method_operator_iter_begin<tp_type> &&
+    requires{ { dango::declval<tp_type>().dango_operator_iter_begin() }noexcept; };
 }
 
 namespace
@@ -1941,27 +1963,27 @@ dango
 {
   template
   <typename tp_type>
-  concept has_operator_iter_struct_end =
+  concept has_struct_operator_iter_end =
     dango::is_object_ignore_ref<tp_type> &&
     requires{ { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::end(dango::declval<tp_type>()) }; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_iter_struct_end =
-    dango::has_operator_iter_struct_end<tp_type> &&
+  concept has_noexcept_struct_operator_iter_end =
+    dango::has_struct_operator_iter_end<tp_type> &&
     requires{ { dango::custom::operator_iter<dango::remove_cvref<tp_type>>::end(dango::declval<tp_type>()) }noexcept; };
 
   template
   <typename tp_type>
-  concept has_operator_iter_method_end =
+  concept has_method_operator_iter_end =
     dango::is_class_or_union_ignore_ref<tp_type> &&
-    requires{ { dango::declval<tp_type>().dango_operator_end() }; };
+    requires{ { dango::declval<tp_type>().dango_operator_iter_end() }; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_iter_method_end =
-    dango::has_operator_iter_method_end<tp_type> &&
-    requires{ { dango::declval<tp_type>().dango_operator_end() }noexcept; };
+  concept has_noexcept_method_operator_iter_end =
+    dango::has_method_operator_iter_end<tp_type> &&
+    requires{ { dango::declval<tp_type>().dango_operator_iter_end() }noexcept; };
 }
 
 namespace
@@ -1971,46 +1993,46 @@ dango::detail
 
   template
   <typename tp_type>
-  requires(dango::has_operator_iter_struct_begin<tp_type>)
+  requires(dango::has_struct_operator_iter_begin<tp_type>)
   constexpr auto
   iter_begin_help
   (dango::priority_tag<dango::uint(1)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_iter_struct_begin<tp_type>)->decltype(auto)
+  noexcept(dango::has_noexcept_struct_operator_iter_begin<tp_type>)->decltype(auto)
   {
     return dango::custom::operator_iter<dango::remove_cvref<tp_type>>::begin(dango::forward<tp_type>(a_arg));
   }
 
   template
   <typename tp_type>
-  requires(dango::has_operator_iter_struct_end<tp_type>)
+  requires(dango::has_struct_operator_iter_end<tp_type>)
   constexpr auto
   iter_end_help
   (dango::priority_tag<dango::uint(1)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_iter_struct_end<tp_type>)->decltype(auto)
+  noexcept(dango::has_noexcept_struct_operator_iter_end<tp_type>)->decltype(auto)
   {
     return dango::custom::operator_iter<dango::remove_cvref<tp_type>>::end(dango::forward<tp_type>(a_arg));
   }
 
   template
   <typename tp_type>
-  requires(dango::has_operator_iter_method_begin<tp_type>)
+  requires(dango::has_method_operator_iter_begin<tp_type>)
   constexpr auto
   iter_begin_help
   (dango::priority_tag<dango::uint(0)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_iter_method_begin<tp_type>)->decltype(auto)
+  noexcept(dango::has_noexcept_method_operator_iter_begin<tp_type>)->decltype(auto)
   {
-    return dango::forward<tp_type>(a_arg).dango_operator_begin();
+    return dango::forward<tp_type>(a_arg).dango_operator_iter_begin();
   }
 
   template
   <typename tp_type>
-  requires(dango::has_operator_iter_method_end<tp_type>)
+  requires(dango::has_method_operator_iter_end<tp_type>)
   constexpr auto
   iter_end_help
   (dango::priority_tag<dango::uint(0)> const, tp_type&& a_arg)
-  noexcept(dango::has_noexcept_operator_iter_method_end<tp_type>)->decltype(auto)
+  noexcept(dango::has_noexcept_method_operator_iter_end<tp_type>)->decltype(auto)
   {
-    return dango::forward<tp_type>(a_arg).dango_operator_end();
+    return dango::forward<tp_type>(a_arg).dango_operator_iter_end();
   }
 }
 
@@ -2189,28 +2211,28 @@ dango
 {
   template
   <typename tp_type>
-  concept has_operator_clone_struct =
+  concept has_struct_operator_clone =
     dango::is_object_exclude_array_ignore_ref<tp_type> &&
     requires
     { { dango::custom::operator_clone<dango::remove_cvref<tp_type>>::clone(dango::declval<tp_type>()) }->dango::is_same<dango::remove_cvref<tp_type>>; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_clone_struct =
-    dango::has_operator_clone_struct<tp_type> &&
+  concept has_noexcept_struct_operator_clone =
+    dango::has_struct_operator_clone<tp_type> &&
     requires
     { { dango::custom::operator_clone<dango::remove_cvref<tp_type>>::clone(dango::declval<tp_type>()) }noexcept->dango::is_same<dango::remove_cvref<tp_type>>; };
 
   template
   <typename tp_type>
-  concept has_operator_clone_method =
+  concept has_method_operator_clone =
     dango::is_class_or_union_ignore_ref<tp_type> &&
     requires{ { dango::declval<tp_type>().dango_operator_clone() }->dango::is_same<dango::remove_cvref<tp_type>>; };
 
   template
   <typename tp_type>
-  concept has_noexcept_operator_clone_method =
-    dango::has_operator_clone_method<tp_type> &&
+  concept has_noexcept_method_operator_clone =
+    dango::has_method_operator_clone<tp_type> &&
     requires{ { dango::declval<tp_type>().dango_operator_clone() }noexcept->dango::is_same<dango::remove_cvref<tp_type>>; };
 }
 
@@ -2221,22 +2243,22 @@ dango::detail
 
   template
   <typename tp_type>
-  requires(dango::has_operator_clone_struct<tp_type const&>)
+  requires(dango::has_struct_operator_clone<tp_type const&>)
   constexpr auto
   clone_help
   (dango::priority_tag<dango::uint(2)> const, tp_type const& a_arg)
-  noexcept(dango::has_noexcept_operator_clone_struct<tp_type const&>)->dango::remove_cv<tp_type>
+  noexcept(dango::has_noexcept_struct_operator_clone<tp_type const&>)->dango::remove_cv<tp_type>
   {
     return dango::custom::operator_clone<dango::remove_cv<tp_type>>::clone(a_arg);
   }
 
   template
   <typename tp_type>
-  requires(dango::has_operator_clone_method<tp_type const&>)
+  requires(dango::has_method_operator_clone<tp_type const&>)
   constexpr auto
   clone_help
   (dango::priority_tag<dango::uint(1)> const, tp_type const& a_arg)
-  noexcept(dango::has_noexcept_operator_clone_method<tp_type const&>)->dango::remove_cv<tp_type>
+  noexcept(dango::has_noexcept_method_operator_clone<tp_type const&>)->dango::remove_cv<tp_type>
   {
     return a_arg.dango_operator_clone();
   }
