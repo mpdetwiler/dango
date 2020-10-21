@@ -26,20 +26,32 @@ private:
   static_assert(dango::is_same<func_type, tp_func>);
 public:
   template
-  <typename tp_func_type>
-  requires(dango::is_brace_constructible<func_type, tp_func_type>)
+  <typename tp_arg>
+  requires(dango::is_brace_constructible_and_noexcept_destructible<func_type, tp_arg>)
   explicit constexpr
   scope_guard
-  (tp_func_type&& a_func)noexcept(dango::is_noexcept_brace_constructible<func_type, tp_func_type>):
-  m_func{ dango::forward<tp_func_type>(a_func) },
+  (tp_arg&& a_arg)
+  noexcept(dango::is_noexcept_brace_constructible<func_type, tp_arg>):
+  m_func{ dango::forward<tp_arg>(a_arg) },
   m_active{ true }
-  {
+  { }
 
+  constexpr
+  ~scope_guard()noexcept
+  {
+    static_assert(noexcept(m_func()));
+
+    if(m_active)
+    {
+      m_func();
+    }
   }
 
-  constexpr ~scope_guard()noexcept;
-
-  constexpr void dismiss()noexcept;
+  constexpr void
+  dismiss()noexcept
+  {
+    m_active = false;
+  }
 private:
   func_type m_func;
   bool m_active;
@@ -47,36 +59,6 @@ public:
   DANGO_DELETE_DEFAULT(scope_guard)
   DANGO_UNMOVEABLE(scope_guard)
 };
-
-template
-<typename tp_func>
-constexpr
-dango::
-detail::
-scope_guard<tp_func>::
-~scope_guard
-()noexcept
-{
-  static_assert(noexcept(m_func()));
-  static_assert(dango::is_noexcept_destructible<func_type>);
-
-  if(m_active)
-  {
-    m_func();
-  }
-}
-
-template
-<typename tp_func>
-constexpr void
-dango::
-detail::
-scope_guard<tp_func>::
-dismiss
-()noexcept
-{
-  m_active = false;
-}
 
 namespace
 dango
@@ -86,8 +68,7 @@ dango
   requires
   (
     dango::is_brace_constructible<dango::detail::scope_guard<dango::decay<tp_func>>, tp_func> &&
-    dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
-    dango::is_noexcept_destructible<dango::decay<tp_func>>
+    dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&>
   )
   [[nodiscard]] constexpr auto
   make_guard
@@ -122,38 +103,28 @@ private:
   static_assert(dango::is_same<func_type, tp_func>);
 public:
   template
-  <typename tp_func_type>
-  requires(dango::is_brace_constructible<func_type, tp_func_type>)
+  <typename tp_arg>
+  requires(dango::is_brace_constructible_and_noexcept_destructible<func_type, tp_arg>)
   explicit constexpr
   finally_guard
-  (tp_func_type&& a_func)noexcept(dango::is_noexcept_brace_constructible<func_type, tp_func_type>):
-  m_func{ dango::forward<tp_func_type>(a_func) }
+  (tp_arg&& a_arg)
+  noexcept(dango::is_noexcept_brace_constructible<func_type, tp_arg>):
+  m_func{ dango::forward<tp_arg>(a_arg) }
+  { }
+
+  constexpr
+  ~finally_guard()noexcept
   {
+    static_assert(noexcept(m_func()));
 
+    m_func();
   }
-
-  constexpr ~finally_guard()noexcept;
 private:
   func_type m_func;
 public:
   DANGO_DELETE_DEFAULT(finally_guard)
   DANGO_UNMOVEABLE(finally_guard)
 };
-
-template
-<typename tp_func>
-constexpr
-dango::
-detail::
-finally_guard<tp_func>::
-~finally_guard
-()noexcept
-{
-  static_assert(noexcept(m_func()));
-  static_assert(dango::is_noexcept_destructible<func_type>);
-
-  m_func();
-}
 
 namespace
 dango
@@ -163,8 +134,7 @@ dango
   requires
   (
     dango::is_brace_constructible<dango::detail::finally_guard<dango::decay<tp_func>>, tp_func> &&
-    dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&> &&
-    dango::is_noexcept_destructible<dango::decay<tp_func>>
+    dango::is_noexcept_callable_ret<void, dango::decay<tp_func>&>
   )
   [[nodiscard]] constexpr auto
   make_finally
