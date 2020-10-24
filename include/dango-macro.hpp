@@ -347,10 +347,36 @@ static_assert(false, u8"unit tests should only be enabled when building executab
 /*** dango_placement_new (include dango-mem.hpp before use) ***/
 
 #define dango_placement_new(addr, type, ...) \
-  ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type)) type __VA_OPT__(__VA_ARGS__)
+  ::new (dango::placement_new, static_cast<void*>(addr), dango::type_val<type>) type __VA_OPT__(__VA_ARGS__)
 
 #define dango_placement_new_array(addr, type, count) \
-  ::new (dango::placement, static_cast<void*>(addr), sizeof(type), alignof(type), dango::usize(count)) type[dango::usize(count)]
+  ::new (dango::placement_new, static_cast<void*>(addr), dango::type_val<type>, dango::usize(count)) type[dango::usize(count)]
+
+/*** dango_allocator_new (include dango-allocator.hpp before_use) ***/
+
+#define dango_allocator_new_nh(alloc_type, type, ...) \
+  ::new (dango::allocator_new<alloc_type>, dango::type_val<type>) type __VA_OPT__(__VA_ARGS__)
+
+#define dango_allocator_new_hb(alloc_type, handle, type, ...) \
+  ::new (dango::allocator_new<alloc_type>, dango::as_const(handle), dango::type_val<type>) type __VA_OPT__(__VA_ARGS__)
+
+#define dango_allocator_new_nh_aligned(alloc_type, type, align, ...) \
+  ::new (dango::allocator_new<alloc_type>, dango::type_val<type>, dango::usize(align)) type __VA_OPT__(__VA_ARGS__)
+
+#define dango_allocator_new_hb_aligned(alloc_type, handle, type, align, ...) \
+  ::new (dango::allocator_new<alloc_type>, dango::as_const(handle), dango::type_val<type>, dango::usize(align)) type __VA_OPT__(__VA_ARGS__)
+
+#define dango_allocator_new_array_nh(alloc_type, type, count) \
+  ::new (dango::allocator_new<alloc_type>, dango::type_val<type>, dango::usize(count)) type[dango::usize(count)]
+
+#define dango_allocator_new_array_hb(alloc_type, handle, type, count) \
+  ::new (dango::allocator_new<alloc_type>, dango::as_const(handle), dango::type_val<type>, dango::usize(count)) type[dango::usize(count)]
+
+#define dango_allocator_new_array_nh_aligned(alloc_type, type, count, align) \
+  ::new (dango::allocator_new<alloc_type>, dango::type_val<type>, dango::usize(count), dango::usize(a_align)) type[dango::usize(count)]
+
+#define dango_allocator_new_array_hb_aligned(alloc_type, handle, type, count, align) \
+  ::new (dango::allocator_new<alloc_type>, dango::as_const(handle), dango::type_val<type>, dango::usize(count), dango::usize(a_align)) type[dango::usize(count)]
 
 /*** dango_crit ***/
 

@@ -182,7 +182,7 @@ dango
   }
 }
 
-/*** destructor destructor_as ***/
+/*** destructor qualified_destructor ***/
 
 namespace
 dango
@@ -192,7 +192,8 @@ dango
   requires(dango::is_destructible<tp_type>)
   constexpr void
   destructor
-  (tp_type const volatile* const a_ptr)noexcept(dango::is_noexcept_destructible<tp_type>)
+  (tp_type const volatile* const a_ptr)
+  noexcept(dango::is_noexcept_destructible<tp_type>)
   {
     if(a_ptr)
     {
@@ -201,16 +202,16 @@ dango
   }
 
   template
-  <dango::is_object_exclude_array tp_type_as, dango::is_object_exclude_array tp_type>
-  requires(requires{ { dango::declval<tp_type const volatile* const&>()->tp_type_as::~tp_type_as() }; })
+  <dango::is_object_exclude_array tp_type>
+  requires(dango::is_qualified_destructible<tp_type>)
   constexpr void
-  destructor_as
+  qualified_destructor
   (tp_type const volatile* const a_ptr)
-  noexcept(requires{ { dango::declval<tp_type const volatile* const&>()->tp_type_as::~tp_type_as() }noexcept; })
+  noexcept(dango::is_noexcept_qualified_destructible<tp_type>)
   {
     if(a_ptr)
     {
-      a_ptr->tp_type_as::~tp_type_as();
+      a_ptr->tp_type::~tp_type();
     }
   }
 }

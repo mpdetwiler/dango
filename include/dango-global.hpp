@@ -233,7 +233,7 @@ decrement
 
   m_ptr = dango::null;
 
-  dango::destructor_as<dango::remove_cv<tp_type>>(a_ptr);
+  dango::qualified_destructor(a_ptr);
 }
 
 /*** inline global test ***/

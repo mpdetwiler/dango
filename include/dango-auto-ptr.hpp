@@ -232,14 +232,10 @@ private:
   (super_type* const a_super)noexcept
   {
     using this_type = auto_ptr_control_nohandle;
-    constexpr auto const c_size = sizeof(this_type);
-    constexpr auto const c_align = alignof(this_type);
 
     auto const a_this = static_cast<this_type*>(a_super);
 
-    dango::destructor_as<this_type>(a_this);
-
-    tp_alloc::dealloc(a_this, c_size, c_align);
+    dango::allocator_delete<tp_alloc>(a_this);
   }
 public:
   template
@@ -280,16 +276,12 @@ private:
   (super_type* const a_super)noexcept
   {
     using this_type = auto_ptr_control_handle_based;
-    constexpr auto const c_size = sizeof(this_type);
-    constexpr auto const c_align = alignof(this_type);
 
     auto const a_this = static_cast<this_type*>(a_super);
 
     auto const a_alloc_ptr = dango::move(a_this->m_alloc_ptr);
 
-    dango::destructor_as<this_type>(a_this);
-
-    a_alloc_ptr->dealloc(a_this, c_size, c_align);
+    dango::allocator_delete<tp_alloc>(a_alloc_ptr, a_this);
   }
 public:
   template
@@ -679,21 +671,12 @@ private:
   )->dango::pair<ptr_type, control_ptr>
   {
     using control_type = dango::detail::auto_ptr_control_handle_based<elem_type, allocator_type>;
-    constexpr auto const c_size = sizeof(control_type);
-    constexpr auto const c_align = alignof(control_type);
-
-    auto const a_addr = a_alloc_ptr->alloc(c_size, c_align);
 
     auto const a_push_guard =
       dango::push_allocator_if_user<allocator_type, elem_type>(a_alloc_ptr);
 
-    auto a_guard =
-      dango::make_guard([&a_alloc_ptr, a_addr]()noexcept->void{ a_alloc_ptr->dealloc(a_addr, c_size, c_align); });
-
     auto const a_control =
-      dango_placement_new(a_addr, control_type, { a_alloc_ptr, dango::forward<tp_args>(a_args)... });
-
-    a_guard.dismiss();
+      dango_allocator_new_hb(allocator_type, a_alloc_ptr, control_type, { a_alloc_ptr, dango::forward<tp_args>(a_args)... });
 
     return { a_control->get_object_ptr(), a_control };
   }
@@ -710,17 +693,9 @@ private:
   )->dango::pair<ptr_type, control_ptr>
   {
     using control_type = dango::detail::auto_ptr_control_nohandle<elem_type, allocator_type>;
-    constexpr auto const c_size = sizeof(control_type);
-    constexpr auto const c_align = alignof(control_type);
 
-    auto const a_addr = allocator_type::alloc(c_size, c_align);
-
-    auto a_guard =
-      dango::make_guard([a_addr]()noexcept->void{ allocator_type::dealloc(a_addr, c_size, c_align); });
-
-    auto const a_control = dango_placement_new(a_addr, control_type, { dango::forward<tp_args>(a_args)... });
-
-    a_guard.dismiss();
+    auto const a_control =
+      dango_allocator_new_nh(allocator_type, control_type, { dango::forward<tp_args>(a_args)... });
 
     return { a_control->get_object_ptr(), a_control };
   }
@@ -1024,7 +999,7 @@ public:
   auto_ptr
   (size_type const a_size, size_type const a_align)
   noexcept(dango::is_noexcept_nohandle_allocator<allocator_type>):
-  m_ptr{ allocator_type::alloc(a_size, a_align) },
+  m_ptr{ dango::allocator_alloc<allocator_type>(a_size, a_align) },
   m_size{ a_size },
   m_align{ a_align }
   { }
@@ -1057,10 +1032,7 @@ public:
   {
     if(m_ptr)
     {
-      auto const a_size = m_size;
-      auto const a_align = m_align;
-
-      allocator_type::dealloc(dango::as_const(m_ptr), a_size, a_align);
+      dango::allocator_dealloc<allocator_type>(m_ptr, m_size, m_align);
     }
   }
 
@@ -1224,7 +1196,7 @@ public:
     size_type const a_align
   )
   noexcept(dango::is_noexcept_handle_based_allocator<allocator_type>):
-  m_ptr{ dango::as_const(a_handle)->alloc(a_size, a_align) },
+  m_ptr{ dango::allocator_alloc<allocator_type>(a_handle, a_size, a_align) },
   m_alloc_ptr{ dango::forward<tp_handle>(a_handle) },
   m_size{ a_size },
   m_align{ a_align }
@@ -1270,10 +1242,7 @@ public:
     {
       dango_assert_nonnull(m_alloc_ptr);
 
-      auto const a_size = m_size;
-      auto const a_align = m_align;
-
-      m_alloc_ptr->dealloc(dango::as_const(m_ptr), a_size, a_align);
+      dango::allocator_dealloc<allocator_type>(m_alloc_ptr, m_ptr, m_size, m_align);
     }
   }
 

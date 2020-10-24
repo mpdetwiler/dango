@@ -59,6 +59,10 @@ dango
 
     DANGO_TAG_TYPE(type_tag)
   };
+
+  template
+  <typename tp_type>
+  inline constexpr dango::type_tag<tp_type> const type_val{ };
 }
 
 /*** type_identity ***/
@@ -1950,7 +1954,27 @@ dango
   <typename tp_type>
   concept is_virtual_destructible =
     dango::is_class<tp_type> && dango::is_destructible<tp_type> && bool(__has_virtual_destructor(tp_type));
+
+  template
+  <typename tp_type>
+  concept is_qualified_destructible =
+    dango::is_object_exclude_array<tp_type> &&
+    requires{ { dango::declval<tp_type&>().tp_type::~tp_type() }; };
+
+  template
+  <typename tp_type>
+  concept is_noexcept_qualified_destructible =
+    dango::is_qualified_destructible<tp_type> &&
+    requires{ { dango::declval<tp_type&>().tp_type::~tp_type() }noexcept; };
+
+  template
+  <typename tp_type>
+  concept is_trivial_qualified_destructible =
+    dango::is_noexcept_qualified_destructible<tp_type> &&
+    bool(__has_trivial_destructor(tp_type));
 }
+
+
 
 /*** is_convertible_arg is_noexcept_convertible_arg is_convertible_ret is_noexcept_convertible_ret ***/
 

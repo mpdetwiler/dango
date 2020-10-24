@@ -558,7 +558,7 @@ public:
     auto const a_dispose =
       [a_resource]()noexcept->void
       {
-        dango::destructor_as<resource_type>(a_resource);
+        dango::qualified_destructor(a_resource);
       };
 
     return m_count.strong_decrement(a_dispose);
@@ -1205,6 +1205,468 @@ dango
     {
       return return_type{ dango::null };
     }
+  }
+}
+
+/*** allocator_alloc allocator_dealloc ***/
+
+namespace
+dango::detail
+{
+  template
+  <dango::is_nohandle_allocator tp_alloc>
+  [[nodiscard, gnu::malloc, gnu::alloc_size(1)]] auto
+  allocator_alloc_help
+  (dango::usize const a_size, dango::usize const a_align)
+  noexcept(dango::is_noexcept_nohandle_allocator<tp_alloc>)->void*
+  {
+    return tp_alloc::alloc(a_size, a_align);
+  }
+
+  template
+  <dango::is_nohandle_allocator tp_alloc>
+  void
+  allocator_dealloc_help
+  (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
+  {
+    return tp_alloc::dealloc(a_ptr, a_size, a_align);
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_handle>
+  requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> && !dango::is_same<tp_handle, typename tp_alloc::guard_type>)
+  [[nodiscard, gnu::malloc, gnu::alloc_size(2)]] auto
+  allocator_alloc_help
+  (tp_handle const& a_handle, dango::usize const a_size, dango::usize const a_align)
+  noexcept(dango::is_noexcept_handle_based_allocator<tp_alloc>)->void*
+  {
+    dango_assert_nonnull(a_handle);
+
+    return a_handle->alloc(a_size, a_align);
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_handle>
+  requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> && !dango::is_same<tp_handle, typename tp_alloc::guard_type>)
+  void
+  allocator_dealloc_help
+  (tp_handle const& a_handle, void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
+  {
+    dango_assert_nonnull(a_handle);
+
+    return a_handle->dealloc(a_ptr, a_size, a_align);
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_guard>
+  requires(dango::is_same<tp_guard, typename tp_alloc::guard_type>)
+  [[nodiscard, gnu::malloc, gnu::alloc_size(2)]] auto
+  allocator_alloc_help
+  (tp_guard const& a_guard, dango::usize const a_size, dango::usize const a_align)
+  noexcept(dango::is_noexcept_handle_based_allocator<tp_alloc>)->void*
+  {
+    return a_guard->alloc(a_size, a_align);
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_guard>
+  requires(dango::is_same<tp_guard, typename tp_alloc::guard_type>)
+  void
+  allocator_dealloc_help
+  (tp_guard const& a_guard, void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
+  {
+    return a_guard->dealloc(a_ptr, a_size, a_align);
+  }
+}
+
+namespace
+dango
+{
+  template
+  <typename tp_alloc>
+  [[nodiscard]] auto
+  allocator_alloc
+  (dango::usize const a_size, dango::usize const a_align)
+  noexcept(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(dango::declval<dango::usize const&>(), a_align) }noexcept; })->void*
+  requires(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(dango::declval<dango::usize const&>(), a_align) }; })
+  {
+    dango_assert(a_size != dango::usize(0));
+    dango_assert(dango::is_pow_two(a_align));
+
+    auto const a_new_size = dango::next_multiple(a_size, a_align);
+
+    return dango::detail::allocator_alloc_help<tp_alloc>(a_new_size, a_align);
+  }
+
+  template
+  <typename tp_alloc>
+  void
+  allocator_dealloc
+  (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)
+  noexcept(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, dango::declval<dango::usize const&>(), a_align) }noexcept; })
+  requires(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, dango::declval<dango::usize const&>(), a_align) }; })
+  {
+    dango_assert_nonnull(a_ptr);
+    dango_assert(a_size != dango::usize(0));
+    dango_assert(dango::is_pow_two(a_align));
+
+    auto const a_new_size = dango::next_multiple(a_size, a_align);
+
+    dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, a_new_size, a_align);
+  }
+
+  template
+  <typename tp_alloc, typename tp_handle>
+  [[nodiscard]] auto
+  allocator_alloc
+  (tp_handle const& a_handle, dango::usize const a_size, dango::usize const a_align)
+  noexcept(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(a_handle, dango::declval<dango::usize const&>(), a_align) }noexcept; })->void*
+  requires(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(a_handle, dango::declval<dango::usize const&>(), a_align) }; })
+  {
+    dango_assert(a_size != dango::usize(0));
+    dango_assert(dango::is_pow_two(a_align));
+
+    auto const a_new_size = dango::next_multiple(a_size, a_align);
+
+    return dango::detail::allocator_alloc_help<tp_alloc>(a_handle, a_new_size, a_align);
+  }
+
+  template
+  <typename tp_alloc, typename tp_handle>
+  void
+  allocator_dealloc
+  (tp_handle const& a_handle, void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)
+  noexcept(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, dango::declval<dango::usize const&>(), a_align) }noexcept; })
+  requires(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, dango::declval<dango::usize const&>(), a_align) }; })
+  {
+    dango_assert_nonnull(a_ptr);
+    dango_assert(a_size != dango::usize(0));
+    dango_assert(dango::is_pow_two(a_align));
+
+    auto const a_new_size = dango::next_multiple(a_size, a_align);
+
+    dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, a_new_size, a_align);
+  }
+}
+
+/*** allocator_new allocator_delete ***/
+
+namespace
+dango
+{
+  template
+  <dango::is_allocator tp_alloc>
+  struct
+  allocator_new_tag
+  final
+  {
+    DANGO_TAG_TYPE(allocator_new_tag)
+  };
+
+  template
+  <dango::is_allocator tp_alloc>
+  inline constexpr dango::allocator_new_tag<tp_alloc> const allocator_new{ };
+}
+
+template
+<dango::is_nohandle_allocator tp_alloc, dango::is_object_exclude_array tp_type>
+[[nodiscard]] auto
+operator new
+(
+  dango::usize const a_size,
+  dango::allocator_new_tag<tp_alloc> const,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_align = alignof(tp_type)
+)
+noexcept(dango::is_noexcept_nohandle_allocator<tp_alloc>)->void*
+requires(dango::is_noexcept_destructible<tp_type>)
+{
+  dango_assert(a_size == sizeof(tp_type));
+  dango_assert(dango::is_pow_two(a_align));
+
+  return dango::allocator_alloc<tp_alloc>(a_size, dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_nohandle_allocator tp_alloc, dango::is_object_exclude_array tp_type>
+void
+operator delete
+(
+  void* const a_ptr,
+  dango::allocator_new_tag<tp_alloc> const,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_align
+)
+noexcept
+requires(dango::is_noexcept_destructible<tp_type>)
+{
+  dango_assert(dango::is_pow_two(a_align));
+
+  dango::allocator_dealloc<tp_alloc>(a_ptr, sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc, typename tp_handle, dango::is_object_exclude_array tp_type>
+requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> && !dango::is_same<tp_handle, typename tp_alloc::guard_type>)
+[[nodiscard]] auto
+operator new
+(
+  dango::usize const a_size,
+  dango::allocator_new_tag<tp_alloc> const,
+  tp_handle const& a_handle,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_align = alignof(tp_type)
+)
+noexcept(dango::is_noexcept_handle_based_allocator<tp_alloc>)->void*
+requires(dango::is_noexcept_destructible<tp_type>)
+{
+  dango_assert(a_size == sizeof(tp_type));
+  dango_assert(dango::is_pow_two(a_align));
+
+  return dango::allocator_alloc<tp_alloc>(a_handle, a_size, dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc, typename tp_handle, dango::is_object_exclude_array tp_type>
+requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> && !dango::is_same<tp_handle, typename tp_alloc::guard_type>)
+void
+operator delete
+(
+  void* const a_ptr,
+  dango::allocator_new_tag<tp_alloc> const,
+  tp_handle const& a_handle,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_align
+)
+noexcept
+requires(dango::is_noexcept_destructible<tp_type>)
+{
+  dango_assert(dango::is_pow_two(a_align));
+
+  dango::allocator_dealloc<tp_alloc>(a_handle, a_ptr, sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc, typename tp_guard, dango::is_object_exclude_array tp_type>
+requires(dango::is_same<tp_guard, typename tp_alloc::guard_type>)
+[[nodiscard]] auto
+operator new
+(
+  dango::usize const a_size,
+  dango::allocator_new_tag<tp_alloc> const,
+  tp_guard const& a_guard,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_align = alignof(tp_type)
+)
+noexcept(dango::is_noexcept_handle_based_allocator<tp_alloc>)->void*
+requires(dango::is_noexcept_destructible<tp_type>)
+{
+  dango_assert(a_size == sizeof(tp_type));
+  dango_assert(dango::is_pow_two(a_align));
+
+  return dango::allocator_alloc<tp_alloc>(a_guard, a_size, dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc, typename tp_guard, dango::is_object_exclude_array tp_type>
+requires(dango::is_same<tp_guard, typename tp_alloc::guard_type>)
+void
+operator delete
+(
+  void* const a_ptr,
+  dango::allocator_new_tag<tp_alloc> const,
+  tp_guard const& a_guard,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_align
+)
+noexcept
+requires(dango::is_noexcept_destructible<tp_type>)
+{
+  dango_assert(dango::is_pow_two(a_align));
+
+  dango::allocator_dealloc<tp_alloc>(a_guard, a_ptr, sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_nohandle_allocator tp_alloc, dango::is_object_exclude_array tp_type>
+[[nodiscard]] auto
+operator new[]
+(
+  dango::usize const a_size,
+  dango::allocator_new_tag<tp_alloc> const,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_count,
+  dango::usize const a_align = alignof(tp_type)
+)
+noexcept(dango::is_noexcept_nohandle_allocator<tp_alloc>)->void*
+requires(dango::is_trivial_destructible<tp_type>)
+{
+  dango_assert(a_size == a_count * sizeof(tp_type));
+  dango_assert(dango::is_pow_two(a_align));
+
+  return dango::allocator_alloc<tp_alloc>(a_size, dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_nohandle_allocator tp_alloc, dango::is_object_exclude_array tp_type>
+void
+operator delete[]
+(
+  void* const a_ptr,
+  dango::allocator_new_tag<tp_alloc> const,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_count,
+  dango::usize const a_align
+)
+noexcept
+requires(dango::is_trivial_destructible<tp_type>)
+{
+  dango_assert(dango::is_pow_two(a_align));
+
+  dango::allocator_dealloc<tp_alloc>(a_ptr, a_count * sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc, typename tp_handle, dango::is_object_exclude_array tp_type>
+requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> && !dango::is_same<tp_handle, typename tp_alloc::guard_type>)
+[[nodiscard]] auto
+operator new[]
+(
+  dango::usize const a_size,
+  dango::allocator_new_tag<tp_alloc> const,
+  tp_handle const& a_handle,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_count,
+  dango::usize const a_align = alignof(tp_type)
+)
+noexcept(dango::is_noexcept_handle_based_allocator<tp_alloc>)->void*
+requires(dango::is_trivial_destructible<tp_type>)
+{
+  dango_assert(a_size == a_count * sizeof(tp_type));
+  dango_assert(dango::is_pow_two(a_align));
+
+  return dango::allocator_alloc<tp_alloc>(a_handle, a_size, dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc, typename tp_handle, dango::is_object_exclude_array tp_type>
+requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> && !dango::is_same<tp_handle, typename tp_alloc::guard_type>)
+void
+operator delete[]
+(
+  void* const a_ptr,
+  dango::allocator_new_tag<tp_alloc> const,
+  tp_handle const& a_handle,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_count,
+  dango::usize const a_align
+)
+noexcept
+requires(dango::is_trivial_destructible<tp_type>)
+{
+  dango_assert(dango::is_pow_two(a_align));
+
+  dango::allocator_dealloc<tp_alloc>(a_handle, a_ptr, a_count * sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc, typename tp_guard, dango::is_object_exclude_array tp_type>
+requires(dango::is_same<tp_guard, typename tp_alloc::guard_type>)
+[[nodiscard]] auto
+operator new[]
+(
+  dango::usize const a_size,
+  dango::allocator_new_tag<tp_alloc> const,
+  tp_guard const& a_guard,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_count,
+  dango::usize const a_align = alignof(tp_type)
+)
+noexcept(dango::is_noexcept_handle_based_allocator<tp_alloc>)->void*
+requires(dango::is_trivial_destructible<tp_type>)
+{
+  dango_assert(a_size == a_count * sizeof(tp_type));
+  dango_assert(dango::is_pow_two(a_align));
+
+  return dango::allocator_alloc<tp_alloc>(a_guard, a_size, dango::max(alignof(tp_type), a_align));
+}
+
+template
+<dango::is_handle_based_allocator tp_alloc, typename tp_guard, dango::is_object_exclude_array tp_type>
+requires(dango::is_same<tp_guard, typename tp_alloc::guard_type>)
+void
+operator delete[]
+(
+  void* const a_ptr,
+  dango::allocator_new_tag<tp_alloc> const,
+  tp_guard const& a_guard,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_count,
+  dango::usize const a_align
+)
+noexcept
+requires(dango::is_trivial_destructible<tp_type>)
+{
+  dango_assert(dango::is_pow_two(a_align));
+
+  dango::allocator_dealloc<tp_alloc>(a_guard, a_ptr, a_count * sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+}
+
+namespace
+dango
+{
+  template
+  <dango::is_nohandle_allocator tp_alloc, dango::is_noexcept_destructible tp_type>
+  void
+  allocator_delete
+  (tp_type const volatile* const a_ptr, dango::usize const a_align = alignof(tp_type))noexcept
+  {
+    dango_assert_nonnull(a_ptr);
+    dango_assert(dango::is_pow_two(a_align));
+
+    dango::qualified_destructor(a_ptr);
+
+    dango::allocator_dealloc<tp_alloc>(a_ptr, sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_handle, dango::is_noexcept_destructible tp_type>
+  requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> || dango::is_same<tp_handle, typename tp_alloc::guard_type>)
+  void
+  allocator_delete
+  (tp_handle const& a_handle, tp_type const volatile* const a_ptr, dango::usize const a_align = alignof(tp_type))noexcept
+  {
+    dango_assert_nonnull(a_ptr);
+    dango_assert(dango::is_pow_two(a_align));
+
+    dango::qualified_destructor(a_ptr);
+
+    dango::allocator_dealloc<tp_alloc>(a_handle, a_ptr, sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+  }
+
+  template
+  <dango::is_nohandle_allocator tp_alloc, dango::is_trivial_destructible tp_type>
+  void
+  allocator_array_delete
+  (tp_type const volatile* const a_ptr, dango::usize const a_count, dango::usize const a_align = alignof(tp_type))noexcept
+  {
+    dango_assert_nonnull(a_ptr);
+    dango_assert(dango::is_pow_two(a_align));
+
+    dango::allocator_dealloc<tp_alloc>(a_ptr, a_count * sizeof(tp_type), dango::max(alignof(tp_type), a_align));
+  }
+
+  template
+  <dango::is_handle_based_allocator tp_alloc, typename tp_handle, dango::is_trivial_destructible tp_type>
+  requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> || dango::is_same<tp_handle, typename tp_alloc::guard_type>)
+  void
+  allocator_array_delete
+  (tp_handle const& a_handle, tp_type const volatile* const a_ptr, dango::usize const a_count, dango::usize const a_align = alignof(tp_type))noexcept
+  {
+    dango_assert_nonnull(a_ptr);
+    dango_assert(dango::is_pow_two(a_align));
+
+    dango::allocator_dealloc<tp_alloc>(a_handle, a_ptr, a_count * sizeof(tp_type), dango::max(alignof(tp_type), a_align));
   }
 }
 

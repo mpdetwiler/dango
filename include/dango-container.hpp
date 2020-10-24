@@ -218,7 +218,7 @@ public:
   destroy
   (elem_type_intern& a_elem)noexcept
   {
-    dango::destructor_as<elem_type_intern>(&a_elem);
+    dango::qualified_destructor(&a_elem);
   }
 
   template
@@ -227,7 +227,7 @@ public:
   destroy
   (dango::allocator_handle_type<tp_allocator> const&, elem_type_intern& a_elem)noexcept
   {
-    dango::destructor_as<elem_type_intern>(&a_elem);
+    dango::qualified_destructor(&a_elem);
   }
 
   template
@@ -283,13 +283,7 @@ final
   (size_type const a_index, tp_args&&... a_args)
   noexcept(dango::is_noexcept_nohandle_allocator<tp_allocator> && dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
   {
-    auto a_void = dango::make_auto_ptr<void, tp_allocator>(sizeof(elem_storage), alignof(elem_storage));
-
-    auto const a_elem = dango_placement_new(a_void.get(), elem_storage, { a_index, dango::forward<tp_args>(a_args)... });
-
-    a_void.release();
-
-    return a_elem;
+    return dango_allocator_new_nh(tp_allocator, elem_storage, { a_index, dango::forward<tp_args>(a_args)... });
   }
 
   template
@@ -297,16 +291,10 @@ final
   requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
   static constexpr auto
   construct
-  (typename tp_allocator::handle_type const& a_handle, size_type const a_index, tp_args&&... a_args)
+  (typename tp_allocator::guard_type const& a_guard, size_type const a_index, tp_args&&... a_args)
   noexcept(dango::is_noexcept_handle_based_allocator<tp_allocator> && dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
   {
-    auto a_void = dango::make_auto_ptr<void, tp_allocator>(a_handle, sizeof(elem_storage), alignof(elem_storage));
-
-    auto const a_elem = dango_placement_new(a_void.get(), elem_storage, { a_index, dango::forward<tp_args>(a_args)... });
-
-    a_void.release();
-
-    return a_elem;
+    return dango_allocator_new_hb(tp_allocator, a_guard, elem_storage, { a_index, dango::forward<tp_args>(a_args)... });
   }
 
   template
@@ -315,24 +303,20 @@ final
   destroy
   (elem_type_intern& a_elem)noexcept
   {
-    dango::destructor_as<elem_storage>(a_elem);
+    dango::allocator_delete<tp_allocator>(a_elem);
 
-    tp_allocator::dealloc(a_elem, sizeof(elem_storage), alignof(elem_storage));
-
-    dango::destructor_as<elem_type_intern>(&a_elem);
+    dango::qualified_destructor(&a_elem);
   }
 
   template
   <dango::is_handle_based_allocator tp_allocator>
   static constexpr void
   destroy
-  (dango::allocator_handle_type<tp_allocator> const& a_handle, elem_type_intern& a_elem)noexcept
+  (typename tp_allocator::guard_type const& a_guard, elem_type_intern& a_elem)noexcept
   {
-    dango::destructor_as<elem_storage>(a_elem);
+    dango::allocator_delete<tp_allocator>(a_guard, a_elem);
 
-    a_handle->dealloc(a_elem, sizeof(elem_storage), alignof(elem_storage));
-
-    dango::destructor_as<elem_type_intern>(&a_elem);
+    dango::qualified_destructor(&a_elem);
   }
 
   template
@@ -393,7 +377,7 @@ final
   destroy
   (elem_type_intern& a_elem)noexcept
   {
-    dango::destructor_as<elem_type_intern>(&a_elem);
+    dango::qualified_destructor(&a_elem);
   }
 
   template
@@ -402,7 +386,7 @@ final
   destroy
   (dango::allocator_handle_type<tp_allocator> const&, elem_type_intern& a_elem)noexcept
   {
-    dango::destructor_as<elem_type_intern>(&a_elem);
+    dango::qualified_destructor(&a_elem);
   }
 
   static constexpr auto
@@ -443,29 +427,17 @@ final
   (size_type const a_index, elem_type& a_arg)
   noexcept(dango::is_noexcept_nohandle_allocator<tp_allocator>)->elem_type_intern
   {
-    auto a_void = dango::make_auto_ptr<void, tp_allocator>(sizeof(elem_storage), alignof(elem_storage));
-
-    auto const a_elem = dango_placement_new(a_void.get(), elem_storage, { a_index, dango::addressof(a_arg) });
-
-    a_void.release();
-
-    return a_elem;
+    return dango_allocator_new_nh(tp_allocator, elem_storage, { a_index, dango::addressof(a_arg) });
   }
 
   template
   <dango::is_handle_based_allocator tp_allocator>
   static constexpr auto
   construct
-  (typename tp_allocator::handle_type const& a_handle, size_type const a_index, elem_type& a_arg)
+  (typename tp_allocator::guard_type const& a_guard, size_type const a_index, elem_type& a_arg)
   noexcept(dango::is_noexcept_handle_based_allocator<tp_allocator>)->elem_type_intern
   {
-    auto a_void = dango::make_auto_ptr<void, tp_allocator>(a_handle, sizeof(elem_storage), alignof(elem_storage));
-
-    auto const a_elem = dango_placement_new(a_void.get(), elem_storage, { a_index, dango::addressof(a_arg) });
-
-    a_void.release();
-
-    return a_elem;
+    return dango_allocator_new_hb(tp_allocator, a_guard, elem_storage, { a_index, dango::addressof(a_arg) });
   }
 
   template
@@ -474,24 +446,20 @@ final
   destroy
   (elem_type_intern& a_elem)noexcept
   {
-    dango::destructor_as<elem_storage>(a_elem);
+    dango::allocator_delete<tp_allocator>(a_elem);
 
-    tp_allocator::dealloc(a_elem, sizeof(elem_storage), alignof(elem_storage));
-
-    dango::destructor_as<elem_type_intern>(&a_elem);
+    dango::qualified_destructor(&a_elem);
   }
 
   template
   <dango::is_handle_based_allocator tp_allocator>
   static constexpr void
   destroy
-  (dango::allocator_handle_type<tp_allocator> const& a_handle, elem_type_intern& a_elem)noexcept
+  (typename tp_allocator::guard_type const& a_guard, elem_type_intern& a_elem)noexcept
   {
-    dango::destructor_as<elem_storage>(a_elem);
+    dango::allocator_delete<tp_allocator>(a_guard, a_elem);
 
-    a_handle->dealloc(a_elem, sizeof(elem_storage), alignof(elem_storage));
-
-    dango::destructor_as<elem_type_intern>(&a_elem);
+    dango::qualified_destructor(&a_elem);
   }
 
   static constexpr auto
@@ -770,8 +738,8 @@ private:
   static inline constexpr auto const construct_test_handle_based =
     []<typename tp_elem, typename tp_arg>
     (dango::type_tag<tp_elem> const, size_type const a_index, tp_arg&& a_arg)
-    noexcept(requires{ { tp_elem::template construct<tp_allocator>(dango::declval<typename tp_allocator::handle_type const&>(), a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->void
-    requires(requires{ { tp_elem::template construct<tp_allocator>(dango::declval<typename tp_allocator::handle_type const&>(), a_index, dango::forward<tp_arg>(a_arg)) }; })
+    noexcept(requires{ { tp_elem::template construct<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->void
+    requires(requires{ { tp_elem::template construct<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_index, dango::forward<tp_arg>(a_arg)) }; })
     { };
 
   static inline constexpr auto const destroy_test_nohandle =
@@ -784,8 +752,8 @@ private:
   static inline constexpr auto const destroy_test_handle_based =
     []<typename tp_elem, typename tp_arg>
     (dango::type_tag<tp_elem> const, typename tp_elem::elem_type_intern& a_elem)
-    noexcept(requires{ { tp_elem::template destroy<tp_allocator>(dango::declval<typename tp_allocator::handle_type const&>(), a_elem) }noexcept; })->void
-    requires(requires{ { tp_elem::template destroy<tp_allocator>(dango::declval<typename tp_allocator::handle_type const&>(), a_elem) }; })
+    noexcept(requires{ { tp_elem::template destroy<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_elem) }noexcept; })->void
+    requires(requires{ { tp_elem::template destroy<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_elem) }; })
     { };
 private:
   template
@@ -805,31 +773,29 @@ private:
 
     dango_assert(a_capacity >= a_requested);
 
-    auto a_void = a_alloc(a_size, c_align);
+    auto a_bytes = a_alloc(a_size, c_align);
 
-    auto const a_bytes = dango_placement_new_array(a_void.get(), dango::byte, a_size);
+    auto const a_array = reinterpret_cast<ptr_type>(a_bytes.get() + sizeof(flex_array));
 
-    auto const a_array = reinterpret_cast<ptr_type>(a_bytes + sizeof(flex_array));
-
-    auto a_void_tuple =
-      dango::make_tuple(a_alloc(a_capacity * sizeof(typename tp_next::elem_type_intern), dango::max(tp_align, alignof(typename tp_next::elem_type_intern)))...);
+    auto a_bytes_tuple =
+      dango::make_tuple(a_alloc(a_capacity * sizeof(typename tp_next::elem_type_intern), dango::max(alignof(typename tp_next::elem_type_intern), tp_align))...);
 
     auto const a_next =
       dango::tuple_apply
       (
         [](auto const&... a_ptr)noexcept->auto
         {
-          return dango::make_tuple(reinterpret_cast<typename tp_next::elem_type_intern*>(dango_placement_new_array(a_ptr.get(), dango::byte, a_ptr.size()))...);
+          return dango::make_tuple(reinterpret_cast<typename tp_next::elem_type_intern*>(a_ptr.get())...);
         },
-        a_void_tuple
+        a_bytes_tuple
       );
 
     auto const a_mem =
-      dango_placement_new(a_bytes, flex_array, { a_array, a_next, a_size_init, a_capacity, dango::forward<tp_args>(a_args)... });
+      dango_placement_new(a_bytes.get(), flex_array, { a_array, a_next, a_size_init, a_capacity, dango::forward<tp_args>(a_args)... });
 
-    dango::tuple_reverse_foreach([](auto& a_ptr)noexcept->void{ a_ptr.release(); }, a_void_tuple);
+    dango::tuple_reverse_foreach([](auto& a_ptr)noexcept->void{ a_ptr.release(); }, a_bytes_tuple);
 
-    a_void.release();
+    a_bytes.release();
 
     return a_mem;
   }
@@ -857,12 +823,12 @@ private:
       <typename tp_elem>
       (tp_elem* const a_ptr)noexcept->void
       {
-        a_dealloc(a_ptr, a_capacity * sizeof(tp_elem), dango::max(tp_align, alignof(tp_elem)));
+        a_dealloc(a_ptr, a_capacity * sizeof(tp_elem), dango::max(alignof(tp_elem), tp_align));
       },
       a_mem->m_next
     );
 
-    dango::destructor(a_mem);
+    dango::qualified_destructor(a_mem);
 
     a_dealloc(a_mem, a_size, c_align);
   }
@@ -881,9 +847,16 @@ public:
 
     constexpr auto const a_alloc =
     [](size_type const a_size, size_type const a_align)
-    noexcept(dango::is_noexcept_nohandle_allocator<tp_alloc>)->dango::auto_ptr<void, tp_alloc>
+    noexcept(dango::is_noexcept_nohandle_allocator<tp_alloc>)->auto
     {
-      return dango::make_auto_ptr<void, tp_alloc>(a_size, a_align);
+      auto const a_deleter =
+        [a_size, a_align]
+        (dango::byte* const a_ptr)noexcept->void
+        {
+          dango::allocator_dealloc<tp_alloc>(a_ptr, a_size, a_align);
+        };
+
+      return dango::auto_ptr{ dango_allocator_new_array_nh_aligned(tp_alloc, dango::byte, a_size, a_align), a_deleter };
     };
 
     return alloc_impl<c_noexcept>(a_alloc, a_size_init, a_requested, dango::forward<tp_args>(a_args)...);
@@ -901,11 +874,20 @@ public:
       dango::is_noexcept_handle_based_allocator<tp_alloc> &&
       dango::is_noexcept_brace_constructible<super_type, tp_args...>;
 
+    auto const a_guard = tp_alloc::lock(a_handle);
+
     auto const a_alloc =
-    [&a_handle](size_type const a_size, size_type const a_align)
-    noexcept(dango::is_noexcept_handle_based_allocator<tp_alloc>)->dango::auto_ptr<void, tp_alloc>
+    [&a_guard](size_type const a_size, size_type const a_align)
+    noexcept(dango::is_noexcept_handle_based_allocator<tp_alloc>)->auto
     {
-      return dango::make_auto_ptr<void, tp_alloc>(a_handle, a_size, a_align);
+      auto const a_deleter =
+        [&a_guard, a_size, a_align]
+        (dango::byte* const a_ptr)noexcept->void
+        {
+          dango::allocator_dealloc<tp_alloc>(a_guard, a_ptr, a_size, a_align);
+        };
+
+      return dango::auto_ptr{ dango_allocator_new_array_hb_aligned(tp_alloc, a_guard, dango::byte, a_size, a_align), a_deleter };
     };
 
     return alloc_impl<c_noexcept>(a_alloc, a_size_init, a_requested, dango::forward<tp_args>(a_args)...);
@@ -993,26 +975,28 @@ public:
 
     auto const a_mem = allocate_n(c_size_init, a_requested, dango::forward<tp_args>(a_args)...);
 
-    auto a_guard = dango::make_guard([&a_handle, a_mem]()noexcept->void{ deallocate(a_handle, a_mem); });
+    auto a_mem_guard = dango::make_guard([&a_handle, a_mem]()noexcept->void{ deallocate(a_handle, a_mem); });
+
+    auto const a_guard = tp_alloc::lock(a_handle);
 
     auto const a_construct =
-      [&a_handle]<typename tp_elem, typename tp_arg>
+      [&a_guard]<typename tp_elem, typename tp_arg>
       (dango::type_tag<tp_elem> const, size_type const a_index, tp_arg&& a_arg)
-      noexcept(requires{ { tp_elem::template construct<tp_alloc>(a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->typename tp_elem::elem_type_intern
+      noexcept(requires{ { tp_elem::template construct<tp_alloc>(a_guard, a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->typename tp_elem::elem_type_intern
       {
-        return tp_elem::template construct<tp_alloc>(a_handle, a_index, dango::forward<tp_arg>(a_arg));
+        return tp_elem::template construct<tp_alloc>(a_guard, a_index, dango::forward<tp_arg>(a_arg));
       };
 
     auto const a_destroy =
-      [&a_handle]<typename tp_elem>
+      [&a_guard]<typename tp_elem>
       (dango::type_tag<tp_elem> const, typename tp_elem::elem_type_intern& a_elem)noexcept->void
       {
-        tp_elem::template destroy<tp_alloc>(a_handle, a_elem);
+        tp_elem::template destroy<tp_alloc>(a_guard, a_elem);
       };
 
     allocate_init_help<tp_first, tp_next...>::outer(outer_index_seq{ }, a_init, a_mem, a_construct, a_destroy);
 
-    a_guard.dismiss();
+    a_mem_guard.dismiss();
 
     return a_mem;
   }
@@ -1079,7 +1063,7 @@ public:
     constexpr auto const a_dealloc =
      [](void const volatile* const a_ptr, size_type const a_size, size_type const a_align)noexcept->void
      {
-       tp_allocator::dealloc(a_ptr, a_size, a_align);
+       dango::allocator_dealloc<tp_alloc>(a_ptr, a_size, a_align);
      };
 
      dealloc_impl(a_dealloc, const_cast<super_type const*>(a_super));
@@ -1094,10 +1078,12 @@ public:
   {
     dango_assert_nonnull(a_handle);
 
+    auto const a_guard = tp_alloc::lock(a_handle);
+
     auto const a_dealloc =
-     [&a_handle](void const volatile* const a_ptr, size_type const a_size, size_type const a_align)noexcept->void
+     [&a_guard](void const volatile* const a_ptr, size_type const a_size, size_type const a_align)noexcept->void
      {
-       a_handle->dealloc(a_ptr, a_size, a_align);
+       dango::allocator_dealloc<tp_alloc>(a_guard, a_ptr, a_size, a_align);
      };
 
     dealloc_impl(a_dealloc, const_cast<super_type const*>(a_super));

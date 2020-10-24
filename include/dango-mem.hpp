@@ -75,11 +75,36 @@ dango
 /*** operator_new operator_delete ***/
 
 namespace
+dango::detail
+{
+  [[nodiscard, gnu::malloc, gnu::alloc_size(1)]] DANGO_EXPORT auto operator_new_help(dango::usize, dango::usize)dango_new_noexcept->void*;
+
+  DANGO_EXPORT void operator_delete_help(void const volatile*, dango::usize, dango::usize)noexcept;
+}
+
+namespace
 dango
 {
-  [[nodiscard, gnu::malloc, gnu::alloc_size(1)]] DANGO_EXPORT auto operator_new(dango::usize, dango::usize)dango_new_noexcept->void*;
+  [[nodiscard]] inline auto
+  operator_new
+  (dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->void*
+  {
+    dango_assert(a_size != dango::usize(0));
+    dango_assert(dango::is_pow_two(a_align));
 
-  DANGO_EXPORT void operator_delete(void const volatile*, dango::usize, dango::usize)noexcept;
+    return dango::detail::operator_new_help(dango::next_multiple(a_size, a_align), a_align);
+  }
+
+  inline void
+  operator_delete
+  (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
+  {
+    dango_assert_nonnull(a_ptr);
+    dango_assert(a_size != dango::usize(0));
+    dango_assert(dango::is_pow_two(a_align));
+
+    dango::detail::operator_delete_help(a_ptr, dango::next_multiple(a_size, a_align), a_align);
+  }
 }
 
 /*** placement new ***/
@@ -88,74 +113,82 @@ namespace
 dango
 {
   struct
-  placement_tag
+  placement_new_tag
   final
   {
-    DANGO_TAG_TYPE(placement_tag)
+    DANGO_TAG_TYPE(placement_new_tag)
   };
 
-  inline constexpr dango::placement_tag const placement{ };
+  inline constexpr dango::placement_new_tag const placement_new{ };
 }
 
+template
+<dango::is_object_exclude_array tp_type>
+requires(dango::is_noexcept_destructible<tp_type>)
 [[nodiscard]] constexpr auto
 operator new
 (
   dango::usize const a_size,
-  dango::placement_tag const,
+  dango::placement_new_tag const,
   void* const a_addr,
-  dango::usize const a_sizeof,
-  dango::usize const a_alignof
+  dango::type_tag<tp_type> const
 )
 noexcept->void*
 {
-  dango_assert(a_addr != dango::null);
-  dango_assert(dango::is_aligned(a_addr, a_alignof));
-  dango_assert(a_size == a_sizeof);
+  dango_assert_nonnull(a_addr);
+  dango_assert(dango::is_aligned(a_addr, alignof(tp_type)));
+  dango_assert(a_size == sizeof(tp_type));
 
   return a_addr;
 }
 
-[[nodiscard]] constexpr auto
-operator new[]
-(
-  dango::usize const a_size,
-  dango::placement_tag const,
-  void* const a_addr,
-  dango::usize const a_sizeof,
-  dango::usize const a_alignof,
-  dango::usize const a_count
-)
-noexcept->void*
-{
-  dango_assert(a_addr != dango::null);
-  dango_assert(dango::is_aligned(a_addr, a_alignof));
-  dango_assert(a_size == a_sizeof * a_count);
-
-  return a_addr;
-}
-
+template
+<dango::is_object_exclude_array tp_type>
+requires(dango::is_noexcept_destructible<tp_type>)
 constexpr void
 operator delete
 (
   void* const,
-  dango::placement_tag const,
+  dango::placement_new_tag const,
   void* const,
-  dango::usize const,
-  dango::usize const
+  dango::type_tag<tp_type> const
 )
 noexcept
 {
 
 }
 
+template
+<dango::is_object_exclude_array tp_type>
+requires(dango::is_trivial_destructible<tp_type>)
+[[nodiscard]] constexpr auto
+operator new[]
+(
+  dango::usize const a_size,
+  dango::placement_new_tag const,
+  void* const a_addr,
+  dango::type_tag<tp_type> const,
+  dango::usize const a_count
+)
+noexcept->void*
+{
+  dango_assert(a_addr != dango::null);
+  dango_assert(dango::is_aligned(a_addr, alignof(tp_type)));
+  dango_assert(a_size == a_count * sizeof(tp_type));
+
+  return a_addr;
+}
+
+template
+<dango::is_object_exclude_array tp_type>
+requires(dango::is_trivial_destructible<tp_type>)
 constexpr void
 operator delete[]
 (
   void* const,
-  dango::placement_tag const,
+  dango::placement_new_tag const,
   void* const,
-  dango::usize const,
-  dango::usize const,
+  dango::type_tag<tp_type> const,
   dango::usize const
 )
 noexcept
@@ -187,7 +220,7 @@ dango
 
       for(auto a_cur = a_array; a_cur != a_end; ++a_cur)
       {
-        dango::destructor_as<tp_type>(a_cur);
+        dango::qualified_destructor(a_cur);
       }
     }
   }

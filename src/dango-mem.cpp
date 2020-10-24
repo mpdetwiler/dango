@@ -6,24 +6,15 @@
 
 auto
 dango::
-operator_new
-(
-  dango::usize const a_size_arg,
-  dango::usize const a_align_arg
-)
-dango_new_noexcept->void*
+detail::
+operator_new_help
+(dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->void*
 {
-  dango_assert(a_size_arg != dango::usize(0));
-  dango_assert(dango::is_pow_two(a_align_arg));
-
-  auto const a_size = dango::next_multiple(a_size_arg, a_align_arg);
-  auto const a_align = std::align_val_t{ a_align_arg };
-
   if constexpr(dango::c_operator_new_noexcept)
   {
     try
     {
-      return ::operator new(a_size, a_align);
+      return ::operator new(a_size, std::align_val_t{ a_align });
     }
     catch(...)
     {
@@ -32,28 +23,17 @@ dango_new_noexcept->void*
   }
   else
   {
-    return ::operator new(a_size, a_align);
+    return ::operator new(a_size, std::align_val_t{ a_align });
   }
 }
 
 void
 dango::
-operator_delete
-(
-  void const volatile* const a_ptr,
-  dango::usize const a_size_arg,
-  dango::usize const a_align_arg
-)
-noexcept
+detail::
+operator_delete_help
+(void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
 {
-  dango_assert(a_ptr != dango::null);
-  dango_assert(a_size_arg != dango::usize(0));
-  dango_assert(dango::is_pow_two(a_align_arg));
-
-  auto const a_size = dango::next_multiple(a_size_arg, a_align_arg);
-  auto const a_align = std::align_val_t{ a_align_arg };
-
-  ::operator delete(const_cast<void*>(a_ptr), a_size, a_align);
+  ::operator delete(const_cast<void*>(a_ptr), a_size, std::align_val_t{ a_align });
 }
 
 constinit dango::default_mem_resource_storage_type
