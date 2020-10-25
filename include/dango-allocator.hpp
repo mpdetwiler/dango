@@ -1286,66 +1286,62 @@ dango
   <typename tp_alloc>
   [[nodiscard]] auto
   allocator_alloc
-  (dango::usize const a_size, dango::usize const a_align)
-  noexcept(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(dango::declval<dango::usize const&>(), a_align) }noexcept; })->void*
-  requires(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(dango::declval<dango::usize const&>(), a_align) }; })
+  (dango::usize a_size, dango::usize const a_align)
+  noexcept(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(a_size, a_align) }noexcept; })->void*
+  requires(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(a_size, a_align) }; })
   {
-    dango_assert(a_size != dango::usize(0));
     dango_assert(dango::is_pow_two(a_align));
 
-    auto const a_new_size = dango::next_multiple(a_size, a_align);
+    a_size = dango::next_multiple(dango::max(dango::usize(1), a_size), a_align);
 
-    return dango::detail::allocator_alloc_help<tp_alloc>(a_new_size, a_align);
+    return dango::detail::allocator_alloc_help<tp_alloc>(a_size, a_align);
   }
 
   template
   <typename tp_alloc>
   void
   allocator_dealloc
-  (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)
-  noexcept(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, dango::declval<dango::usize const&>(), a_align) }noexcept; })
-  requires(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, dango::declval<dango::usize const&>(), a_align) }; })
+  (void const volatile* const a_ptr, dango::usize a_size, dango::usize const a_align)
+  noexcept(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, a_size, a_align) }noexcept; })
+  requires(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, a_size, a_align) }; })
   {
     dango_assert_nonnull(a_ptr);
-    dango_assert(a_size != dango::usize(0));
     dango_assert(dango::is_pow_two(a_align));
 
-    auto const a_new_size = dango::next_multiple(a_size, a_align);
+    a_size = dango::next_multiple(dango::max(dango::usize(1), a_size), a_align);
 
-    dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, a_new_size, a_align);
+    dango::detail::allocator_dealloc_help<tp_alloc>(a_ptr, a_size, a_align);
   }
 
   template
   <typename tp_alloc, typename tp_handle>
   [[nodiscard]] auto
   allocator_alloc
-  (tp_handle const& a_handle, dango::usize const a_size, dango::usize const a_align)
-  noexcept(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(a_handle, dango::declval<dango::usize const&>(), a_align) }noexcept; })->void*
-  requires(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(a_handle, dango::declval<dango::usize const&>(), a_align) }; })
+  (tp_handle const& a_handle, dango::usize a_size, dango::usize const a_align)
+  noexcept(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(a_handle, a_size, a_align) }noexcept; })->void*
+  requires(requires{ { dango::detail::allocator_alloc_help<tp_alloc>(a_handle, a_size, a_align) }; })
   {
-    dango_assert(a_size != dango::usize(0));
     dango_assert(dango::is_pow_two(a_align));
 
-    auto const a_new_size = dango::next_multiple(a_size, a_align);
+    a_size = dango::next_multiple(dango::max(dango::usize(1), a_size), a_align);
 
-    return dango::detail::allocator_alloc_help<tp_alloc>(a_handle, a_new_size, a_align);
+    return dango::detail::allocator_alloc_help<tp_alloc>(a_handle, a_size, a_align);
   }
 
   template
   <typename tp_alloc, typename tp_handle>
   void
   allocator_dealloc
-  (tp_handle const& a_handle, void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)
-  noexcept(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, dango::declval<dango::usize const&>(), a_align) }noexcept; })
-  requires(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, dango::declval<dango::usize const&>(), a_align) }; })
+  (tp_handle const& a_handle, void const volatile* const a_ptr, dango::usize a_size, dango::usize const a_align)
+  noexcept(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, a_size, a_align) }noexcept; })
+  requires(requires{ { dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, a_size, a_align) }; })
   {
     dango_assert_nonnull(a_ptr);
-    dango_assert(a_size != dango::usize(0));
     dango_assert(dango::is_pow_two(a_align));
 
-    auto const a_new_size = dango::next_multiple(a_size, a_align);
+    a_size = dango::next_multiple(dango::max(dango::usize(1), a_size), a_align);
 
-    dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, a_new_size, a_align);
+    dango::detail::allocator_dealloc_help<tp_alloc>(a_handle, a_ptr, a_size, a_align);
   }
 }
 

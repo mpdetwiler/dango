@@ -2,6 +2,7 @@
 #include "dango-test-print.hpp"
 #include "dango-concurrent.hpp"
 #include "dango-thread.hpp"
+#include "dango-allocator.hpp"
 
 auto
 main

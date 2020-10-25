@@ -87,23 +87,25 @@ dango
 {
   [[nodiscard]] inline auto
   operator_new
-  (dango::usize const a_size, dango::usize const a_align)dango_new_noexcept->void*
+  (dango::usize a_size, dango::usize const a_align)dango_new_noexcept->void*
   {
-    dango_assert(a_size != dango::usize(0));
     dango_assert(dango::is_pow_two(a_align));
 
-    return dango::detail::operator_new_help(dango::next_multiple(a_size, a_align), a_align);
+    a_size = dango::next_multiple(dango::max(dango::usize(1), a_size), a_align);
+
+    return dango::detail::operator_new_help(a_size, a_align);
   }
 
   inline void
   operator_delete
-  (void const volatile* const a_ptr, dango::usize const a_size, dango::usize const a_align)noexcept
+  (void const volatile* const a_ptr, dango::usize a_size, dango::usize const a_align)noexcept
   {
     dango_assert_nonnull(a_ptr);
-    dango_assert(a_size != dango::usize(0));
     dango_assert(dango::is_pow_two(a_align));
 
-    dango::detail::operator_delete_help(a_ptr, dango::next_multiple(a_size, a_align), a_align);
+    a_size = dango::next_multiple(dango::max(dango::usize(1), a_size), a_align);
+
+    dango::detail::operator_delete_help(a_ptr, a_size, a_align);
   }
 }
 

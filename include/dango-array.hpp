@@ -60,8 +60,10 @@ public:
   constexpr auto last()&& noexcept->rref_type{ return dango::move(last()); }
   constexpr auto last()const&& noexcept->crref_type{ return dango::move(last()); }
 
-  constexpr auto data()noexcept->ptr_type{ return m_array; }
-  constexpr auto data()const noexcept->cptr_type{ return m_array; }
+  constexpr auto data()& noexcept->ptr_type{ return m_array; }
+  constexpr auto data()const& noexcept->cptr_type{ return m_array; }
+  constexpr auto data()&& noexcept = delete;
+  constexpr auto data()const&& noexcept = delete;
 public:
   elem_type m_array[tp_size];
 };
@@ -103,8 +105,10 @@ public:
   constexpr auto last()&& noexcept->rref_type{ dango_unreachable; }
   constexpr auto last()const&& noexcept->crref_type{ dango_unreachable; }
 
-  constexpr auto data()noexcept->ptr_type{ return dango::null; }
-  constexpr auto data()const noexcept->cptr_type{ return dango::null; }
+  constexpr auto data()& noexcept->ptr_type{ return reinterpret_cast<ptr_type>(this); }
+  constexpr auto data()const& noexcept->cptr_type{ return reinterpret_cast<cptr_type>(this); }
+  constexpr auto data()&& noexcept = delete;
+  constexpr auto data()const&& noexcept = delete;
 };
 
 namespace
@@ -332,7 +336,8 @@ final
   using array_type = dango::array<tp_elem, tp_size>;
 
   template
-  <dango::is_same_ignore_cvref<array_type> tp_arg>
+  <dango::is_lvalue_ref tp_arg>
+  requires(dango::is_same_ignore_cvref<tp_arg, array_type>)
   static constexpr auto
   begin
   (tp_arg&& a_array)noexcept->auto
@@ -341,20 +346,14 @@ final
   }
 
   template
-  <dango::is_same_ignore_cvref<array_type> tp_arg>
+  <dango::is_lvalue_ref tp_arg>
+  requires(dango::is_same_ignore_cvref<tp_arg, array_type>)
   static constexpr auto
   end
   (tp_arg&& a_array)
   noexcept->dango::copy_cv<dango::remove_ref<tp_arg>, dango::copy_cv<tp_elem, void>>*
   {
-    if constexpr(tp_size != dango::usize(0))
-    {
-      return dango::forward<tp_arg>(a_array).data() + tp_size;
-    }
-    else
-    {
-      return dango::null;
-    }
+    return dango::forward<tp_arg>(a_array).data() + tp_size;
   }
 
   DANGO_UNCONSTRUCTIBLE(operator_iter)
