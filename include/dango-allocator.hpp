@@ -1643,7 +1643,7 @@ dango
   template
   <dango::is_nohandle_allocator tp_alloc, dango::is_trivial_destructible tp_type>
   void
-  allocator_array_delete
+  allocator_delete_array
   (tp_type const volatile* const a_ptr, dango::usize const a_count, dango::usize const a_align = alignof(tp_type))noexcept
   {
     dango_assert_nonnull(a_ptr);
@@ -1656,7 +1656,7 @@ dango
   <dango::is_handle_based_allocator tp_alloc, typename tp_handle, dango::is_trivial_destructible tp_type>
   requires(dango::is_same<tp_handle, typename tp_alloc::handle_type> || dango::is_same<tp_handle, typename tp_alloc::guard_type>)
   void
-  allocator_array_delete
+  allocator_delete_array
   (tp_handle const& a_handle, tp_type const volatile* const a_ptr, dango::usize const a_count, dango::usize const a_align = alignof(tp_type))noexcept
   {
     dango_assert_nonnull(a_ptr);

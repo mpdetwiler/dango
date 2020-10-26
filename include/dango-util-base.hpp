@@ -2492,20 +2492,16 @@ dango
 /*** aligned_storage ***/
 
 namespace
-dango::detail
+dango
 {
   template
   <dango::usize tp_size, dango::usize tp_align>
   concept aligned_storage_constraint_spec =
     (tp_size != dango::usize(0)) && dango::is_pow_two(tp_align);
-}
 
-namespace
-dango
-{
   template
   <dango::usize tp_size, dango::usize tp_align = alignof(dango::max_align_type)>
-  requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
+  requires(dango::aligned_storage_constraint_spec<tp_size, tp_align>)
   class aligned_storage;
 
   template
@@ -2518,7 +2514,7 @@ dango
 
 template
 <dango::usize tp_size, dango::usize tp_align>
-requires(dango::detail::aligned_storage_constraint_spec<tp_size, tp_align>)
+requires(dango::aligned_storage_constraint_spec<tp_size, tp_align>)
 class
 dango::
 aligned_storage

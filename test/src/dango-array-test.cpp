@@ -79,4 +79,17 @@ DANGO_UNIT_TEST_BEGIN(fixed_array_test1)
 }
 DANGO_UNIT_TEST_END
 
+struct
+node
+{
+  float m_data;
+  dango::fixed_array<node> m_children;
+};
+
+static_assert(dango::is_noexcept_destructible<node>);
+static_assert(dango::is_noexcept_move_constructible<node>);
+static_assert(dango::is_noexcept_move_assignable<node>);
+static_assert(!dango::is_copy_constructible<node>);
+static_assert(!dango::is_copy_assignable<node>);
+
 }

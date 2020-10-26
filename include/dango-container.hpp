@@ -182,12 +182,15 @@ final
 public:
   using elem_type = tp_type;
   using elem_type_intern = dango::remove_cv<elem_type>;
-private:
-  static inline constexpr bool const elem_type_constexpr_condition =
-    !dango::is_default_constructible<elem_type_intern> || !dango::is_move_assignable<elem_type_intern>;
-public:
+
   using elem_type_intern_constexpr =
-    dango::conditional<elem_type_constexpr_condition, elem_type_intern*, elem_type_intern>;
+    dango::conditional
+    <
+      dango::is_default_constructible<elem_type_intern> && dango::is_move_constructible<elem_type_intern>,
+      elem_type_intern,
+      elem_type_intern*
+    >;
+
   using size_type = dango::usize;
 public:
   template
@@ -236,26 +239,36 @@ public:
   static constexpr auto
   construct_constexpr
   (size_type const, tp_args&&... a_args)
-  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern_constexpr
+  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->auto
   {
-    if constexpr(elem_type_constexpr_condition)
-    {
-      return new elem_type_intern{ dango::forward<tp_args>(a_args)... };
-    }
-    else
+    if constexpr(dango::is_default_constructible<elem_type_intern> && dango::is_move_assignable<elem_type_intern>)
     {
       return elem_type_intern{ dango::forward<tp_args>(a_args)... };
     }
+    else
+    {
+      return new elem_type_intern{ dango::forward<tp_args>(a_args)... };
+    }
   }
 
+  template
+  <dango::is_same<elem_type_intern> tp_arg>
+  requires(dango::is_default_constructible<tp_arg> && dango::is_move_assignable<tp_arg>)
   static constexpr void
   destroy_constexpr
-  (elem_type_intern_constexpr& a_elem)noexcept
+  (tp_arg&)noexcept
   {
-    if constexpr(elem_type_constexpr_condition)
-    {
-      delete a_elem;
-    }
+
+  }
+
+  template
+  <dango::is_same<elem_type_intern> tp_arg>
+  requires(!(dango::is_default_constructible<tp_arg> && dango::is_move_assignable<tp_arg>))
+  static constexpr void
+  destroy_constexpr
+  (tp_arg* const a_elem)noexcept
+  {
+    delete a_elem;
   }
 
   DANGO_UNCONSTRUCTIBLE(container_elem_type)
@@ -332,7 +345,7 @@ final
 
   static constexpr void
   destroy_constexpr
-  (elem_type_intern_constexpr& a_elem)noexcept
+  (elem_type_intern_constexpr const a_elem)noexcept
   {
     delete a_elem;
   }
@@ -398,7 +411,7 @@ final
 
   static constexpr void
   destroy_constexpr
-  (elem_type_intern_constexpr&)noexcept
+  (elem_type_intern_constexpr const)noexcept
   {
 
   }
@@ -471,7 +484,7 @@ final
 
   static constexpr void
   destroy_constexpr
-  (elem_type_intern_constexpr& a_elem)noexcept
+  (elem_type_intern_constexpr const a_elem)noexcept
   {
     delete a_elem;
   }
@@ -520,7 +533,7 @@ dango::detail
 template
 <dango::is_class tp_header, dango::usize tp_align, dango::detail::is_container_elem_type<tp_align> tp_first, dango::detail::is_container_elem_type<tp_align>... tp_next>
 requires(!dango::is_const_or_volatile<tp_header> && dango::is_pow_two(tp_align))
-class alignas(dango::aligned_union<dango::aligned_storage<tp_align>, typename tp_first::elem_type_intern>)
+class
 dango::
 detail::
 flex_array<tp_header, tp_align, dango::struct_of_array<tp_first, tp_next...>>
@@ -764,18 +777,21 @@ private:
   {
     dango_assert(a_size_init <= a_requested);
 
-    constexpr auto const c_align = alignof(flex_array);
+    using overhead_type =
+      dango::aligned_union<flex_array, elem_type, dango::aligned_storage<tp_align, tp_align>>;
+
+    constexpr auto const c_align = alignof(overhead_type);
 
     auto const a_size =
-      dango::next_multiple(sizeof(flex_array) + a_requested * sizeof(elem_type), c_align);
+      dango::next_multiple(sizeof(overhead_type) + a_requested * sizeof(elem_type), c_align);
 
-    auto const a_capacity = (a_size - sizeof(flex_array)) / sizeof(elem_type);
+    auto const a_capacity = (a_size - sizeof(overhead_type)) / sizeof(elem_type);
 
     dango_assert(a_capacity >= a_requested);
 
     auto a_bytes = a_alloc(a_size, c_align);
 
-    auto const a_array = reinterpret_cast<ptr_type>(a_bytes.get() + sizeof(flex_array));
+    auto const a_array = reinterpret_cast<ptr_type>(a_bytes.get() + sizeof(overhead_type));
 
     auto a_bytes_tuple =
       dango::make_tuple(a_alloc(a_capacity * sizeof(typename tp_next::elem_type_intern), dango::max(alignof(typename tp_next::elem_type_intern), tp_align))...);
@@ -808,14 +824,17 @@ private:
   {
     dango_assert_nonnull(a_super);
 
-    constexpr auto const c_align = alignof(flex_array);
+    using overhead_type =
+      dango::aligned_union<flex_array, elem_type, dango::aligned_storage<tp_align, tp_align>>;
+
+    constexpr auto const c_align = alignof(overhead_type);
 
     auto const a_mem = static_cast<flex_array const*>(a_super);
 
     auto const a_capacity = a_mem->capacity();
 
     auto const a_size =
-      dango::next_multiple(sizeof(flex_array) + a_capacity * sizeof(elem_type), c_align);
+      dango::next_multiple(sizeof(overhead_type) + a_capacity * sizeof(elem_type), c_align);
 
     dango::tuple_reverse_foreach
     (
@@ -1105,8 +1124,7 @@ public tp_header
 private:
   using super_type = tp_header;
 public:
-  using elem_type = typename tp_first::elem_type_intern_constexpr;
-  using ptr_type = elem_type*;
+  using ptr_type = typename tp_first::elem_type_intern_constexpr*;
   using tuple_type = dango::tuple<typename tp_next::elem_type_intern_constexpr*...>;
   using size_type = dango::usize;
 public:
@@ -1285,7 +1303,7 @@ public:
   {
     dango_assert(a_init_size <= a_capacity);
 
-    dango::auto_ptr a_array{ new elem_type[a_capacity], dango::array_delete };
+    dango::auto_ptr a_array{ new typename tp_first::elem_type_intern_constexpr[a_capacity], dango::array_delete };
 
     auto a_array_tuple =
       dango::make_tuple(dango::auto_ptr{ new typename tp_next::elem_type_intern_constexpr[a_capacity], dango::array_delete }...);
