@@ -65,7 +65,9 @@ DANGO_UNIT_TEST_BEGIN(array_test1)
 DANGO_UNIT_TEST_END
 
 static_assert(dango::fixed_array<float, dango::basic_allocator>{ }.size() == 0);
-static_assert(dango::fixed_array<float, dango::polymorphic_allocator<>>{ }.size() == 0);
+//static_assert(dango::fixed_array<float, dango::polymorphic_allocator<>>{ }.size() == 0);
+static_assert(dango::fixed_array<float, dango::basic_allocator>{ }.is_empty());
+//static_assert(dango::fixed_array<float, dango::polymorphic_allocator<>>{ }.is_empty());
 
 DANGO_UNIT_TEST_BEGIN(fixed_array_test1)
 {
@@ -86,6 +88,7 @@ node
   dango::fixed_array<node> m_children;
 };
 
+//static_assert(dango::is_default_constructible<node>);
 static_assert(dango::is_noexcept_destructible<node>);
 static_assert(dango::is_noexcept_move_constructible<node>);
 static_assert(dango::is_noexcept_move_assignable<node>);

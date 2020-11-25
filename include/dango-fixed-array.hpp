@@ -115,24 +115,17 @@ public:
 private:
   using header = dango::detail::fixed_array_header<allocator_type>;
   using header_ptr = header*;
-  /*using elem_type_adaptor = dango::detail::container_elem_type<elem_type, tp_align>;
+  using elem_type_adaptor = dango::detail::container_elem_type<elem_type, tp_align>;
   using array_type = dango::detail::flex_array<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
   using array_type_constexpr = dango::detail::flex_array_constexpr<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
   using array_allocator = typename array_type::template allocator<allocator_type>;
   using array_allocator_constexpr = typename array_type_constexpr::allocator;
-  using dispatcher_type = dango::detail::flex_array_dispatcher<header, array_type, array_type_constexpr>;*/
+  using dispatcher_type = dango::detail::flex_array_dispatcher<header, array_type, array_type_constexpr>;
 private:
   static constexpr auto
   default_construct_help()
   noexcept(dango::is_noexcept_allocator<allocator_type>)->header_ptr
   {
-    using elem_type_adaptor = dango::detail::container_elem_type<elem_type, tp_align>;
-    using array_type = dango::detail::flex_array<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
-    using array_type_constexpr = dango::detail::flex_array_constexpr<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
-    using array_allocator = typename array_type::template allocator<allocator_type>;
-    using array_allocator_constexpr = typename array_type_constexpr::allocator;
-    //using dispatcher_type = dango::detail::flex_array_dispatcher<header, array_type, array_type_constexpr>;
-
     if(dango::in_constexpr_context())
     {
       return array_allocator_constexpr::allocate_n(size_type(0), size_type(0));
@@ -176,13 +169,6 @@ public:
   constexpr
   ~fixed_array()noexcept
   {
-    using elem_type_adaptor = dango::detail::container_elem_type<elem_type, tp_align>;
-    using array_type = dango::detail::flex_array<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
-    using array_type_constexpr = dango::detail::flex_array_constexpr<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
-    using array_allocator = typename array_type::template allocator<allocator_type>;
-    using array_allocator_constexpr = typename array_type_constexpr::allocator;
-    using dispatcher_type = dango::detail::flex_array_dispatcher<header, array_type, array_type_constexpr>;
-
     if(!m_header)
     {
       return;
@@ -215,9 +201,11 @@ public:
       {
         auto const a_alloc_ptr = dango::move(m_header->allocator_handle());
 
+        auto const a_guard = allocator_type::lock(a_alloc_ptr);
+
         for(auto a_current = a_begin; a_current != a_end; ++a_current)
         {
-          elem_type_adaptor::template destroy<allocator_type>(a_alloc_ptr, *a_current);
+          elem_type_adaptor::template destroy<allocator_type>(a_guard, *a_current);
         }
 
         array_allocator::deallocate(a_alloc_ptr, m_header);
@@ -234,28 +222,8 @@ public:
   constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_header); }
   constexpr void dango_operator_swap(fixed_array& a_array)& noexcept{ dango::swap(m_header, a_array.m_header); }
 public:
-  constexpr auto size()const noexcept->size_type
-  {
-    using elem_type_adaptor = dango::detail::container_elem_type<elem_type, tp_align>;
-    using array_type = dango::detail::flex_array<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
-    using array_type_constexpr = dango::detail::flex_array_constexpr<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
-    //using array_allocator = typename array_type::template allocator<allocator_type>;
-    //using array_allocator_constexpr = typename array_type_constexpr::allocator;
-    using dispatcher_type = dango::detail::flex_array_dispatcher<header, array_type, array_type_constexpr>;
-
-    return dispatcher_type::size(m_header);
-  }
-  constexpr auto is_empty()const noexcept->bool
-  {
-    using elem_type_adaptor = dango::detail::container_elem_type<elem_type, tp_align>;
-    using array_type = dango::detail::flex_array<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
-    using array_type_constexpr = dango::detail::flex_array_constexpr<header, tp_align, dango::struct_of_array<elem_type_adaptor>>;
-    //using array_allocator = typename array_type::template allocator<allocator_type>;
-    //using array_allocator_constexpr = typename array_type_constexpr::allocator;
-    using dispatcher_type = dango::detail::flex_array_dispatcher<header, array_type, array_type_constexpr>;
-
-    return dispatcher_type::is_empty(m_header);
-  }
+  constexpr auto size()const noexcept->size_type{ return dispatcher_type::size(m_header); }
+  constexpr auto is_empty()const noexcept->bool{ return dispatcher_type::is_empty(m_header); }
 private:
   header_ptr m_header;
 };

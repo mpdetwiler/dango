@@ -170,7 +170,6 @@ dango::detail
   struct container_elem_type<dango::stable_ref_adaptor<tp_type>, tp_align>;
 }
 
-
 template
 <dango::is_object_exclude_array tp_type, dango::usize tp_align>
 struct
@@ -182,21 +181,12 @@ final
 public:
   using elem_type = tp_type;
   using elem_type_intern = dango::remove_cv<elem_type>;
-
-  using elem_type_intern_constexpr =
-    dango::conditional
-    <
-      dango::is_default_constructible<elem_type_intern> && dango::is_move_constructible<elem_type_intern>,
-      elem_type_intern,
-      elem_type_intern*
-    >;
-
   using size_type = dango::usize;
 public:
   template
   <dango::is_nohandle_allocator tp_allocator, typename... tp_args>
   requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
-  static constexpr auto
+  static auto
   construct
   (size_type const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
@@ -207,9 +197,9 @@ public:
   template
   <dango::is_handle_based_allocator tp_allocator, typename... tp_args>
   requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
-  static constexpr auto
+  static auto
   construct
-  (typename tp_allocator::handle_type const&, size_type const, tp_args&&... a_args)
+  (typename tp_allocator::guard_type const&, size_type const, tp_args&&... a_args)
   noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
   {
     return elem_type_intern{ dango::forward<tp_args>(a_args)... };
@@ -217,7 +207,7 @@ public:
 
   template
   <dango::is_nohandle_allocator tp_allocator>
-  static constexpr void
+  static void
   destroy
   (elem_type_intern& a_elem)noexcept
   {
@@ -226,9 +216,9 @@ public:
 
   template
   <dango::is_handle_based_allocator tp_allocator>
-  static constexpr void
+  static void
   destroy
-  (dango::allocator_handle_type<tp_allocator> const&, elem_type_intern& a_elem)noexcept
+  (typename tp_allocator::guard_type const&, elem_type_intern& a_elem)noexcept
   {
     dango::qualified_destructor(&a_elem);
   }
@@ -239,36 +229,16 @@ public:
   static constexpr auto
   construct_constexpr
   (size_type const, tp_args&&... a_args)
-  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->auto
+  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
   {
-    if constexpr(dango::is_default_constructible<elem_type_intern> && dango::is_move_assignable<elem_type_intern>)
-    {
-      return elem_type_intern{ dango::forward<tp_args>(a_args)... };
-    }
-    else
-    {
-      return new elem_type_intern{ dango::forward<tp_args>(a_args)... };
-    }
+    return elem_type_intern{ dango::forward<tp_args>(a_args)... };
   }
 
-  template
-  <dango::is_same<elem_type_intern> tp_arg>
-  requires(dango::is_default_constructible<tp_arg> && dango::is_move_assignable<tp_arg>)
   static constexpr void
   destroy_constexpr
-  (tp_arg&)noexcept
+  (elem_type_intern&)noexcept
   {
 
-  }
-
-  template
-  <dango::is_same<elem_type_intern> tp_arg>
-  requires(!(dango::is_default_constructible<tp_arg> && dango::is_move_assignable<tp_arg>))
-  static constexpr void
-  destroy_constexpr
-  (tp_arg* const a_elem)noexcept
-  {
-    delete a_elem;
   }
 
   DANGO_UNCONSTRUCTIBLE(container_elem_type)
@@ -285,13 +255,12 @@ final
   using elem_type = tp_type;
   using elem_storage = dango::detail::stable_element<dango::remove_cv<elem_type>, tp_align>;
   using elem_type_intern = elem_storage*;
-  using elem_type_intern_constexpr = elem_type_intern;
   using size_type = dango::usize;
 
   template
   <dango::is_nohandle_allocator tp_allocator, typename... tp_args>
   requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
-  static constexpr auto
+  static auto
   construct
   (size_type const a_index, tp_args&&... a_args)
   noexcept(dango::is_noexcept_nohandle_allocator<tp_allocator> && dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
@@ -302,7 +271,7 @@ final
   template
   <dango::is_handle_based_allocator tp_allocator, typename... tp_args>
   requires(dango::is_brace_constructible_and_noexcept_destructible<elem_type_intern, tp_args...>)
-  static constexpr auto
+  static auto
   construct
   (typename tp_allocator::guard_type const& a_guard, size_type const a_index, tp_args&&... a_args)
   noexcept(dango::is_noexcept_handle_based_allocator<tp_allocator> && dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
@@ -312,7 +281,7 @@ final
 
   template
   <dango::is_nohandle_allocator tp_allocator>
-  static constexpr void
+  static void
   destroy
   (elem_type_intern& a_elem)noexcept
   {
@@ -323,7 +292,7 @@ final
 
   template
   <dango::is_handle_based_allocator tp_allocator>
-  static constexpr void
+  static void
   destroy
   (typename tp_allocator::guard_type const& a_guard, elem_type_intern& a_elem)noexcept
   {
@@ -338,14 +307,14 @@ final
   static constexpr auto
   construct_constexpr
   (size_type const a_index, tp_args&&... a_args)
-  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern_constexpr
+  noexcept(dango::is_noexcept_brace_constructible<elem_type_intern, tp_args...>)->elem_type_intern
   {
     return new elem_storage{ a_index, dango::forward<tp_args>(a_args)... };
   }
 
   static constexpr void
   destroy_constexpr
-  (elem_type_intern_constexpr const a_elem)noexcept
+  (elem_type_intern& a_elem)noexcept
   {
     delete a_elem;
   }
@@ -363,12 +332,11 @@ final
 {
   using elem_type = tp_type;
   using elem_type_intern = elem_type*;
-  using elem_type_intern_constexpr = elem_type_intern;
   using size_type = dango::usize;
 
   template
   <dango::is_nohandle_allocator tp_allocator>
-  static constexpr auto
+  static auto
   construct
   (size_type const, elem_type& a_arg)noexcept->elem_type_intern
   {
@@ -377,16 +345,16 @@ final
 
   template
   <dango::is_handle_based_allocator tp_allocator>
-  static constexpr auto
+  static auto
   construct
-  (typename tp_allocator::handle_type const&, size_type const, elem_type& a_arg)noexcept->elem_type_intern
+  (typename tp_allocator::guard_type const&, size_type const, elem_type& a_arg)noexcept->elem_type_intern
   {
     return elem_type_intern{ dango::addressof(a_arg) };
   }
 
   template
   <dango::is_nohandle_allocator tp_allocator>
-  static constexpr void
+  static void
   destroy
   (elem_type_intern& a_elem)noexcept
   {
@@ -395,23 +363,23 @@ final
 
   template
   <dango::is_handle_based_allocator tp_allocator>
-  static constexpr void
+  static void
   destroy
-  (dango::allocator_handle_type<tp_allocator> const&, elem_type_intern& a_elem)noexcept
+  (typename tp_allocator::guard_type const&, elem_type_intern& a_elem)noexcept
   {
     dango::qualified_destructor(&a_elem);
   }
 
   static constexpr auto
   construct_constexpr
-  (size_type const, elem_type& a_arg)noexcept->elem_type_intern_constexpr
+  (size_type const, elem_type& a_arg)noexcept->elem_type_intern
   {
     return elem_type_intern{ dango::addressof(a_arg) };
   }
 
   static constexpr void
   destroy_constexpr
-  (elem_type_intern_constexpr const)noexcept
+  (elem_type_intern&)noexcept
   {
 
   }
@@ -430,12 +398,11 @@ final
   using elem_type = tp_type;
   using elem_storage = dango::detail::stable_element<elem_type* const, tp_align>;
   using elem_type_intern = elem_storage*;
-  using elem_type_intern_constexpr = elem_type_intern;
   using size_type = dango::usize;
 
   template
   <dango::is_nohandle_allocator tp_allocator>
-  static constexpr auto
+  static auto
   construct
   (size_type const a_index, elem_type& a_arg)
   noexcept(dango::is_noexcept_nohandle_allocator<tp_allocator>)->elem_type_intern
@@ -445,7 +412,7 @@ final
 
   template
   <dango::is_handle_based_allocator tp_allocator>
-  static constexpr auto
+  static auto
   construct
   (typename tp_allocator::guard_type const& a_guard, size_type const a_index, elem_type& a_arg)
   noexcept(dango::is_noexcept_handle_based_allocator<tp_allocator>)->elem_type_intern
@@ -455,7 +422,7 @@ final
 
   template
   <dango::is_nohandle_allocator tp_allocator>
-  static constexpr void
+  static void
   destroy
   (elem_type_intern& a_elem)noexcept
   {
@@ -466,7 +433,7 @@ final
 
   template
   <dango::is_handle_based_allocator tp_allocator>
-  static constexpr void
+  static void
   destroy
   (typename tp_allocator::guard_type const& a_guard, elem_type_intern& a_elem)noexcept
   {
@@ -477,14 +444,14 @@ final
 
   static constexpr auto
   construct_constexpr
-  (size_type const a_index, elem_type& a_arg)noexcept->elem_type_intern_constexpr
+  (size_type const a_index, elem_type& a_arg)noexcept->elem_type_intern
   {
     return new elem_storage{ a_index, dango::addressof(a_arg) };
   }
 
   static constexpr void
   destroy_constexpr
-  (elem_type_intern_constexpr const a_elem)noexcept
+  (elem_type_intern& a_elem)noexcept
   {
     delete a_elem;
   }
@@ -1124,8 +1091,9 @@ public tp_header
 private:
   using super_type = tp_header;
 public:
-  using ptr_type = typename tp_first::elem_type_intern_constexpr*;
-  using tuple_type = dango::tuple<typename tp_next::elem_type_intern_constexpr*...>;
+  using elem_type = typename tp_first::elem_type_intern;
+  using ptr_type = elem_type*;
+  using tuple_type = dango::tuple<typename tp_next::elem_type_intern*...>;
   using size_type = dango::usize;
 public:
   struct allocator;
@@ -1252,7 +1220,7 @@ private:
     noexcept(requires{ { ( ... , void(tp_elem::construct_constexpr(tp_indices, dango::tuple_get<tp_index>(dango::tuple_get<tp_indices>(a_init))))) }noexcept; })->auto
     requires(requires{ { ( ... , void(tp_elem::construct_constexpr(tp_indices, dango::tuple_get<tp_index>(dango::tuple_get<tp_indices>(a_init))))) }; })
     {
-      using intern_type = typename tp_elem::elem_type_intern_constexpr;
+      using intern_type = typename tp_elem::elem_type_intern;
 
       constexpr auto const c_size = sizeof...(tp_tuples);
 
@@ -1267,10 +1235,17 @@ private:
           delete[] a_array;
         };
 
-      auto const a_begin =
-        new intern_type[a_capacity]{ tp_elem::construct_constexpr(tp_indices, dango::tuple_get<tp_index>(dango::tuple_get<tp_indices>(a_init)))... };
+      if constexpr(dango::is_default_constructible<intern_type>)
+      {
+        auto const a_begin =
+          new intern_type[a_capacity]{ tp_elem::construct_constexpr(tp_indices, dango::tuple_get<tp_index>(dango::tuple_get<tp_indices>(a_init)))... };
 
-      return dango::auto_ptr{ a_begin, c_deleter };
+        return dango::auto_ptr{ a_begin, c_deleter };
+      }
+      else
+      {
+        dango_unreachable;
+      }
     }
   public:
     template
@@ -1303,29 +1278,36 @@ public:
   {
     dango_assert(a_init_size <= a_capacity);
 
-    dango::auto_ptr a_array{ new typename tp_first::elem_type_intern_constexpr[a_capacity], dango::array_delete };
+    if constexpr((dango::is_default_constructible<elem_type> && ... && dango::is_default_constructible<typename tp_next::elem_type_intern>))
+    {
+      dango::auto_ptr a_array{ new elem_type[a_capacity], dango::array_delete };
 
-    auto a_array_tuple =
-      dango::make_tuple(dango::auto_ptr{ new typename tp_next::elem_type_intern_constexpr[a_capacity], dango::array_delete }...);
+      auto a_array_tuple =
+        dango::make_tuple(dango::auto_ptr{ new typename tp_next::elem_type_intern[a_capacity], dango::array_delete }...);
 
-    auto const a_next =
-      dango::tuple_apply
-      (
-        [](auto const&... a_ptr)noexcept->tuple_type
-        {
-          return tuple_type{ a_ptr.get()... };
-        },
-        a_array_tuple
-      );
+      auto const a_next =
+        dango::tuple_apply
+        (
+          [](auto const&... a_ptr)noexcept->tuple_type
+          {
+            return tuple_type{ a_ptr.get()... };
+          },
+          a_array_tuple
+        );
 
-    auto const a_mem =
-      new flex_array_constexpr{ a_array.get(), a_next, a_init_size, a_capacity, dango::forward<tp_args>(a_args)... };
+      auto const a_mem =
+        new flex_array_constexpr{ a_array.get(), a_next, a_init_size, a_capacity, dango::forward<tp_args>(a_args)... };
 
-    dango::tuple_reverse_foreach([](auto& a_ptr)noexcept->void{ a_ptr.release(); }, a_array_tuple);
+      dango::tuple_reverse_foreach([](auto& a_ptr)noexcept->void{ a_ptr.release(); }, a_array_tuple);
 
-    a_array.release();
+      a_array.release();
 
-    return a_mem;
+      return a_mem;
+    }
+    else
+    {
+      dango_unreachable;
+    }
   }
 
   template
