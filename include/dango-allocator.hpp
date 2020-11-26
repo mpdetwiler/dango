@@ -838,12 +838,15 @@ final
 public:
   using control_type = control_base;
 public:
-  explicit
+  explicit constexpr
   mem_resource_guard
   (privacy_tag const, control_type* const a_control)noexcept:
   m_control{ a_control }
-  { }
+  {
+    dango_assert_nonnull(a_control);
+  }
 
+  constexpr
   ~mem_resource_guard()noexcept
   {
     auto const a_control = m_control;
