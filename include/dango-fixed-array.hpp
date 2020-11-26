@@ -169,24 +169,18 @@ public:
   constexpr
   ~fixed_array()noexcept
   {
-    if(!m_header)
+    auto const a_header = m_header;
+
+    if(!a_header)
     {
       return;
     }
 
-    auto const a_begin = dispatcher_type::begin(m_header);
-    auto const a_end = dispatcher_type::end(m_header);
+    auto const a_begin = dispatcher_type::begin(a_header);
+    auto const a_end = dispatcher_type::end(a_header);
 
-    if(dango::in_constexpr_context())
-    {
-      for(auto a_current = a_begin; a_current != a_end; ++a_current)
-      {
-        elem_type_adaptor::destroy_constexpr(*a_current);
-      }
-
-      array_allocator_constexpr::deallocate(m_header);
-    }
-    else
+    auto const a_runtime =
+    [a_header, a_begin, a_end]()noexcept->void
     {
       if constexpr(dango::is_void<allocator_handle_type>)
       {
@@ -195,11 +189,11 @@ public:
           elem_type_adaptor::template destroy<allocator_type>(*a_current);
         }
 
-        array_allocator::deallocate(m_header);
+        array_allocator::deallocate(a_header);
       }
       else
       {
-        auto const a_alloc_ptr = dango::move(m_header->allocator_handle());
+        auto const a_alloc_ptr = dango::move(a_header->allocator_handle());
 
         auto const a_guard = allocator_type::lock(a_alloc_ptr);
 
@@ -208,8 +202,22 @@ public:
           elem_type_adaptor::template destroy<allocator_type>(a_guard, *a_current);
         }
 
-        array_allocator::deallocate(a_alloc_ptr, m_header);
+        array_allocator::deallocate(a_alloc_ptr, a_header);
       }
+    };
+
+    if(dango::in_constexpr_context())
+    {
+      for(auto a_current = a_begin; a_current != a_end; ++a_current)
+      {
+        elem_type_adaptor::destroy_constexpr(*a_current);
+      }
+
+      array_allocator_constexpr::deallocate(a_header);
+    }
+    else
+    {
+      a_runtime();
     }
   }
 
