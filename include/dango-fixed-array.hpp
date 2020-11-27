@@ -145,7 +145,7 @@ private:
     }
   }
 public:
-  explicit constexpr
+  constexpr
   fixed_array()
   noexcept(dango::is_noexcept_allocator<allocator_type>)
   requires(dango::is_void<allocator_handle_type> || dango::allocator_has_default_handle<allocator_type>):

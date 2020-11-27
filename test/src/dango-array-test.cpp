@@ -88,11 +88,43 @@ node
   dango::fixed_array<node> m_children;
 };
 
-//static_assert(dango::is_default_constructible<node>);
 static_assert(dango::is_noexcept_destructible<node>);
 static_assert(dango::is_noexcept_move_constructible<node>);
 static_assert(dango::is_noexcept_move_assignable<node>);
 static_assert(!dango::is_copy_constructible<node>);
 static_assert(!dango::is_copy_assignable<node>);
+
+DANGO_UNIT_TEST_BEGIN(fixed_array_test2)
+{
+  node a_node1;
+  node a_node2{ 1.0f, { } };
+  node a_node3{ 1.0f, null };
+}
+DANGO_UNIT_TEST_END
+
+struct nondefault
+{
+  explicit constexpr nondefault()noexcept = delete;
+};
+
+[[maybe_unused]]
+constexpr auto
+nondefault_test(int const a_ret)noexcept->int
+{
+  dango::fixed_array<nondefault> a_array{ };
+
+  return a_ret;
+}
+
+// uncommenting the following line should cause a compilation error:
+// static_assert(nondefault_test(5) == 5);
+
+// the runtime version should compile:
+
+DANGO_UNIT_TEST_BEGIN(fixed_array_test3)
+{
+  dango_assert(nondefault_test(5) == 5);
+}
+DANGO_UNIT_TEST_END
 
 }
