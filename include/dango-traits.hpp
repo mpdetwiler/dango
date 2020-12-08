@@ -3,6 +3,10 @@
 
 #include "dango-def.hpp"
 
+#define DANGO_TRAITS_DEFINE_IGNORE_REF(name) \
+  template<typename tp_type> \
+  concept name##_ignore_ref = dango::name<tp_type> || dango::name<dango::remove_ref<tp_type>>;
+
 /*** declval ***/
 
 namespace
@@ -899,10 +903,6 @@ dango
     dango::is_same_ignore_cv<dango::remove_ref<tp_type1>, dango::remove_ref<tp_type2>>;
 }
 
-#define DANGO_TRAITS_DEFINE_IGNORE_REF(name) \
-  template<typename tp_type> \
-  concept name##_ignore_ref = dango::name<tp_type> || dango::name<dango::remove_ref<tp_type>>;
-
 /*** is_void ***/
 
 namespace
@@ -1624,19 +1624,6 @@ dango
   DANGO_TRAITS_DEFINE_IGNORE_REF(is_trivial_copyable)
 }
 
-/*** is_trivial ***/
-
-namespace
-dango
-{
-  template
-  <typename tp_type>
-  concept is_trivial =
-    dango::is_trivial_copyable<tp_type> && bool(__is_trivial(tp_type));
-
-  DANGO_TRAITS_DEFINE_IGNORE_REF(is_trivial)
-}
-
 /*** is_standard_layout ***/
 
 namespace
@@ -1726,8 +1713,6 @@ dango
 
   DANGO_TRAITS_DEFINE_IGNORE_REF(is_unsigned)
 }
-
-#undef DANGO_TRAITS_DEFINE_IGNORE_REF
 
 /*** is_base_of ***/
 
@@ -1973,8 +1958,6 @@ dango
     dango::is_noexcept_qualified_destructible<tp_type> &&
     bool(__has_trivial_destructor(tp_type));
 }
-
-
 
 /*** is_convertible_arg is_noexcept_convertible_arg is_convertible_ret is_noexcept_convertible_ret ***/
 
@@ -2316,6 +2299,30 @@ dango
   <typename tp_type>
   concept is_trivial_move_assignable =
     dango::is_noexcept_move_assignable<tp_type> && dango::is_trivial_assignable<tp_type&, tp_type&&>;
+}
+
+/*** is_trivial ***/
+
+namespace
+dango
+{
+#ifdef DANGO_USING_CLANG
+  template
+  <typename tp_type>
+  concept is_trivial =
+    dango::is_trivial_copyable<tp_type> &&
+    dango::is_trivial_default_constructible<tp_type>;
+    // bool(__is_trivial(tp_type)); <- seems to be bugged in clang 11. breaks for certain types that pass in clang 10 and GCC 10.
+#else
+  template
+  <typename tp_type>
+  concept is_trivial =
+    dango::is_trivial_copyable<tp_type> &&
+    dango::is_trivial_default_constructible<tp_type> &&
+    bool(__is_trivial(tp_type));
+#endif
+
+  DANGO_TRAITS_DEFINE_IGNORE_REF(is_trivial)
 }
 
 /*** common_type ***/
@@ -2906,5 +2913,7 @@ dango::detail
   using spec_id = void;
 }
 #endif
+
+#undef DANGO_TRAITS_DEFINE_IGNORE_REF
 
 #endif // DANGO_TRAITS_HPP_INCLUDED

@@ -469,6 +469,7 @@ static_assert(!dango::is_trivial<int&>);
 static_assert(!dango::is_trivial_copyable<int&>);
 static_assert(dango::is_trivial_default_constructible<dango::tuple<int, bool, dango::tuple<float, long, dango::tuple<double, char>, unsigned>, test_struct, long double>>);
 static_assert(dango::is_trivial_copyable<dango::tuple<int, bool, dango::tuple<float, long, dango::tuple<double, char>, unsigned>, test_struct, long double>>);
+static_assert(dango::is_trivial<dango::tuple<int, bool, dango::tuple<float, long, dango::tuple<double, char>, unsigned>, test_struct, long double>>);
 
 /*** is_standard_layout ***/
 
