@@ -23,8 +23,4 @@ std
 }
 #endif
 
-#ifdef _LIBCPP_VERSION
-#include <utility>
-#endif
-
 #endif // DANGO_STANDARD_HEADERS_HPP_INCLUDED
