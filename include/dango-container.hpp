@@ -3,8 +3,31 @@
 
 #include "dango-allocator.hpp"
 #include "dango-auto-ptr.hpp"
+#include "dango-macro.hpp"
 #include "dango-tuple.hpp"
 #include "dango-util.hpp"
+
+namespace
+dango
+{
+  struct
+  list_init_tag
+  final
+  {
+    DANGO_TAG_TYPE(list_init_tag)
+  };
+
+  inline constexpr dango::list_init_tag const list_init{ };
+
+  struct
+  fill_init_tag
+  final
+  {
+    DANGO_TAG_TYPE(fill_init_tag)
+  };
+
+  inline constexpr dango::fill_init_tag const fill_init{ };
+}
 
 namespace
 dango

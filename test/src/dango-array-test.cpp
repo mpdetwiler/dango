@@ -1,4 +1,5 @@
 #include "dango-array.hpp"
+#include "dango-container.hpp"
 #include "dango-fixed-array.hpp"
 #include "dango-test-print.hpp"
 
@@ -126,5 +127,15 @@ DANGO_UNIT_TEST_BEGIN(fixed_array_test3)
   dango_assert(nondefault_test(5) == 5);
 }
 DANGO_UNIT_TEST_END
+
+DANGO_UNIT_TEST_BEGIN(fixed_array_test4)
+{
+  //using array_type = dango::fixed_array<float, dango::basic_allocator>;
+  //using array_allocator = array_type::array_allocator;
+
+  //array_allocator::allocate_init(dango::forward_as_tuple(dango::forward_as_tuple(1)), 1);
+}
+DANGO_UNIT_TEST_END
+
 
 }

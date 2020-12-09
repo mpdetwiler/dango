@@ -3,6 +3,8 @@
 
 #include "dango-array.hpp"
 #include "dango-container.hpp"
+#include "dango-macro.hpp"
+#include "dango-traits.hpp"
 
 namespace
 dango::detail
@@ -112,7 +114,7 @@ public:
   using allocator_type = tp_allocator;
   using allocator_handle_type = dango::allocator_handle_type<allocator_type, void>;
   using size_type = dango::usize;
-private:
+public:
   using header = dango::detail::fixed_array_header<allocator_type>;
   using header_ptr = header*;
   using elem_type_adaptor = dango::detail::container_elem_type<elem_type, tp_align>;
@@ -144,6 +146,34 @@ private:
       }
     }
   }
+
+  using construct_help_prio = dango::priority_tag<dango::uint(1)>;
+
+  template
+  <typename... tp_init>
+  requires(dango::is_void<allocator_handle_type>)
+  static constexpr auto
+  construct_help
+  (dango::priority_tag<dango::uint(1)> const, dango::list_init_tag const, tp_init&&... a_init)
+  noexcept(requires{ { array_allocator::allocate_init_single_array(dango::forward_as_tuple(dango::forward<tp_init>(a_init)...), sizeof...(tp_init)) }noexcept; })->header_ptr
+  requires(requires{ { array_allocator::allocate_init_single_array(dango::forward_as_tuple(dango::forward<tp_init>(a_init)...), sizeof...(tp_init)) }; })
+  {
+    if(dango::in_constexpr_context())
+    {
+      if constexpr(requires{ { array_allocator_constexpr::allocate_init_single_array(dango::forward_as_tuple(dango::forward<tp_init>(a_init)...), sizeof...(tp_init)) }; })
+      {
+        return array_allocator_constexpr::allocate_init_single_array(dango::forward_as_tuple(dango::forward<tp_init>(a_init)...), sizeof...(tp_init));
+      }
+      else
+      {
+        dango_unreachable;
+      }
+    }
+    else
+    {
+      return array_allocator::allocate_init_single_array(dango::forward_as_tuple(dango::forward<tp_init>(a_init)...), sizeof...(tp_init));
+    }
+  }
 public:
   constexpr
   fixed_array()
@@ -158,12 +188,21 @@ public:
   m_header{ dango::null }
   { }
 
-  constexpr fixed_array(fixed_array const&)noexcept = delete;
-
   constexpr
   fixed_array
   (fixed_array&& a_array)noexcept:
   m_header{ dango::exchange(a_array.m_header, dango::null) }
+  { }
+
+  template
+  <typename... tp_args>
+  requires(sizeof...(tp_args) != dango::usize(0))
+  explicit constexpr
+  fixed_array
+  (tp_args&&... a_args)
+  noexcept(requires{ { construct_help(construct_help_prio{ }, dango::forward<tp_args>(a_args)...) }noexcept; })
+  requires(requires{ { construct_help(construct_help_prio{ }, dango::forward<tp_args>(a_args)...) }; }):
+  m_header{ construct_help(construct_help_prio{ }, dango::forward<tp_args>(a_args)...) }
   { }
 
   constexpr
@@ -222,10 +261,8 @@ public:
   }
 
   DANGO_DEFINE_NULL_SWAP_ASSIGN(fixed_array, constexpr, true)
-
-  constexpr auto operator = (fixed_array const&)& noexcept = delete;
-
   DANGO_DEFINE_MOVE_SWAP_ASSIGN(fixed_array, constexpr, true)
+  DANGO_UNCOPYABLE(fixed_array)
 public:
   constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_header); }
   constexpr void dango_operator_swap(fixed_array& a_array)& noexcept{ dango::swap(m_header, a_array.m_header); }
