@@ -130,10 +130,10 @@ DANGO_UNIT_TEST_END
 
 DANGO_UNIT_TEST_BEGIN(fixed_array_test4)
 {
-  //using array_type = dango::fixed_array<float, dango::basic_allocator>;
-  //using array_allocator = array_type::array_allocator;
+  using array_type = dango::fixed_array<float, dango::basic_allocator>;
+  using array_allocator = array_type::array_allocator;
 
-  //array_allocator::allocate_init(dango::forward_as_tuple(dango::forward_as_tuple(1)), 1);
+  array_allocator::allocate_init(dango::forward_as_tuple(dango::forward_as_tuple(1.0f)), dango::usize(1));
 }
 DANGO_UNIT_TEST_END
 

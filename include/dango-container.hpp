@@ -734,30 +734,38 @@ private:
   static inline constexpr auto const construct_test_nohandle =
     []<typename tp_elem, typename tp_arg>
     (dango::type_tag<tp_elem> const, size_type const a_index, tp_arg&& a_arg)
-    noexcept(requires{ { tp_elem::template construct<tp_allocator>(a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->void
+    noexcept(requires{ { tp_elem::template construct<tp_allocator>(a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->typename tp_elem::elem_type_intern
     requires(requires{ { tp_elem::template construct<tp_allocator>(a_index, dango::forward<tp_arg>(a_arg)) }; })
-    { };
+    {
+      dango_unreachable;
+    };
 
   static inline constexpr auto const construct_test_handle_based =
     []<typename tp_elem, typename tp_arg>
     (dango::type_tag<tp_elem> const, size_type const a_index, tp_arg&& a_arg)
-    noexcept(requires{ { tp_elem::template construct<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->void
+    noexcept(requires{ { tp_elem::template construct<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->typename tp_elem::elem_type_intern
     requires(requires{ { tp_elem::template construct<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_index, dango::forward<tp_arg>(a_arg)) }; })
-    { };
+    {
+      dango_unreachable;
+    };
 
   static inline constexpr auto const destroy_test_nohandle =
-    []<typename tp_elem, typename tp_arg>
+    []<typename tp_elem>
     (dango::type_tag<tp_elem> const, typename tp_elem::elem_type_intern& a_elem)
     noexcept(requires{ { tp_elem::template destroy<tp_allocator>(a_elem) }noexcept; })->void
     requires(requires{ { tp_elem::template destroy<tp_allocator>(a_elem) }; })
-    { };
+    {
+      dango_unreachable;
+    };
 
   static inline constexpr auto const destroy_test_handle_based =
-    []<typename tp_elem, typename tp_arg>
+    []<typename tp_elem>
     (dango::type_tag<tp_elem> const, typename tp_elem::elem_type_intern& a_elem)
     noexcept(requires{ { tp_elem::template destroy<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_elem) }noexcept; })->void
     requires(requires{ { tp_elem::template destroy<tp_allocator>(dango::declval<typename tp_allocator::guard_type const&>(), a_elem) }; })
-    { };
+    {
+      dango_unreachable;
+    };
 private:
   template
   <bool tp_noexcept, typename tp_alloc, typename... tp_args>
@@ -913,7 +921,7 @@ public:
     requires
     {
       { allocate_n(dango::declval<size_type const&>(), dango::declval<size_type const&>(), dango::declval<tp_args>()...) }noexcept;
-      { allocate_init_help<tp_first, tp_next...>::outer(outer_index_seq{ }, a_init, dango::null, construct_test_nohandle, destroy_test_nohandle) }noexcept;
+      //{ allocate_init_help<tp_first, tp_next...>::outer(outer_index_seq{ }, a_init, dango::null, construct_test_nohandle, destroy_test_nohandle) }noexcept;
     }
   )->flex_array*
   requires
@@ -921,7 +929,7 @@ public:
     requires
     {
       { allocate_n(dango::declval<size_type const&>(), dango::declval<size_type const&>(), dango::declval<tp_args>()...) };
-      { allocate_init_help<tp_first, tp_next...>::outer(outer_index_seq{ }, a_init, dango::null, construct_test_nohandle, destroy_test_nohandle) };
+      //{ allocate_init_help<tp_first, tp_next...>::outer(outer_index_seq{ }, a_init, dango::null, construct_test_nohandle, destroy_test_nohandle) };
     }
   )
   {
@@ -936,7 +944,7 @@ public:
     constexpr auto const c_construct =
       []<typename tp_elem, typename tp_arg>
       (dango::type_tag<tp_elem> const, size_type const a_index, tp_arg&& a_arg)
-      noexcept(requires{ { tp_elem::template construct<tp_alloc>(a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })->typename tp_elem::elem_type_intern
+      noexcept/*(requires{ { tp_elem::template construct<tp_alloc>(a_index, dango::forward<tp_arg>(a_arg)) }noexcept; })*/->typename tp_elem::elem_type_intern
       {
         return tp_elem::template construct<tp_alloc>(a_index, dango::forward<tp_arg>(a_arg));
       };
