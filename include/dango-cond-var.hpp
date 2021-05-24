@@ -400,7 +400,7 @@ public:
 public:
   constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_control); }
   constexpr auto dango_operator_equals(shared_cond_var const& a_cond)const noexcept->bool{ return dango::equals(m_control, a_cond.m_control); }
-  constexpr auto dango_operator_compare(shared_cond_var const& a_cond)const noexcept->auto{ return dango::compare(m_control, a_cond.m_control); }
+  constexpr auto dango_operator_compare(shared_cond_var const& a_cond)const noexcept->dango::compare_val_s{ return dango::compare(m_control, a_cond.m_control); }
 
   constexpr void
   dango_operator_swap

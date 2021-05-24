@@ -392,7 +392,7 @@ public:
 public:
   constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_control); }
   constexpr auto dango_operator_equals(shared_mutex const& a_mut)const noexcept->bool{ return dango::equals(m_control, a_mut.m_control); }
-  constexpr auto dango_operator_compare(shared_mutex const& a_mut)const noexcept->auto{ return dango::compare(m_control, a_mut.m_control); }
+  constexpr auto dango_operator_compare(shared_mutex const& a_mut)const noexcept->dango::compare_val_s{ return dango::compare(m_control, a_mut.m_control); }
   constexpr void dango_operator_swap(shared_mutex& a_mut)& noexcept{ dango::swap(m_control, a_mut.m_control); }
 public:
   [[nodiscard]] auto

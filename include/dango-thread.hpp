@@ -106,7 +106,7 @@ public:
   DANGO_DEFINE_NULLABLE_OPERATOR_BOOL(constexpr, true)
   constexpr auto dango_operator_is_null()const noexcept->bool{ return dango::is_null(m_control); }
   constexpr auto dango_operator_equals(thread const& a_arg)const noexcept->bool{ return dango::equals(m_control, a_arg.m_control); }
-  constexpr auto dango_operator_compare(thread const& a_arg)const noexcept->auto{ return dango::compare(m_control, a_arg.m_control); }
+  constexpr auto dango_operator_compare(thread const& a_arg)const noexcept->dango::compare_val_s{ return dango::compare(m_control, a_arg.m_control); }
   auto dango_operator_hash()const noexcept->dango::hash_val{ return dango::hash(m_control); }
   constexpr void dango_operator_swap(thread& a_arg)& noexcept{ dango::swap(m_control, a_arg.m_control); }
   DANGO_EXPORT auto is_alive()const noexcept->bool;
